@@ -1,34 +1,25 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
 import { REST } from '@discordjs/rest'
 import { Routes } from 'discord-api-types/v9'
-import { config } from 'dotenv'
-config()
+import { Commands, registerCommands } from './commands'
 import { Config } from './utils/config'
 
-const commands = [
-  new SlashCommandBuilder()
-    .setName('ping')
-    .setDescription('Replies with pong!'),
-  new SlashCommandBuilder()
-    .setName('server')
-    .setDescription('Replies with server info!'),
-  new SlashCommandBuilder()
-    .setName('user')
-    .setDescription('Replies with user info!'),
-].map((command) => command.toJSON())
+registerCommands()
 
 const rest = new REST({ version: '9' }).setToken(Config.token)
 
 ;(async () => {
   try {
-    await rest.put(
+    const cmdJson = Array.from(Commands.values()).map((x) => x.data.toJSON())
+    // console.log(cmdJson)
+    const resp = await rest.put(
       Routes.applicationGuildCommands(Config.clientId, Config.guildId),
       {
-        body: commands,
+        body: cmdJson,
       }
     )
 
     console.log('Successfully registered application commands.')
+    console.log(resp)
   } catch (error) {
     console.error(error)
   }

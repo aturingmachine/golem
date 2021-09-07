@@ -1,3 +1,6 @@
+import { config } from 'dotenv'
+config()
+
 export class Config {
   static get token(): string {
     return process.env.TOKEN || ''
@@ -9,5 +12,9 @@ export class Config {
 
   static get guildId(): string {
     return process.env.TEST_SERVER_GUILD_ID || ''
+  }
+
+  static get libraryPath(): string {
+    return process.env.LIBRARY_PATH || ''
   }
 }
