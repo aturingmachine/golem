@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
-import { Message } from 'discord.js'
+import { CommandInteraction, Interaction, Message } from 'discord.js'
+import { TrackFinder } from '../player/track-finder'
 
 const data = new SlashCommandBuilder()
   .setName('goplay')
@@ -11,8 +12,12 @@ const data = new SlashCommandBuilder()
       .setRequired(true)
   )
 
-const execute = async (interaction: Message): Promise<void> => {
-  await interaction.reply('Pong!')
+const execute = async (interaction: CommandInteraction): Promise<void> => {
+  const query = interaction.options.getString('query') || ''
+  const res = TrackFinder.search(query)
+  await interaction.reply(
+    `Searched For ${query}! Found ${res.artist} - ${res.album} - ${res.track}`
+  )
 }
 
 export default {
