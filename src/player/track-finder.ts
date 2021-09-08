@@ -1,4 +1,7 @@
+import fs from 'fs'
 import Fuse from 'fuse.js'
+import * as mm from 'music-metadata'
+import { debug } from '..'
 import { Config } from '../utils/config'
 import { getAllFiles } from '../utils/filesystem'
 import { logger } from '../utils/logger'
@@ -37,28 +40,86 @@ const fuseOpts = {
   includeScore: true,
   ignoreLocation: true,
   shouldSort: true,
-  minMatchCharLength: 3,
+  minMatchCharLength: 2,
 }
+
+const reg = /.*\.(png|html|pdf|db|jpg|jpeg|xml|js|css)$/
 
 export class TrackFinder {
   private static listings: Listing[] = []
   private static _search: Fuse<Listing>
 
-  static loadLibrary(): void {
-    const paths = getAllFiles(Config.libraryPath, [])
-    TrackFinder.listings = paths.map((trackPath) => {
-      const split = trackPath.replace(Config.libraryPath, '').split('/')
-      const artist = split[1]
-      const album = split[2]
-      const track = split[3]
+  static async loadLibrary(): Promise<void> {
+    logger.debug('Loading library')
+    const paths = getAllFiles(Config.libraryPath, []).filter(
+      (trackPath) => !reg.test(trackPath)
+    )
+    logger.debug(`Found ${paths.length} paths.`)
 
-      return {
-        artist,
-        album,
-        track,
-        path: trackPath,
+    const listings: Listing[] = []
+    let errorCount = 0
+
+    for (const trackPath of paths) {
+      const split = trackPath.replace(Config.libraryPath, '').split('/')
+
+      try {
+        const meta = await mm.parseFile(trackPath)
+        // logger.info(`Listing ${meta.common.title || split[3]}`)
+
+        listings.push({
+          artist: meta.common.artist || meta.common.artists?.[0] || split[1],
+          album: meta.common.album || split[2],
+          track: meta.common.title || split[3],
+          path: trackPath,
+        })
+      } catch (error) {
+        logger.error(`${trackPath} encountered error.`)
+        logger.warn('Continuing with library read')
+        // console.error(error)
+        errorCount++
       }
-    })
+    }
+
+    logger.warn(`Encountered ${errorCount} errors while loading library.`)
+
+    // TrackFinder.listings = await Promise.all(
+    //   paths.map(async (trackPath): Promise<Listing> => {
+    //     logger.info(`Checking ${trackPath}`)
+    //     try {
+    //       const meta = await mm.parseFile(trackPath)
+
+    //       console.log(meta)
+    //       console.log(JSON.stringify(meta))
+
+    //       return {
+    //         artist,
+    //         album,
+    //         track,
+    //         path: trackPath,
+    //       }
+    //     } catch (error) {
+    //       console.log('ERROR')
+    //       console.error(error)
+    //       return {
+    //         artist: '',
+    //         album: '',
+    //         track: '',
+    //         path: trackPath,
+    //       }
+    //     }
+    //   })
+    // )
+
+    logger.info('Setting listings')
+    TrackFinder.listings = listings
+
+    if (debug) {
+      fs.writeFileSync(
+        './list-out.json',
+        JSON.stringify(TrackFinder.listings, undefined, 2),
+        { encoding: 'utf-8' }
+      )
+    }
 
     TrackFinder._search = new Fuse<Listing>(TrackFinder.listings, fuseOpts)
   }
@@ -67,23 +128,21 @@ export class TrackFinder {
     query: string,
     res: Fuse.FuseResult<Listing>[]
   ): boolean {
-    return [res[0], res[1], res[2], res[3]]
-      .filter(Boolean)
-      .some((r) => r.item.artist.toLowerCase().includes(query.toLowerCase()))
+    return [res[0], res[1], res[2], res[3]].filter(Boolean).some((r) => {
+      const artist = r.item.artist.toLowerCase().trim()
+      const q = query.toLowerCase().trim()
+      return artist === query || artist.indexOf(q) === 0
+    })
   }
 
   static isWideMatch(
     query: string,
     result: Fuse.FuseResult<Listing>[]
   ): boolean {
-    // if diffs are 0
-    // if diff1 is < 0.001 maybe ?
-
     const picked = result[0]
     const second = result[1]
-    const third = result[2]
 
-    if (picked.score && second.score && third.score) {
+    if (picked.score && second.score) {
       const diff1 = Math.abs(picked.score - second.score) * 1000
 
       return diff1 === 0 || diff1 < 0.1

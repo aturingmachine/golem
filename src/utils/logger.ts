@@ -13,7 +13,7 @@ const consoleLogFormat = printf(({ level, message, timestamp }) => {
     .concat(`.${d.getMilliseconds()}`)
     .concat(time.slice(spaceIndex))
 
-  return ` <${level}> :: ${d.toLocaleDateString()} ${timeString}] ${message}`
+  return `<${level}> ${d.toLocaleDateString()} ${timeString}] ${message}`
 })
 
 const id = winston.format((info) => {
@@ -34,8 +34,5 @@ const logger = winston.createLogger({
     }),
   ],
 })
-
-logger.error('ERROR')
-logger.info('hello')
 
 export { logger }
