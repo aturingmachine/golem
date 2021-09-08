@@ -8,8 +8,6 @@ import { TrackFinder } from './player/track-finder'
 import { Config } from './utils/config'
 import { logger } from './utils/logger'
 
-console.log(process.argv.slice(2))
-
 export const debug = process.argv.slice(2).includes('debug')
 
 let rl: readline.Interface

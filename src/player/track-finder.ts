@@ -16,6 +16,7 @@ interface Listing {
   artist: string
   album: string
   track: string
+  duration: number
   path: string
 }
 
@@ -64,51 +65,22 @@ export class TrackFinder {
 
       try {
         const meta = await mm.parseFile(trackPath)
-        // logger.info(`Listing ${meta.common.title || split[3]}`)
 
         listings.push({
           artist: meta.common.artist || meta.common.artists?.[0] || split[1],
           album: meta.common.album || split[2],
           track: meta.common.title || split[3],
+          duration: meta.format.duration || 160,
           path: trackPath,
         })
       } catch (error) {
         logger.error(`${trackPath} encountered error.`)
         logger.warn('Continuing with library read')
-        // console.error(error)
         errorCount++
       }
     }
 
     logger.warn(`Encountered ${errorCount} errors while loading library.`)
-
-    // TrackFinder.listings = await Promise.all(
-    //   paths.map(async (trackPath): Promise<Listing> => {
-    //     logger.info(`Checking ${trackPath}`)
-    //     try {
-    //       const meta = await mm.parseFile(trackPath)
-
-    //       console.log(meta)
-    //       console.log(JSON.stringify(meta))
-
-    //       return {
-    //         artist,
-    //         album,
-    //         track,
-    //         path: trackPath,
-    //       }
-    //     } catch (error) {
-    //       console.log('ERROR')
-    //       console.error(error)
-    //       return {
-    //         artist: '',
-    //         album: '',
-    //         track: '',
-    //         path: trackPath,
-    //       }
-    //     }
-    //   })
-    // )
 
     logger.info('Setting listings')
     TrackFinder.listings = listings
@@ -160,9 +132,9 @@ export class TrackFinder {
     const isWideMatch = TrackFinder.isWideMatch(query, result)
     const diff1 = Math.abs(result[0].score || 0 - (result[1].score || 0)) * 1000
 
-    logger.debug(
-      `Query: ${query} -> {artistQuery: ${isArtistQuery}, wideMatch: ${isWideMatch}, diff: ${diff1}}`
-    )
+    const debLog = JSON.stringify(result[0], undefined, 2)
+
+    logger.debug(`\n>>> QUERIED: ${query} ->\n${debLog}`)
 
     if (false) {
       TrackFinder.debug(query, result, isArtistQuery, isWideMatch, diff1)
