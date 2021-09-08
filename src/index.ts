@@ -1,4 +1,3 @@
-// Require the necessary discord.js classes
 import fs from 'fs'
 import path from 'path'
 import { Client, Intents } from 'discord.js'
@@ -6,16 +5,14 @@ import { registerCommands } from './commands'
 import { EventHandler } from './models/event-handler'
 import { TrackFinder } from './player/track-finder'
 import { Config } from './utils/config'
+import { logger } from './utils/logger'
 
-TrackFinder.load3()
-// const resp = TrackFinder.search('tt')
-// console.log('SEARCHED')
-// console.log(resp)
-// process.exit(0)
+logger.info('hello!')
+
+TrackFinder.loadLibrary()
 
 registerCommands()
 
-// Create a new client instance
 const client = new Client({
   intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES],
 })
@@ -24,25 +21,23 @@ const eventFiles = fs
   .readdirSync(path.resolve(__dirname, './events'))
   .filter((file) => file.endsWith('.js'))
 
-console.log(eventFiles)
-
 for (const file of eventFiles) {
-  console.log('Attempting to load Event Handler:', file)
+  logger.debug(`Attempting to load Event Handler: ${file}`)
   /* eslint-disable-next-line @typescript-eslint/no-var-requires */
   const event: EventHandler<any> = require(`./events/${file}`).default
-  console.log('Event Handler Loaded:', event)
+  logger.debug(`Event Handler Loaded: ${event}`)
   if (event.once) {
     client.once(event.on, async (...args) => await event.execute(...args))
   } else {
     client.on(event.on, async (...args) => await event.execute(...args))
   }
-  console.log('Event Handler Registered:', event.on)
+  logger.debug(`Event Handler Registered: ${event.on}`)
 }
 
-console.log(Config.token)
+logger.debug(Config.token)
 client
   .login(Config.token)
-  .then(console.log)
+  .then(logger.debug)
   .catch((err) => {
     console.error('Login Blew Up')
     console.error(err)

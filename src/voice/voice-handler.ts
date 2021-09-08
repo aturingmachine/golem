@@ -6,6 +6,7 @@ import {
   NoSubscriberBehavior,
   VoiceConnection,
 } from '@discordjs/voice'
+import { logger } from '../utils/logger'
 
 /**
  * TODO
@@ -42,22 +43,22 @@ export class Player {
     }
 
     Player._initialized = true
-    console.log(`Attempting to play ${resourceName} using opts ${test}`)
+    logger.debug(`Attempting to play ${resourceName} using opts ${test}`)
     if (!Player.connection) {
-      console.log('No Connection, creating new')
+      logger.debug('No Connection, creating new')
       Player.connect(test)
-      console.log('Connection Created')
+      logger.debug('Connection Created')
     }
 
     const resource = createAudioResource(resourceName)
 
     Player.connection.subscribe(Player._player)
-    console.log('Should be playing maybe?')
+    logger.debug('Should be playing maybe?')
 
-    console.log('Attempting to play!')
-    console.log(Player._player.state)
+    logger.debug('Attempting to play!')
+    logger.debug(Player._player.state)
     Player._player.play(resource)
-    console.log(Player._player.state)
+    logger.debug(Player._player.state)
   }
 
   static disconnect(): void {
@@ -78,26 +79,32 @@ export class Player {
       return
     })
 
-    Player._player.on('error', console.error)
+    Player._player.on('error', (error) => {
+      logger.error(`Audio Player Error: ${error}`)
+    })
 
-    Player._player.on('debug', console.log)
+    Player._player.on('debug', (msg) => {
+      logger.debug(`voice-handler <debug> ${msg}`)
+    })
 
-    Player._player.on(AudioPlayerStatus.Buffering, () =>
-      console.log('Entered Buffering')
-    )
+    Player._player.on(AudioPlayerStatus.Buffering, () => {
+      logger.debug('Entered Buffering')
+    })
 
-    Player._player.on(AudioPlayerStatus.Idle, () => console.log('Entered Idle'))
+    Player._player.on(AudioPlayerStatus.Idle, () => {
+      logger.debug('Entered Idle')
+    })
 
-    Player._player.on(AudioPlayerStatus.Paused, () =>
-      console.log('Entered Paused')
-    )
+    Player._player.on(AudioPlayerStatus.Paused, () => {
+      logger.debug('Entered Paused')
+    })
 
-    Player._player.on(AudioPlayerStatus.Playing, () =>
-      console.log('Entered Playing')
-    )
+    Player._player.on(AudioPlayerStatus.Playing, () => {
+      logger.debug('Entered Playing')
+    })
 
-    Player._player.on(AudioPlayerStatus.AutoPaused, () =>
-      console.log('Entered AutoPaused')
-    )
+    Player._player.on(AudioPlayerStatus.AutoPaused, () => {
+      logger.debug('Entered AutoPaused')
+    })
   }
 }

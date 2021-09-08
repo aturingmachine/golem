@@ -4,3 +4,7 @@ node_modules/
 .env
 
 dist/
+
+data-out.json
+
+logs/

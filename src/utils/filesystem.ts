@@ -18,7 +18,6 @@ export const getAllFiles = (
     withFileTypes: false,
     encoding: 'utf-8',
   })
-  // console.log(files)
 
   let filesCopy = [...arrayOfFiles]
 
