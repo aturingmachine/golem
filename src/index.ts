@@ -7,6 +7,7 @@ import { establishConnection } from './db'
 import { EventHandler } from './models/event-handler'
 import { TrackFinder } from './player/track-finder'
 import { Config, opts } from './utils/config'
+import { GoGet } from './utils/go-get-handler'
 import { fourSquare } from './utils/image-helpers'
 import { logger } from './utils/logger'
 
@@ -26,28 +27,13 @@ const main = async () => {
   await TrackFinder.loadLibrary()
 
   if (opts.image) {
-    const srcs = TrackFinder.artistSample('LOONA')
-
-    try {
-      const img = await fourSquare({
-        images: {
-          img1: srcs[0].albumArt,
-          img2: srcs[1].albumArt,
-          img3: srcs[2].albumArt,
-          img4: srcs[3].albumArt,
-        },
-        size: 80,
-      })
-      img.toString('base64')
-      console.log(img.toString('base64'))
-    } catch (error) {
-      console.error(error)
-    }
+    console.log(GoGet.catalog)
     process.exit(0)
   }
 
   if (opts.debug) {
     logger.debug('>>> ENTERING INTERACTIVE DEBUG MODE')
+    initBot()
     s()
   } else {
     initBot()
@@ -61,7 +47,8 @@ function s() {
     if (ans.toLowerCase() !== 'exit') {
       s()
     } else {
-      initBot()
+      // initBot()
+      process.exit(0)
     }
   })
 }

@@ -78,13 +78,16 @@ const execute = async (
         files: [image],
       })
 
-      // if (interaction.guild) {
-      //   logger.debug('GoPlay starting Player.')
-      //   Player.start({
-      //     channelId: voiceChannel?.id || '',
-      //     guildId: interaction.guildId || '',
-      //     adapterCreator: interaction.guild.voiceAdapterCreator,
-      //   })
+      if (interaction.guild) {
+        logger.debug('GoPlay starting Player.')
+        Player.start({
+          channelId: voiceChannel?.id || '',
+          guildId: interaction.guildId || '',
+          adapterCreator: interaction.guild.voiceAdapterCreator,
+        })
+
+        Player.enqueue(res.listing)
+      }
     }
   } else {
     Player.unpause()

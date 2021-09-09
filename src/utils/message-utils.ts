@@ -1,6 +1,6 @@
 import fs from 'fs'
+import path from 'path'
 import {
-  CommandInteraction,
   MessageActionRow,
   MessageAttachment,
   MessageButton,
@@ -14,7 +14,7 @@ import { humanReadableDuration } from './time-utils'
 
 export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
   return new MessageAttachment(
-    albumArt || fs.readFileSync('../../plexlogo.png'),
+    albumArt || fs.readFileSync(path.resolve(__dirname, '../../plexlogo.jpg')),
     'cover.png'
   )
 }
@@ -104,4 +104,8 @@ export const ArtistConfirmReply = (
     components: [row],
     files: [image],
   }
+}
+
+export const centerString = (longest: number, str: string): string => {
+  return str.padStart((longest - str.length) / 2 + str.length).padEnd(longest)
 }

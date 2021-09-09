@@ -76,6 +76,7 @@ export class Player {
     }
   }
 
+  // TODO also broken...
   static pause(): void {
     logger.info('Player pausing')
     Player._player.pause()
@@ -134,7 +135,7 @@ export class Player {
     if (!Player.isPlaying) {
       const resource = createAudioResource(listing.path)
       Player._currentResource = resource
-      Player._player.play(resource)
+      // Player._player.play(resource) // TODO wtf was this
       Player._player.play(Player._currentResource)
       logger.debug(
         `Resource Created: CurrentResource: ${Player._currentResource}; Ended: ${Player._currentResource?.ended}`
@@ -144,6 +145,7 @@ export class Player {
     Player.connection.subscribe(Player._player)
   }
 
+  // TODO this might need to be fixed
   private static playNext(): void {
     logger.debug('Player::playNext Called')
     const nextTrack = Player.queue.peek()
@@ -151,6 +153,9 @@ export class Player {
     if (Player._currentResource?.ended && nextTrack) {
       logger.info(`Playing Next track ${nextTrack.name}`)
       Player.play(Player.queue.pop() || nextTrack)
+    } else if (Player._currentResource?.ended && !nextTrack) {
+      Player.queue.pop()
+      Player.stop()
     }
   }
 

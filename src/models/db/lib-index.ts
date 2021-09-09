@@ -8,7 +8,7 @@ interface LibIndex {
 
 const schema = new Schema<LibIndex>({
   count: Number,
-  listings: [Schema.Types.ObjectId],
+  listings: [{ type: Schema.Types.ObjectId, ref: 'Listing' }],
 })
 
 export const LibIndex = mongoose.model<LibIndex>('LibIndex', schema)
