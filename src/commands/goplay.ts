@@ -1,15 +1,9 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
-import {
-  Client,
-  CommandInteraction,
-  Interaction,
-  Message,
-  MessageActionRow,
-  MessageButton,
-} from 'discord.js'
-import { ButtonIdPrefixes } from '../handlers/button-handler'
+import { CommandInteraction, Message } from 'discord.js'
 import { TrackFinder } from '../player/track-finder'
+import { fourSquare } from '../utils/image-helpers'
 import { logger } from '../utils/logger'
+import { ArtistConfirmReply, GetEmbedFromListing } from '../utils/message-utils'
 import { Player } from '../voice/voice-handler'
 
 const data = new SlashCommandBuilder()
@@ -22,7 +16,10 @@ const data = new SlashCommandBuilder()
       .setRequired(true)
   )
 
-const execute = async (interaction: CommandInteraction): Promise<void> => {
+const execute = async (
+  interaction: CommandInteraction | Message,
+  query?: string
+): Promise<void> => {
   const guild = interaction.client.guilds.cache.get(interaction.guildId || '')
   const member = guild?.members.cache.get(interaction.member?.user.id || '')
   const voiceChannel = member?.voice.channel
@@ -31,43 +28,67 @@ const execute = async (interaction: CommandInteraction): Promise<void> => {
     `goplay command -> guild=${guild?.name}, member=${member?.displayName}, voiceChannel=${voiceChannel?.id}`
   )
 
-  const query = interaction.options.getString('query') || ''
-  const res = TrackFinder.search(query)
+  let commandQuery = query
 
-  if (res.isArtistQuery) {
-    const row = new MessageActionRow().addComponents(
-      new MessageButton()
-        .setCustomId(
-          `${ButtonIdPrefixes.confirmArtistPlay}${res.listing.artist}`
-        )
-        .setLabel('Yes')
-        .setStyle('SUCCESS'),
-      new MessageButton()
-        .setCustomId(`${ButtonIdPrefixes.abortArtistPlay}${res.listing.artist}`)
-        .setLabel('No')
-        .setStyle('DANGER')
-    )
-
-    await interaction.reply({
-      content: `Looks like you might be looking for the artist: **${res.listing.artist}**.\nShould I queue their discography?`,
-      components: [row],
-    })
-  } else if (res.isWideMatch) {
-    // TODO
-    await interaction.reply(
-      `WIDE: Searched For: **${query}**\nFound: **${res.listing.artist}** - **${res.listing.album}** - **${res.listing.track}**\nArtist Query: **${res.isArtistQuery}**\nWide Match: **${res.isWideMatch}**`
-    )
-  } else {
-    await interaction.reply(
-      `Searched For: **${query}**\nFound: **${res.listing.artist}** - **${res.listing.album}** - **${res.listing.track}**\nArtist Query: **${res.isArtistQuery}**\nWide Match: **${res.isWideMatch}**`
-    )
+  if (interaction instanceof CommandInteraction) {
+    commandQuery = interaction.options.getString('query') || ''
   }
 
-  // Player.play(res.path, {
-  //   channelId: voiceChannel?.id,
-  //   guildId: interaction.guildId,
-  //   voiceAdapterCreator: interaction.guild?.voiceAdapterCreator,
-  // })
+  if (commandQuery) {
+    const res = TrackFinder.search(commandQuery)
+
+    logger.debug(
+      `Query Result: \nartist=${res.listing.artist},\nalbum=${res.listing.album}\ntrack=${res.listing.track}\nwide=${res.isWideMatch}\nartistQuery=${res.isArtistQuery}`
+    )
+
+    // Handle artist query
+    if (res.isArtistQuery) {
+      const srcs = TrackFinder.artistSample(res.listing.artist, 4)
+
+      await interaction.reply(
+        ArtistConfirmReply(
+          res.listing.artist,
+          await fourSquare({
+            images: {
+              img1: srcs[0].albumArt,
+              img2: srcs[1].albumArt,
+              img3: srcs[2].albumArt,
+              img4: srcs[3].albumArt,
+            },
+          })
+        )
+      )
+    }
+    // Handle Wide Queries
+    else if (res.isWideMatch) {
+      // TODO
+      await interaction.reply(
+        `WIDE: Searched For: **${commandQuery}**\nFound: **${res.listing.name}**\nArtist Query: **${res.isArtistQuery}**\nWide Match: **${res.isWideMatch}**`
+      )
+    }
+    // Handle Catch-All queries
+    else {
+      const { image, embed } = GetEmbedFromListing(
+        res.listing,
+        Player.isPlaying
+      )
+
+      await interaction.reply({
+        embeds: [embed],
+        files: [image],
+      })
+
+      // if (interaction.guild) {
+      //   logger.debug('GoPlay starting Player.')
+      //   Player.start({
+      //     channelId: voiceChannel?.id || '',
+      //     guildId: interaction.guildId || '',
+      //     adapterCreator: interaction.guild.voiceAdapterCreator,
+      //   })
+    }
+  } else {
+    Player.unpause()
+  }
 }
 
 export default {

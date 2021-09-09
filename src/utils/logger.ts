@@ -3,17 +3,17 @@ import winston from 'winston'
 
 const { combine, timestamp, colorize, printf, json, splat } = winston.format
 
-const consoleLogFormat = printf(({ level, message, timestamp }) => {
-  const d = new Date(timestamp)
+const consoleLogFormat = printf(({ level, message, _timestamp }) => {
+  // const d = new Date(timestamp)
 
-  const time = d.toLocaleTimeString()
-  const spaceIndex = time.indexOf(' ')
-  const timeString = time
-    .slice(0, spaceIndex)
-    .concat(`.${d.getMilliseconds()}`)
-    .concat(time.slice(spaceIndex))
+  // const time = d.toLocaleTimeString()
+  // const spaceIndex = time.indexOf(' ')
+  // const timeString = time
+  //   .slice(0, spaceIndex)
+  //   .concat(`.${d.getMilliseconds()}`)
+  //   .concat(time.slice(spaceIndex))
 
-  return `<${level}> ${d.toLocaleDateString()} ${timeString}] ${message}`
+  return `<${level}> ${message}`
 })
 
 const id = winston.format((info) => {

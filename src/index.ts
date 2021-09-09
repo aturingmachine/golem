@@ -5,13 +5,12 @@ import { Client, Intents } from 'discord.js'
 import { registerCommands } from './commands'
 import { EventHandler } from './models/event-handler'
 import { TrackFinder } from './player/track-finder'
-import { Config } from './utils/config'
+import { Config, opts } from './utils/config'
+import { fourSquare } from './utils/image-helpers'
 import { logger } from './utils/logger'
 
-export const debug = process.argv.slice(2).includes('debug')
-
 let rl: readline.Interface
-if (debug) {
+if (opts.debug) {
   rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -21,7 +20,28 @@ if (debug) {
 const main = async () => {
   await TrackFinder.loadLibrary()
 
-  if (debug) {
+  if (opts.image) {
+    const srcs = TrackFinder.artistSample('LOONA')
+
+    try {
+      const img = await fourSquare({
+        images: {
+          img1: srcs[0].albumArt,
+          img2: srcs[1].albumArt,
+          img3: srcs[2].albumArt,
+          img4: srcs[3].albumArt,
+        },
+        size: 80,
+      })
+      img.toString('base64')
+      console.log(img.toString('base64'))
+    } catch (error) {
+      console.error(error)
+    }
+    process.exit(0)
+  }
+
+  if (opts.debug) {
     logger.debug('>>> ENTERING INTERACTIVE DEBUG MODE')
     s()
   } else {
@@ -41,14 +61,28 @@ function s() {
   })
 }
 
-main()
+if (!opts.noRun) {
+  main()
+}
 
 function initBot(): void {
   registerCommands()
 
   const client = new Client({
-    intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_VOICE_STATES],
+    intents: [
+      Intents.FLAGS.GUILDS,
+      Intents.FLAGS.GUILD_VOICE_STATES,
+      Intents.FLAGS.GUILD_MESSAGES,
+    ],
   })
+
+  if (opts.verbose) {
+    client.on('debug', (msg) => {
+      logger.debug(`Client Debug >>>\n${msg}`)
+    })
+  }
+
+  logger.info(`Cient Running With: ${client.options.intents}`)
 
   const eventFiles = fs
     .readdirSync(path.resolve(__dirname, './events'))

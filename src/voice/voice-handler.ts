@@ -1,12 +1,18 @@
 import {
   AudioPlayerStatus,
+  AudioResource,
   createAudioPlayer,
   createAudioResource,
+  CreateVoiceConnectionOptions,
   joinVoiceChannel,
+  JoinVoiceChannelOptions,
   NoSubscriberBehavior,
   VoiceConnection,
 } from '@discordjs/voice'
+import { Listing } from '../models/listing'
+import { TrackQueue } from '../player/queue'
 import { logger } from '../utils/logger'
+import { humanReadableTime } from '../utils/time-utils'
 
 /**
  * TODO
@@ -35,41 +41,140 @@ export class Player {
       noSubscriber: NoSubscriberBehavior.Play,
     },
   })
+  private static _currentResource: AudioResource
   private static _initialized = false
+  private static queue = new TrackQueue()
 
-  static play(resourceName: string, test: any): void {
+  static start(
+    channelOptions: JoinVoiceChannelOptions & CreateVoiceConnectionOptions
+  ): void {
+    logger.debug(`Player:start`)
     if (!Player._initialized) {
       Player.setup()
+      Player._initialized = true
     }
 
-    Player._initialized = true
-    logger.debug(`Attempting to play ${resourceName} using opts ${test}`)
     if (!Player.connection) {
       logger.debug('No Connection, creating new')
-      Player.connect(test)
+      Player.connect(channelOptions)
       logger.debug('Connection Created')
     }
+  }
 
-    const resource = createAudioResource(resourceName)
+  static enqueue(listing: Listing): void {
+    logger.debug(`Enqueuing ${listing.name}`)
+    Player.queue.add(listing)
+    Player.play(listing)
+  }
+
+  static enqueueMany(listings: Listing[]): void {
+    const first = listings.shift()
+
+    if (first) {
+      Player.enqueue(first)
+      Player.queue.addMany(listings)
+    }
+  }
+
+  static pause(): void {
+    logger.info('Player pausing')
+    Player._player.pause()
+  }
+
+  static skip(): void {
+    logger.info('Player Skipping')
+    Player.stop()
+
+    const next = Player.queue.pop()
+    if (next) {
+      Player.play(next)
+    }
+  }
+
+  static clear(): void {
+    logger.info('Player clearing queue')
+    Player.queue.clear()
+
+    Player.stop()
+  }
+
+  static unpause(): void {
+    logger.info('Player resuming playback')
+    Player._player.unpause()
+  }
+
+  static get stats(): { count: number; time: number; hTime: string } {
+    return {
+      count: Player.queue.queuedTrackCount,
+      time: Player.queue.runTime,
+      hTime: humanReadableTime(Player.queue.runTime),
+    }
+  }
+
+  static get nowPlaying(): string {
+    return Player.queue.peek()?.name || 'No Track Playing'
+  }
+
+  static get isPlaying(): boolean {
+    return !(
+      !Player._currentResource ||
+      (Player._currentResource && Player._currentResource.ended)
+    )
+  }
+
+  private static play(listing: Listing): void {
+    logger.debug(`Attempting to play ${listing.name}`)
+    logger.debug(
+      `Current Player State: connection: ${Player.connection}, resource: ${Player._currentResource}`
+    )
+    logger.debug(
+      `CurrentResource: ${Player._currentResource}; Ended: ${Player._currentResource?.ended}`
+    )
+
+    if (!Player.isPlaying) {
+      const resource = createAudioResource(listing.path)
+      Player._currentResource = resource
+      Player._player.play(resource)
+      Player._player.play(Player._currentResource)
+      logger.debug(
+        `Resource Created: CurrentResource: ${Player._currentResource}; Ended: ${Player._currentResource?.ended}`
+      )
+    }
 
     Player.connection.subscribe(Player._player)
-    logger.debug('Should be playing maybe?')
-
-    logger.debug('Attempting to play!')
-    logger.debug(Player._player.state)
-    Player._player.play(resource)
-    logger.debug(Player._player.state)
   }
 
-  static disconnect(): void {
-    Player.connection.destroy(true)
+  private static playNext(): void {
+    logger.debug('Player::playNext Called')
+    const nextTrack = Player.queue.peek()
+
+    if (Player._currentResource?.ended && nextTrack) {
+      logger.info(`Playing Next track ${nextTrack.name}`)
+      Player.play(Player.queue.pop() || nextTrack)
+    }
   }
 
-  static connect(test: any): void {
+  private static stop(): void {
+    Player._player.stop()
+  }
+
+  private static disconnect(): void {
+    logger.debug('Player:disconnect')
+    Player.connection.destroy()
+    Player._initialized = false
+    return
+  }
+
+  private static connect(
+    channelOptions: JoinVoiceChannelOptions & CreateVoiceConnectionOptions
+  ): void {
+    logger.debug(
+      `Connection With channelId: ${channelOptions.channelId} guildId: ${channelOptions.guildId}`
+    )
     Player.connection = joinVoiceChannel({
-      channelId: test.channelId,
-      guildId: test.guildId,
-      adapterCreator: test.voiceAdapterCreator,
+      channelId: channelOptions.channelId,
+      guildId: channelOptions.guildId,
+      adapterCreator: channelOptions.adapterCreator,
     })
   }
 
@@ -93,6 +198,7 @@ export class Player {
 
     Player._player.on(AudioPlayerStatus.Idle, () => {
       logger.debug('Entered Idle')
+      Player.playNext()
     })
 
     Player._player.on(AudioPlayerStatus.Paused, () => {

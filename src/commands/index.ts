@@ -2,6 +2,11 @@ import fs from 'fs'
 import { Collection } from 'discord.js'
 import { logger } from '../utils/logger'
 import { Command } from '~/models/commands'
+import goClear from './goclear'
+import goGet from './goget'
+import goPause from './gopause'
+import goPlay from './goplay'
+import goSkip from './goskip'
 
 export const Commands = new Collection<string, Command>()
 
@@ -18,3 +23,5 @@ export const registerCommands = (): void => {
       Commands.set(command.data.name, command)
     })
 }
+
+export const RegisteredCommands = { goClear, goGet, goPlay, goSkip, goPause }
