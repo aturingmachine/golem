@@ -9,3 +9,6 @@ data-out.json
 list-out.json
 
 logs/
+
+*.png
+*.jpg

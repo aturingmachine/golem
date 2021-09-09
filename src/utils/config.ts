@@ -25,7 +25,7 @@ export const noRun = process.argv.slice(2).includes('noRun')
 export const opts = {
   debug: process.argv.slice(2).includes('debug'),
   noRun: process.argv.slice(2).includes('noRun'),
-  bustCache: !process.argv.slice(2).includes('bust-cache'),
+  bustCache: process.argv.slice(2).includes('bust-cache'),
   verbose: process.argv.slice(2).includes('verbose'),
   image: process.argv.slice(2).includes('image'),
 }

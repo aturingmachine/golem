@@ -1,12 +1,11 @@
-import fs from 'fs'
 import Fuse from 'fuse.js'
 import * as mm from 'music-metadata'
-import { Listing, ListingBackupInfo } from '../models/listing'
+import { LibIndex } from '../models/db/lib-index'
+import { ListingSchema } from '../models/db/listing'
+import { Listing } from '../models/listing'
 import { Config, opts } from '../utils/config'
-import { getAllFiles, pathExists } from '../utils/filesystem'
+import { getAllFiles } from '../utils/filesystem'
 import { logger } from '../utils/logger'
-
-const backupPath = './lib.bk'
 
 export interface SearchResult {
   listing: Listing
@@ -45,7 +44,7 @@ export class TrackFinder {
     if (opts.bustCache) {
       await TrackFinder.loadTracksFromDisk()
     } else {
-      await TrackFinder.loadTracksFromBackup()
+      await TrackFinder.loadTracksFromDB()
     }
 
     TrackFinder._search = new Fuse<Listing>(TrackFinder.listings, fuseOpts)
@@ -112,20 +111,30 @@ export class TrackFinder {
     return TrackFinder.listings.length
   }
 
-  private static async loadTracksFromBackup(): Promise<void> {
-    logger.info('Reading library from backup')
+  private static async loadTracksFromDB(): Promise<void> {
+    logger.info('Reading library from Database')
 
-    if (pathExists(backupPath)) {
-      const data: ListingBackupInfo[] = JSON.parse(
-        fs.readFileSync(backupPath, { encoding: 'utf-8' })
-      )
+    const dbRead = await LibIndex.findOne()
+      .sort({ created_at: -1 })
+      .populate('listings')
+      .exec()
 
-      for (const datum of data) {
-        const listing = await Listing.fromBackup(datum)
-        TrackFinder.listings.push(listing)
+    if (dbRead) {
+      logger.info('DB Record found')
+      try {
+        const data: Listing[] = dbRead.listings
+
+        for (const datum of data) {
+          // const listing = await Listing.fromBackup(datum)
+          TrackFinder.listings.push(datum)
+        }
+      } catch (error) {
+        logger.warn('unable to parse backup')
+        LibIndex.deleteOne({ id: { $eq: dbRead._id } })
+        await TrackFinder.loadTracksFromDisk()
       }
     } else {
-      logger.info('No backup, creating library from filesystem')
+      logger.warn('No backup, creating library from filesystem')
       await TrackFinder.loadTracksFromDisk()
     }
   }
@@ -158,19 +167,25 @@ export class TrackFinder {
     logger.info('Setting listings')
     TrackFinder.listings = listings
 
-    fs.writeFileSync(
-      backupPath,
-      JSON.stringify(
-        TrackFinder.listings.map((l) => ({
-          ...l,
-          albumArt: undefined,
-        })),
-        undefined,
-        2
-      ),
-      {
-        encoding: 'utf-8',
-      }
-    )
+    logger.info('Attempting backup save')
+    TrackFinder.save()
+    logger.info('Backup saved to database')
+  }
+
+  private static async save(): Promise<void> {
+    const listingIds = TrackFinder.listings.map((listing) => {
+      const listingRecord = new ListingSchema(listing)
+
+      listingRecord.save()
+
+      return listingRecord._id
+    })
+
+    const record = new LibIndex({
+      listings: listingIds,
+      count: TrackFinder.listings.length,
+    })
+
+    record.save()
   }
 }

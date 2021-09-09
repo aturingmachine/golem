@@ -3,6 +3,7 @@ import path from 'path'
 import readline from 'readline'
 import { Client, Intents } from 'discord.js'
 import { registerCommands } from './commands'
+import { establishConnection } from './db'
 import { EventHandler } from './models/event-handler'
 import { TrackFinder } from './player/track-finder'
 import { Config, opts } from './utils/config'
@@ -18,6 +19,10 @@ if (opts.debug) {
 }
 
 const main = async () => {
+  logger.info('Connecting to database')
+  await establishConnection()
+  logger.info('Connection established')
+
   await TrackFinder.loadLibrary()
 
   if (opts.image) {
