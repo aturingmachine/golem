@@ -11,6 +11,8 @@ import { GoGet } from './utils/go-get-handler'
 import { fourSquare } from './utils/image-helpers'
 import { logger } from './utils/logger'
 
+let client: Client
+
 let rl: readline.Interface
 if (opts.debug) {
   rl = readline.createInterface({
@@ -42,7 +44,11 @@ const main = async () => {
 
 function s() {
   rl.question('QUERY ("exit" to exit): \n>>> ', (ans) => {
-    TrackFinder.search(ans)
+    const result = TrackFinder.search(ans)
+
+    logger.debug(
+      `DEBUG >>>\n\tResult=${result?.listing.names.short.piped};\n\tArtistQuery=${result?.isArtistQuery};\n\tWideMatch=${result?.isWideMatch}`
+    )
 
     if (ans.toLowerCase() !== 'exit') {
       s()
@@ -60,7 +66,7 @@ if (!opts.noRun) {
 function initBot(): void {
   registerCommands()
 
-  const client = new Client({
+  client = new Client({
     intents: [
       Intents.FLAGS.GUILDS,
       Intents.FLAGS.GUILD_VOICE_STATES,
@@ -103,3 +109,5 @@ function initBot(): void {
       console.error(Object.keys(err))
     })
 }
+
+export const getClient = (): Client => client

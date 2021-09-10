@@ -7,6 +7,8 @@ import {
   MessageButton,
   MessageEmbed,
   MessageOptions,
+  MessageSelectMenu,
+  MessageSelectOptionData,
 } from 'discord.js'
 import { Constants } from '../constants'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
@@ -145,5 +147,29 @@ export const getSearchReply = (
 
   return {
     embeds: [embed],
+  }
+}
+
+export const GetWideSearchEmbed = (
+  query: string,
+  results: Listing[]
+): MessageOptions => {
+  const options: MessageSelectOptionData[] = results.slice(0, 25).map((r) => {
+    return {
+      label: r.names.short.dashed.slice(0, 90),
+      value: r.id,
+    }
+  })
+
+  const row = new MessageActionRow().addComponents(
+    new MessageSelectMenu()
+      .setCustomId(`${ButtonIdPrefixes.wideSearchPlay}${query}`)
+      .setPlaceholder('Select a track')
+      .addOptions(...options)
+  )
+
+  return {
+    content: `Found ${results.length} results for ${query}. Please select a track!`,
+    components: [row],
   }
 }

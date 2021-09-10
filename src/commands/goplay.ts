@@ -3,7 +3,11 @@ import { CommandInteraction, Message } from 'discord.js'
 import { TrackFinder } from '../player/track-finder'
 import { fourSquare } from '../utils/image-helpers'
 import { logger } from '../utils/logger'
-import { ArtistConfirmReply, GetEmbedFromListing } from '../utils/message-utils'
+import {
+  ArtistConfirmReply,
+  GetEmbedFromListing,
+  GetWideSearchEmbed,
+} from '../utils/message-utils'
 import { Player } from '../voice/voice-handler'
 
 const data = new SlashCommandBuilder()
@@ -37,6 +41,12 @@ const execute = async (
   if (commandQuery) {
     const res = TrackFinder.search(commandQuery)
 
+    if (!res) {
+      logger.debug(`GoPlay: No ResultSet`)
+      await interaction.reply(`No Results for **${query}**`)
+      return
+    }
+
     logger.debug(
       `Query Result: \nartist=${res.listing.artist},\nalbum=${res.listing.album}\ntrack=${res.listing.track}\nwide=${res.isWideMatch}\nartistQuery=${res.isArtistQuery}`
     )
@@ -61,9 +71,8 @@ const execute = async (
     }
     // Handle Wide Queries
     else if (res.isWideMatch) {
-      // TODO
       await interaction.reply(
-        `WIDE: Searched For: **${commandQuery}**\nFound: **${res.listing.name}**\nArtist Query: **${res.isArtistQuery}**\nWide Match: **${res.isWideMatch}**`
+        GetWideSearchEmbed(commandQuery, TrackFinder.searchMany(commandQuery))
       )
     }
     // Handle Catch-All queries
@@ -78,7 +87,7 @@ const execute = async (
         files: [image],
       })
 
-      if (interaction.guild) {
+      if (interaction.guild && voiceChannel?.id) {
         logger.debug('GoPlay starting Player.')
         Player.start({
           channelId: voiceChannel?.id || '',
@@ -87,6 +96,8 @@ const execute = async (
         })
 
         Player.enqueue(res.listing)
+      } else {
+        interaction.channel?.send('Not in a valid voice channel.')
       }
     }
   } else {

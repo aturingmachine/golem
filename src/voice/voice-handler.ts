@@ -38,7 +38,7 @@ export class Player {
   private static _player = createAudioPlayer({
     debug: true,
     behaviors: {
-      noSubscriber: NoSubscriberBehavior.Play,
+      noSubscriber: NoSubscriberBehavior.Stop,
     },
   })
   private static _currentResource: AudioResource

@@ -1,5 +1,6 @@
 import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
+import { v4 } from 'uuid'
 import { Config } from '../utils/config'
 
 type ListingNameStyles = {
@@ -17,6 +18,7 @@ export type ListingBackupInfo = Omit<ListingInfo, 'albumArt'> & {
 }
 
 export type ListingInfo = {
+  id: string
   artist: string
   album: string
   track: string
@@ -27,6 +29,7 @@ export type ListingInfo = {
 }
 
 export class Listing {
+  id!: string
   artist!: string
   album!: string
   track!: string
@@ -36,6 +39,7 @@ export class Listing {
   albumArt?: Buffer
 
   constructor(info: ListingInfo) {
+    this.id = info.id
     this.artist = info.artist
     this.album = info.album
     this.track = info.track
@@ -81,6 +85,7 @@ export class Listing {
     const split = path.replace(Config.libraryPath, '').split('/')
 
     return new Listing({
+      id: v4(),
       artist: meta.common.artist || meta.common.artists?.[0] || split[1],
       album: meta.common.album || split[2],
       track: meta.common.title || split[3],
@@ -98,6 +103,7 @@ export class Listing {
 
   static async fromBackup(datum: ListingBackupInfo): Promise<Listing> {
     return new Listing({
+      id: datum.id,
       artist: datum.artist,
       album: datum.album,
       track: datum.track,

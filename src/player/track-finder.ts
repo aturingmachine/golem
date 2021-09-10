@@ -1,3 +1,4 @@
+import { MessageOptions } from 'discord.js'
 import fuzzy from 'fuzzy'
 import * as mm from 'music-metadata'
 import { LibIndex } from '../models/db/lib-index'
@@ -70,21 +71,31 @@ export class TrackFinder {
   // Handle no results more gracefully
   // probs say something and best case dont die on a
   // bad $go play
-  static search(query: string): SearchResult {
+  static search(query: string): SearchResult | undefined {
     const result = fuzzy.filter(query, TrackFinder.listings, baseSearchOptions)
     const isArtistQuery = TrackFinder.isArtistQuery(query, result)
     const isWideMatch = TrackFinder.isWideMatch(result)
 
     logger.debug(`${query}: ${result.length} Matches\n`)
-    logger.debug(
-      `Result=${result[0].string};\nArtistQuery=${isArtistQuery};\nWideMatch=${isWideMatch}`
-    )
 
-    return {
-      listing: new Listing(result[0].original),
-      isArtistQuery,
-      isWideMatch,
+    if (result.length) {
+      logger.debug(
+        `Pre-weighting Result=${result[0].string};\nArtistQuery=${isArtistQuery};\nWideMatch=${isWideMatch}`
+      )
+
+      const final = new Listing(TrackFinder.weightResult(result).original)
+      const hasBeenWeighted = final.path !== result[0].original.path
+
+      return {
+        listing: final,
+        isArtistQuery,
+        isWideMatch: isWideMatch && !hasBeenWeighted,
+      }
     }
+
+    logger.warn(`No Results found for ${query}`)
+
+    return undefined
   }
 
   static searchMany(query: string): Listing[] {
@@ -112,6 +123,43 @@ export class TrackFinder {
 
   static get trackCount(): number {
     return TrackFinder._listings.length
+  }
+
+  // Our library matches nicely but does not
+  // allow for key weighting, so we will do
+  // it ourselves. Going to "add weight" to
+  // base tracks (non inst, live, jp version)
+  // since those can be accessed by more exact
+  // queries, whereas we cannot work backwards.
+  private static weightResult(
+    resultSet: fuzzy.FilterResult<Listing>[]
+  ): fuzzy.FilterResult<Listing> {
+    logger.debug(
+      `${resultSet.map((r) => `${r.original.track} scored ${r.score}`)}`
+    )
+    let pref = resultSet[0]
+    const startingScore = pref.score
+    logger.debug(`Post-Weight: Starting with ${pref.original.name}`)
+
+    if (TrackFinder.isLiveOrInst(pref)) {
+      logger.debug(`Post-Weight: Pref flagged, searching for alternatives`)
+      pref =
+        resultSet
+          .slice(0, 10)
+          .filter((r) => Math.abs(startingScore - r.score) < 5)
+          .find((result) => !this.isLiveOrInst(result)) || pref
+    }
+
+    logger.debug(`Returning ${pref.original.track}`)
+
+    return pref
+  }
+
+  private static isLiveOrInst(result: fuzzy.FilterResult<Listing>): boolean {
+    logger.debug(`Checking inst for ${result.original.track.toLowerCase()}`)
+    return ['instrumental', 'inst.', 'live', 'tour', 'jp'].some((s) =>
+      result.original.track.toLowerCase().includes(s)
+    )
   }
 
   private static async loadTracksFromDB(): Promise<void> {
@@ -142,6 +190,8 @@ export class TrackFinder {
   }
 
   private static async loadTracksFromDisk(): Promise<void> {
+    await LibIndex.deleteMany().exec()
+    await ListingSchema.deleteMany().exec()
     logger.debug('Loading library from filesystem')
     const paths = getAllFiles(Config.libraryPath, []).filter(
       (trackPath) => !reg.test(trackPath)
