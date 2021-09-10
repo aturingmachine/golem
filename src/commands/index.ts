@@ -5,7 +5,9 @@ import { Command } from '~/models/commands'
 import goClear from './goclear'
 import goGet from './goget'
 import goPause from './gopause'
+import goPeek from './gopeek'
 import goPlay from './goplay'
+import goSearch from './gosearch'
 import goSkip from './goskip'
 
 export const Commands = new Collection<string, Command>()
@@ -24,4 +26,12 @@ export const registerCommands = (): void => {
     })
 }
 
-export const RegisteredCommands = { goClear, goGet, goPlay, goSkip, goPause }
+export const RegisteredCommands = {
+  goClear,
+  goGet,
+  goPlay,
+  goSkip,
+  goPause,
+  goSearch,
+  goPeek,
+}

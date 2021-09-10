@@ -1,12 +1,14 @@
 import fs from 'fs'
 import path from 'path'
 import {
+  EmbedFieldData,
   MessageActionRow,
   MessageAttachment,
   MessageButton,
   MessageEmbed,
   MessageOptions,
 } from 'discord.js'
+import { Constants } from '../constants'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
 import { Listing } from '../models/listing'
 import { Player } from '../voice/voice-handler'
@@ -69,6 +71,10 @@ export const ArtistConfirmButton = (artist: string): MessageActionRow => {
       .setLabel('Yes')
       .setStyle('SUCCESS'),
     new MessageButton()
+      .setCustomId(`${ButtonIdPrefixes.shuffleArtistPlay}${artist}`)
+      .setLabel('Shuffle')
+      .setStyle('PRIMARY'),
+    new MessageButton()
       .setCustomId(`${ButtonIdPrefixes.abortArtistPlay}${artist}`)
       .setLabel('No')
       .setStyle('DANGER')
@@ -81,16 +87,7 @@ export const ArtistConfirmReply = (
 ): MessageOptions => {
   const image = GetMessageAttachement(albumArt)
 
-  const row = new MessageActionRow().addComponents(
-    new MessageButton()
-      .setCustomId(`${ButtonIdPrefixes.confirmArtistPlay}${artist}`)
-      .setLabel('Yes')
-      .setStyle('SUCCESS'),
-    new MessageButton()
-      .setCustomId(`${ButtonIdPrefixes.abortArtistPlay}${artist}`)
-      .setLabel('No')
-      .setStyle('DANGER')
-  )
+  const row = ArtistConfirmButton(artist)
 
   const embed = new MessageEmbed()
     .setTitle(`Play ${artist}?`)
@@ -108,4 +105,45 @@ export const ArtistConfirmReply = (
 
 export const centerString = (longest: number, str: string): string => {
   return str.padStart((longest - str.length) / 2 + str.length).padEnd(longest)
+}
+
+export const getSearchReply = (
+  query: string,
+  results: Listing[],
+  totalCount: number
+): MessageOptions => {
+  const fields: EmbedFieldData[] = results
+    .map((res, index) => ({
+      name: `Hit ${index + 1}`,
+      value: new Listing(res).names.short.piped,
+      inline: true,
+    }))
+    .reduce((prev, curr, index) => {
+      if (index && index % 2 === 0) {
+        prev.push({
+          name: '\u200B',
+          value: '\u200B',
+          inline: true,
+        })
+      }
+      prev.push(curr)
+
+      return prev
+    }, [] as EmbedFieldData[])
+
+  console.log(fields)
+
+  const embed = new MessageEmbed()
+    .setTitle(`Top ${results.length} for "${query.toUpperCase()}"`)
+    .setDescription(`Taken from **${totalCount}** total results`)
+    .setFields(...fields, {
+      name: '\u200B',
+      value: '\u200B',
+      inline: true,
+    })
+    .setColor(Constants.baseColor)
+
+  return {
+    embeds: [embed],
+  }
 }

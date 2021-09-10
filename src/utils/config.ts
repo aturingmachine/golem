@@ -10,12 +10,16 @@ export class Config {
     return process.env.CLIENT_ID || ''
   }
 
-  static get guildId(): string {
-    return process.env.TEST_SERVER_GUILD_ID || ''
+  static get guildIds(): string[] {
+    return (process.env.SERVER_IDS || '').split(',')
   }
 
   static get libraryPath(): string {
     return process.env.LIBRARY_PATH || ''
+  }
+
+  static get testGuildId(): string {
+    return process.env.TEST_SERVER_GUILD_ID || ''
   }
 }
 

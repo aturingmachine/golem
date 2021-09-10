@@ -11,7 +11,9 @@ export const humanReadableTime = (totalSeconds: number): string => {
     .padStart(2, '0')
   seconds = seconds % 60
 
-  return `${hours}:${minutes}:${(Math.round(seconds * 100) / 100).toFixed(2)}`
+  return `${hours}:${minutes}:${(Math.round(seconds * 100) / 100)
+    .toFixed(2)
+    .padStart(4, '0')}`
 }
 
 export const humanReadableDuration = (totalSeconds: number): string => {

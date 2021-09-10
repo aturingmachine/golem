@@ -10,15 +10,17 @@ const rest = new REST({ version: '9' }).setToken(Config.token)
 
 ;(async () => {
   try {
-    const cmdJson = Array.from(Commands.values()).map((x) => x.data.toJSON())
-    const resp = await rest.put(
-      Routes.applicationGuildCommands(Config.clientId, Config.guildId),
-      {
-        body: cmdJson,
-      }
-    )
+    for (const guildId of [Config.testGuildId]) {
+      const cmdJson = Array.from(Commands.values()).map((x) => x.data.toJSON())
+      const resp = await rest.put(
+        Routes.applicationGuildCommands(Config.clientId, guildId),
+        {
+          body: cmdJson,
+        }
+      )
 
-    console.log(resp)
+      console.log(resp)
+    }
     logger.info('Application Commands Registered')
   } catch (error) {
     console.error(error)

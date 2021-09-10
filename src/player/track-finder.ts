@@ -1,5 +1,4 @@
-import fs from 'fs'
-import Fuse from 'fuse.js'
+import fuzzy from 'fuzzy'
 import * as mm from 'music-metadata'
 import { LibIndex } from '../models/db/lib-index'
 import { ListingSchema } from '../models/db/listing'
@@ -14,34 +13,24 @@ export interface SearchResult {
   isWideMatch: boolean
 }
 
-const fuseOpts: Fuse.IFuseOptions<Listing> = {
-  keys: [
-    {
-      name: 'artist',
-      weight: 0.6,
-    },
-    {
-      name: 'album',
-      weight: 0.3,
-    },
-    {
-      name: 'track',
-      weight: 1.5,
-    },
-  ],
-  includeScore: true,
-  ignoreLocation: true,
-  shouldSort: true,
-  minMatchCharLength: 4,
-  includeMatches: true,
-  threshold: 0.1,
+/**
+ * TODO - General Search Notes
+ *
+ * - Live should be weighted less
+ * - Inst. should be weighted less
+ * - figure out how to do weighting lol
+ */
+
+// Need to re-run the search if we get nothing but this time include the album?
+// lotsa problems
+const baseSearchOptions = {
+  extract: (l: Listing) => `${l.artist} | ${l.track}`,
 }
 
 const reg = /.*\.(png|html|pdf|db|jpg|jpeg|xml|js|css)$/
 
 export class TrackFinder {
   private static _listings: Listing[] = []
-  private static _search: Fuse<Listing>
 
   static get listings(): Listing[] {
     return [...this._listings]
@@ -53,103 +42,66 @@ export class TrackFinder {
     } else {
       await TrackFinder.loadTracksFromDB()
     }
-
-    TrackFinder._search = new Fuse<Listing>(TrackFinder._listings, fuseOpts)
   }
 
   static isArtistQuery(
     query: string,
-    res: Fuse.FuseResult<Listing>[]
+    res: fuzzy.FilterResult<Listing>[]
   ): boolean {
     return [res[0], res[1], res[2], res[3]].filter(Boolean).some((r) => {
-      const artist = r.item.artist.toLowerCase().trim()
+      const artist = r.original.artist.toLowerCase().trim()
       const q = query.toLowerCase().trim()
       return artist === query || artist.indexOf(q) === 0
     })
   }
 
-  static isWideMatch(result: Fuse.FuseResult<Listing>[]): boolean {
-    const picked = result[0]
-    const second = result[1]
-
-    if (picked?.score && second?.score) {
-      const diff1 = Math.abs(picked.score - second.score) * 1000
-
-      return diff1 === 0 || diff1 < 0.1
-    }
-    return false
+  // Dreamcatcher BOCA fucks this up
+  // maybe check the length of the results as well?
+  // ----
+  // songs of the same name can trigger this (See above)
+  // we have a lot of the same blackpink and its unplayable lol
+  static isWideMatch(result: fuzzy.FilterResult<Listing>[]): boolean {
+    return (
+      result.length > 5 &&
+      result.slice(1, 5).some((r) => result[0].score - r.score < 5)
+    )
   }
 
-  /**
-   * TODO
-   *
-   * currently this does not search on each key, but
-   * on all keys. For example searching for:
-   * "twicecoaster lane 2 TT" returns "MAMAMOO - Better than i thought"
-   *
-   * Which it shouldnt.
-   */
+  // Handle no results more gracefully
+  // probs say something and best case dont die on a
+  // bad $go play
   static search(query: string): SearchResult {
-    logger.debug(`Querying for ${query}`)
-    const result = TrackFinder._search.search({
-      $or: [{ artist: query }, { album: query }, { track: query }],
-    })
-    // const result = TrackFinder._search.search({ $path: 'artist' })
-
+    const result = fuzzy.filter(query, TrackFinder.listings, baseSearchOptions)
     const isArtistQuery = TrackFinder.isArtistQuery(query, result)
     const isWideMatch = TrackFinder.isWideMatch(result)
 
-    fs.appendFileSync(
-      './out.put',
-      `----------- QUERY="${query}" -----------\nisArtistQuery=${isArtistQuery};\nisWide=${isWideMatch}`,
-      {
-        encoding: 'utf-8',
-      }
-    )
-
-    result[0].matches?.forEach((m) =>
-      logger.debug(`match=${JSON.stringify(m)}`)
-    )
-
-    result.slice(0, 10).forEach((r) => {
-      const l = new Listing(r.item)
-      const resStr = `\nResult\nName=\n${r.matches
-        ?.map((match) => highlightMatches(l, match))
-        .join('\n')};\nscore=${r.score};\nmatches.length=${
-        r.matches?.length
-      };\n--------------------------------------------------------------\n`
-      fs.appendFileSync('./out.put', resStr, {
-        encoding: 'utf-8',
-      })
-    })
-
+    logger.debug(`${query}: ${result.length} Matches\n`)
     logger.debug(
-      `Result\nName=${
-        new Listing(result[0]?.item).name
-      };\nisArtistQuery=${isArtistQuery};\nisWide=${isWideMatch}`
+      `Result=${result[0].string};\nArtistQuery=${isArtistQuery};\nWideMatch=${isWideMatch}`
     )
 
     return {
-      listing: new Listing(result[0]?.item),
+      listing: new Listing(result[0].original),
       isArtistQuery,
       isWideMatch,
     }
   }
 
   static searchMany(query: string): Listing[] {
-    const result = TrackFinder._search.search(query)
+    const result = fuzzy.filter(query, TrackFinder.listings, baseSearchOptions)
 
-    return result.map((r) => r.item)
+    return result.map((r) => new Listing(r.original))
   }
 
   static artistSample(artist: string, count = 1): Listing[] {
     const res = []
-    const listings = TrackFinder._listings.filter(
-      (l, index, self) =>
-        l.artist.toLowerCase() === artist.toLowerCase() &&
-        l.albumArt &&
-        self.map((x) => x.album).indexOf(l.album) === index
-    )
+    const listings = TrackFinder._listings
+      .filter(
+        (l) => l.artist.toLowerCase() === artist.toLowerCase() && l.albumArt
+      )
+      .filter(
+        (l, index, self) => self.map((x) => x.album).indexOf(l.album) === index
+      )
 
     for (let i = 0; i < count; i++) {
       res.push(listings[Math.floor(Math.random() * listings.length)])
@@ -176,8 +128,7 @@ export class TrackFinder {
         const data: Listing[] = dbRead.listings
 
         for (const datum of data) {
-          // const listing = await Listing.fromBackup(datum)
-          TrackFinder._listings.push(datum)
+          TrackFinder._listings.push(new Listing(datum))
         }
       } catch (error) {
         logger.warn('unable to parse backup')
@@ -239,32 +190,4 @@ export class TrackFinder {
 
     record.save()
   }
-}
-
-const highlightMatches = (
-  listing: Listing,
-  match?: Fuse.FuseResultMatch
-): string => {
-  const t = { ...listing } as any
-  console.log(match, match?.key, match?.indices)
-  if (match?.key) {
-    const highlighted =
-      (listing[match.key as keyof Listing] as string).slice(
-        0,
-        match.indices[0][0]
-      ) +
-      '[' +
-      (listing[match.key as keyof Listing] as string).slice(
-        match.indices[0][0],
-        match.indices[0][1] + 1
-      ) +
-      ']' +
-      (listing[match.key as keyof Listing] as string).slice(
-        match.indices[0][1] + 1
-      )
-
-    t[match.key as keyof Listing] = highlighted
-  }
-
-  return `${t.artist} - ${t.album} - ${t.track}`
 }

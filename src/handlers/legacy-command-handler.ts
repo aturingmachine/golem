@@ -41,6 +41,16 @@ export class LegacyCommandHandler {
       case 'pause':
         await RegisteredCommands.goPause.execute(msg)
         break
+      case 'search':
+        await RegisteredCommands.goSearch.execute(
+          msg,
+          args.split('-c')[0],
+          args.split('-c')[1] ? parseInt(args.split('-c')[1], 10) : undefined
+        )
+        break
+      case 'peek':
+        await RegisteredCommands.goPeek.execute(msg)
+        break
       default:
         break
     }
@@ -80,6 +90,16 @@ export class LegacyCommandHandler {
         {
           name: 'skip',
           value: 'skip the current track',
+          inline: true,
+        },
+        {
+          name: 'peek',
+          value: 'see the next 5 queued tracks',
+          inline: true,
+        },
+        {
+          name: 'search -c [count]',
+          value: 'search for up [count] tracks, max 10, default 5',
           inline: true,
         }
       )

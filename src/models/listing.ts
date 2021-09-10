@@ -2,6 +2,16 @@ import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
 import { Config } from '../utils/config'
 
+type ListingNameStyles = {
+  piped: string
+  dashed: string
+}
+
+type ListingNames = {
+  short: ListingNameStyles
+  full: ListingNameStyles
+}
+
 export type ListingBackupInfo = Omit<ListingInfo, 'albumArt'> & {
   albumArt: string
 }
@@ -34,8 +44,25 @@ export class Listing {
     this.albumArt = info.albumArt
   }
 
+  get names(): ListingNames {
+    return {
+      short: {
+        piped: `${this.artist} | ${this.track}`,
+        dashed: `${this.artist} - ${this.track}`,
+      },
+      full: {
+        piped: `${this.artist} | ${this.album} | ${this.track}`,
+        dashed: `${this.artist} - ${this.album} - ${this.track}`,
+      },
+    }
+  }
+
   get name(): string {
     return this.toString()
+  }
+
+  get pipedName(): string {
+    return `${this.artist} | ${this.album} | ${this.track}`
   }
 
   toString(): string {

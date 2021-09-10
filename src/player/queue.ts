@@ -33,6 +33,11 @@ export class TrackQueue {
     return this._queue[0]
   }
 
+  peekDeep(depth = 5): Listing[] {
+    logger.info('Queue: Deep Peeking')
+    return this._queue.slice(0, depth)
+  }
+
   pop(): Listing | undefined {
     logger.info('Queue: Popping Next track')
     return this._queue.shift()

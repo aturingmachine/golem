@@ -33,7 +33,7 @@ const main = async () => {
 
   if (opts.debug) {
     logger.debug('>>> ENTERING INTERACTIVE DEBUG MODE')
-    initBot()
+    // initBot()
     s()
   } else {
     initBot()
