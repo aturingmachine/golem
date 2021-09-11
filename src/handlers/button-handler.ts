@@ -1,6 +1,7 @@
 import { MessageComponentInteraction } from 'discord.js'
 import { logger } from '../utils/logger'
 import { artistPlayButtonHandler } from './artist-play-handler'
+import { playlistMenuHandler } from './playlist-menu-handler'
 import { wideSearchHandler } from './wide-search-handler'
 
 export const ButtonIdPrefixes = {
@@ -8,12 +9,13 @@ export const ButtonIdPrefixes = {
   abortArtistPlay: 'artist-search-abort-',
   shuffleArtistPlay: 'artist-search-shuffle',
   wideSearchPlay: 'wide-select-',
+  playlistLoadMore: 'playlist-load-more-',
 }
 
 export const buttonHandler = async (
   interaction: MessageComponentInteraction
 ): Promise<void> => {
-  logger.info(`Button Handler: ${interaction.customId}`)
+  logger.info(`${interaction.customId}`, { src: 'Button Handler' })
   if (
     [
       ButtonIdPrefixes.abortArtistPlay,
@@ -29,5 +31,12 @@ export const buttonHandler = async (
     interaction.isSelectMenu()
   ) {
     await wideSearchHandler(interaction)
+  }
+
+  if (
+    interaction.customId.includes(ButtonIdPrefixes.playlistLoadMore) &&
+    interaction.isSelectMenu()
+  ) {
+    await playlistMenuHandler(interaction)
   }
 }

@@ -12,7 +12,9 @@ export class LegacyCommandHandler {
 
     const args = msg.content.split(' ').slice(2).join(' ')
 
-    logger.info(`Legacy Handler subcommand=${subcommand}, args="${args}"`)
+    logger.info(`subcommand=${subcommand}, args="${args}"`, {
+      src: 'legacy-handler',
+    })
 
     await LegacyCommandHandler.executeCommand(subcommand, args, msg)
   }
@@ -33,7 +35,10 @@ export class LegacyCommandHandler {
         await RegisteredCommands.goGet.execute(msg, args)
         break
       case 'skip':
-        await RegisteredCommands.goSkip.execute(msg)
+        await RegisteredCommands.goSkip.execute(
+          msg,
+          args.length ? parseInt(args, 10) : undefined
+        )
         break
       case 'clear':
         await RegisteredCommands.goClear.execute(msg)
@@ -50,6 +55,13 @@ export class LegacyCommandHandler {
         break
       case 'peek':
         await RegisteredCommands.goPeek.execute(msg)
+        break
+      case 'playlist':
+      case 'playlists':
+        await RegisteredCommands.goPlaylist.execute(msg, args)
+        break
+      case 'shuffle':
+        await RegisteredCommands.goShuffle.execute(msg)
         break
       default:
         break
@@ -68,6 +80,7 @@ export class LegacyCommandHandler {
        \`count\`: current queue count
        \`np | nowplaying\`: current playing track
        \`tcount\`: library size
+       \`playlist[s]\`: list all playlists
        returns all stats if invoked with no parameters`,
           inline: true,
         },
@@ -88,8 +101,8 @@ export class LegacyCommandHandler {
           inline: true,
         },
         {
-          name: 'skip',
-          value: 'skip the current track',
+          name: 'skip [count]',
+          value: 'skip the current track, or [count] tracks',
           inline: true,
         },
         {
@@ -100,6 +113,16 @@ export class LegacyCommandHandler {
         {
           name: 'search -c [count]',
           value: 'search for up [count] tracks, max 10, default 5',
+          inline: true,
+        },
+        {
+          name: 'playlist[s] [playlist-name]',
+          value: 'queue playlist [playlist-name] or choose from a menu',
+          inline: true,
+        },
+        {
+          name: 'shuffle',
+          value: 'shuffle the queue',
           inline: true,
         }
       )

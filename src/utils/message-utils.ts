@@ -13,7 +13,8 @@ import {
 import { Constants } from '../constants'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
 import { Listing } from '../models/listing'
-import { Player } from '../voice/voice-handler'
+import { Player } from '../player/music-player'
+import { Plex } from '../plex'
 import { humanReadableDuration } from './time-utils'
 
 export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
@@ -170,6 +171,35 @@ export const GetWideSearchEmbed = (
 
   return {
     content: `Found ${results.length} results for ${query}. Please select a track!`,
+    components: [row],
+  }
+}
+
+export const GetPlaylistEmbed = (offset = 25): MessageOptions => {
+  const options: MessageSelectOptionData[] = Plex.playlists
+    .slice(0, offset)
+    .map((playlist) => ({
+      label: `${playlist.name} - ${playlist.count} Tracks`,
+      value: playlist.name,
+    }))
+
+  if (Plex.playlists.length > 25) {
+    options.pop()
+    options.push({
+      label: 'Load More...',
+      value: `${ButtonIdPrefixes.playlistLoadMore}${offset + 1}`,
+    })
+  }
+
+  const row = new MessageActionRow().addComponents(
+    new MessageSelectMenu()
+      .setCustomId(`${ButtonIdPrefixes.playlistLoadMore}${offset + 1}`)
+      .setPlaceholder('Select A Playlist')
+      .addOptions(...options)
+  )
+
+  return {
+    content: `Found **${Plex.playlists.length}** Playlists`,
     components: [row],
   }
 }

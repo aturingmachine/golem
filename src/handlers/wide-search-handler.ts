@@ -1,8 +1,10 @@
 import { SelectMenuInteraction } from 'discord.js'
+import { Player } from '../player/music-player'
 import { TrackFinder } from '../player/track-finder'
 import { logger } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
-import { Player } from '../voice/voice-handler'
+
+const log = logger.child({ src: 'wide-search' })
 
 export const wideSearchHandler = async (
   interaction: SelectMenuInteraction
@@ -15,17 +17,18 @@ export const wideSearchHandler = async (
 
   const listing = TrackFinder.listings.filter((l) => l.id === listingId)[0]
 
-  logger.debug(`Got ${listing.names.short.piped} from id ${listingId}`)
+  log.debug(`Got ${listing.names.short.piped} from id ${listingId}`)
 
   const { image, embed } = GetEmbedFromListing(listing, Player.isPlaying)
 
   await interaction.reply({
     embeds: [embed],
     files: [image],
+    components: [],
   })
 
   if (interaction.guild && voiceChannel?.id) {
-    logger.debug('GoPlay starting Player.')
+    log.debug('GoPlay starting Player.')
     Player.start({
       channelId: voiceChannel?.id || '',
       guildId: interaction.guildId || '',

@@ -4,16 +4,20 @@ import { Player } from '../player/music-player'
 import { logger } from '../utils/logger'
 
 const data = new SlashCommandBuilder()
-  .setName('gopause')
-  .setDescription('Pause playback')
+  .setName('goshuffle')
+  .setDescription('shuffle the current queue')
 
 const execute = async (
   interaction: CommandInteraction | Message
 ): Promise<void> => {
-  logger.info('Executing', { src: 'GoPause' })
+  logger.info('invoked', { src: 'GoShuffle' })
 
-  await interaction.reply('Pausing playback...')
-  Player.pause()
+  if (Player.stats.count > 0) {
+    await interaction.reply('Shuffling the queue')
+    Player.shuffle()
+  } else {
+    await interaction.reply('No queue to shuffle.')
+  }
 }
 
 export default { data, execute }

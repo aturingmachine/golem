@@ -6,7 +6,7 @@ const ready: EventHandler<'ready'> = {
   on: 'ready',
   once: true,
   execute(client: Client): void {
-    logger.info(`Ready! Logged in as ${client.user?.tag}`)
+    logger.info(`Ready! Logged in as ${client.user?.tag}`, { src: 'client' })
   },
 }
 

@@ -1,5 +1,6 @@
+import { Player } from '../player/music-player'
 import { TrackFinder } from '../player/track-finder'
-import { Player } from '../voice/voice-handler'
+import { Plex } from '../plex'
 import { centerString } from './message-utils'
 
 export class GoGet {
@@ -16,6 +17,10 @@ export class GoGet {
         return GoGet.tCountResponse
       case 'catalog':
         return GoGet.catalog
+      case 'playlist':
+      case 'playlists':
+        return GoGet.playlists
+        break
       default:
         return GoGet.stats
     }
@@ -75,6 +80,12 @@ export class GoGet {
     }, '')
 
     return catalog
+  }
+
+  static get playlists(): string {
+    return Plex.playlists.reduce((prev, curr) => {
+      return prev.concat(`\n${curr.name} - _${curr.count} tracks_`)
+    }, '**Playlists:**')
   }
 }
 

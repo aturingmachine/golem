@@ -3,7 +3,7 @@ import winston from 'winston'
 
 const { combine, timestamp, colorize, printf, json, splat } = winston.format
 
-const consoleLogFormat = printf(({ level, message, _timestamp }) => {
+const consoleLogFormat = printf(({ level, message, _timestamp, src }) => {
   // const d = new Date(timestamp)
 
   // const time = d.toLocaleTimeString()
@@ -13,7 +13,7 @@ const consoleLogFormat = printf(({ level, message, _timestamp }) => {
   //   .concat(`.${d.getMilliseconds()}`)
   //   .concat(time.slice(spaceIndex))
 
-  return `<${level}> ${message}`
+  return `<${level}> [${src}] ${message}`
 })
 
 const id = winston.format((info) => {

@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
+import { Player } from '../player/music-player'
 import { TrackFinder } from '../player/track-finder'
 import { fourSquare } from '../utils/image-helpers'
 import { logger } from '../utils/logger'
@@ -8,7 +9,8 @@ import {
   GetEmbedFromListing,
   GetWideSearchEmbed,
 } from '../utils/message-utils'
-import { Player } from '../voice/voice-handler'
+
+const log = logger.child({ src: 'GoPlay' })
 
 const data = new SlashCommandBuilder()
   .setName('goplay')
@@ -28,7 +30,7 @@ const execute = async (
   const member = guild?.members.cache.get(interaction.member?.user.id || '')
   const voiceChannel = member?.voice.channel
 
-  logger.debug(
+  log.debug(
     `goplay command -> guild=${guild?.name}, member=${member?.displayName}, voiceChannel=${voiceChannel?.id}`
   )
 
@@ -42,12 +44,12 @@ const execute = async (
     const res = TrackFinder.search(commandQuery)
 
     if (!res) {
-      logger.debug(`GoPlay: No ResultSet`)
+      log.debug(`GoPlay: No ResultSet`)
       await interaction.reply(`No Results for **${query}**`)
       return
     }
 
-    logger.debug(
+    log.debug(
       `Query Result: \nartist=${res.listing.artist},\nalbum=${res.listing.album}\ntrack=${res.listing.track}\nwide=${res.isWideMatch}\nartistQuery=${res.isArtistQuery}`
     )
 
@@ -88,7 +90,7 @@ const execute = async (
       })
 
       if (interaction.guild && voiceChannel?.id) {
-        logger.debug('GoPlay starting Player.')
+        log.debug('GoPlay starting Player.')
         Player.start({
           channelId: voiceChannel?.id || '',
           guildId: interaction.guildId || '',

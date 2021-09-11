@@ -9,3 +9,7 @@ export const shuffleArray = <T>(array: T[]): T[] => {
 
   return arr
 }
+
+export const isDefined = <T>(input: T | undefined | null): input is T => {
+  return typeof input !== 'undefined' && input !== null
+}

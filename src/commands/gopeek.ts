@@ -5,8 +5,8 @@ import {
   Message,
   MessageEmbed,
 } from 'discord.js'
+import { Player } from '../player/music-player'
 import { logger } from '../utils/logger'
-import { Player } from '../voice/voice-handler'
 
 const data = new SlashCommandBuilder()
   .setName('gopeek')
@@ -15,7 +15,7 @@ const data = new SlashCommandBuilder()
 const execute = async (
   interaction: CommandInteraction | Message
 ): Promise<void> => {
-  logger.debug('GoPeek: Executing')
+  logger.debug('Executing', { src: 'GoPeek' })
   const peekedListings = Player.peek()
 
   const fields = peekedListings.map((listing, index) => ({

@@ -10,9 +10,9 @@ import {
   VoiceConnection,
 } from '@discordjs/voice'
 import { Listing } from '../models/listing'
-import { TrackQueue } from '../player/queue'
 import { logger } from '../utils/logger'
 import { humanReadableTime } from '../utils/time-utils'
+import { TrackQueue } from './queue'
 
 /**
  * TODO
@@ -33,6 +33,8 @@ import { humanReadableTime } from '../utils/time-utils'
  *
  */
 
+const log = logger.child({ src: 'Player' })
+
 export class Player {
   private static connection: VoiceConnection
   private static _player = createAudioPlayer({
@@ -48,21 +50,21 @@ export class Player {
   static start(
     channelOptions: JoinVoiceChannelOptions & CreateVoiceConnectionOptions
   ): void {
-    logger.debug(`Player:start`)
+    log.debug(`Start`)
     if (!Player._initialized) {
       Player.setup()
       Player._initialized = true
     }
 
     if (!Player.connection) {
-      logger.debug('Player: No Connection, creating new')
+      log.debug('No Connection, creating new')
       Player.connect(channelOptions)
-      logger.debug('Player: Connection Created')
+      log.debug('Connection Created')
     }
   }
 
   static enqueue(listing: Listing): void {
-    logger.debug(`Player: Enqueuing ${listing.name}`)
+    log.debug(`Enqueuing ${listing.name}`)
     Player.queue.add(listing)
     Player.play(listing)
   }
@@ -78,42 +80,57 @@ export class Player {
 
   // TODO also broken...
   static pause(): void {
-    logger.info('Player: pausing')
+    log.info('pausing')
     Player._player.pause()
   }
 
   static skip(): void {
-    logger.info('Player: Skipping')
-    Player.stop()
+    log.info('Skipping')
 
     const next = Player.queue.pop()
     if (next) {
       Player.play(next)
+    } else {
+      Player.stop()
     }
   }
 
   static clear(): void {
-    logger.info('Player: clearing queue')
-    Player.queue.clear()
-
+    log.info('clearing queue')
     Player.stop()
+
+    Player.queue.clear()
   }
 
   static unpause(): void {
-    logger.info('Player: resuming playback')
+    log.info('resuming playback')
     Player._player.unpause()
   }
 
   static peek(depth = 5): Listing[] {
-    logger.info('Player: Peeking Deep')
+    log.info('Peeking Deep')
     return this.queue.peekDeep(depth)
+  }
+
+  static shuffle(): void {
+    log.info('Shuffling')
+    this.queue.shuffle()
+  }
+
+  static get currentTrackRemaining(): number {
+    return (
+      (Player.queue.peek()?.duration || 0) -
+      Player._currentResource.playbackDuration / 1000
+    )
   }
 
   static get stats(): { count: number; time: number; hTime: string } {
     return {
       count: Player.queue.queuedTrackCount,
-      time: Player.queue.runTime,
-      hTime: humanReadableTime(Player.queue.runTime),
+      time: Player.queue.runTime + Player.currentTrackRemaining,
+      hTime: humanReadableTime(
+        Player.queue.runTime + Player.currentTrackRemaining
+      ),
     }
   }
 
@@ -129,21 +146,23 @@ export class Player {
   }
 
   private static play(listing: Listing): void {
-    logger.debug(`Player: Attempting to play ${listing.name}`)
-    logger.debug(
-      `Player: Current Player State: connection: ${Player.connection}, resource: ${Player._currentResource}`
+    log.debug(`Attempting to play ${listing.name}`)
+    log.debug(
+      `Current Player State: connection: ${Player.connection}, resource: ${Player._currentResource}`
     )
-    logger.debug(
-      `Player: CurrentResource: ${Player._currentResource}; Ended: ${Player._currentResource?.ended}`
+    log.debug(
+      `CurrentResource: ${Player._currentResource}; Ended: ${Player._currentResource?.ended}`
     )
 
     if (!Player.isPlaying) {
-      const resource = createAudioResource(listing.path)
+      const resource = createAudioResource(listing.path, {
+        silencePaddingFrames: 10,
+      })
       Player._currentResource = resource
-      // Player._player.play(resource) // TODO wtf was this
-      Player._player.play(Player._currentResource)
-      logger.debug(
-        `Player: Resource Created: CurrentResource: ${Player._currentResource}; Ended: ${Player._currentResource?.ended}`
+      Player._player.play(resource) // TODO wtf was this
+      // Player._player.play(Player._currentResource)
+      log.debug(
+        `Resource Created: CurrentResource: ${Player._currentResource}; Ended: ${Player._currentResource?.ended}`
       )
     }
 
@@ -153,18 +172,18 @@ export class Player {
   // The peek pop peek can probs be pulled to a
   // function in teh queue?
   private static playNext(): void {
-    logger.debug('Player::playNext Called')
+    log.debug('playNext Called')
     const nextTrack = Player.queue.peek()
 
     if (Player._currentResource?.ended && nextTrack) {
       Player.queue.pop()
-      logger.info(`Player: Playing Next track ${nextTrack.name}`)
+      log.info(`Playing Next track ${nextTrack.name}`)
       const next = Player.queue.peek()
       if (next) {
         Player.play(next)
       }
     } else if (Player._currentResource?.ended && !nextTrack) {
-      logger.debug('Player:playNext Resource ended, no next track')
+      log.debug('playNext Resource ended, no next track')
       Player.queue.pop()
       Player.stop()
     }
@@ -175,7 +194,7 @@ export class Player {
   }
 
   private static disconnect(): void {
-    logger.debug('Player:disconnect')
+    log.debug('Player:disconnect')
     Player.connection.destroy()
     Player._initialized = false
     return
@@ -184,8 +203,8 @@ export class Player {
   private static connect(
     channelOptions: JoinVoiceChannelOptions & CreateVoiceConnectionOptions
   ): void {
-    logger.debug(
-      `Player: Connection With channelId: ${channelOptions.channelId} guildId: ${channelOptions.guildId}`
+    log.debug(
+      `Connection With channelId: ${channelOptions.channelId} guildId: ${channelOptions.guildId}`
     )
     Player.connection = joinVoiceChannel({
       channelId: channelOptions.channelId,
@@ -201,34 +220,32 @@ export class Player {
     })
 
     Player._player.on('error', (error) => {
-      logger.error(`Player: Audio Player Error: ${error}`)
+      log.error(`Audio Player Error: ${error}`)
     })
 
     Player._player.on('debug', (msg) => {
-      logger.debug(`Player: <debug> ${msg}`)
+      log.debug(`<debug> ${msg}`)
     })
 
     Player._player.on(AudioPlayerStatus.Buffering, () => {
-      logger.debug('Player: Entered Buffering')
+      log.debug('Entered Buffering')
     })
 
     Player._player.on(AudioPlayerStatus.Idle, () => {
-      logger.debug('Player: Entered Idle')
-      setTimeout(() => {
-        Player.playNext()
-      })
+      log.debug('Entered Idle')
+      Player.playNext()
     })
 
     Player._player.on(AudioPlayerStatus.Paused, () => {
-      logger.debug('Player: Entered Paused')
+      log.debug('Entered Paused')
     })
 
     Player._player.on(AudioPlayerStatus.Playing, () => {
-      logger.debug('Player: Entered Playing')
+      log.debug('Entered Playing')
     })
 
     Player._player.on(AudioPlayerStatus.AutoPaused, () => {
-      logger.debug('Player: Entered AutoPaused')
+      log.debug('Entered AutoPaused')
     })
   }
 }

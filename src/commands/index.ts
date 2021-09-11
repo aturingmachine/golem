@@ -7,7 +7,9 @@ import goGet from './goget'
 import goPause from './gopause'
 import goPeek from './gopeek'
 import goPlay from './goplay'
+import goPlaylist from './goplaylist'
 import goSearch from './gosearch'
+import goShuffle from './goshuffle'
 import goSkip from './goskip'
 
 export const Commands = new Collection<string, Command>()
@@ -19,7 +21,7 @@ export const registerCommands = (): void => {
       /* eslint-disable-next-line @typescript-eslint/no-var-requires */
       const command = require(`./${file}`).default
 
-      logger.debug(`Registering Command ${file}`)
+      logger.debug(`Registering Command ${file}`, { src: 'CMD-REG' })
       // Set a new item in the Collection
       // With the key as the command name and the value as the exported module
       Commands.set(command.data.name, command)
@@ -34,4 +36,6 @@ export const RegisteredCommands = {
   goPause,
   goSearch,
   goPeek,
+  goPlaylist,
+  goShuffle,
 }

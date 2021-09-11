@@ -21,6 +21,22 @@ export class Config {
   static get testGuildId(): string {
     return process.env.TEST_SERVER_GUILD_ID || ''
   }
+
+  static get plexURI(): string {
+    return process.env.PLEX_URI || ''
+  }
+
+  static get plexUsername(): string {
+    return process.env.PLEX_USERNAME || ''
+  }
+
+  static get plexPassword(): string {
+    return process.env.PLEX_PASSWORD || ''
+  }
+
+  static get plexAppId(): string {
+    return process.env.PLEX_APPLICATION_ID || ''
+  }
 }
 
 export const debug = process.argv.slice(2).includes('debug')

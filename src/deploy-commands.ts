@@ -21,7 +21,7 @@ const rest = new REST({ version: '9' }).setToken(Config.token)
 
       console.log(resp)
     }
-    logger.info('Application Commands Registered')
+    logger.info('Application Commands Registered', { src: 'cmd-deploy' })
   } catch (error) {
     console.error(error)
   }

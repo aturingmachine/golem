@@ -4,6 +4,8 @@ import { TrackFinder } from '../player/track-finder'
 import { logger } from '../utils/logger'
 import { getSearchReply } from '../utils/message-utils'
 
+const log = logger.child({ src: 'GoSearch' })
+
 const data = new SlashCommandBuilder()
   .setName('gosearch')
   .setDescription('Search for tracks')
@@ -35,25 +37,23 @@ const execute = async (
     searchCount = interaction.options.getInteger('count') || 5
   }
 
-  logger.debug(`GoSearch: executing Query=${searchQuery}; Count=${searchCount}`)
+  log.debug(`executing Query=${searchQuery}; Count=${searchCount}`)
 
   searchCount = searchCount > 10 ? 10 : searchCount
 
   if (!searchQuery) {
-    logger.warn(
-      `GoSearch: No query provided by ${interaction.member?.user.username}`
-    )
+    log.warn(`No query provided by ${interaction.member?.user.username}`)
     await interaction.reply('No search string provided.')
   } else {
     searchQuery = searchQuery.trim()
     const results = TrackFinder.searchMany(searchQuery)
 
     if (results.length === 0) {
-      logger.warn(`GoSearch: No results for ${searchQuery}`)
+      log.warn(`No results for ${searchQuery}`)
       await interaction.reply(`No results found for ${searchQuery}`)
       return
     }
-    logger.debug(`Found ${results.length} results for ${searchQuery}`)
+    log.debug(`Found ${results.length} results for ${searchQuery}`)
 
     const trimmedResults = results.slice(0, searchCount)
 

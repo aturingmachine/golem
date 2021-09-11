@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import sharp, { gravity, Raw, SharpOptions } from 'sharp'
+import sharp, { gravity } from 'sharp'
 
 export const fourSquare = async (config: {
   images: {

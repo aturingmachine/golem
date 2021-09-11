@@ -1,5 +1,8 @@
 import { Listing } from '../models/listing'
+import { shuffleArray } from '../utils/list-utils'
 import { logger } from '../utils/logger'
+
+const log = logger.child({ src: 'Queue' })
 
 export class TrackQueue {
   private _queue!: Listing[]
@@ -9,38 +12,48 @@ export class TrackQueue {
   }
 
   add(listing: Listing): void {
-    logger.info(`Queue: Adding ${listing.name}`)
+    log.info(`Adding ${listing.name}`)
     this._queue.push(listing)
   }
 
   addMany(listings: Listing[]): void {
-    logger.info(`Queue: Adding many - ${listings.length} tracks`)
+    log.info(`Adding many - ${listings.length} tracks`)
     this._queue.push(...listings)
   }
 
   skip(): void {
-    logger.info(`Queue: Skipping ${this._queue[0].name}`)
+    log.info(`Skipping ${this._queue[0].name}`)
     this._queue.shift()
   }
 
   clear(): void {
-    logger.info('Queue: Clearing')
+    log.info('Clearing')
     this._queue = []
   }
 
   peek(): Listing | undefined {
-    logger.info('Queue: Peeking')
+    log.info('Peeking')
     return this._queue[0]
   }
 
   peekDeep(depth = 5): Listing[] {
-    logger.info('Queue: Deep Peeking')
+    log.info('Deep Peeking')
     return this._queue.slice(0, depth)
   }
 
   pop(): Listing | undefined {
-    logger.info('Queue: Popping Next track')
+    log.info('Popping Next track')
     return this._queue.shift()
+  }
+
+  shuffle(): void {
+    log.info('shuffling')
+    let temp = [...this._queue]
+    temp.shift()
+    temp = shuffleArray(temp)
+    temp.unshift(this._queue[0])
+    this._queue = temp
+    log.info('shuffled')
   }
 
   get first(): Listing {
@@ -51,11 +64,11 @@ export class TrackQueue {
    * Get rough runtime in seconds
    */
   get runTime(): number {
-    const estRunTime = this._queue.reduce((prev, curr) => {
+    const estRunTime = this._queue.slice(1).reduce((prev, curr) => {
       return prev + curr.duration
     }, 0)
 
-    logger.info(`Queue: Estimated Runtime ${estRunTime}`)
+    log.info(`Estimated Runtime ${estRunTime}`)
 
     return estRunTime
   }

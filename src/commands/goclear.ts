@@ -1,7 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
+import { Player } from '../player/music-player'
 import { logger } from '../utils/logger'
-import { Player } from '../voice/voice-handler'
 
 const data = new SlashCommandBuilder()
   .setName('goclear')
@@ -10,7 +10,7 @@ const data = new SlashCommandBuilder()
 const execute = async (
   interaction: CommandInteraction | Message
 ): Promise<void> => {
-  logger.info('GoSkip executing')
+  logger.info('executing', { src: 'GoSkip' })
 
   await interaction.reply('Clearing the queue!')
   Player.clear()
