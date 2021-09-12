@@ -1,6 +1,6 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message, MessageAttachment } from 'discord.js'
-import { GoGet } from '../utils/go-get-handler'
+import { GoGet } from '../handlers/go-get-handler'
 
 const data = new SlashCommandBuilder()
   .setName('goget')

@@ -17,6 +17,12 @@ import { Player } from '../player/music-player'
 import { Plex } from '../plex'
 import { humanReadableDuration } from './time-utils'
 
+const embedFieldSpacer = {
+  name: '\u200B',
+  value: '\u200B',
+  inline: true,
+}
+
 export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
   return new MessageAttachment(
     albumArt || fs.readFileSync(path.resolve(__dirname, '../../plexlogo.jpg')),
@@ -46,6 +52,7 @@ export const GetEmbedFromListing = (
         value: listing.album,
         inline: true,
       },
+      embedFieldSpacer,
       {
         name: 'Duration',
         value: `${
@@ -58,6 +65,13 @@ export const GetEmbedFromListing = (
       {
         name: 'Track',
         value: listing.track,
+        inline: true,
+      },
+      embedFieldSpacer,
+      {
+        name: 'Genres',
+        value: listing.genres.slice(0, 3).join(', '),
+        inline: true,
       }
     )
 
@@ -123,11 +137,7 @@ export const getSearchReply = (
     }))
     .reduce((prev, curr, index) => {
       if (index && index % 2 === 0) {
-        prev.push({
-          name: '\u200B',
-          value: '\u200B',
-          inline: true,
-        })
+        prev.push(embedFieldSpacer)
       }
       prev.push(curr)
 
@@ -139,11 +149,7 @@ export const getSearchReply = (
   const embed = new MessageEmbed()
     .setTitle(`Top ${results.length} for "${query.toUpperCase()}"`)
     .setDescription(`Taken from **${totalCount}** total results`)
-    .setFields(...fields, {
-      name: '\u200B',
-      value: '\u200B',
-      inline: true,
-    })
+    .setFields(...fields, embedFieldSpacer)
     .setColor(Constants.baseColor)
 
   return {

@@ -1,14 +1,10 @@
 import fuzzy from 'fuzzy'
-import * as mm from 'music-metadata'
-import { LibIndex } from '../models/db/lib-index'
-import { ListingSchema } from '../models/db/listing'
 import { Listing } from '../models/listing'
-import { Config, opts } from '../utils/config'
-import { getAllFiles } from '../utils/filesystem'
+import { Track } from '../models/track'
 import { isDefined } from '../utils/list-utils'
 import { logger } from '../utils/logger'
 
-const log = logger.child({ src: 'track-finder' })
+const log = logger.child({ src: 'search' })
 
 export interface SearchResult {
   listing: Listing
@@ -16,67 +12,26 @@ export interface SearchResult {
   isWideMatch: boolean
 }
 
-/**
- * TODO - General Search Notes
- *
- * - Live should be weighted less
- * - Inst. should be weighted less
- * - figure out how to do weighting lol
- */
-
-// Need to re-run the search if we get nothing but this time include the album?
-// lotsa problems
 const baseSearchOptions = {
-  extract: (l: Listing) => `${l.artist} | ${l.track}`,
+  extract: (t: Track) => t.searchString,
 }
 
-const reg = /.*\.(png|html|pdf|db|jpg|jpeg|xml|js|css)$/
-
 export class TrackFinder {
+  public readonly tracks: Track[]
   private static _listings: Listing[] = []
+
+  constructor(tracks: Track[]) {
+    this.tracks = tracks
+  }
 
   static get listings(): Listing[] {
     return [...this._listings]
   }
 
-  static async loadLibrary(): Promise<void> {
-    if (opts.bustCache) {
-      await TrackFinder.loadTracksFromDisk()
-    } else {
-      await TrackFinder.loadTracksFromDB()
-    }
-  }
-
-  static isArtistQuery(
-    query: string,
-    res: fuzzy.FilterResult<Listing>[]
-  ): boolean {
-    return [res[0], res[1], res[2], res[3]].filter(Boolean).some((r) => {
-      const artist = r.original.artist.toLowerCase().trim()
-      const q = query.toLowerCase().trim()
-      return artist === query || artist.indexOf(q) === 0
-    })
-  }
-
-  // Dreamcatcher BOCA fucks this up
-  // maybe check the length of the results as well?
-  // ----
-  // songs of the same name can trigger this (See above)
-  // we have a lot of the same blackpink and its unplayable lol
-  static isWideMatch(result: fuzzy.FilterResult<Listing>[]): boolean {
-    return (
-      result.length > 5 &&
-      result.slice(1, 5).some((r) => result[0].score - r.score < 5)
-    )
-  }
-
-  // Handle no results more gracefully
-  // probs say something and best case dont die on a
-  // bad $go play
-  static search(query: string): SearchResult | undefined {
-    const result = fuzzy.filter(query, TrackFinder.listings, baseSearchOptions)
-    const isArtistQuery = TrackFinder.isArtistQuery(query, result)
-    const isWideMatch = TrackFinder.isWideMatch(result)
+  search(query: string): SearchResult | undefined {
+    const result = fuzzy.filter(query, this.tracks, baseSearchOptions)
+    const isArtistQuery = this.isArtistQuery(query, result)
+    const isWideMatch = this.isWideMatch(result)
 
     log.debug(`${query}: ${result.length} Matches\n`)
 
@@ -85,7 +40,7 @@ export class TrackFinder {
         `Pre-weighting Result=${result[0].string};\nArtistQuery=${isArtistQuery};\nWideMatch=${isWideMatch}`
       )
 
-      const final = new Listing(TrackFinder.weightResult(result).original)
+      const final = new Listing(this.weightResult(result).original)
       const hasBeenWeighted = final.path !== result[0].original.path
 
       return {
@@ -144,23 +99,38 @@ export class TrackFinder {
     return TrackFinder._listings.length
   }
 
-  // Our library matches nicely but does not
-  // allow for key weighting, so we will do
-  // it ourselves. Going to "add weight" to
-  // base tracks (non inst, live, jp version)
-  // since those can be accessed by more exact
-  // queries, whereas we cannot work backwards.
-  private static weightResult(
-    resultSet: fuzzy.FilterResult<Listing>[]
-  ): fuzzy.FilterResult<Listing> {
+  private isArtistQuery(
+    query: string,
+    res: fuzzy.FilterResult<Track>[]
+  ): boolean {
+    return [res[0], res[1], res[2], res[3]].filter(Boolean).some((r) => {
+      const artist = r.original.listing.artist.toLowerCase().trim()
+      const q = query.toLowerCase().trim()
+      return artist === query || artist.indexOf(q) === 0
+    })
+  }
+
+  private isWideMatch(result: fuzzy.FilterResult<Track>[]): boolean {
+    return (
+      result.length > 5 &&
+      result.slice(1, 5).some((r) => result[0].score - r.score < 5)
+    )
+  }
+
+  // Our library matches nicely but does not allow for key weighting, so we will do
+  // it ourselves. Going to "add weight" to base tracks (non inst, live, jp version)
+  // since those can be accessed by more exact queries, whereas we cannot work backwards.
+  private weightResult(
+    resultSet: fuzzy.FilterResult<Track>[]
+  ): fuzzy.FilterResult<Track> {
     log.debug(
-      `${resultSet.map((r) => `${r.original.track} scored ${r.score}`)}`
+      `${resultSet.map((r) => `${r.original.listing.track} scored ${r.score}`)}`
     )
     let pref = resultSet[0]
     const startingScore = pref.score
-    log.debug(`Post-Weight: Starting with ${pref.original.name}`)
+    log.debug(`Post-Weight: Starting with ${pref.original.listing.name}`)
 
-    if (TrackFinder.isLiveOrInst(pref)) {
+    if (this.isLiveOrInst(pref)) {
       log.debug(`Post-Weight: Pref flagged, searching for alternatives`)
       pref =
         resultSet
@@ -169,13 +139,16 @@ export class TrackFinder {
           .find((result) => !this.isLiveOrInst(result)) || pref
     }
 
-    log.debug(`Returning ${pref.original.track}`)
+    log.debug(`Returning ${pref.original.listing.track}`)
 
     return pref
   }
 
-  private static isLiveOrInst(result: fuzzy.FilterResult<Listing>): boolean {
-    log.debug(`Checking inst for ${result.original.track.toLowerCase()}`)
+  private isLiveOrInst(result: fuzzy.FilterResult<Track>): boolean {
+    log.debug(
+      `Checking inst for ${result.original.listing.track.toLowerCase()}`
+    )
+
     return [
       'instrumental',
       'inst.',
@@ -184,85 +157,6 @@ export class TrackFinder {
       'jp',
       'eng.',
       'english',
-    ].some((s) => result.original.track.toLowerCase().includes(s))
-  }
-
-  private static async loadTracksFromDB(): Promise<void> {
-    log.info('Reading library from Database')
-
-    const dbRead = await LibIndex.findOne()
-      .sort({ created_at: -1 })
-      .populate('listings')
-      .exec()
-
-    if (dbRead) {
-      log.info('DB Record found')
-      try {
-        const data: Listing[] = dbRead.listings
-
-        for (const datum of data) {
-          TrackFinder._listings.push(new Listing(datum))
-        }
-      } catch (error) {
-        log.warn('unable to parse backup')
-        LibIndex.deleteOne({ id: { $eq: dbRead._id } })
-        await TrackFinder.loadTracksFromDisk()
-      }
-    } else {
-      log.warn('No backup, creating library from filesystem')
-      await TrackFinder.loadTracksFromDisk()
-    }
-  }
-
-  private static async loadTracksFromDisk(): Promise<void> {
-    await LibIndex.deleteMany().exec()
-    await ListingSchema.deleteMany().exec()
-    log.debug('Loading library from filesystem')
-    const paths = getAllFiles(Config.libraryPath, []).filter(
-      (trackPath) => !reg.test(trackPath)
-    )
-    log.debug(`Found ${paths.length} paths.`)
-
-    const listings: Listing[] = []
-    let errorCount = 0
-
-    for (const trackPath of paths) {
-      try {
-        const meta = await mm.parseFile(trackPath)
-        const listing = await Listing.fromMeta(meta, trackPath)
-
-        listings.push(listing)
-      } catch (error) {
-        log.error(`${trackPath} encountered error.`)
-        log.warn('Continuing with library read')
-        errorCount++
-      }
-    }
-
-    log.warn(`Encountered ${errorCount} errors while loading library.`)
-
-    log.info('Setting listings')
-    TrackFinder._listings = listings
-
-    log.info('Attempting backup save')
-    TrackFinder.save()
-    log.info('Backup saved to database')
-  }
-
-  private static async save(): Promise<void> {
-    const listingIds = TrackFinder._listings.map((listing) => {
-      const listingRecord = new ListingSchema(listing)
-
-      listingRecord.save()
-
-      return listingRecord._id
-    })
-
-    const record = new LibIndex({
-      listings: listingIds,
-      count: TrackFinder._listings.length,
-    })
-
-    record.save()
+    ].some((s) => result.original.listing.track.toLowerCase().includes(s))
   }
 }

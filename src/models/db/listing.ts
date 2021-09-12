@@ -8,6 +8,7 @@ const schema = new Schema<Listing>({
   duration: Number,
   hasDefaultDuration: Boolean,
   path: String,
+  genres: [String],
   albumArt: Buffer,
 })
 

@@ -1,7 +1,7 @@
 import { Player } from '../player/music-player'
 import { TrackFinder } from '../player/track-finder'
 import { Plex } from '../plex'
-import { centerString } from './message-utils'
+import { centerString } from '../utils/message-utils'
 
 export class GoGet {
   static it(value?: string | null): string {

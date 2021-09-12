@@ -4,12 +4,16 @@ import {
   createAudioPlayer,
   createAudioResource,
   CreateVoiceConnectionOptions,
+  entersState,
   joinVoiceChannel,
   JoinVoiceChannelOptions,
   NoSubscriberBehavior,
+  PlayerSubscription,
   VoiceConnection,
+  VoiceConnectionStatus,
 } from '@discordjs/voice'
 import { Listing } from '../models/listing'
+import { debounce } from '../utils/debounce'
 import { logger } from '../utils/logger'
 import { humanReadableTime } from '../utils/time-utils'
 import { TrackQueue } from './queue'
@@ -45,11 +49,17 @@ export class Player {
   })
   private static _currentResource: AudioResource
   private static _initialized = false
+  private static _subscription?: PlayerSubscription
   private static queue = new TrackQueue()
+  private static debouncedPlayNext = debounce(() => {
+    if (Player._player.state.status === AudioPlayerStatus.Idle) {
+      Player.playNext()
+    }
+  }, 3000)
 
-  static start(
+  static async start(
     channelOptions: JoinVoiceChannelOptions & CreateVoiceConnectionOptions
-  ): void {
+  ): Promise<void> {
     log.debug(`Start`)
     if (!Player._initialized) {
       Player.setup()
@@ -58,8 +68,24 @@ export class Player {
 
     if (!Player.connection) {
       log.debug('No Connection, creating new')
-      Player.connect(channelOptions)
+      Player.connection = Player.connect(channelOptions)
       log.debug('Connection Created')
+
+      try {
+        await entersState(
+          Player.connection,
+          VoiceConnectionStatus.Ready,
+          20_000
+        )
+      } catch {
+        if (Player.connection.state.status !== VoiceConnectionStatus.Destroyed)
+          Player.connection.destroy()
+      }
+    }
+
+    if (!Player._subscription) {
+      log.debug('Subscribing to connection')
+      Player._subscription = Player.connection.subscribe(Player._player)
     }
   }
 
@@ -146,27 +172,25 @@ export class Player {
   }
 
   private static play(listing: Listing): void {
-    log.debug(`Attempting to play ${listing.name}`)
+    log.debug(`Playing ${listing.name}`)
     log.debug(
-      `Current Player State: connection: ${Player.connection}, resource: ${Player._currentResource}`
-    )
-    log.debug(
-      `CurrentResource: ${Player._currentResource}; Ended: ${Player._currentResource?.ended}`
+      `Current Player State: playing=${
+        Player.isPlaying
+      }; connection=${!!Player.connection}; resource=${!!Player._currentResource}; ended=${
+        Player._currentResource?.ended
+      }`
     )
 
     if (!Player.isPlaying) {
+      log.debug('Player not playing - adding resource to play')
       const resource = createAudioResource(listing.path, {
-        silencePaddingFrames: 10,
+        silencePaddingFrames: 0,
       })
       Player._currentResource = resource
+      Player._player.play(Player._currentResource)
+      log.debug(`Resource Created`)
       Player._player.play(resource) // TODO wtf was this
-      // Player._player.play(Player._currentResource)
-      log.debug(
-        `Resource Created: CurrentResource: ${Player._currentResource}; Ended: ${Player._currentResource?.ended}`
-      )
     }
-
-    Player.connection.subscribe(Player._player)
   }
 
   // The peek pop peek can probs be pulled to a
@@ -202,11 +226,11 @@ export class Player {
 
   private static connect(
     channelOptions: JoinVoiceChannelOptions & CreateVoiceConnectionOptions
-  ): void {
+  ): VoiceConnection {
     log.debug(
       `Connection With channelId: ${channelOptions.channelId} guildId: ${channelOptions.guildId}`
     )
-    Player.connection = joinVoiceChannel({
+    return joinVoiceChannel({
       channelId: channelOptions.channelId,
       guildId: channelOptions.guildId,
       adapterCreator: channelOptions.adapterCreator,
@@ -224,17 +248,26 @@ export class Player {
     })
 
     Player._player.on('debug', (msg) => {
-      log.debug(`<debug> ${msg}`)
+      log.debug(`${msg}`)
+    })
+
+    Player._player.on('stateChange', (oldState, newState) => {
+      if (
+        newState.status === AudioPlayerStatus.Idle &&
+        oldState.status !== AudioPlayerStatus.Idle
+      ) {
+        Player.playNext()
+      }
     })
 
     Player._player.on(AudioPlayerStatus.Buffering, () => {
       log.debug('Entered Buffering')
     })
 
-    Player._player.on(AudioPlayerStatus.Idle, () => {
-      log.debug('Entered Idle')
-      Player.playNext()
-    })
+    // Player._player.on(AudioPlayerStatus.Idle, () => {
+    //   log.debug('Entered Idle')
+    //   Player.debouncedPlayNext()
+    // })
 
     Player._player.on(AudioPlayerStatus.Paused, () => {
       log.debug('Entered Paused')

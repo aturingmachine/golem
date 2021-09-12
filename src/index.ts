@@ -37,28 +37,31 @@ const main = async () => {
 
   if (opts.debug) {
     log.debug('>>> ENTERING INTERACTIVE DEBUG MODE')
-    // initBot()
-    s()
+    debugPrompt()
   } else {
     initBot()
   }
 }
 
-function s() {
-  rl.question('QUERY ("exit" to exit): \n>>> ', (ans) => {
-    const result = TrackFinder.search(ans)
+function debugPrompt() {
+  rl.question(
+    'QUERY ("exit" to start bot; "kill" to kill process): \n>>> ',
+    (ans) => {
+      const result = TrackFinder.search(ans)
 
-    log.debug(
-      `DEBUG >>>\n\tResult=${result?.listing.names.short.piped};\n\tArtistQuery=${result?.isArtistQuery};\n\tWideMatch=${result?.isWideMatch}`
-    )
+      log.debug(
+        `DEBUG >>>\n\tResult=${result?.listing.names.short.piped};\n\tArtistQuery=${result?.isArtistQuery};\n\tWideMatch=${result?.isWideMatch};\n\tGenres=${result?.listing.genres}`
+      )
 
-    if (ans.toLowerCase() !== 'exit') {
-      s()
-    } else {
-      // initBot()
-      process.exit(0)
+      if (ans.toLowerCase() === 'exit') {
+        initBot()
+      } else if (ans.toLowerCase() === 'kill') {
+        process.exit(0)
+      } else {
+        debugPrompt()
+      }
     }
-  })
+  )
 }
 
 if (!opts.noRun) {

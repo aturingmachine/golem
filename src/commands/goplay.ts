@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { Player } from '../player/music-player'
 import { TrackFinder } from '../player/track-finder'
-import { fourSquare } from '../utils/image-helpers'
+import { fourSquare } from '../utils/image-utils'
 import { logger } from '../utils/logger'
 import {
   ArtistConfirmReply,
