@@ -28,7 +28,7 @@ export class TrackFinder {
     return [...this._listings]
   }
 
-  search(query: string): SearchResult | undefined {
+  search(query: string): any {
     const result = fuzzy.filter(query, this.tracks, baseSearchOptions)
     const isArtistQuery = this.isArtistQuery(query, result)
     const isWideMatch = this.isWideMatch(result)
@@ -40,8 +40,9 @@ export class TrackFinder {
         `Pre-weighting Result=${result[0].string};\nArtistQuery=${isArtistQuery};\nWideMatch=${isWideMatch}`
       )
 
-      const final = new Listing(this.weightResult(result).original)
-      const hasBeenWeighted = final.path !== result[0].original.path
+      const final = new Track(this.weightResult(result).original.listing)
+      const hasBeenWeighted =
+        final.listing.path !== result[0].original.listing.path
 
       return {
         listing: final,
