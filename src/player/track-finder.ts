@@ -7,7 +7,7 @@ import { logger } from '../utils/logger'
 const log = logger.child({ src: 'search' })
 
 export interface SearchResult {
-  listing: Listing
+  track: Track
   isArtistQuery: boolean
   isWideMatch: boolean
 }
@@ -18,17 +18,16 @@ const baseSearchOptions = {
 
 export class TrackFinder {
   public readonly tracks: Track[]
-  private static _listings: Listing[] = []
 
   constructor(tracks: Track[]) {
     this.tracks = tracks
   }
 
-  static get listings(): Listing[] {
-    return [...this._listings]
+  get listings(): Listing[] {
+    return this.tracks.map((track) => track.listing)
   }
 
-  search(query: string): any {
+  search(query: string): SearchResult | undefined {
     const result = fuzzy.filter(query, this.tracks, baseSearchOptions)
     const isArtistQuery = this.isArtistQuery(query, result)
     const isWideMatch = this.isWideMatch(result)
@@ -40,31 +39,30 @@ export class TrackFinder {
         `Pre-weighting Result=${result[0].string};\nArtistQuery=${isArtistQuery};\nWideMatch=${isWideMatch}`
       )
 
-      const final = new Track(this.weightResult(result).original.listing)
+      const final = this.weightResult(result).original
       const hasBeenWeighted =
         final.listing.path !== result[0].original.listing.path
 
       return {
-        listing: final,
+        track: final,
         isArtistQuery,
         isWideMatch: isWideMatch && !hasBeenWeighted,
       }
     }
 
     log.warn(`No Results found for ${query}`)
-
     return undefined
   }
 
-  static searchMany(query: string): Listing[] {
-    const result = fuzzy.filter(query, TrackFinder.listings, baseSearchOptions)
+  searchMany(query: string): Track[] {
+    const result = fuzzy.filter(query, this.tracks, baseSearchOptions)
 
-    return result.map((r) => new Listing(r.original))
+    return result.map((r) => r.original)
   }
 
-  static artistSample(artist: string, count = 1): Listing[] {
+  artistSample(artist: string, count = 1): Listing[] {
     const res = []
-    const listings = TrackFinder._listings
+    const listings = this.listings
       .filter(
         (l) => l.artist.toLowerCase() === artist.toLowerCase() && l.albumArt
       )
@@ -79,8 +77,8 @@ export class TrackFinder {
     return res
   }
 
-  static findIdByPath(path: string): { id: string; name: string } {
-    const listing = TrackFinder.listings.find((l) => l.path === path)
+  findIdByPath(path: string): { id: string; name: string } {
+    const listing = this.tracks.find((t) => t.listing.path === path)?.listing
 
     return {
       id: listing?.id || '',
@@ -88,16 +86,14 @@ export class TrackFinder {
     }
   }
 
-  static findListingsByIds(
-    params: { id: string; [key: string]: any }[]
-  ): Listing[] {
+  findListingsByIds(params: { id: string; [key: string]: any }[]): Listing[] {
     return params
-      .map((param) => TrackFinder.listings.find((l) => l.id === param.id))
+      .map((param) => this.listings.find((l) => l.id === param.id))
       .filter(isDefined)
   }
 
-  static get trackCount(): number {
-    return TrackFinder._listings.length
+  get trackCount(): number {
+    return this.tracks.length
   }
 
   private isArtistQuery(

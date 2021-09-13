@@ -9,6 +9,7 @@ import {
   VoiceConnectionDisconnectReason,
   VoiceConnectionStatus,
 } from '@discordjs/voice'
+import { Track } from '~/models/track'
 import { TrackQueue } from './queue'
 
 const wait = promisify(setTimeout)
