@@ -1,5 +1,6 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
+import { GolemBot } from '..'
 import { Player } from '../player/music-player'
 import { TrackFinder } from '../player/track-finder'
 import { fourSquare } from '../utils/image-utils'
@@ -41,7 +42,7 @@ const execute = async (
   }
 
   if (commandQuery) {
-    const res = TrackFinder.search(commandQuery)
+    const res = GolemBot.trackFinder.search(commandQuery)
 
     if (!res) {
       log.debug(`GoPlay: No ResultSet`)
@@ -49,17 +50,18 @@ const execute = async (
       return
     }
 
-    log.debug(
-      `Query Result: \nartist=${res.listing.artist},\nalbum=${res.listing.album}\ntrack=${res.listing.track}\nwide=${res.isWideMatch}\nartistQuery=${res.isArtistQuery}`
-    )
+    log.debug(`Query Result: \n${res.track.debugString}`)
 
     // Handle artist query
     if (res.isArtistQuery) {
-      const srcs = TrackFinder.artistSample(res.listing.artist, 4)
+      const srcs = GolemBot.trackFinder.artistSample(
+        res.track.listing.artist,
+        4
+      )
 
       await interaction.reply(
         ArtistConfirmReply(
-          res.listing.artist,
+          res.track.listing.artist,
           await fourSquare({
             images: {
               img1: srcs[0].albumArt,
@@ -74,13 +76,16 @@ const execute = async (
     // Handle Wide Queries
     else if (res.isWideMatch) {
       await interaction.reply(
-        GetWideSearchEmbed(commandQuery, TrackFinder.searchMany(commandQuery))
+        GetWideSearchEmbed(
+          commandQuery,
+          GolemBot.trackFinder.searchMany(commandQuery)
+        )
       )
     }
     // Handle Catch-All queries
     else {
       const { image, embed } = GetEmbedFromListing(
-        res.listing,
+        res.track.listing,
         Player.isPlaying
       )
 

@@ -42,7 +42,7 @@ export class Listing {
   id!: string
   artist!: string
   album!: string
-  track!: string
+  title!: string
   duration!: number
   hasDefaultDuration!: boolean
   path!: string
@@ -53,7 +53,7 @@ export class Listing {
     this.id = info.id
     this.artist = info.artist
     this.album = info.album
-    this.track = info.track
+    this.title = info.track
     this.duration = info.duration
     this.path = info.path
     this.genres = info.genres
@@ -63,12 +63,12 @@ export class Listing {
   get names(): ListingNames {
     return {
       short: {
-        piped: `${this.artist} | ${this.track}`,
-        dashed: `${this.artist} - ${this.track}`,
+        piped: `${this.artist} | ${this.title}`,
+        dashed: `${this.artist} - ${this.title}`,
       },
       full: {
-        piped: `${this.artist} | ${this.album} | ${this.track}`,
-        dashed: `${this.artist} - ${this.album} - ${this.track}`,
+        piped: `${this.artist} | ${this.album} | ${this.title}`,
+        dashed: `${this.artist} - ${this.album} - ${this.title}`,
       },
     }
   }
@@ -78,15 +78,15 @@ export class Listing {
   }
 
   get pipedName(): string {
-    return `${this.artist} | ${this.album} | ${this.track}`
+    return `${this.artist} | ${this.album} | ${this.title}`
   }
 
   toString(): string {
-    return `${this.artist} - ${this.album} - ${this.track}`
+    return `${this.artist} - ${this.album} - ${this.title}`
   }
 
   get markup(): string {
-    return `**${this.artist}**: _${this.album}_ - ${this.track}`
+    return `**${this.artist}**: _${this.album}_ - ${this.title}`
   }
 
   get cleanDuration(): string {

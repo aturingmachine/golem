@@ -15,6 +15,7 @@ import { ButtonIdPrefixes } from '../handlers/button-handler'
 import { Listing } from '../models/listing'
 import { Player } from '../player/music-player'
 import { Plex } from '../plex'
+import { Track } from '~/models/track'
 import { humanReadableDuration } from './time-utils'
 
 const embedFieldSpacer = {
@@ -64,7 +65,7 @@ export const GetEmbedFromListing = (
       },
       {
         name: 'Track',
-        value: listing.track,
+        value: listing.title,
         inline: true,
       },
       embedFieldSpacer,
@@ -159,12 +160,12 @@ export const getSearchReply = (
 
 export const GetWideSearchEmbed = (
   query: string,
-  results: Listing[]
+  results: Track[]
 ): MessageOptions => {
   const options: MessageSelectOptionData[] = results.slice(0, 25).map((r) => {
     return {
-      label: r.names.short.dashed.slice(0, 90),
-      value: r.id,
+      label: r.shortName,
+      value: r.listing.id,
     }
   })
 

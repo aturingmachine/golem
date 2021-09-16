@@ -1,9 +1,10 @@
 import fs from 'fs'
 import path from 'path'
-import { Client, Intents } from 'discord.js'
+import { Client, Intents, Snowflake } from 'discord.js'
 import winston from 'winston'
 import { establishConnection } from './db'
 import { EventHandler } from './models/event-handler'
+import { MusicPlayer } from './player/beta-music-player'
 import { TrackFinder } from './player/track-finder'
 import { TrackLoader } from './player/track-loaders'
 import { Plex } from './plex'
@@ -17,8 +18,10 @@ export class Golem {
   public client: Client
   public loader: TrackLoader
   public trackFinder!: TrackFinder
+  public players: Record<Snowflake, MusicPlayer>
 
   constructor() {
+    this.players = {}
     this.log = logger.child({ src: 'app' })
     this.debugger = new Debugger()
 
@@ -65,7 +68,7 @@ export class Golem {
 
     this.trackFinder = new TrackFinder(this.loader.tracks)
 
-    await Plex.init()
+    await Plex.init(this.trackFinder)
   }
 
   async login(): Promise<void> {

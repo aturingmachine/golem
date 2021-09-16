@@ -86,7 +86,7 @@ export class TrackFinder {
     }
   }
 
-  findListingsByIds(params: { id: string; [key: string]: any }[]): Listing[] {
+  findListingsByIds(params: { id: string;[key: string]: any }[]): Listing[] {
     return params
       .map((param) => this.listings.find((l) => l.id === param.id))
       .filter(isDefined)
@@ -121,7 +121,7 @@ export class TrackFinder {
     resultSet: fuzzy.FilterResult<Track>[]
   ): fuzzy.FilterResult<Track> {
     log.debug(
-      `${resultSet.map((r) => `${r.original.listing.track} scored ${r.score}`)}`
+      `${resultSet.map((r) => `${r.original.listing.title} scored ${r.score}`)}`
     )
     let pref = resultSet[0]
     const startingScore = pref.score
@@ -136,14 +136,14 @@ export class TrackFinder {
           .find((result) => !this.isLiveOrInst(result)) || pref
     }
 
-    log.debug(`Returning ${pref.original.listing.track}`)
+    log.debug(`Returning ${pref.original.listing.title}`)
 
     return pref
   }
 
   private isLiveOrInst(result: fuzzy.FilterResult<Track>): boolean {
     log.debug(
-      `Checking inst for ${result.original.listing.track.toLowerCase()}`
+      `Checking inst for ${result.original.listing.title.toLowerCase()}`
     )
 
     return [
@@ -154,6 +154,6 @@ export class TrackFinder {
       'jp',
       'eng.',
       'english',
-    ].some((s) => result.original.listing.track.toLowerCase().includes(s))
+    ].some((s) => result.original.listing.title.toLowerCase().includes(s))
   }
 }

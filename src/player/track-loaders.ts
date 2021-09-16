@@ -31,6 +31,7 @@ export class TrackLoader {
   }
 
   private async loadFromDisk(): Promise<void> {
+    console.log(Config.libraryPath)
     await this.wipeData()
 
     log.debug('Loading library from filesystem')
@@ -79,7 +80,7 @@ export class TrackLoader {
         const data: Listing[] = dbRead.listings
 
         for (const datum of data) {
-          this.tracks.push(Track.fromListing(new Listing(datum)))
+          this.tracks.push(Track.fromListing(datum))
         }
       } catch (error) {
         log.warn('unable to parse backup')

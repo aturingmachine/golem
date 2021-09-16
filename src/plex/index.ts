@@ -30,7 +30,7 @@ const PlexHeaders: Record<string, string> = {
 
 type Plex = {
   token: string
-  init: () => Promise<void>
+  init: (trackFinder: TrackFinder) => Promise<void>
   instance?: AxiosInstance
   getPlaylists: () => Promise<PlaylistRecord[]>
   getPlaylistById: (id: string) => Promise<PlaylistDetailsContainer | undefined>
@@ -41,7 +41,7 @@ export const Plex: Plex = {
   token: '',
   playlists: [],
 
-  async init(): Promise<void> {
+  async init(trackFinder: TrackFinder): Promise<void> {
     log.info('Initializing Plex Connection')
     const res = await axios.post(
       'https://plex.tv/api/v2/users/signin',
@@ -71,7 +71,7 @@ export const Plex: Plex = {
         name: record.name,
         count: record.count,
         listings: record.filePaths.map((path) =>
-          TrackFinder.findIdByPath(path)
+          trackFinder.findIdByPath(path)
         ),
       })
     })

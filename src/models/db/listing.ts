@@ -4,7 +4,7 @@ import { Listing } from '../listing'
 const schema = new Schema<Listing>({
   artist: String,
   album: String,
-  track: String,
+  title: String,
   duration: Number,
   hasDefaultDuration: Boolean,
   path: String,
