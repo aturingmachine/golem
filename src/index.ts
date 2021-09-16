@@ -1,24 +1,14 @@
 import { Golem } from './golem'
 import { opts } from './utils/config'
 
-const main = async (): Promise<Golem> => {
-  const golem = new Golem()
+const main = async (): Promise<void> => {
+  await Golem.initialize()
 
-  await golem.initialize()
+  await Golem.login()
 
   if (opts.debug) {
-    golem.debugger.openPrompt()
+    Golem.debugger.openPrompt()
   }
-
-  await golem.login()
-
-  return golem
 }
 
-let GolemBot: Golem
-
-main().then((bot) => {
-  GolemBot = bot
-})
-
-export { GolemBot }
+main()

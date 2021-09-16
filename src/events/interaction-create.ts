@@ -1,9 +1,9 @@
 import { buttonHandler } from '../handlers/button-handler'
 import { commandHandler } from '../handlers/command-handler'
-import { logger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { EventHandler } from '~/models/event-handler'
 
-const log = logger.child({ src: 'interaction create' })
+const log = GolemLogger.child({ src: LogSources.InteractionCreate })
 
 const interactionCreate: EventHandler<'interactionCreate'> = {
   on: 'interactionCreate',

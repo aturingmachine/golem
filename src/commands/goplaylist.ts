@@ -1,16 +1,16 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
-import { Player } from '../player/music-player'
-import { TrackFinder } from '../player/track-finder'
+import { CommandNames } from '../constants'
+import { Golem } from '../golem'
 import { Plex } from '../plex'
-import { logger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPlaylistEmbed } from '../utils/message-utils'
 import { Replier } from '../utils/replies'
 
-const log = logger.child({ src: 'GoPlaylist' })
+const log = GolemLogger.child({ src: LogSources.GoPlayList })
 
 const data = new SlashCommandBuilder()
-  .setName('goplaylist')
+  .setName(CommandNames.slash.playlist)
   .setDescription('Enqueue a playlist')
   .addStringOption((option) =>
     option
@@ -24,9 +24,13 @@ const execute = async (
   playlist?: string
 ): Promise<void> => {
   log.debug(`invoked with ${playlist}`)
-  const guild = interaction.client.guilds.cache.get(interaction.guildId || '')
-  const member = guild?.members.cache.get(interaction.member?.user.id || '')
-  const voiceChannel = member?.voice.channel
+  const player = Golem.getOrCreatePlayer(interaction)
+
+  if (!player) {
+    await interaction.reply('Not in a valid voice channel.')
+    log.info(`no channel to join, exiting early`)
+    return
+  }
 
   let listName = playlist || ''
 
@@ -41,22 +45,11 @@ const execute = async (
     )
 
     if (list) {
-      if (interaction.guild && voiceChannel?.id) {
-        log.debug('Starting Player.')
-        Player.start({
-          channelId: voiceChannel?.id || '',
-          guildId: interaction.guildId || '',
-          adapterCreator: interaction.guild.voiceAdapterCreator,
-        })
-
-        log.debug(`Enqueuing List ${list.name}`)
-        Player.enqueueMany(TrackFinder.findListingsByIds(list.listings))
-        await interaction.reply(
-          `${Replier.affirmative}, I'll queue up ${list.name}`
-        )
-      } else {
-        interaction.channel?.send('Not in a valid voice channel.')
-      }
+      log.debug(`Enqueuing List ${list.name}`)
+      player.enqueueMany(Golem.trackFinder.findListingsByIds(list.listings))
+      await interaction.reply(
+        `${Replier.affirmative}, I'll queue up ${list.name}`
+      )
     } else {
       await interaction.reply(`No playlist found with name ${listName}`)
     }

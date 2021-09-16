@@ -1,12 +1,13 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
-import { Player } from '../player/music-player'
-import { logger } from '../utils/logger'
+import { CommandNames } from '../constants'
+import { Golem } from '../golem'
+import { GolemLogger, LogSources } from '../utils/logger'
 
-const log = logger.child({ src: 'GoSkip' })
+const log = GolemLogger.child({ src: LogSources.GoSkip })
 
 const data = new SlashCommandBuilder()
-  .setName('goskip')
+  .setName(CommandNames.slash.skip)
   .setDescription(
     'Skip the current song in queue, stops player if last song in queue.'
   )
@@ -21,6 +22,13 @@ const execute = async (
   interaction: CommandInteraction | Message,
   count?: number
 ): Promise<void> => {
+  const player = Golem.getPlayer(interaction)
+
+  if (!player) {
+    await interaction.reply('Not in a valid voice channel')
+    return
+  }
+
   log.info('executing')
   let skipCount = count || 1
 
@@ -32,8 +40,8 @@ const execute = async (
 
   for (let i = 0; i < skipCount; i++) {
     log.debug('Attempting to skip')
-    if (Player.nowPlaying !== 'No Track Playing') {
-      Player.skip()
+    if (player.nowPlaying) {
+      player.skip()
     }
   }
 }

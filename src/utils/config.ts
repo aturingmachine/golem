@@ -48,4 +48,6 @@ export const opts = {
   verbose: cliArgs.includes('verbose'),
   image: cliArgs.includes('image'),
   loadTest: cliArgs.includes('load-test'),
+  logLevel:
+    cliArgs.includes('debug') || cliArgs.includes('verbose') ? 'debug' : 'info',
 }

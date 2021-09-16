@@ -2,7 +2,7 @@ import { REST } from '@discordjs/rest'
 import { Routes } from 'discord-api-types/v9'
 import { Commands, registerCommands } from './commands'
 import { Config } from './utils/config'
-import { logger } from './utils/logger'
+import { GolemLogger, LogSources } from './utils/logger'
 
 registerCommands()
 
@@ -21,7 +21,9 @@ const rest = new REST({ version: '9' }).setToken(Config.token)
 
       console.log(resp)
     }
-    logger.info('Application Commands Registered', { src: 'cmd-deploy' })
+    GolemLogger.info('Application Commands Registered', {
+      src: LogSources.CommandDeploy,
+    })
   } catch (error) {
     console.error(error)
   }

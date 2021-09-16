@@ -1,20 +1,19 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
-import { GolemBot } from '..'
-import { Player } from '../player/music-player'
-import { TrackFinder } from '../player/track-finder'
+import { CommandNames } from '../constants'
+import { Golem } from '../golem'
 import { fourSquare } from '../utils/image-utils'
-import { logger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import {
   ArtistConfirmReply,
   GetEmbedFromListing,
   GetWideSearchEmbed,
 } from '../utils/message-utils'
 
-const log = logger.child({ src: 'GoPlay' })
+const log = GolemLogger.child({ src: LogSources.GoPlay })
 
 const data = new SlashCommandBuilder()
-  .setName('goplay')
+  .setName(CommandNames.slash.play)
   .setDescription('Play Something')
   .addStringOption((option) =>
     option
@@ -27,13 +26,13 @@ const execute = async (
   interaction: CommandInteraction | Message,
   query?: string
 ): Promise<void> => {
-  const guild = interaction.client.guilds.cache.get(interaction.guildId || '')
-  const member = guild?.members.cache.get(interaction.member?.user.id || '')
-  const voiceChannel = member?.voice.channel
+  const player = Golem.getOrCreatePlayer(interaction)
 
-  log.debug(
-    `goplay command -> guild=${guild?.name}, member=${member?.displayName}, voiceChannel=${voiceChannel?.id}`
-  )
+  if (!player) {
+    await interaction.reply('Not in a valid voice channel.')
+    log.info(`no channel to join, exiting early`)
+    return
+  }
 
   let commandQuery = query
 
@@ -41,8 +40,10 @@ const execute = async (
     commandQuery = interaction.options.getString('query') || ''
   }
 
-  if (commandQuery) {
-    const res = GolemBot.trackFinder.search(commandQuery)
+  if (!commandQuery) {
+    player.unpause()
+  } else {
+    const res = Golem.trackFinder.search(commandQuery)
 
     if (!res) {
       log.debug(`GoPlay: No ResultSet`)
@@ -54,10 +55,7 @@ const execute = async (
 
     // Handle artist query
     if (res.isArtistQuery) {
-      const srcs = GolemBot.trackFinder.artistSample(
-        res.track.listing.artist,
-        4
-      )
+      const srcs = Golem.trackFinder.artistSample(res.track.listing.artist, 4)
 
       await interaction.reply(
         ArtistConfirmReply(
@@ -78,37 +76,23 @@ const execute = async (
       await interaction.reply(
         GetWideSearchEmbed(
           commandQuery,
-          GolemBot.trackFinder.searchMany(commandQuery)
+          Golem.trackFinder.searchMany(commandQuery)
         )
       )
     }
     // Handle Catch-All queries
     else {
-      const { image, embed } = GetEmbedFromListing(
-        res.track.listing,
-        Player.isPlaying
-      )
+      const { image, embed } = GetEmbedFromListing(res.track, player)
 
       await interaction.reply({
         embeds: [embed],
         files: [image],
       })
 
-      if (interaction.guild && voiceChannel?.id) {
-        log.debug('GoPlay starting Player.')
-        Player.start({
-          channelId: voiceChannel?.id || '',
-          guildId: interaction.guildId || '',
-          adapterCreator: interaction.guild.voiceAdapterCreator,
-        })
+      log.debug('GoPlay starting Player.')
 
-        Player.enqueue(res.listing)
-      } else {
-        interaction.channel?.send('Not in a valid voice channel.')
-      }
+      player.enqueue(res.track)
     }
-  } else {
-    Player.unpause()
   }
 }
 

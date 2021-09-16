@@ -1,8 +1,8 @@
 import { LegacyCommandHandler } from '../handlers/legacy-command-handler'
 import { EventHandler } from '../models/event-handler'
-import { logger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 
-const log = logger.child({ src: 'message create' })
+const log = GolemLogger.child({ src: LogSources.MessageCreate })
 
 const messageCreate: EventHandler<'messageCreate'> = {
   on: 'messageCreate',

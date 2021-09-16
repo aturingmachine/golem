@@ -12,8 +12,7 @@ import {
 } from 'discord.js'
 import { Constants } from '../constants'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
-import { Listing } from '../models/listing'
-import { Player } from '../player/music-player'
+import { MusicPlayer } from '../player/beta-music-player'
 import { Plex } from '../plex'
 import { Track } from '~/models/track'
 import { humanReadableDuration } from './time-utils'
@@ -32,46 +31,46 @@ export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
 }
 
 export const GetEmbedFromListing = (
-  listing: Listing,
-  isQueued: boolean
+  track: Track,
+  player: MusicPlayer
 ): { embed: MessageEmbed; image: MessageAttachment } => {
-  const image = GetMessageAttachement(listing.albumArt)
+  const image = GetMessageAttachement(track.listing.albumArt)
 
   const embed = new MessageEmbed()
-    .setTitle(isQueued ? 'Added to Queue' : 'Now Playing')
+    .setTitle(player.isPlaying ? 'Added to Queue' : 'Now Playing')
     .setDescription(
-      isQueued ? `Starts In: ${Player.stats.hTime}` : 'Starting Now'
+      player.isPlaying ? `Starts In: ${player.stats.hTime}` : 'Starting Now'
     )
     .setThumbnail(`attachment://cover.png`)
     .setFields(
       {
         name: 'Artist',
-        value: listing.artist,
+        value: track.listing.artist,
       },
       {
         name: 'Album',
-        value: listing.album,
+        value: track.listing.album,
         inline: true,
       },
       embedFieldSpacer,
       {
         name: 'Duration',
         value: `${
-          listing.hasDefaultDuration
+          track.listing.hasDefaultDuration
             ? '-'
-            : humanReadableDuration(listing.duration)
+            : humanReadableDuration(track.listing.duration)
         }`,
         inline: true,
       },
       {
         name: 'Track',
-        value: listing.title,
+        value: track.listing.title,
         inline: true,
       },
       embedFieldSpacer,
       {
         name: 'Genres',
-        value: listing.genres.slice(0, 3).join(', '),
+        value: track.listing.genres.slice(0, 3).join(', '),
         inline: true,
       }
     )
@@ -127,13 +126,13 @@ export const centerString = (longest: number, str: string): string => {
 
 export const getSearchReply = (
   query: string,
-  results: Listing[],
+  results: Track[],
   totalCount: number
 ): MessageOptions => {
   const fields: EmbedFieldData[] = results
     .map((res, index) => ({
       name: `Hit ${index + 1}`,
-      value: new Listing(res).names.short.piped,
+      value: res.longName,
       inline: true,
     }))
     .reduce((prev, curr, index) => {

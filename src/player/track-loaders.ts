@@ -5,9 +5,9 @@ import { Listing } from '../models/listing'
 import { Track } from '../models/track'
 import { Config, opts } from '../utils/config'
 import { getAllFiles } from '../utils/filesystem'
-import { logger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 
-const log = logger.child({ src: 'loader' })
+const log = GolemLogger.child({ src: LogSources.Loader })
 
 const reg = /.*\.(png|html|pdf|db|jpg|jpeg|xml|js|css)$/
 

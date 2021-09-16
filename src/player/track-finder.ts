@@ -2,9 +2,9 @@ import fuzzy from 'fuzzy'
 import { Listing } from '../models/listing'
 import { Track } from '../models/track'
 import { isDefined } from '../utils/list-utils'
-import { logger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 
-const log = logger.child({ src: 'search' })
+const log = GolemLogger.child({ src: LogSources.Search })
 
 export interface SearchResult {
   track: Track
@@ -78,17 +78,17 @@ export class TrackFinder {
   }
 
   findIdByPath(path: string): { id: string; name: string } {
-    const listing = this.tracks.find((t) => t.listing.path === path)?.listing
+    const track = this.tracks.find((t) => t.listing.path === path)
 
     return {
-      id: listing?.id || '',
-      name: listing?.names.short.piped || 'Not found',
+      id: track?.listing.id || '',
+      name: track?.shortName || 'Not found',
     }
   }
 
-  findListingsByIds(params: { id: string;[key: string]: any }[]): Listing[] {
+  findListingsByIds(params: { id: string; [key: string]: any }[]): Track[] {
     return params
-      .map((param) => this.listings.find((l) => l.id === param.id))
+      .map((param) => this.tracks.find((t) => t.listing.id === param.id))
       .filter(isDefined)
   }
 
@@ -121,7 +121,10 @@ export class TrackFinder {
     resultSet: fuzzy.FilterResult<Track>[]
   ): fuzzy.FilterResult<Track> {
     log.debug(
-      `${resultSet.map((r) => `${r.original.listing.title} scored ${r.score}`)}`
+      `\n${resultSet
+        .slice(0, 15)
+        .map((r) => `${r.original.listing.title} scored ${r.score}`)
+        .join('\n')}`
     )
     let pref = resultSet[0]
     const startingScore = pref.score

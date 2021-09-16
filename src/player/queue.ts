@@ -1,28 +1,28 @@
-import { Listing } from '../models/listing'
+import { Track } from '../models/track'
 import { shuffleArray } from '../utils/list-utils'
-import { logger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 
-const log = logger.child({ src: 'Queue' })
+const log = GolemLogger.child({ src: LogSources.Queue })
 
 export class TrackQueue {
-  private _queue!: Listing[]
+  private _queue!: Track[]
 
   constructor() {
     this._queue = []
   }
 
-  add(listing: Listing): void {
-    log.info(`Adding ${listing.name}`)
-    this._queue.push(listing)
+  add(track: Track): void {
+    log.info(`Adding ${track.listing.name}`)
+    this._queue.push(track)
   }
 
-  addMany(listings: Listing[]): void {
-    log.info(`Adding many - ${listings.length} tracks`)
-    this._queue.push(...listings)
+  addMany(tracks: Track[]): void {
+    log.info(`Adding many - ${tracks.length} tracks`)
+    this._queue.push(...tracks)
   }
 
   skip(): void {
-    log.info(`Skipping ${this._queue[0].name}`)
+    log.info(`Skipping ${this._queue[0].listing.name}`)
     this._queue.shift()
   }
 
@@ -31,17 +31,17 @@ export class TrackQueue {
     this._queue = []
   }
 
-  peek(): Listing | undefined {
+  peek(): Track | undefined {
     log.info('Peeking')
     return this._queue[0]
   }
 
-  peekDeep(depth = 5): Listing[] {
+  peekDeep(depth = 5): Track[] {
     log.info('Deep Peeking')
     return this._queue.slice(0, depth)
   }
 
-  pop(): Listing | undefined {
+  pop(): Track | undefined {
     log.info('Popping Next track')
     return this._queue.shift()
   }
@@ -56,7 +56,7 @@ export class TrackQueue {
     log.info('shuffled')
   }
 
-  get first(): Listing {
+  get first(): Track {
     return this._queue[0]
   }
 
@@ -65,7 +65,7 @@ export class TrackQueue {
    */
   get runTime(): number {
     const estRunTime = this._queue.slice(1).reduce((prev, curr) => {
-      return prev + curr.duration
+      return prev + curr.listing.duration
     }, 0)
 
     log.info(`Estimated Runtime ${estRunTime}`)

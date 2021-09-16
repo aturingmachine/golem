@@ -1,6 +1,6 @@
+import md5 from 'md5'
 import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
-import { v4 } from 'uuid'
 import { Config } from '../utils/config'
 
 type ListingNameStyles = {
@@ -13,15 +13,11 @@ type ListingNames = {
   full: ListingNameStyles
 }
 
-export type ListingBackupInfo = Omit<ListingInfo, 'albumArt'> & {
-  albumArt: string
-}
-
 export type ListingInfo = {
-  id: string
+  id?: string
   artist: string
   album: string
-  track: string
+  title: string
   duration: number
   hasDefaultDuration: boolean
   path: string
@@ -50,10 +46,10 @@ export class Listing {
   albumArt?: Buffer
 
   constructor(info: ListingInfo) {
-    this.id = info.id
+    this.id = info.id || md5(`${info.artist} - ${info.album} - ${info.title}`)
     this.artist = info.artist
     this.album = info.album
-    this.title = info.track
+    this.title = info.title
     this.duration = info.duration
     this.path = info.path
     this.genres = info.genres
@@ -95,15 +91,17 @@ export class Listing {
 
   static async fromMeta(meta: IAudioMetadata, path: string): Promise<Listing> {
     const split = path.replace(Config.libraryPath, '').split('/')
+    const artist = meta.common.artist || meta.common.artists?.[0] || split[1]
+    const album = meta.common.album || split[2]
+    const track = meta.common.title || split[3]
 
     return new Listing({
-      id: v4(),
-      artist: meta.common.artist || meta.common.artists?.[0] || split[1], // album artist > artist > artists[0] > split
-      album: meta.common.album || split[2], // album > albumsort > split
-      track: meta.common.title || split[3], // title > titelsort > split
+      artist,
+      album,
+      title: track,
       duration: meta.format.duration || 160,
       hasDefaultDuration: !meta.format.duration,
-      path: path,
+      path,
       genres: meta.common.genre?.map((g) => g.split(',')).flat(1) || [],
       albumArt: meta.common.picture
         ? await sharp(meta.common.picture[0].data)
@@ -113,22 +111,4 @@ export class Listing {
         : undefined,
     })
   }
-
-  // static async fromBackup(datum: ListingBackupInfo): Promise<Listing> {
-  //   return new Listing({
-  //     id: datum.id,
-  //     artist: datum.artist,
-  //     album: datum.album,
-  //     track: datum.track,
-  //     duration: datum.duration,
-  //     hasDefaultDuration: datum.hasDefaultDuration,
-  //     path: datum.path,
-  //     albumArt: datum.albumArt
-  //       ? await sharp(Buffer.from(datum.albumArt, 'base64'))
-  //           .resize(100, 100)
-  //           .toFormat('png')
-  //           .toBuffer()
-  //       : undefined,
-  //   })
-  // }
 }

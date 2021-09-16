@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios'
 import { TrackFinder } from '../player/track-finder'
 import { Config } from '../utils/config'
-import { logger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import {
   PlaylistRecord,
   PlaylistDetailsContainer,
@@ -9,7 +9,7 @@ import {
   Playlist,
 } from './models'
 
-const log = logger.child({ src: 'Plex' })
+const log = GolemLogger.child({ src: LogSources.Plex })
 
 const fixSlashes = (original: string): string => {
   const match = Config.libraryPath.split('/').pop() || ''

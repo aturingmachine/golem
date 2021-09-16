@@ -1,9 +1,10 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message, MessageAttachment } from 'discord.js'
+import { CommandNames } from '../constants'
 import { GoGet } from '../handlers/go-get-handler'
 
 const data = new SlashCommandBuilder()
-  .setName('goget')
+  .setName(CommandNames.slash.get)
   .setDescription(
     'Get current queue time, queue count, now playing, or total track count.'
   )
@@ -24,7 +25,7 @@ const execute = async (
     value = interaction.options.getString('value', false) || ''
   }
 
-  const response = GoGet.it(value)
+  const response = GoGet.it({ value, guildId: interaction.guildId })
 
   if (value === 'catalog') {
     const snippet = new MessageAttachment(
