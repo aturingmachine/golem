@@ -7,17 +7,18 @@ const log = GolemLogger.child({ src: LogSources.MessageCreate })
 const messageCreate: EventHandler<'messageCreate'> = {
   on: 'messageCreate',
   async execute(message) {
-    log.debug(`received ${message}`)
-
-    if (
-      !message.content.startsWith('$go') ||
-      message.member?.id === '884552685028790305' ||
-      !message.content.startsWith('$play')
-    ) {
+    if (message.member?.id === '884552685028790305') {
       return
     }
 
-    await LegacyCommandHandler.parseMessage(message)
+    log.debug(`received ${message}`)
+
+    if (
+      message.content.startsWith('$go') ||
+      message.content.startsWith('$play')
+    ) {
+      await LegacyCommandHandler.parseMessage(message)
+    }
   },
 }
 
