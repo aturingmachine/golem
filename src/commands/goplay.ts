@@ -1,5 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
+import { Analytics } from '../analytics'
+import { CommandAnalyticsInteraction } from '../analytics/models/interaction'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { fourSquare } from '../utils/image-utils'
@@ -36,8 +38,19 @@ const execute = async (
 
   let commandQuery = query
 
-  if (interaction instanceof CommandInteraction) {
+  const isSlashCommand = interaction instanceof CommandInteraction
+
+  if (isSlashCommand) {
     commandQuery = interaction.options.getString('query') || ''
+  }
+
+  if (interaction.member) {
+    Analytics.push(
+      new CommandAnalyticsInteraction(interaction, {
+        command: 'GoPlay',
+        content: commandQuery,
+      })
+    )
   }
 
   if (!commandQuery) {
@@ -91,7 +104,7 @@ const execute = async (
 
       log.debug('GoPlay starting Player.')
 
-      player.enqueue(res.track)
+      player.enqueue(interaction.member?.user.id || '', res.track)
     }
   }
 }

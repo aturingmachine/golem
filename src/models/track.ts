@@ -4,13 +4,22 @@ import winston from 'winston'
 import { GolemLogger } from '../utils/logger'
 import { Listing } from './listing'
 
+export interface TrackAudioResourceMetadata {
+  track: {
+    trackId: string
+    artist: string
+    album: string
+    title: string
+  }
+}
+
 export class Track {
   private readonly log: winston.Logger
 
   public readonly listing!: Listing
 
   constructor(listing: Listing) {
-    this.log = GolemLogger.child({ src: `t-${listing.title.slice(0, 7)}` })
+    this.log = GolemLogger.child({ src: 'track' })
     this.listing = listing
   }
 
@@ -19,6 +28,7 @@ export class Track {
     return createAudioResource(this.listing.path, {
       metadata: {
         track: {
+          trackId: this.listing.trackId,
           artist: this.listing.artist,
           album: this.listing.album,
           title: this.listing.title,
@@ -34,7 +44,11 @@ export class Track {
   }
 
   get searchString(): string {
-    return `${this.listing.artist} - ${this.listing.album} - ${this.listing.title}`
+    return `${this.listing.artist} ${this.listing.album} ${this.listing.title}`
+  }
+
+  get shortNameSearchString(): string {
+    return `${this.listing.artist} ${this.listing.title}`
   }
 
   static fromListing(listing: Listing): Track {

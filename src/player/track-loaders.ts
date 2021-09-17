@@ -1,6 +1,6 @@
 import * as mm from 'music-metadata'
-import { LibIndex } from '../models/db/lib-index'
-import { ListingSchema } from '../models/db/listing'
+import { LibIndexData } from '../models/db/lib-index'
+import { ListingData } from '../models/db/listing'
 import { Listing } from '../models/listing'
 import { Track } from '../models/track'
 import { Config, opts } from '../utils/config'
@@ -12,12 +12,14 @@ const log = GolemLogger.child({ src: LogSources.Loader })
 const reg = /.*\.(png|html|pdf|db|jpg|jpeg|xml|js|css)$/
 
 export class TrackLoader {
-  public readonly listings: Listing[]
   public readonly tracks: Track[]
 
   constructor() {
-    this.listings = []
     this.tracks = []
+  }
+
+  get listings(): Listing[] {
+    return this.tracks.map((t) => t.listing)
   }
 
   async load(): Promise<Track[]> {
@@ -40,7 +42,7 @@ export class TrackLoader {
     )
     log.debug(`Found ${paths.length} paths.`)
 
-    const listings: Listing[] = []
+    // const listings: Listing[] = []
     let errorCount = 0
 
     for (const trackPath of paths) {
@@ -48,18 +50,20 @@ export class TrackLoader {
         const meta = await mm.parseFile(trackPath)
         const listing = await Listing.fromMeta(meta, trackPath)
 
-        listings.push(listing)
+        // listings.push(listing)
+        this.tracks.push(Track.fromListing(listing))
       } catch (error) {
         log.error(`${trackPath} encountered error.`)
         log.warn('Continuing with library read')
+        log.error(error)
         errorCount++
       }
     }
 
     log.warn(`Encountered ${errorCount} errors while loading library.`)
 
-    log.info('Setting listings')
-    this.listings.push(...listings)
+    // log.info('Setting listings')
+    // this.listings.push(...listings)
 
     log.info('Attempting backup save')
     this.save()
@@ -69,7 +73,7 @@ export class TrackLoader {
   private async loadTracksFromDB(): Promise<void> {
     log.info('Reading library from Database')
 
-    const dbRead = await LibIndex.findOne()
+    const dbRead = await LibIndexData.findOne()
       .sort({ created_at: -1 })
       .populate('listings')
       .exec()
@@ -84,7 +88,7 @@ export class TrackLoader {
         }
       } catch (error) {
         log.warn('unable to parse backup')
-        LibIndex.deleteOne({ id: { $eq: dbRead._id } })
+        LibIndexData.deleteOne({ id: { $eq: dbRead._id } })
         await this.loadFromDisk()
       }
     } else {
@@ -95,8 +99,8 @@ export class TrackLoader {
 
   private async wipeData(): Promise<void> {
     log.info('Deleting stale cache')
-    await LibIndex.deleteMany().exec()
-    await ListingSchema.deleteMany().exec()
+    await LibIndexData.deleteMany().exec()
+    await ListingData.deleteMany().exec()
     log.info('Stale cache deleted')
   }
 
@@ -104,14 +108,14 @@ export class TrackLoader {
     const listingIds: string[] = []
 
     for (const listing of this.listings) {
-      const listingRecord = new ListingSchema(listing)
+      const listingRecord = new ListingData(listing)
 
       await listingRecord.save()
 
       listingIds.push(listingRecord._id)
     }
 
-    const record = new LibIndex({
+    const record = new LibIndexData({
       listings: listingIds,
       count: this.listings.length,
     })

@@ -46,7 +46,10 @@ const execute = async (
 
     if (list) {
       log.debug(`Enqueuing List ${list.name}`)
-      player.enqueueMany(Golem.trackFinder.findListingsByIds(list.listings))
+      player.enqueueMany(
+        interaction.member?.user.id || '',
+        Golem.trackFinder.findListingsByIds(list.listings)
+      )
       await interaction.reply(
         `${Replier.affirmative}, I'll queue up ${list.name}`
       )

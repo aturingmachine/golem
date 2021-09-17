@@ -15,14 +15,14 @@ import { GolemLogger, LogSources } from './utils/logger'
 
 export class Golem {
   private static log: winston.Logger
-  private static players: Record<Snowflake, MusicPlayer>
+  private static players: Map<Snowflake, MusicPlayer>
   public static debugger: Debugger
   public static client: Client
   public static loader: TrackLoader
   public static trackFinder: TrackFinder
 
   static async initialize(): Promise<void> {
-    Golem.players = {}
+    Golem.players = new Map()
     Golem.log = GolemLogger.child({ src: LogSources.App })
     Golem.debugger = new Debugger()
 
@@ -73,47 +73,63 @@ export class Golem {
   static getOrCreatePlayer(
     interaction: Interaction | Message
   ): MusicPlayer | undefined {
-    if (!interaction.guild) {
+    const guild = interaction.client.guilds.cache.get(interaction.guildId || '')
+    const member = guild?.members.cache.get(interaction.member?.user.id || '')
+    const voiceChannel = member?.voice.channel
+
+    Golem.log.debug(
+      `getting player guild=${guild?.name}, member=${member?.user.username}, voiceChannel=${voiceChannel?.id}`
+    )
+
+    if (!interaction.guild || !interaction.guildId) {
+      this.log.warn('no guild, cannot get player')
       return undefined
     }
 
-    const guildId = interaction.guild.id
+    const guildId = interaction.guildId
 
-    const voiceChannel =
-      interaction.guild.members.cache.get(guildId)?.voice.channel
-
-    Golem.log.debug(
-      `getting player guild=${interaction.guild.name}, member=${interaction.member?.user.username}, voiceChannel=${voiceChannel?.id}`
-    )
-
-    if (!Golem.players[guildId]) {
-      Golem.players[guildId] = new MusicPlayer(
-        joinVoiceChannel({
-          channelId: voiceChannel?.id || '',
-          guildId: interaction.guildId || '',
-          adapterCreator: interaction.guild.voiceAdapterCreator,
-        })
+    if (!Golem.players.has(guildId)) {
+      Golem.players.set(
+        guildId,
+        new MusicPlayer(
+          joinVoiceChannel({
+            channelId: voiceChannel?.id || '',
+            guildId: interaction.guildId || '',
+            adapterCreator: interaction.guild.voiceAdapterCreator,
+          })
+        )
       )
     }
 
-    return Golem.players[guildId]
+    return Golem.players.get(guildId)
   }
 
   static getPlayer(
     searchVal: string | Message | Interaction
   ): MusicPlayer | undefined {
     if (typeof searchVal === 'string') {
-      return Golem.players[searchVal]
+      return Golem.players.get(searchVal)
     }
 
     if (!searchVal.guild) {
       return undefined
     }
 
-    return Golem.players[searchVal.guild.id]
+    return Golem.players.get(searchVal.guild.id)
+  }
+
+  static removePlayer(channelId: string): void {
+    Golem.players.delete(channelId)
   }
 
   static async login(): Promise<void> {
     Golem.client.login(Config.token)
+  }
+
+  static disconnectAll(): void {
+    this.log.info('Disconnection players')
+    Golem.players.forEach((player) => {
+      player.disconnect()
+    })
   }
 }

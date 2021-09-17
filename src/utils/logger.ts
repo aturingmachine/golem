@@ -65,9 +65,12 @@ enum LogSources {
   Queue = 'queue',
   Search = 'search',
   WideSearch = 'wide-search',
+  DatabaseConnection = 'db-con',
+  Analytics = 'analytics',
 }
 
 const LogSourceColors: Record<LogSources, chalk.Chalk> = {
+  analytics: chalk.cyanBright,
   'artist-button': chalk.white,
   'button-handler': chalk.blue,
   'cmd-deploy': chalk.green,
@@ -93,6 +96,7 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   plex: chalk.magenta,
   queue: chalk.blue,
   search: chalk.green,
+  'db-con': chalk.cyan,
 }
 
 export { logger as GolemLogger, LogSources }

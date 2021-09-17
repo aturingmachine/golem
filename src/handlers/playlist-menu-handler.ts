@@ -39,7 +39,7 @@ export const playlistMenuHandler = async (
 
       log.debug('Playlist Menu Handler: starting Player.')
 
-      player.enqueueMany(listings)
+      player.enqueueMany(interaction.member?.user.id || '', listings)
 
       await interaction.reply({
         content: `${Replier.affirmative}, I'll queue up the playlist **${listName}**`,

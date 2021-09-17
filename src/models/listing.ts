@@ -14,7 +14,7 @@ type ListingNames = {
 }
 
 export type ListingInfo = {
-  id?: string
+  trackId: string
   artist: string
   album: string
   title: string
@@ -35,7 +35,15 @@ export type ListingInfo = {
  * Listing should just be for reading from file and db.
  */
 export class Listing {
-  id!: string
+  /**
+   * The MongoId, is actually an ObjectId instance
+   */
+  _id!: string
+  /**
+   * An attempt at a consistent unique id made by md5 hashing
+   * some info of the listing
+   */
+  trackId!: string
   artist!: string
   album!: string
   title!: string
@@ -46,7 +54,7 @@ export class Listing {
   albumArt?: Buffer
 
   constructor(info: ListingInfo) {
-    this.id = info.id || md5(`${info.artist} - ${info.album} - ${info.title}`)
+    this.trackId = info.trackId
     this.artist = info.artist
     this.album = info.album
     this.title = info.title
@@ -54,6 +62,13 @@ export class Listing {
     this.path = info.path
     this.genres = info.genres
     this.albumArt = info.albumArt
+  }
+
+  /**
+   * The ObjectId properly parsed
+   */
+  get id(): string {
+    return this._id.toString()
   }
 
   get names(): ListingNames {
@@ -94,8 +109,15 @@ export class Listing {
     const artist = meta.common.artist || meta.common.artists?.[0] || split[1]
     const album = meta.common.album || split[2]
     const track = meta.common.title || split[3]
+    const identifier =
+      meta.common.musicbrainz_trackid ||
+      meta.common.musicbrainz_recordingid ||
+      meta.common.isrc?.[0] ||
+      ''
+    const id = md5(`${artist} - ${album} - ${track} - ${identifier}`)
 
     return new Listing({
+      trackId: id,
       artist,
       album,
       title: track,

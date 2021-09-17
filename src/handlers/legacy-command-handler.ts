@@ -42,7 +42,7 @@ export class LegacyCommandHandler {
         )
         break
       case CommandNames.stop:
-        await RegisteredCommands.goSkip.execute(msg)
+        await RegisteredCommands.goStop.execute(msg)
         break
       case CommandNames.pause:
         await RegisteredCommands.goPause.execute(msg)

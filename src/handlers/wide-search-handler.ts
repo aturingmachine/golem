@@ -8,6 +8,7 @@ const log = GolemLogger.child({ src: LogSources.WideSearch })
 export const wideSearchHandler = async (
   interaction: SelectMenuInteraction
 ): Promise<void> => {
+  log.info('executing')
   const player = Golem.getOrCreatePlayer(interaction)
 
   if (!player) {
@@ -29,5 +30,5 @@ export const wideSearchHandler = async (
     components: [],
   })
 
-  player.enqueue(track)
+  player.enqueue(interaction.user.id, track)
 }

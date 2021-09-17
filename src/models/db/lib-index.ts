@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose'
 import { Listing } from '../listing'
 
-interface LibIndex {
+export interface LibIndex {
   count: number
   listings: Listing[]
 }
@@ -11,4 +11,4 @@ const schema = new Schema<LibIndex>({
   listings: [{ type: Schema.Types.ObjectId, ref: 'Listing' }],
 })
 
-export const LibIndex = mongoose.model<LibIndex>('LibIndex', schema)
+export const LibIndexData = mongoose.model<LibIndex>('LibIndex', schema)

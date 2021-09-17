@@ -4,25 +4,30 @@ import { GolemLogger, LogSources } from '../utils/logger'
 
 const log = GolemLogger.child({ src: LogSources.Queue })
 
+interface QueuedTrack {
+  queuedBy: string
+  track: Track
+}
+
 export class TrackQueue {
-  private _queue!: Track[]
+  private _queue!: QueuedTrack[]
 
   constructor() {
     this._queue = []
   }
 
-  add(track: Track): void {
-    log.info(`Adding ${track.listing.name}`)
-    this._queue.push(track)
+  add(userId: string, track: Track): void {
+    log.info(`${userId} Adding ${track.shortName}`)
+    this._queue.push({ track, queuedBy: userId })
   }
 
-  addMany(tracks: Track[]): void {
+  addMany(userId: string, tracks: Track[]): void {
     log.info(`Adding many - ${tracks.length} tracks`)
-    this._queue.push(...tracks)
+    this._queue.push(...tracks.map((track) => ({ track, queuedBy: userId })))
   }
 
   skip(): void {
-    log.info(`Skipping ${this._queue[0].listing.name}`)
+    log.info(`Skipping ${this._queue[0].track.listing.name}`)
     this._queue.shift()
   }
 
@@ -33,17 +38,17 @@ export class TrackQueue {
 
   peek(): Track | undefined {
     log.info('Peeking')
-    return this._queue[0]
+    return this._queue[0].track
   }
 
   peekDeep(depth = 5): Track[] {
     log.info('Deep Peeking')
-    return this._queue.slice(0, depth)
+    return this._queue.slice(0, depth).map((i) => i.track)
   }
 
   pop(): Track | undefined {
     log.info('Popping Next track')
-    return this._queue.shift()
+    return this._queue.shift()?.track
   }
 
   shuffle(): void {
@@ -57,7 +62,7 @@ export class TrackQueue {
   }
 
   get first(): Track {
-    return this._queue[0]
+    return this._queue[0].track
   }
 
   /**
@@ -65,7 +70,7 @@ export class TrackQueue {
    */
   get runTime(): number {
     const estRunTime = this._queue.slice(1).reduce((prev, curr) => {
-      return prev + curr.listing.duration
+      return prev + curr.track.listing.duration
     }, 0)
 
     log.info(`Estimated Runtime ${estRunTime}`)

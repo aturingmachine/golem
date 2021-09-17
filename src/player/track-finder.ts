@@ -12,14 +12,23 @@ export interface SearchResult {
   isWideMatch: boolean
 }
 
-const baseSearchOptions = {
-  extract: (t: Track) => t.searchString,
+const baseSearch = {
+  extract: (t: Track) => t.searchString.toLowerCase(),
+}
+
+const titleSearch = {
+  extract: (t: Track) => t.listing.title.toLowerCase(),
+}
+
+const shortNameSearch = {
+  extract: (t: Track) => t.shortNameSearchString.toLowerCase(),
 }
 
 export class TrackFinder {
   public readonly tracks: Track[]
 
   constructor(tracks: Track[]) {
+    log.info('instantiating track finder')
     this.tracks = tracks
   }
 
@@ -28,15 +37,28 @@ export class TrackFinder {
   }
 
   search(query: string): SearchResult | undefined {
-    const result = fuzzy.filter(query, this.tracks, baseSearchOptions)
+    log.info(`searching for ${query}`)
+    log.debug(`using titleSearch`)
+    let result = fuzzy.filter(query, this.tracks, titleSearch)
+
+    if (result.length === 0) {
+      log.debug(`titleSearch miss; using shortNameSearch`)
+      result = fuzzy.filter(query, this.tracks, shortNameSearch)
+    }
+
+    if (result.length === 0) {
+      log.debug(`shortNameSearch miss; using baseSearch`)
+      result = fuzzy.filter(query, this.tracks, baseSearch)
+    }
+
     const isArtistQuery = this.isArtistQuery(query, result)
     const isWideMatch = this.isWideMatch(result)
 
-    log.debug(`${query}: ${result.length} Matches\n`)
+    log.debug(`${query}: ${result.length} Matches`)
 
     if (result.length) {
       log.debug(
-        `Pre-weighting Result=${result[0].string};\nArtistQuery=${isArtistQuery};\nWideMatch=${isWideMatch}`
+        `Pre-weighting\nResult=${result[0].string};\nArtistQuery=${isArtistQuery};\nWideMatch=${isWideMatch}`
       )
 
       const final = this.weightResult(result).original
@@ -55,7 +77,7 @@ export class TrackFinder {
   }
 
   searchMany(query: string): Track[] {
-    const result = fuzzy.filter(query, this.tracks, baseSearchOptions)
+    const result = fuzzy.filter(query, this.tracks, titleSearch)
 
     return result.map((r) => r.original)
   }
@@ -81,14 +103,14 @@ export class TrackFinder {
     const track = this.tracks.find((t) => t.listing.path === path)
 
     return {
-      id: track?.listing.id || '',
+      id: track?.listing.trackId || '',
       name: track?.shortName || 'Not found',
     }
   }
 
   findListingsByIds(params: { id: string; [key: string]: any }[]): Track[] {
     return params
-      .map((param) => this.tracks.find((t) => t.listing.id === param.id))
+      .map((param) => this.tracks.find((t) => t.listing.trackId === param.id))
       .filter(isDefined)
   }
 
@@ -128,7 +150,7 @@ export class TrackFinder {
     )
     let pref = resultSet[0]
     const startingScore = pref.score
-    log.debug(`Post-Weight: Starting with ${pref.original.listing.name}`)
+    log.debug(`Post-Weight: Starting with ${pref.original.longName}`)
 
     if (this.isLiveOrInst(pref)) {
       log.debug(`Post-Weight: Pref flagged, searching for alternatives`)
@@ -146,7 +168,7 @@ export class TrackFinder {
 
   private isLiveOrInst(result: fuzzy.FilterResult<Track>): boolean {
     log.debug(
-      `Checking inst for ${result.original.listing.title.toLowerCase()}`
+      `Checking force weighting for ${result.original.listing.title.toLowerCase()}`
     )
 
     return [

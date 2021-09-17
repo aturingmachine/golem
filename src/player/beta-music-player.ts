@@ -12,10 +12,12 @@ import {
   VoiceConnectionStatus,
 } from '@discordjs/voice'
 import winston from 'winston'
+import { Analytics } from '../analytics'
+import { Golem } from '../golem'
 import { ListingInfo } from '../models/listing'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { humanReadableTime } from '../utils/time-utils'
-import { Track } from '~/models/track'
+import { Track, TrackAudioResourceMetadata } from '~/models/track'
 import { TrackQueue } from './queue'
 
 const wait = promisify(setTimeout)
@@ -61,20 +63,31 @@ export class MusicPlayer {
     this.audioPlayer = createAudioPlayer()
     this.queue = new TrackQueue()
 
-    this.voiceConnection.on('stateChange', this.voiceConnectionStateHandler)
+    this.voiceConnection.on(
+      'stateChange',
+      this.voiceConnectionStateHandler.bind(this)
+    )
 
-    this.audioPlayer.on('stateChange', this.playerStateHandler)
+    this.audioPlayer.on('stateChange', this.playerStateHandler.bind(this))
+
+    this.voiceConnection.subscribe(this.audioPlayer)
   }
 
-  public enqueue(track: Track): void {
-    this.log.info(`queueing ${track.debugString}`)
-    this.queue.add(track)
+  public enqueue(userId: string, track: Track): void {
+    this.log.info(`queueing ${track.shortName}`)
+    this.queue.add(userId, track)
+    Analytics.queuePlayRecord(track.listing.trackId, userId)
+
+    if (this.queue.queuedTrackCount === 0) {
+      Analytics.playRecord(track.listing.trackId)
+    }
+
     void this.processQueue()
   }
 
-  public enqueueMany(tracks: Track[]): void {
+  public enqueueMany(userId: string, tracks: Track[]): void {
     this.log.info(`enqueueing ${tracks.length} tracks`)
-    this.queue.addMany(tracks)
+    this.queue.addMany(userId, tracks)
     void this.processQueue()
   }
 
@@ -99,7 +112,14 @@ export class MusicPlayer {
 
   public skip(): void {
     this.log.info(
-      `skipping ${(this.currentResource?.metadata as ListingInfo).title}`
+      `skipping ${
+        (this.currentResource?.metadata as TrackAudioResourceMetadata).track
+          .title
+      }`
+    )
+    Analytics.skipRecord(
+      (this.currentResource?.metadata as TrackAudioResourceMetadata).track
+        .trackId || ''
     )
     this.processQueue(true)
   }
@@ -114,6 +134,15 @@ export class MusicPlayer {
     return this.queue.peekDeep(depth)
   }
 
+  public disconnect(): void {
+    this.voiceConnection.destroy()
+  }
+
+  public destroy(): void {
+    Golem.removePlayer(this.voiceConnection.joinConfig.channelId || '')
+    this.voiceConnection.destroy()
+  }
+
   public get trackCount(): number {
     return this.queue.queuedTrackCount + (this.isPlaying ? 1 : 0)
   }
@@ -121,10 +150,10 @@ export class MusicPlayer {
   private processQueue(force = false): void {
     this.log.debug(`processing queue${force ? ' - forcing next' : ''}`)
     if (
-      !force &&
-      (this.queueLock ||
-        this.audioPlayer.state.status !== AudioPlayerStatus.Idle ||
-        this.queue.queuedTrackCount === 0)
+      (!force &&
+        (this.queueLock ||
+          this.audioPlayer.state.status !== AudioPlayerStatus.Idle)) ||
+      this.queue.queuedTrackCount === 0
     ) {
       this.log.debug(`skipping processing due to state`)
       return
@@ -134,10 +163,22 @@ export class MusicPlayer {
     /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
     const nextTrack = this.queue.pop()!
 
-    this.log.info(`playing ${nextTrack.debugString}`)
+    this.log.info(`playing ${nextTrack.shortName}`)
     const next = nextTrack.toAudioResource()
     this.currentResource = next
-    this.audioPlayer.play(next)
+    this.audioPlayer.play(this.currentResource)
+
+    if (this.queue.queuedTrackCount === 0) {
+      Analytics.playRecord(
+        (this.currentResource?.metadata as TrackAudioResourceMetadata).track
+          .title
+      )
+    } else {
+      Analytics.autoplayRecord(
+        (this.currentResource?.metadata as TrackAudioResourceMetadata).track
+          .title
+      )
+    }
 
     this.queueLock = false
   }
