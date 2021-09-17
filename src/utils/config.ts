@@ -2,6 +2,10 @@ import { config } from 'dotenv'
 config()
 
 export class Config {
+  static get libraries(): string[] {
+    return process.env.LIBRARY_PATHS?.split(',') || []
+  }
+
   static get token(): string {
     return process.env.TOKEN || ''
   }

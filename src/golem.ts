@@ -5,6 +5,7 @@ import { Client, Intents, Interaction, Message, Snowflake } from 'discord.js'
 import winston from 'winston'
 import { establishConnection } from './db'
 import { EventHandler } from './models/event-handler'
+import { Track } from './models/track'
 import { MusicPlayer } from './player/beta-music-player'
 import { TrackFinder } from './player/track-finder'
 import { TrackLoader } from './player/track-loaders'
@@ -20,6 +21,7 @@ export class Golem {
   public static client: Client
   public static loader: TrackLoader
   public static trackFinder: TrackFinder
+  public static libraries: Record<string, Track[]>
 
   static async initialize(): Promise<void> {
     Golem.players = new Map()

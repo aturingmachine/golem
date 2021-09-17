@@ -1,8 +1,9 @@
 import mongoose from 'mongoose'
 import { Golem } from './golem'
-import { opts } from './utils/config'
+import { Config, opts } from './utils/config'
 
 const main = async (): Promise<void> => {
+  console.log(Config.libraries)
   await Golem.initialize()
 
   if (!opts.noRun) {
