@@ -3,6 +3,7 @@ import { Listing } from '../models/listing'
 import { Track } from '../models/track'
 import { isDefined } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { SearchSchemes } from './search-schemes'
 
 const log = GolemLogger.child({ src: LogSources.Search })
 
@@ -10,18 +11,6 @@ export interface SearchResult {
   track: Track
   isArtistQuery: boolean
   isWideMatch: boolean
-}
-
-const baseSearch = {
-  extract: (t: Track) => t.searchString.toLowerCase(),
-}
-
-const titleSearch = {
-  extract: (t: Track) => t.listing.title.toLowerCase(),
-}
-
-const shortNameSearch = {
-  extract: (t: Track) => t.shortNameSearchString.toLowerCase(),
 }
 
 export class TrackFinder {
@@ -39,17 +28,29 @@ export class TrackFinder {
   search(query: string): SearchResult | undefined {
     log.info(`searching for ${query}`)
     log.debug(`using titleSearch`)
-    let result = fuzzy.filter(query, this.tracks, titleSearch)
+    // let result = fuzzy.filter(query, this.tracks, titleSearch)
 
-    if (result.length === 0) {
-      log.debug(`titleSearch miss; using shortNameSearch`)
-      result = fuzzy.filter(query, this.tracks, shortNameSearch)
-    }
+    /* CASCADING SEARCH SCHEME */
+    // if (result.length === 0 || result[0].score < 50) {
+    //   log.debug(
+    //     `titleSearch ${
+    //       result.length ? 'scores: ' + result[0].score : 'miss'
+    //     }; using shortNameSearch`
+    //   )
+    //   result = fuzzy.filter(query, this.tracks, shortNameSearch)
+    // }
 
-    if (result.length === 0) {
-      log.debug(`shortNameSearch miss; using baseSearch`)
-      result = fuzzy.filter(query, this.tracks, baseSearch)
-    }
+    // if (result.length === 0 || result[0].score < 50) {
+    //   log.debug(
+    //     `shortNameSearch ${
+    //       result.length ? 'scores: ' + result[0].score : 'miss'
+    //     }; using baseSearch`
+    //   )
+    //   result = fuzzy.filter(query, this.tracks, baseSearch)
+    // }
+    /* END CASCADING SEARCH SCHEME */
+
+    const result = SearchSchemes.composite(query, this.tracks)
 
     const isArtistQuery = this.isArtistQuery(query, result)
     const isWideMatch = this.isWideMatch(result)
@@ -77,7 +78,7 @@ export class TrackFinder {
   }
 
   searchMany(query: string): Track[] {
-    const result = fuzzy.filter(query, this.tracks, titleSearch)
+    const result = SearchSchemes.composite(query, this.tracks)
 
     return result.map((r) => r.original)
   }
@@ -103,14 +104,14 @@ export class TrackFinder {
     const track = this.tracks.find((t) => t.listing.path === path)
 
     return {
-      id: track?.listing.trackId || '',
+      id: track?.listing.id || '',
       name: track?.shortName || 'Not found',
     }
   }
 
   findListingsByIds(params: { id: string; [key: string]: any }[]): Track[] {
     return params
-      .map((param) => this.tracks.find((t) => t.listing.trackId === param.id))
+      .map((param) => this.tracks.find((t) => t.listing.id === param.id))
       .filter(isDefined)
   }
 
@@ -179,6 +180,7 @@ export class TrackFinder {
       'jp',
       'eng.',
       'english',
+      'remix',
     ].some((s) => result.original.listing.title.toLowerCase().includes(s))
   }
 }

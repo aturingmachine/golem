@@ -11,7 +11,8 @@ const messageCreate: EventHandler<'messageCreate'> = {
 
     if (
       !message.content.startsWith('$go') ||
-      message.member?.id === '884552685028790305'
+      message.member?.id === '884552685028790305' ||
+      !message.content.startsWith('$play')
     ) {
       return
     }
@@ -21,5 +22,3 @@ const messageCreate: EventHandler<'messageCreate'> = {
 }
 
 export default messageCreate
-
-// TODO move this into interactionCreated handler, only thing I can think of

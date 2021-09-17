@@ -10,6 +10,7 @@ export interface TrackAudioResourceMetadata {
     artist: string
     album: string
     title: string
+    duration: number
   }
 }
 
@@ -32,6 +33,7 @@ export class Track {
           artist: this.listing.artist,
           album: this.listing.album,
           title: this.listing.title,
+          duration: this.listing.duration,
         },
       },
     })

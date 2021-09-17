@@ -71,7 +71,7 @@ const execute = async (
       const srcs = Golem.trackFinder.artistSample(res.track.listing.artist, 4)
 
       await interaction.reply(
-        ArtistConfirmReply(
+        await ArtistConfirmReply(
           res.track.listing.artist,
           await fourSquare({
             images: {
@@ -95,7 +95,7 @@ const execute = async (
     }
     // Handle Catch-All queries
     else {
-      const { image, embed } = GetEmbedFromListing(res.track, player)
+      const { image, embed } = await GetEmbedFromListing(res.track, player)
 
       await interaction.reply({
         embeds: [embed],

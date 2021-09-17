@@ -14,7 +14,6 @@ import {
 import winston from 'winston'
 import { Analytics } from '../analytics'
 import { Golem } from '../golem'
-import { ListingInfo } from '../models/listing'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { humanReadableTime } from '../utils/time-utils'
 import { Track, TrackAudioResourceMetadata } from '~/models/track'
@@ -38,20 +37,23 @@ export class MusicPlayer {
   }
 
   get nowPlaying(): string | undefined {
-    const info = this.currentResource?.metadata as ListingInfo
-    return info ? `${info.artist} - ${info.album} - ${info.title}` : undefined
+    const info = this.currentResource?.metadata as TrackAudioResourceMetadata
+    return info?.track
+      ? `${info.track.artist} - ${info.track.album} - ${info.track.title}`
+      : undefined
   }
 
   get currentTrackRemaining(): number {
     return (
-      (this.queue.peek()?.listing.duration || 0) -
+      (this.currentResource?.metadata as TrackAudioResourceMetadata).track
+        .duration -
       (this.currentResource?.playbackDuration || 0) / 1000
     )
   }
 
   get stats(): { count: number; time: number; hTime: string } {
     return {
-      count: this.queue.queuedTrackCount,
+      count: this.queue.queuedTrackCount + (this.isPlaying ? 1 : 0),
       time: this.queue.runTime + this.currentTrackRemaining,
       hTime: humanReadableTime(this.queue.runTime + this.currentTrackRemaining),
     }
@@ -78,7 +80,7 @@ export class MusicPlayer {
     this.queue.add(userId, track)
     Analytics.queuePlayRecord(track.listing.trackId, userId)
 
-    if (this.queue.queuedTrackCount === 0) {
+    if (this.queue.queuedTrackCount === 1) {
       Analytics.playRecord(track.listing.trackId)
     }
 
@@ -108,6 +110,7 @@ export class MusicPlayer {
     this.currentResource = undefined
     this.log.info(`force stopping player`)
     this.audioPlayer.stop(true)
+    this.queueLock = false
   }
 
   public skip(): void {
@@ -169,14 +172,26 @@ export class MusicPlayer {
     this.audioPlayer.play(this.currentResource)
 
     if (this.queue.queuedTrackCount === 0) {
+      this.log.debug(
+        `triggering processed play analytic for ${
+          (this.currentResource?.metadata as TrackAudioResourceMetadata).track
+            .trackId
+        } `
+      )
       Analytics.playRecord(
         (this.currentResource?.metadata as TrackAudioResourceMetadata).track
-          .title
+          .trackId
       )
     } else {
+      this.log.debug(
+        `triggering processed autoplay analytic for ${
+          (this.currentResource?.metadata as TrackAudioResourceMetadata).track
+            .trackId
+        } `
+      )
       Analytics.autoplayRecord(
         (this.currentResource?.metadata as TrackAudioResourceMetadata).track
-          .title
+          .trackId
       )
     }
 

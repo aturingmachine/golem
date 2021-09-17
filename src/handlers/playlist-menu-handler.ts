@@ -20,6 +20,7 @@ export const playlistMenuHandler = async (
 
   const choice = interaction.values[0]
 
+  // Load more
   if (choice.startsWith(ButtonIdPrefixes.playlistLoadMore)) {
     const newOffset = parseInt(
       choice.replace(ButtonIdPrefixes.playlistLoadMore, ''),
@@ -30,7 +31,9 @@ export const playlistMenuHandler = async (
     )
 
     await interaction.reply(GetPlaylistEmbed(newOffset))
-  } else {
+  }
+  // Play playlist
+  else {
     const listName = choice.replace(ButtonIdPrefixes.playlistLoadMore, '')
     const playlist = Plex.playlists.find((list) => list.name.includes(listName))
 

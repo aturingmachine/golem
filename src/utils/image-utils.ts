@@ -1,6 +1,5 @@
-import fs from 'fs'
-import path from 'path'
 import sharp, { gravity } from 'sharp'
+import { PlexLogo } from '../constants'
 
 export const fourSquare = async (config: {
   images: {
@@ -11,7 +10,7 @@ export const fourSquare = async (config: {
   }
   size?: number
 }): Promise<Buffer> => {
-  const logo = fs.readFileSync(path.resolve(__dirname, '../../plexlogo.jpg'))
+  const logo = PlexLogo
   const dimension = config.size || 100
   const halfDimension = dimension / 2
 

@@ -32,13 +32,6 @@ export class TrackLoader {
         await this.loadTracksFromDB(lib, name)
       }
     }
-
-    // if (opts.bustCache) {
-    //   await this.loadFromDisk()
-    // } else {
-    //   await this.loadTracksFromDB()
-    // }
-
     return this.tracks
   }
 
@@ -52,13 +45,14 @@ export class TrackLoader {
     log.debug(`Found ${paths.length} paths.`)
 
     let errorCount = 0
+    const tracks: Track[] = []
 
     for (const trackPath of paths) {
       try {
         const meta = await mm.parseFile(trackPath)
         const listing = await Listing.fromMeta(meta, trackPath)
 
-        this.tracks.push(Track.fromListing(listing))
+        tracks.push(Track.fromListing(listing))
       } catch (error) {
         log.error(`${trackPath} encountered error.`)
         log.warn('Continuing with library read')
@@ -70,7 +64,8 @@ export class TrackLoader {
     log.warn(`Encountered ${errorCount} errors while loading library.`)
 
     log.info('Attempting backup save')
-    this.save(name)
+    this.save(name, tracks)
+    this.tracks.push(...tracks)
     log.info('Backup saved to database')
   }
 
@@ -108,11 +103,11 @@ export class TrackLoader {
     log.info('Stale cache deleted')
   }
 
-  private async save(name: string): Promise<void> {
+  private async save(name: string, tracks: Track[]): Promise<void> {
     const listingIds: string[] = []
 
-    for (const listing of this.listings) {
-      const listingRecord = new ListingData(listing)
+    for (const track of tracks) {
+      const listingRecord = new ListingData(track.listing)
 
       await listingRecord.save()
 
@@ -122,7 +117,7 @@ export class TrackLoader {
     const record = new LibIndexData({
       name,
       listings: listingIds,
-      count: this.listings.length,
+      count: tracks.length,
     })
 
     await record.save()

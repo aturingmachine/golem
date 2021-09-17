@@ -1,6 +1,7 @@
 import { Golem } from '../golem'
 import { MusicPlayer } from '../player/beta-music-player'
 import { Plex } from '../plex'
+import { GolemLogger } from '../utils/logger'
 
 export interface GetOptions {
   value: string | null
@@ -9,8 +10,12 @@ export interface GetOptions {
 
 const noPlayerMsg = 'Unable to find player.'
 
+// TODO stats are broke af right now, says they dont have the conns
 export class GoGet {
   static it(opts: Partial<GetOptions>): string {
+    GolemLogger.debug(`Go Getting With ${opts.value} ${opts.guildId}`, {
+      src: 'goget-handler',
+    })
     switch (opts.value?.toLowerCase()) {
       case 'time':
         return GoGet.timeResponse(Golem.getPlayer(opts.guildId || ''))
@@ -20,13 +25,12 @@ export class GoGet {
       case 'nowplaying':
         return GoGet.npResponse(Golem.getPlayer(opts.guildId || ''))
       case 'tcount':
-        return GoGet.tCountResponse(Golem.getPlayer(opts.guildId || ''))
+        return GoGet.tCountResponse
       // case 'catalog':
       //   return GoGet.catalog
       case 'playlist':
       case 'playlists':
         return GoGet.playlists
-        break
       default:
         return GoGet.stats(Golem.getPlayer(opts.guildId || ''))
     }
@@ -44,15 +48,14 @@ export class GoGet {
     return `\n**Now Playing**: ${player?.nowPlaying || noPlayerMsg}`
   }
 
-  // This needs to know the channel...
-  static tCountResponse(player?: MusicPlayer): string {
-    return `\n**Available Tracks**: ${player?.stats.count || noPlayerMsg}`
+  static get tCountResponse(): string {
+    return `\n**Available Tracks**: ${Golem.trackFinder.trackCount}`
   }
 
   static stats(player?: MusicPlayer): string {
     return GoGet.timeResponse(player)
       .concat(GoGet.qCountResponse(player))
-      .concat(GoGet.tCountResponse(player))
+      .concat(GoGet.tCountResponse)
       .concat(GoGet.npResponse(player))
   }
 

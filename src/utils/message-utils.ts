@@ -1,5 +1,3 @@
-import fs from 'fs'
-import path from 'path'
 import {
   EmbedFieldData,
   MessageActionRow,
@@ -10,7 +8,8 @@ import {
   MessageSelectMenu,
   MessageSelectOptionData,
 } from 'discord.js'
-import { Constants } from '../constants'
+import { getAverageColor } from 'fast-average-color-node'
+import { Constants, PlexLogo } from '../constants'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
 import { MusicPlayer } from '../player/beta-music-player'
 import { Plex } from '../plex'
@@ -25,16 +24,16 @@ const embedFieldSpacer = {
 }
 
 export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
-  return new MessageAttachment(
-    albumArt || fs.readFileSync(path.resolve(__dirname, '../../plexlogo.jpg')),
-    'cover.png'
-  )
+  return new MessageAttachment(albumArt || PlexLogo, 'cover.png')
 }
 
-export const GetEmbedFromListing = (
+export const GetEmbedFromListing = async (
   track: Track,
   player: MusicPlayer
-): { embed: MessageEmbed; image: MessageAttachment } => {
+): Promise<{ embed: MessageEmbed; image: MessageAttachment }> => {
+  const color = await getAverageColor(track.listing.albumArt || PlexLogo, {
+    algorithm: 'dominant',
+  })
   const image = GetMessageAttachement(track.listing.albumArt)
 
   const embed = new MessageEmbed()
@@ -42,6 +41,7 @@ export const GetEmbedFromListing = (
     .setDescription(
       player.isPlaying ? `Starts In: ${player.stats.hTime}` : 'Starting Now'
     )
+    .setColor(color.hex)
     .setThumbnail(`attachment://cover.png`)
     .setFields(
       {
@@ -71,7 +71,9 @@ export const GetEmbedFromListing = (
       embedFieldSpacer,
       {
         name: 'Genres',
-        value: track.listing.genres.slice(0, 3).join(', '),
+        value: track.listing.genres.length
+          ? track.listing.genres.slice(0, 3).join(', ')
+          : 'N/A',
         inline: true,
       }
     )
@@ -99,11 +101,14 @@ export const ArtistConfirmButton = (artist: string): MessageActionRow => {
   )
 }
 
-export const ArtistConfirmReply = (
+export const ArtistConfirmReply = async (
   artist: string,
   albumArt?: Buffer
-): MessageOptions => {
+): Promise<MessageOptions> => {
   const image = GetMessageAttachement(albumArt)
+  const color = await getAverageColor(albumArt || PlexLogo, {
+    algorithm: 'dominant',
+  })
 
   const row = ArtistConfirmButton(artist)
 
@@ -112,6 +117,7 @@ export const ArtistConfirmReply = (
     .setDescription(
       `Looks like you might be looking for the artist: **${artist}**.\nShould I queue their discography?`
     )
+    .setColor(color.hex)
     .setThumbnail('attachment://cover.png')
 
   return {

@@ -2,7 +2,9 @@ import chalk from 'chalk'
 import mongoose from 'mongoose'
 import winston from 'winston'
 import { BotInteractionData } from '../analytics/models/interaction'
+import { PlayRecordData } from '../analytics/models/play-record'
 import { Golem } from '../golem'
+import { GoGet } from '../handlers/go-get-handler'
 import { LibIndexData } from '../models/db/lib-index'
 import { ListingData } from '../models/db/listing'
 import { SearchResult } from '../player/track-finder'
@@ -17,6 +19,8 @@ enum DebugCommands {
   Inspect = 'inspect',
   DB = 'db',
   Pry = 'pry',
+  Connections = 'conns',
+  Stats = 'stats',
 }
 
 const debuggerCompletions = [
@@ -28,6 +32,8 @@ const debuggerCompletions = [
   'db listings',
   'db libindex',
   'db analytics',
+  'db plays',
+  'conns',
 ]
 
 const debugLogSearchResult = (result: SearchResult) => {
@@ -53,7 +59,7 @@ export class Debugger {
 
   setPrompt(): void {
     this.state = 'open'
-    rl.setPrompt(`${chalk.bgYellow.black.bold('DEBUG >')} `)
+    rl.setPrompt(`${chalk.bgYellow.bold('DEBUG >')} `)
   }
 
   listen(): void {
@@ -88,12 +94,38 @@ export class Debugger {
         this.setPrompt()
         rl.resume()
         break
+      case DebugCommands.Stats:
+        const id = cmd.split(' ')[1] || Golem.players.keys().next().value || ''
+
+        console.log(
+          GoGet.it({
+            value: cmd
+              .split(' ')
+              .filter((x) => !/^[0-9]*$/.test(x))
+              .join(' '),
+            guildId: id,
+          })
+        )
+        break
+
       case DebugCommands.Inspect:
         console.log(
           `\n${Object.entries(opts)
             .map(([key, val]) => `${key}=${val}`)
             .join('\n')}`
         )
+        break
+      case DebugCommands.Connections:
+        let conns = ''
+        const it = Golem.players.entries()
+        let next = it.next()
+
+        while (!next.done) {
+          conns = conns.concat(`${next.value[0]} => ${next.value[1]}\n`)
+          next = it.next()
+        }
+
+        console.log(conns)
         break
       default:
         const res = Golem.trackFinder.search(cmd)
@@ -112,11 +144,6 @@ export class Debugger {
     const query = new PryQuery(cmd)
     let targetModel: typeof mongoose.Model | undefined = undefined
 
-    console.log(query.filter)
-
-    console.log('using', query.fields)
-    console.log('field length', query.fields.length)
-
     switch (cmd.toLowerCase().split(' ')[1]) {
       case 'listings':
         targetModel = ListingData
@@ -130,6 +157,8 @@ export class Debugger {
       case 'interactions':
         targetModel = BotInteractionData
         break
+      case 'plays':
+        targetModel = PlayRecordData
       default:
         break
     }
@@ -139,6 +168,8 @@ export class Debugger {
         console.log(targetModel.schema)
         return
       }
+
+      console.log(query.filter)
 
       const resultSet = await targetModel.find(query.filter).exec()
 
@@ -150,7 +181,13 @@ export class Debugger {
               )
             )
           })
-        : resultSet
+        : resultSet.map((res) => {
+            return Object.fromEntries(
+              Object.entries(res._doc).filter(
+                ([key, _val]) => key !== 'albumArt'
+              )
+            )
+          })
 
       console.log(results.map((r) => JSON.stringify(r)).join('\n'))
       this.pryLock = false

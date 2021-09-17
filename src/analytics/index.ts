@@ -1,4 +1,5 @@
 import { Document } from 'mongoose'
+import { GolemLogger } from '../utils/logger'
 import { BotInteractionData, GolemBotInteraction } from './models/interaction'
 import { PlayRecord, PlayRecordData } from './models/play-record'
 
@@ -11,7 +12,12 @@ export class Analytics {
     model.save()
   }
 
+  //TODO plays are slightl inaccurate, skips are not tracked
+  // if the track is played alone i dont think?
   static queuePlayRecord(trackId: string, userId: string): void {
+    GolemLogger.info(`queuing play analytic for ${trackId}`, {
+      src: 'analytics',
+    })
     const record = new PlayRecordData({
       trackId,
       userId,
@@ -38,14 +44,23 @@ export class Analytics {
   }
 
   static playRecord(trackId: string): void {
+    GolemLogger.info(`writing play for ${trackId}`, {
+      src: 'analytics',
+    })
     Analytics.writePlayRecord(trackId, 'play')
   }
 
   static skipRecord(trackId: string): void {
+    GolemLogger.info(`writing skip for ${trackId}`, {
+      src: 'analytics',
+    })
     Analytics.writePlayRecord(trackId, 'skip')
   }
 
   static autoplayRecord(trackId: string): void {
+    GolemLogger.info(`writing autoplay for ${trackId}`, {
+      src: 'analytics',
+    })
     Analytics.writePlayRecord(trackId, 'autoplay')
   }
 
@@ -63,6 +78,9 @@ export class Analytics {
     })
 
     if (target) {
+      GolemLogger.info(`final - writing ${type} for ${trackId}`, {
+        src: 'analytics',
+      })
       target.resolutionType = type
 
       target.save()

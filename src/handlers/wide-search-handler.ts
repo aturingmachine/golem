@@ -22,7 +22,7 @@ export const wideSearchHandler = async (
 
   log.debug(`Got ${track.shortName} from id ${listingId}`)
 
-  const { image, embed } = GetEmbedFromListing(track, player)
+  const { image, embed } = await GetEmbedFromListing(track, player)
 
   await interaction.reply({
     embeds: [embed],

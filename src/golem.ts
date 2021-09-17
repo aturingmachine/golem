@@ -5,7 +5,6 @@ import { Client, Intents, Interaction, Message, Snowflake } from 'discord.js'
 import winston from 'winston'
 import { establishConnection } from './db'
 import { EventHandler } from './models/event-handler'
-import { Track } from './models/track'
 import { MusicPlayer } from './player/beta-music-player'
 import { TrackFinder } from './player/track-finder'
 import { TrackLoader } from './player/track-loaders'
@@ -16,12 +15,11 @@ import { GolemLogger, LogSources } from './utils/logger'
 
 export class Golem {
   private static log: winston.Logger
-  private static players: Map<Snowflake, MusicPlayer>
+  public static players: Map<Snowflake, MusicPlayer>
   public static debugger: Debugger
   public static client: Client
   public static loader: TrackLoader
   public static trackFinder: TrackFinder
-  public static libraries: Record<string, Track[]>
 
   static async initialize(): Promise<void> {
     Golem.players = new Map()
@@ -91,6 +89,7 @@ export class Golem {
     const guildId = interaction.guildId
 
     if (!Golem.players.has(guildId)) {
+      this.log.debug(`no player for ${guildId} - creating new`)
       Golem.players.set(
         guildId,
         new MusicPlayer(
@@ -110,13 +109,15 @@ export class Golem {
     searchVal: string | Message | Interaction
   ): MusicPlayer | undefined {
     if (typeof searchVal === 'string') {
-      return Golem.players.get(searchVal)
+      this.log.debug(`string get player for: "${searchVal}"`)
+      return Golem.players.get(searchVal.trim())
     }
 
     if (!searchVal.guild) {
       return undefined
     }
 
+    this.log.debug(`interaction get player for: ${searchVal.guild.id}`)
     return Golem.players.get(searchVal.guild.id)
   }
 

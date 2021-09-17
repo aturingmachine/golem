@@ -5,6 +5,15 @@ import { GolemLogger, LogSources } from '../utils/logger'
 
 export class LegacyCommandHandler {
   static async parseMessage(msg: Message): Promise<void> {
+    // Early exit on a $play
+    if (msg.content.startsWith('$play')) {
+      await RegisteredCommands.goPlay.execute(
+        msg,
+        msg.content.split(' ').slice(1).join(' ')
+      )
+      return
+    }
+
     const subcommand = msg.content.split(' ')[1]
 
     if (!subcommand) {
@@ -97,8 +106,8 @@ export class LegacyCommandHandler {
           inline: true,
         },
         {
-          name: 'clear',
-          value: 'clear the current queue',
+          name: 'stop',
+          value: 'stop playback and clear the queue',
           inline: true,
         },
         {

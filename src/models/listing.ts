@@ -68,7 +68,7 @@ export class Listing {
    * The ObjectId properly parsed
    */
   get id(): string {
-    return this._id.toString()
+    return this._id?.toString() || ''
   }
 
   get names(): ListingNames {
@@ -124,7 +124,7 @@ export class Listing {
       duration: meta.format.duration || 160,
       hasDefaultDuration: !meta.format.duration,
       path,
-      genres: meta.common.genre?.map((g) => g.split(',')).flat(1) || [],
+      genres: meta.common.genre?.map((g) => g.split('/')).flat(1) || [],
       albumArt: meta.common.picture
         ? await sharp(meta.common.picture[0].data)
             .resize(100, 100)

@@ -23,7 +23,7 @@ const execute = async (
   interaction: CommandInteraction | Message,
   playlist?: string
 ): Promise<void> => {
-  log.debug(`invoked with ${playlist}`)
+  log.debug('invoked')
   const player = Golem.getOrCreatePlayer(interaction)
 
   if (!player) {
@@ -37,6 +37,8 @@ const execute = async (
   if (interaction instanceof CommandInteraction) {
     listName = interaction.options.getString('playlist') || ''
   }
+
+  log.debug(`invoked with ${playlist}`)
 
   if (listName.length) {
     log.debug(`Attempting to find playlist`)

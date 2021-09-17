@@ -27,7 +27,7 @@ export class TrackQueue {
   }
 
   skip(): void {
-    log.info(`Skipping ${this._queue[0].track.listing.name}`)
+    log.info(`Skipping ${this._queue[0]?.track.listing.name}`)
     this._queue.shift()
   }
 
@@ -38,7 +38,7 @@ export class TrackQueue {
 
   peek(): Track | undefined {
     log.info('Peeking')
-    return this._queue[0].track
+    return this._queue[0]?.track
   }
 
   peekDeep(depth = 5): Track[] {
@@ -69,7 +69,7 @@ export class TrackQueue {
    * Get rough runtime in seconds
    */
   get runTime(): number {
-    const estRunTime = this._queue.slice(1).reduce((prev, curr) => {
+    const estRunTime = this._queue.reduce((prev, curr) => {
       return prev + curr.track.listing.duration
     }, 0)
 

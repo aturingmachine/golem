@@ -5,8 +5,8 @@ import { opts } from './config'
 
 const { combine, timestamp, colorize, printf, json, splat } = winston.format
 
-const consoleLogFormat = printf(({ level, message, _timestamp, src }) => {
-  // const d = new Date(timestamp)
+const consoleLogFormat = printf(({ level, message, timestamp, src }) => {
+  const d = new Date(timestamp)
 
   // const time = d.toLocaleTimeString()
   // const spaceIndex = time.indexOf(' ')
@@ -15,9 +15,11 @@ const consoleLogFormat = printf(({ level, message, _timestamp, src }) => {
   //   .concat(`.${d.getMilliseconds()}`)
   //   .concat(time.slice(spaceIndex))
 
+  const timeString = `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`
+
   const srcColor = LogSourceColors[src as LogSources] || chalk.white
 
-  return `<${level}> [${srcColor(src)}] ${message}`
+  return `${timeString} <${level}> [${srcColor(src)}] ${message}`
 })
 
 const id = winston.format((info) => {
@@ -71,22 +73,22 @@ enum LogSources {
 
 const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   analytics: chalk.cyanBright,
-  'artist-button': chalk.white,
+  'artist-button': chalk.magentaBright,
   'button-handler': chalk.blue,
   'cmd-deploy': chalk.green,
   'cmd-register': chalk.yellow,
   'go-pause': chalk.magenta,
-  'go-peek': chalk.white,
+  'go-peek': chalk.magentaBright,
   'go-play': chalk.blue,
   'go-playlist': chalk.green,
   'go-search': chalk.yellow,
   'go-shuffle': chalk.magenta,
-  'go-skip': chalk.white,
+  'go-skip': chalk.magentaBright,
   'go-stop': chalk.blue,
   'interaction-create': chalk.green,
   'legacy-handler': chalk.green,
   'message-create': chalk.yellow,
-  'music-player': chalk.white,
+  'music-player': chalk.magentaBright,
   'playlist-menu': chalk.yellow,
   'wide-search': chalk.magenta,
   app: chalk.blue,
