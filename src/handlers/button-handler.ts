@@ -1,5 +1,5 @@
 import { MessageComponentInteraction } from 'discord.js'
-import { logger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { artistPlayButtonHandler } from './artist-play-handler'
 import { playlistMenuHandler } from './playlist-menu-handler'
 import { wideSearchHandler } from './wide-search-handler'
@@ -15,7 +15,7 @@ export const ButtonIdPrefixes = {
 export const buttonHandler = async (
   interaction: MessageComponentInteraction
 ): Promise<void> => {
-  logger.info(`${interaction.customId}`, { src: 'Button Handler' })
+  GolemLogger.info(`${interaction.customId}`, { src: LogSources.ButtonHandler })
   if (
     [
       ButtonIdPrefixes.abortArtistPlay,

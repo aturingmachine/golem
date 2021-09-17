@@ -1,6 +1,6 @@
+import md5 from 'md5'
 import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
-import { v4 } from 'uuid'
 import { Config } from '../utils/config'
 
 type ListingNameStyles = {
@@ -13,50 +13,73 @@ type ListingNames = {
   full: ListingNameStyles
 }
 
-export type ListingBackupInfo = Omit<ListingInfo, 'albumArt'> & {
-  albumArt: string
-}
-
 export type ListingInfo = {
-  id: string
+  trackId: string
   artist: string
   album: string
-  track: string
+  title: string
   duration: number
   hasDefaultDuration: boolean
   path: string
+  genres: string[]
   albumArt?: Buffer
 }
 
+/**
+ * Listing will be the data record itself, track will be
+ * the implementation that we play.
+ *
+ * Tracks will also be stored in the search list, that way
+ * we can write helper methods for naming and shit
+ *
+ * Listing should just be for reading from file and db.
+ */
 export class Listing {
-  id!: string
+  /**
+   * The MongoId, is actually an ObjectId instance
+   */
+  _id!: string
+  /**
+   * An attempt at a consistent unique id made by md5 hashing
+   * some info of the listing
+   */
+  trackId!: string
   artist!: string
   album!: string
-  track!: string
+  title!: string
   duration!: number
   hasDefaultDuration!: boolean
   path!: string
+  genres!: string[]
   albumArt?: Buffer
 
   constructor(info: ListingInfo) {
-    this.id = info.id
+    this.trackId = info.trackId
     this.artist = info.artist
     this.album = info.album
-    this.track = info.track
+    this.title = info.title
     this.duration = info.duration
     this.path = info.path
+    this.genres = info.genres
     this.albumArt = info.albumArt
+  }
+
+  /**
+   * The ObjectId properly parsed
+   */
+  get id(): string {
+    return this._id?.toString() || ''
   }
 
   get names(): ListingNames {
     return {
       short: {
-        piped: `${this.artist} | ${this.track}`,
-        dashed: `${this.artist} - ${this.track}`,
+        piped: `${this.artist} | ${this.title}`,
+        dashed: `${this.artist} - ${this.title}`,
       },
       full: {
-        piped: `${this.artist} | ${this.album} | ${this.track}`,
-        dashed: `${this.artist} - ${this.album} - ${this.track}`,
+        piped: `${this.artist} | ${this.album} | ${this.title}`,
+        dashed: `${this.artist} - ${this.album} - ${this.title}`,
       },
     }
   }
@@ -66,15 +89,15 @@ export class Listing {
   }
 
   get pipedName(): string {
-    return `${this.artist} | ${this.album} | ${this.track}`
+    return `${this.artist} | ${this.album} | ${this.title}`
   }
 
   toString(): string {
-    return `${this.artist} - ${this.album} - ${this.track}`
+    return `${this.artist} - ${this.album} - ${this.title}`
   }
 
   get markup(): string {
-    return `**${this.artist}**: _${this.album}_ - ${this.track}`
+    return `**${this.artist}**: _${this.album}_ - ${this.title}`
   }
 
   get cleanDuration(): string {
@@ -83,35 +106,27 @@ export class Listing {
 
   static async fromMeta(meta: IAudioMetadata, path: string): Promise<Listing> {
     const split = path.replace(Config.libraryPath, '').split('/')
+    const artist = meta.common.artist || meta.common.artists?.[0] || split[1]
+    const album = meta.common.album || split[2]
+    const track = meta.common.title || split[3]
+    const identifier =
+      meta.common.musicbrainz_trackid ||
+      meta.common.musicbrainz_recordingid ||
+      meta.common.isrc?.[0] ||
+      ''
+    const id = md5(`${artist} - ${album} - ${track} - ${identifier}`)
 
     return new Listing({
-      id: v4(),
-      artist: meta.common.artist || meta.common.artists?.[0] || split[1],
-      album: meta.common.album || split[2],
-      track: meta.common.title || split[3],
+      trackId: id,
+      artist,
+      album,
+      title: track,
       duration: meta.format.duration || 160,
       hasDefaultDuration: !meta.format.duration,
-      path: path,
+      path,
+      genres: meta.common.genre?.map((g) => g.split('/')).flat(1) || [],
       albumArt: meta.common.picture
         ? await sharp(meta.common.picture[0].data)
-            .resize(100, 100)
-            .toFormat('png')
-            .toBuffer()
-        : undefined,
-    })
-  }
-
-  static async fromBackup(datum: ListingBackupInfo): Promise<Listing> {
-    return new Listing({
-      id: datum.id,
-      artist: datum.artist,
-      album: datum.album,
-      track: datum.track,
-      duration: datum.duration,
-      hasDefaultDuration: datum.hasDefaultDuration,
-      path: datum.path,
-      albumArt: datum.albumArt
-        ? await sharp(Buffer.from(datum.albumArt, 'base64'))
             .resize(100, 100)
             .toFormat('png')
             .toBuffer()

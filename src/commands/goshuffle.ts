@@ -1,20 +1,28 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
-import { Player } from '../player/music-player'
-import { logger } from '../utils/logger'
+import { CommandNames } from '../constants'
+import { Golem } from '../golem'
+import { GolemLogger, LogSources } from '../utils/logger'
 
 const data = new SlashCommandBuilder()
-  .setName('goshuffle')
+  .setName(CommandNames.slash.shuffle)
   .setDescription('shuffle the current queue')
 
 const execute = async (
   interaction: CommandInteraction | Message
 ): Promise<void> => {
-  logger.info('invoked', { src: 'GoShuffle' })
+  const player = Golem.getPlayer(interaction)
 
-  if (Player.stats.count > 0) {
+  if (!player) {
+    await interaction.reply('Not in a valid voice channel')
+    return
+  }
+
+  GolemLogger.info('invoked', { src: LogSources.GoShuffle })
+
+  if (player.stats.count > 0) {
     await interaction.reply('Shuffling the queue')
-    Player.shuffle()
+    player.shuffle()
   } else {
     await interaction.reply('No queue to shuffle.')
   }

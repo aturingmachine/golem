@@ -1,13 +1,14 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
-import { TrackFinder } from '../player/track-finder'
-import { logger } from '../utils/logger'
+import { CommandNames } from '../constants'
+import { Golem } from '../golem'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { getSearchReply } from '../utils/message-utils'
 
-const log = logger.child({ src: 'GoSearch' })
+const log = GolemLogger.child({ src: LogSources.GoSearch })
 
 const data = new SlashCommandBuilder()
-  .setName('gosearch')
+  .setName(CommandNames.slash.search)
   .setDescription('Search for tracks')
   .addStringOption((option) =>
     option
@@ -46,7 +47,7 @@ const execute = async (
     await interaction.reply('No search string provided.')
   } else {
     searchQuery = searchQuery.trim()
-    const results = TrackFinder.searchMany(searchQuery)
+    const results = Golem.trackFinder.searchMany(searchQuery)
 
     if (results.length === 0) {
       log.warn(`No results for ${searchQuery}`)

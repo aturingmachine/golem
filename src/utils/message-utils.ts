@@ -1,5 +1,3 @@
-import fs from 'fs'
-import path from 'path'
 import {
   EmbedFieldData,
   MessageActionRow,
@@ -10,54 +8,73 @@ import {
   MessageSelectMenu,
   MessageSelectOptionData,
 } from 'discord.js'
-import { Constants } from '../constants'
+import { getAverageColor } from 'fast-average-color-node'
+import { Constants, PlexLogo } from '../constants'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
-import { Listing } from '../models/listing'
-import { Player } from '../player/music-player'
+import { MusicPlayer } from '../player/beta-music-player'
 import { Plex } from '../plex'
+import { Track } from '~/models/track'
+import { GolemLogger } from './logger'
 import { humanReadableDuration } from './time-utils'
 
-export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
-  return new MessageAttachment(
-    albumArt || fs.readFileSync(path.resolve(__dirname, '../../plexlogo.jpg')),
-    'cover.png'
-  )
+const embedFieldSpacer = {
+  name: '\u200B',
+  value: '\u200B',
+  inline: true,
 }
 
-export const GetEmbedFromListing = (
-  listing: Listing,
-  isQueued: boolean
-): { embed: MessageEmbed; image: MessageAttachment } => {
-  const image = GetMessageAttachement(listing.albumArt)
+export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
+  return new MessageAttachment(albumArt || PlexLogo, 'cover.png')
+}
+
+export const GetEmbedFromListing = async (
+  track: Track,
+  player: MusicPlayer
+): Promise<{ embed: MessageEmbed; image: MessageAttachment }> => {
+  const color = await getAverageColor(track.listing.albumArt || PlexLogo, {
+    algorithm: 'dominant',
+  })
+  const image = GetMessageAttachement(track.listing.albumArt)
 
   const embed = new MessageEmbed()
-    .setTitle(isQueued ? 'Added to Queue' : 'Now Playing')
+    .setTitle(player.isPlaying ? 'Added to Queue' : 'Now Playing')
     .setDescription(
-      isQueued ? `Starts In: ${Player.stats.hTime}` : 'Starting Now'
+      player.isPlaying ? `Starts In: ${player.stats.hTime}` : 'Starting Now'
     )
+    .setColor(color.hex)
     .setThumbnail(`attachment://cover.png`)
     .setFields(
       {
         name: 'Artist',
-        value: listing.artist,
+        value: track.listing.artist,
       },
       {
         name: 'Album',
-        value: listing.album,
+        value: track.listing.album,
         inline: true,
       },
+      embedFieldSpacer,
       {
         name: 'Duration',
         value: `${
-          listing.hasDefaultDuration
+          track.listing.hasDefaultDuration
             ? '-'
-            : humanReadableDuration(listing.duration)
+            : humanReadableDuration(track.listing.duration)
         }`,
         inline: true,
       },
       {
         name: 'Track',
-        value: listing.track,
+        value: track.listing.title,
+        inline: true,
+      },
+      embedFieldSpacer,
+      {
+        name: 'Genres',
+        value: track.listing.genres.length
+          ? track.listing.genres.slice(0, 3).join(', ')
+          : 'N/A',
+        inline: true,
       }
     )
 
@@ -84,11 +101,14 @@ export const ArtistConfirmButton = (artist: string): MessageActionRow => {
   )
 }
 
-export const ArtistConfirmReply = (
+export const ArtistConfirmReply = async (
   artist: string,
   albumArt?: Buffer
-): MessageOptions => {
+): Promise<MessageOptions> => {
   const image = GetMessageAttachement(albumArt)
+  const color = await getAverageColor(albumArt || PlexLogo, {
+    algorithm: 'dominant',
+  })
 
   const row = ArtistConfirmButton(artist)
 
@@ -97,6 +117,7 @@ export const ArtistConfirmReply = (
     .setDescription(
       `Looks like you might be looking for the artist: **${artist}**.\nShould I queue their discography?`
     )
+    .setColor(color.hex)
     .setThumbnail('attachment://cover.png')
 
   return {
@@ -112,22 +133,18 @@ export const centerString = (longest: number, str: string): string => {
 
 export const getSearchReply = (
   query: string,
-  results: Listing[],
+  results: Track[],
   totalCount: number
 ): MessageOptions => {
   const fields: EmbedFieldData[] = results
     .map((res, index) => ({
       name: `Hit ${index + 1}`,
-      value: new Listing(res).names.short.piped,
+      value: res.longName,
       inline: true,
     }))
     .reduce((prev, curr, index) => {
       if (index && index % 2 === 0) {
-        prev.push({
-          name: '\u200B',
-          value: '\u200B',
-          inline: true,
-        })
+        prev.push(embedFieldSpacer)
       }
       prev.push(curr)
 
@@ -139,11 +156,7 @@ export const getSearchReply = (
   const embed = new MessageEmbed()
     .setTitle(`Top ${results.length} for "${query.toUpperCase()}"`)
     .setDescription(`Taken from **${totalCount}** total results`)
-    .setFields(...fields, {
-      name: '\u200B',
-      value: '\u200B',
-      inline: true,
-    })
+    .setFields(...fields, embedFieldSpacer)
     .setColor(Constants.baseColor)
 
   return {
@@ -153,12 +166,15 @@ export const getSearchReply = (
 
 export const GetWideSearchEmbed = (
   query: string,
-  results: Listing[]
+  results: Track[]
 ): MessageOptions => {
+  GolemLogger.debug(
+    `creating wide search embed: ${query}, ${results.length} hits`
+  )
   const options: MessageSelectOptionData[] = results.slice(0, 25).map((r) => {
     return {
-      label: r.names.short.dashed.slice(0, 90),
-      value: r.id,
+      label: r.shortName,
+      value: r.listing.id,
     }
   })
 

@@ -2,13 +2,15 @@ import mongoose, { Schema } from 'mongoose'
 import { Listing } from '../listing'
 
 const schema = new Schema<Listing>({
+  trackId: String,
   artist: String,
   album: String,
-  track: String,
+  title: String,
   duration: Number,
   hasDefaultDuration: Boolean,
   path: String,
+  genres: [String],
   albumArt: Buffer,
 })
 
-export const ListingSchema = mongoose.model<Listing>('Listing', schema)
+export const ListingData = mongoose.model<Listing>('Listing', schema)

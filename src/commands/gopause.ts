@@ -1,19 +1,27 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
-import { Player } from '../player/music-player'
-import { logger } from '../utils/logger'
+import { CommandNames } from '../constants'
+import { Golem } from '../golem'
+import { GolemLogger, LogSources } from '../utils/logger'
 
 const data = new SlashCommandBuilder()
-  .setName('gopause')
+  .setName(CommandNames.slash.pause)
   .setDescription('Pause playback')
 
 const execute = async (
   interaction: CommandInteraction | Message
 ): Promise<void> => {
-  logger.info('Executing', { src: 'GoPause' })
+  const player = Golem.getPlayer(interaction)
+
+  if (!player) {
+    await interaction.reply('Not in a valid voice channel')
+    return
+  }
+
+  GolemLogger.info('Executing', { src: LogSources.GoPause })
 
   await interaction.reply('Pausing playback...')
-  Player.pause()
+  player.pause()
 }
 
 export default { data, execute }

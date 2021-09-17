@@ -1,19 +1,21 @@
 import { MessageComponentInteraction } from 'discord.js'
-import { Player } from '../player/music-player'
-import { TrackFinder } from '../player/track-finder'
+import { Golem } from '../golem'
 import { shuffleArray } from '../utils/list-utils'
-import { logger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { Replier } from '../utils/replies'
 import { ButtonIdPrefixes } from './button-handler'
 
-const log = logger.child({ src: 'artist button handler' })
+const log = GolemLogger.child({ src: LogSources.ArtistButton })
 
 export const artistPlayButtonHandler = async (
   interaction: MessageComponentInteraction
 ): Promise<void> => {
-  const guild = interaction.client.guilds.cache.get(interaction.guildId || '')
-  const member = guild?.members.cache.get(interaction.member?.user.id || '')
-  const voiceChannel = member?.voice.channel
+  const player = Golem.getOrCreatePlayer(interaction)
+
+  if (!player) {
+    await interaction.reply('Not in a valid voice channel.')
+    return
+  }
 
   const artist = interaction.customId
     .replace(ButtonIdPrefixes.confirmArtistPlay, '')
@@ -29,19 +31,11 @@ export const artistPlayButtonHandler = async (
       components: [],
     })
 
-    const artistTracks = TrackFinder.searchMany(artist).filter(
-      (l) => l.artist.toLowerCase() === artist.toLowerCase()
-    )
+    const artistTracks = Golem.trackFinder
+      .searchMany(artist)
+      .filter((l) => l.listing.artist.toLowerCase() === artist.toLowerCase())
 
-    if (interaction.guild) {
-      Player.start({
-        channelId: voiceChannel?.id || '',
-        guildId: interaction.guildId || '',
-        adapterCreator: interaction.guild.voiceAdapterCreator,
-      })
-    }
-
-    Player.enqueueMany(artistTracks)
+    player.enqueueMany(interaction.member?.user.id || '', artistTracks)
   }
   // Shuffle
   else if (interaction.customId.includes(ButtonIdPrefixes.shuffleArtistPlay)) {
@@ -52,19 +46,14 @@ export const artistPlayButtonHandler = async (
       components: [],
     })
 
-    const artistTracks = TrackFinder.searchMany(artist).filter(
-      (l) => l.artist.toLowerCase() === artist.toLowerCase()
+    const artistTracks = Golem.trackFinder
+      .searchMany(artist)
+      .filter((track) => track.isArtist(artist))
+
+    player.enqueueMany(
+      interaction.member?.user.id || '',
+      shuffleArray(artistTracks)
     )
-
-    if (interaction.guild) {
-      Player.start({
-        channelId: voiceChannel?.id || '',
-        guildId: interaction.guildId || '',
-        adapterCreator: interaction.guild.voiceAdapterCreator,
-      })
-    }
-
-    Player.enqueueMany(shuffleArray(artistTracks))
   }
   // Cancel
   else if (interaction.customId.includes(ButtonIdPrefixes.abortArtistPlay)) {

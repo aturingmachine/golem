@@ -2,6 +2,10 @@ import { config } from 'dotenv'
 config()
 
 export class Config {
+  static get libraries(): string[] {
+    return process.env.LIBRARY_PATHS?.split(',') || []
+  }
+
   static get token(): string {
     return process.env.TOKEN || ''
   }
@@ -39,13 +43,15 @@ export class Config {
   }
 }
 
-export const debug = process.argv.slice(2).includes('debug')
-export const noRun = process.argv.slice(2).includes('noRun')
+const cliArgs = process.argv.slice(2)
 
 export const opts = {
-  debug: process.argv.slice(2).includes('debug'),
-  noRun: process.argv.slice(2).includes('noRun'),
-  bustCache: process.argv.slice(2).includes('bust-cache'),
-  verbose: process.argv.slice(2).includes('verbose'),
-  image: process.argv.slice(2).includes('image'),
+  debug: cliArgs.includes('debug'),
+  noRun: cliArgs.includes('noRun'),
+  bustCache: cliArgs.includes('bust-cache'),
+  verbose: cliArgs.includes('verbose'),
+  image: cliArgs.includes('image'),
+  loadTest: cliArgs.includes('load-test'),
+  logLevel:
+    cliArgs.includes('debug') || cliArgs.includes('verbose') ? 'debug' : 'info',
 }
