@@ -8,14 +8,10 @@ const { combine, timestamp, colorize, printf, json, splat } = winston.format
 const consoleLogFormat = printf(({ level, message, timestamp, src }) => {
   const d = new Date(timestamp)
 
-  // const time = d.toLocaleTimeString()
-  // const spaceIndex = time.indexOf(' ')
-  // const timeString = time
-  //   .slice(0, spaceIndex)
-  //   .concat(`.${d.getMilliseconds()}`)
-  //   .concat(time.slice(spaceIndex))
-
-  const timeString = `${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`
+  const timeString = `${d.getHours()}:${d.getMinutes()}:${d
+    .getSeconds()
+    .toString()
+    .padStart(2, '0')}`
 
   const srcColor = LogSourceColors[src as LogSources] || chalk.white
 
@@ -57,6 +53,7 @@ enum LogSources {
   GoShuffle = 'go-shuffle',
   GoSkip = 'go-skip',
   GoStop = 'go-stop',
+  GoMix = 'go-mix',
   InteractionCreate = 'interaction-create',
   LegacyHandler = 'legacy-handler',
   Loader = 'loader',
@@ -69,6 +66,8 @@ enum LogSources {
   WideSearch = 'wide-search',
   DatabaseConnection = 'db-con',
   Analytics = 'analytics',
+  LastFm = 'last-fm',
+  Mixer = 'mixer',
 }
 
 const LogSourceColors: Record<LogSources, chalk.Chalk> = {
@@ -99,6 +98,9 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   queue: chalk.blue,
   search: chalk.green,
   'db-con': chalk.cyan,
+  'last-fm': chalk.magentaBright,
+  'go-mix': chalk.greenBright,
+  mixer: chalk.cyanBright,
 }
 
 export { logger as GolemLogger, LogSources }

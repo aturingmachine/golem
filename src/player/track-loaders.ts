@@ -1,4 +1,5 @@
 import * as mm from 'music-metadata'
+import { Golem } from '../golem'
 import { LibIndexData } from '../models/db/lib-index'
 import { ListingData } from '../models/db/listing'
 import { Listing, ListingInfo } from '../models/listing'
@@ -55,6 +56,8 @@ export class TrackLoader {
         log.error(error)
         errorCount++
       }
+
+      Golem.addProgress(50 / paths.length / Config.LibraryPaths.length)
     }
 
     log.warn(`Encountered ${errorCount} errors while loading library.`)
@@ -80,6 +83,7 @@ export class TrackLoader {
 
         for (const datum of data) {
           this.listings.push(new Listing(datum))
+          Golem.addProgress(50 / data.length / Config.LibraryPaths.length)
         }
       } catch (error) {
         log.warn('unable to parse backup')

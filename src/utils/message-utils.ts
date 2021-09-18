@@ -1,5 +1,7 @@
 import {
   EmbedFieldData,
+  Interaction,
+  Message,
   MessageActionRow,
   MessageAttachment,
   MessageButton,
@@ -12,11 +14,11 @@ import { getAverageColor } from 'fast-average-color-node'
 import { Constants, PlexLogo } from '../constants'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
 import { Listing } from '../models/listing'
-import { MusicPlayer } from '../player/beta-music-player'
+import { MusicPlayer } from '../player/music-player'
 import { Plex } from '../plex'
 import { Config } from './config'
 import { GolemLogger } from './logger'
-import { humanReadableDuration } from './time-utils'
+import { humanReadableDuration, humanReadableTime } from './time-utils'
 
 const embedFieldSpacer = {
   name: '\u200B',
@@ -29,22 +31,51 @@ const averageColor = (img?: Buffer) =>
     algorithm: Config.Image.ColorAlg,
   })
 
+export const userFrom = (interaction: Message | Interaction): string =>
+  interaction.member?.user.id || ''
+
 export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
   return new MessageAttachment(albumArt || PlexLogo, 'cover.png')
 }
 
+const getDurationBar = (current: number, total: number): string => {
+  const ratio = (current - total) / total
+  console.log('>>> current', current)
+  console.log('>>> total', total)
+  console.log('>>> ratio', ratio)
+  console.log('>>> hash calced', Math.round(20 * ratio))
+  return ''.padEnd(Math.round(20 * ratio), '#').padEnd(20, '-')
+}
+
 export const GetEmbedFromListing = async (
   listing: Listing,
-  player: MusicPlayer
+  player: MusicPlayer,
+  context: 'queue' | 'playing'
 ): Promise<{ embed: MessageEmbed; image: MessageAttachment }> => {
+  const isQueue = context === 'queue'
   const color = await averageColor(listing.albumArt)
   const image = GetMessageAttachement(listing.albumArt)
 
+  const title = isQueue
+    ? player.isPlaying
+      ? 'Added to Queue'
+      : 'Now Playing'
+    : 'Now Playing'
+
+  const description = isQueue
+    ? player.isPlaying
+      ? `Starts In: ${player.stats.hTime}`
+      : 'Starting Now'
+    : player.currentResource
+    ? `[${getDurationBar(
+        player.currentTrackRemaining,
+        player.currentResource.metadata.duration
+      )}] - ${humanReadableTime(player.currentTrackRemaining)}`
+    : `Remaining: ${humanReadableTime(player.currentTrackRemaining)}`
+
   const embed = new MessageEmbed()
-    .setTitle(player.isPlaying ? 'Added to Queue' : 'Now Playing')
-    .setDescription(
-      player.isPlaying ? `Starts In: ${player.stats.hTime}` : 'Starting Now'
-    )
+    .setTitle(title)
+    .setDescription(description)
     .setColor(color.hex)
     .setThumbnail(`attachment://cover.png`)
     .setFields(
@@ -221,4 +252,18 @@ export const GetPlaylistEmbed = (offset = 25): MessageOptions => {
     content: `Found **${Plex.playlists.length}** Playlists`,
     components: [row],
   }
+}
+
+export const GetPeekEmbed = (player: MusicPlayer): MessageEmbed => {
+  const peekedTracks = player.peek()
+
+  const fields = peekedTracks.map((track, index) => ({
+    name: index === 0 ? 'Up Next' : `Position: ${index + 1}`,
+    value: track.listing.longName,
+  })) as EmbedFieldData[]
+
+  return new MessageEmbed()
+    .setTitle('Upcoming Tracks')
+    .setDescription(`${player.trackCount} Queued Tracks`)
+    .setFields(...fields)
 }

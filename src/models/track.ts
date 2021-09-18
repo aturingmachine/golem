@@ -30,6 +30,7 @@ export class Track {
   toAudioResource(): AudioResource {
     this.log.debug('converting to audio resource')
     return createAudioResource(this.listing.path, {
+      inlineVolume: true,
       metadata: {
         internalId: this.internalId,
         trackId: this.listing.trackId,

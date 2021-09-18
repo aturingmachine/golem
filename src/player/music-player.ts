@@ -111,6 +111,8 @@ export class MusicPlayer {
     this.log.info(`force stopping player`)
     this.audioPlayer.stop(true)
     this.queueLock = false
+    // hack to resolve the player becoming unstartable after stopping
+    this.disconnect()
   }
 
   public skip(): void {
@@ -175,6 +177,7 @@ export class MusicPlayer {
 
     const next = nextTrack.toAudioResource()
     this.currentResource = next as GolemTrackAudioResource
+    this.currentResource.volume?.setVolume(0.35)
     this.audioPlayer.play(this.currentResource)
 
     this.queueLock = false

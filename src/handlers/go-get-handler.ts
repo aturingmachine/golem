@@ -1,6 +1,6 @@
 import { MessageOptions } from 'discord.js'
 import { Golem } from '../golem'
-import { MusicPlayer } from '../player/beta-music-player'
+import { MusicPlayer } from '../player/music-player'
 import { Plex } from '../plex'
 import { GolemLogger } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
@@ -53,7 +53,8 @@ export class GoGet {
     if (player && player.currentResource) {
       const assets = await GetEmbedFromListing(
         player.currentResource?.metadata.track.listing,
-        player
+        player,
+        'playing'
       )
 
       return {

@@ -1,4 +1,5 @@
 import axios, { AxiosInstance } from 'axios'
+import { Golem } from '../golem'
 import { TrackFinder } from '../player/track-finder'
 import { Config, opts } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -80,6 +81,7 @@ export const Plex: Plex = {
           trackFinder.findIdByPath(path)
         ),
       })
+      Golem.addProgress(10 / playlistRecords.length)
     })
     log.info('Playlists Mapped')
   },

@@ -8,7 +8,7 @@ export const Constants = {
   baseColor: '#f900d5' as ColorResolvable,
 }
 
-const CommandBase = {
+export const CommandBase = {
   help: 'help',
   get: 'get',
   pause: 'pause',
@@ -19,6 +19,7 @@ const CommandBase = {
   shuffle: 'shuffle',
   skip: 'skip',
   stop: 'stop',
+  mix: 'mix',
 }
 
 const SlashCommands = {
@@ -31,6 +32,7 @@ const SlashCommands = {
   shuffle: `go${CommandBase.shuffle}`,
   skip: `go${CommandBase.skip}`,
   stop: `go${CommandBase.stop}`,
+  mix: `go${CommandBase.mix}`,
 }
 
 export const CommandNames = {

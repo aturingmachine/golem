@@ -18,6 +18,9 @@ type ConfigValues = {
     Username: string
     Password: string
   }
+  LastFm: {
+    APIKey: string
+  }
 }
 
 export class Config {
@@ -54,6 +57,12 @@ export class Config {
       AppId: process.env.PLEX_APPLICATION_ID || '',
       Username: process.env.PLEX_USERNAME || '',
       Password: process.env.PLEX_PASSWORD || '',
+    }
+  }
+
+  static get LastFm(): ConfigValues['LastFm'] {
+    return {
+      APIKey: process.env.LAST_FM_API_KEY || '',
     }
   }
 }

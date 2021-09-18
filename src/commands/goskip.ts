@@ -3,6 +3,7 @@ import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { GetEmbedFromListing } from '../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoSkip })
 
@@ -36,12 +37,23 @@ const execute = async (
     skipCount = interaction.options.getInteger('skip-count') || 1
   }
 
-  await interaction.reply('Skipping!')
-
   for (let i = 0; i < skipCount; i++) {
     log.debug('Attempting to skip')
-    if (player.nowPlaying) {
+    if (player.nowPlaying && player.currentResource) {
       player.skip()
+      const assets = await GetEmbedFromListing(
+        player.currentResource.metadata.track.listing,
+        player,
+        'playing'
+      )
+
+      await interaction.reply({
+        content: 'Skipped!',
+        embeds: [assets.embed],
+        files: [assets.image],
+      })
+    } else {
+      await interaction.reply('No track to skip')
     }
   }
 }

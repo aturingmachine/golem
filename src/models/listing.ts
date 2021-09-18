@@ -3,6 +3,11 @@ import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
 import { Config } from '../utils/config'
 
+interface MusicBrainzData {
+  artistId?: string
+  trackId?: string
+}
+
 type ListingNameStyles = {
   piped: string
   dashed: string
@@ -24,6 +29,7 @@ export type ListingInfo = {
   genres: string[]
   moods: string[]
   key: string
+  mb: MusicBrainzData
   bpm?: number
   albumArt?: Buffer
 }
@@ -56,6 +62,7 @@ export class Listing {
   genres!: string[]
   key!: string
   moods!: string[]
+  mb: MusicBrainzData
   bpm?: number
   albumArt?: Buffer
 
@@ -70,6 +77,7 @@ export class Listing {
     this.key = info.key
     this.moods = info.moods
     this.bpm = info.bpm
+    this.mb = info.mb
     this.albumArt = info.albumArt
   }
 
@@ -160,6 +168,13 @@ export class Listing {
     const moods: string[] = meta.native['ID3v2.3']
       ?.filter((t) => t.id === 'TXXX:mood' && !t.value.includes('Not '))
       .map((t) => t.value)
+    const artistMBId = meta.common.musicbrainz_artistid?.[0] || ''
+    const trackMbId = meta.common.musicbrainz_trackid?.[0] || ''
+
+    const mb: MusicBrainzData = {
+      artistId: artistMBId,
+      trackId: trackMbId,
+    }
 
     return new Listing({
       trackId: id,
@@ -173,6 +188,7 @@ export class Listing {
       key,
       moods: moods,
       bpm: bpm ? parseInt(bpm, 10) : undefined,
+      mb,
       albumArt: meta.common.picture
         ? await sharp(meta.common.picture[0].data)
             .resize(100, 100)

@@ -1,13 +1,9 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
-import {
-  CommandInteraction,
-  EmbedFieldData,
-  Message,
-  MessageEmbed,
-} from 'discord.js'
+import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { GetPeekEmbed } from '../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoPeek })
 
@@ -27,17 +23,7 @@ const execute = async (
     return
   }
 
-  const peekedTracks = player.peek()
-
-  const fields = peekedTracks.map((track, index) => ({
-    name: index === 0 ? 'Up Next' : `Position: ${index + 1}`,
-    value: track.listing.longName,
-  })) as EmbedFieldData[]
-
-  const embed = new MessageEmbed()
-    .setTitle('Upcoming Tracks')
-    .setDescription(`${player.trackCount} Queued Tracks`)
-    .setFields(...fields)
+  const embed = GetPeekEmbed(player)
 
   await interaction.reply({ embeds: [embed] })
 }

@@ -95,7 +95,11 @@ const execute = async (
     }
     // Handle Catch-All queries
     else {
-      const { image, embed } = await GetEmbedFromListing(res.listing, player)
+      const { image, embed } = await GetEmbedFromListing(
+        res.listing,
+        player,
+        'queue'
+      )
 
       await interaction.reply({
         embeds: [embed],

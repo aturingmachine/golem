@@ -3,15 +3,41 @@ import { RegisteredCommands } from '../commands'
 import { CommandNames } from '../constants'
 import { GolemLogger, LogSources } from '../utils/logger'
 
-export class LegacyCommandHandler {
-  static async parseMessage(msg: Message): Promise<void> {
-    // Early exit on a $play
-    if (msg.content.startsWith('$play')) {
+export async function AliasedCommand(msg: Message): Promise<boolean> {
+  const command = msg.content.split(' ').slice(0, 1).join(' ')
+  const args = msg.content.split(' ').slice(1).join(' ')
+
+  switch (command) {
+    case '$play':
       await RegisteredCommands.goPlay.execute(
         msg,
         msg.content.split(' ').slice(1).join(' ')
       )
-      return
+      break
+    case '$np':
+    case '$nowplaying':
+      await RegisteredCommands.goGet.execute(msg, 'np')
+      break
+    case '$stop':
+      await RegisteredCommands.goStop.execute(msg)
+      break
+    case '$skip':
+      await RegisteredCommands.goSkip.execute(msg, parseInt(args, 10))
+      break
+    default:
+      return false
+  }
+  return true
+}
+
+export class LegacyCommandHandler {
+  static async parseMessage(msg: Message): Promise<void> {
+    // Early exit on an aliased command
+    if (!msg.content.startsWith('$go ') && msg.content.startsWith('$')) {
+      const hasRun = await AliasedCommand(msg)
+      if (hasRun) {
+        return
+      }
     }
 
     const subcommand = msg.content.split(' ')[1]
@@ -73,6 +99,12 @@ export class LegacyCommandHandler {
       case CommandNames.shuffle:
         await RegisteredCommands.goShuffle.execute(msg)
         break
+      case CommandNames.mix:
+        await RegisteredCommands.goMix.execute(
+          msg,
+          args.split(' ').slice(0, 1).join(''),
+          args.split(' ').slice(1).join(' ')
+        )
       default:
         break
     }

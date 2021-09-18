@@ -1,6 +1,7 @@
 import fuzzy from 'fuzzy'
+import { SimilarArtistMatch, SimilarTrackMatch } from '../lastfm/models'
 import { Listing } from '../models/listing'
-import { isDefined } from '../utils/list-utils'
+import { isDefined, shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { SearchSchemes } from './search-schemes'
 
@@ -59,6 +60,38 @@ export class TrackFinder {
     const result = SearchSchemes.cascading(query, this.listings)
 
     return result.map((r) => r.original)
+  }
+
+  getSimilarArtists(
+    similarMatches: SimilarArtistMatch[],
+    takeArtists = 10,
+    takeTracks = 5
+  ): Listing[] {
+    const artistNames = similarMatches.map((m) => m.name.toLowerCase())
+    return shuffleArray(similarMatches)
+      .slice(0, takeArtists)
+      .reduce((prev, curr) => {
+        const res = SearchSchemes.byArtist(curr.name, this.listings)
+        return prev.concat(
+          res
+            .map((r) => r.original)
+            .filter((r) => artistNames.includes(r.artist.toLowerCase()))
+            .slice(0, takeTracks)
+        )
+      }, [] as Listing[])
+  }
+
+  getSimilarTracks(
+    similarMatches: SimilarTrackMatch[],
+    takeArtists = 10,
+    takeTracks = 5
+  ): Listing[] {
+    return shuffleArray(similarMatches)
+      .slice(0, takeArtists)
+      .reduce((prev, curr) => {
+        const res = SearchSchemes.byArtist(curr.name, this.listings)
+        return prev.concat(res.map((r) => r.original).slice(0, takeTracks))
+      }, [] as Listing[])
   }
 
   artistSample(artist: string, count = 1): Listing[] {

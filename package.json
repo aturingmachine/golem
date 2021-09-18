@@ -15,6 +15,7 @@
   "devDependencies": {
     "@types/md5": "^2.3.1",
     "@types/sharp": "^0.29.0",
+    "@types/terminal-kit": "^1.28.4",
     "@types/uuid": "^8.3.1",
     "@typescript-eslint/eslint-plugin": "^4.31.0",
     "@typescript-eslint/parser": "^4.31.0",
@@ -29,6 +30,7 @@
   },
   "dependencies": {
     "@discordjs/builders": "^0.5.0",
+    "@discordjs/opus": "github:discordjs/opus",
     "@discordjs/rest": "^0.1.0-canary.0",
     "@discordjs/voice": "^0.6.0",
     "axios": "^0.21.4",
@@ -45,9 +47,11 @@
     "md5": "^2.3.0",
     "mongoose": "^6.0.5",
     "music-metadata": "^7.11.4",
+    "opusscript": "^0.0.8",
     "plex-sdk": "^1.0.5",
     "serverline": "^1.5.0",
     "sharp": "^0.29.1",
+    "terminal-kit": "^2.1.6",
     "uuid": "^8.3.2",
     "winston": "^3.3.3"
   }

@@ -18,6 +18,10 @@ const extractors = {
     extract: (t: Listing) => t.artist.toLowerCase(),
   },
 
+  mbWithArtist: {
+    extract: (t: Listing) => `${t.artist.toLowerCase()} ${t.mb.artistId}`,
+  },
+
   // album only
   album: {
     extract: (t: Listing) => t.album.toLowerCase(),
@@ -31,6 +35,20 @@ const extractors = {
 
 export class SearchSchemes {
   private static log = GolemLogger.child({ src: 'search-schemes' })
+
+  static byArtist(
+    query: string,
+    tracks: Listing[]
+  ): fuzzy.FilterResult<Listing>[] {
+    return fuzzy.filter(query, tracks, extractors.mbWithArtist)
+  }
+
+  static byArtistTrack(
+    query: string,
+    tracks: Listing[]
+  ): fuzzy.FilterResult<Listing>[] {
+    return fuzzy.filter(query, tracks, extractors.shortName)
+  }
 
   static cascading(
     query: string,
