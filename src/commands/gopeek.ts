@@ -31,7 +31,7 @@ const execute = async (
 
   const fields = peekedTracks.map((track, index) => ({
     name: index === 0 ? 'Up Next' : `Position: ${index + 1}`,
-    value: track.longName,
+    value: track.listing.longName,
   })) as EmbedFieldData[]
 
   const embed = new MessageEmbed()

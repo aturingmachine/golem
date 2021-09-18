@@ -12,19 +12,23 @@ import {
   VoiceConnectionStatus,
 } from '@discordjs/voice'
 import winston from 'winston'
-import { Analytics } from '../analytics'
 import { Golem } from '../golem'
+import { Listing } from '../models/listing'
+import { Track, TrackAudioResourceMetadata } from '../models/track'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { humanReadableTime } from '../utils/time-utils'
-import { Track, TrackAudioResourceMetadata } from '~/models/track'
 import { TrackQueue } from './queue'
 
 const wait = promisify(setTimeout)
 
+type GolemTrackAudioResource = AudioResource & {
+  metadata: TrackAudioResourceMetadata
+}
+
 export class MusicPlayer {
   private readonly queue: TrackQueue
   private readonly log: winston.Logger
-  private currentResource?: AudioResource
+  public currentResource?: GolemTrackAudioResource
 
   public queueLock = false
   public readyLock = false
@@ -36,17 +40,13 @@ export class MusicPlayer {
     return this.audioPlayer.state.status === AudioPlayerStatus.Playing
   }
 
-  get nowPlaying(): string | undefined {
-    const info = this.currentResource?.metadata as TrackAudioResourceMetadata
-    return info?.track
-      ? `${info.track.artist} - ${info.track.album} - ${info.track.title}`
-      : undefined
+  get nowPlaying(): Listing | undefined {
+    return this.currentResource?.metadata.track.listing
   }
 
   get currentTrackRemaining(): number {
     return (
-      (this.currentResource?.metadata as TrackAudioResourceMetadata).track
-        .duration -
+      (this.currentResource?.metadata.duration || 0) -
       (this.currentResource?.playbackDuration || 0) / 1000
     )
   }
@@ -75,21 +75,20 @@ export class MusicPlayer {
     this.voiceConnection.subscribe(this.audioPlayer)
   }
 
-  public enqueue(userId: string, track: Track): void {
-    this.log.info(`queueing ${track.shortName}`)
+  public enqueue(userId: string, listing: Listing): void {
+    this.log.info(`queueing ${listing.shortName}`)
+    const track = new Track(listing, userId)
     this.queue.add(userId, track)
-    Analytics.queuePlayRecord(track.listing.trackId, userId)
-
-    if (this.queue.queuedTrackCount === 1) {
-      Analytics.playRecord(track.listing.trackId)
-    }
+    track.onPlay()
 
     void this.processQueue()
   }
 
-  public enqueueMany(userId: string, tracks: Track[]): void {
-    this.log.info(`enqueueing ${tracks.length} tracks`)
+  public enqueueMany(userId: string, listings: Listing[]): void {
+    const tracks = listings.map((listing) => Track.fromListing(listing, userId))
+    this.log.info(`enqueueing ${tracks.length} listings`)
     this.queue.addMany(userId, tracks)
+    tracks.forEach((t) => t.onPlay())
     void this.processQueue()
   }
 
@@ -105,6 +104,7 @@ export class MusicPlayer {
 
   public stop(): void {
     this.log.info(`clearing queue`)
+    this.currentResource?.metadata.track.onSkip()
     this.queueLock = true
     this.queue.clear()
     this.currentResource = undefined
@@ -114,16 +114,9 @@ export class MusicPlayer {
   }
 
   public skip(): void {
-    this.log.info(
-      `skipping ${
-        (this.currentResource?.metadata as TrackAudioResourceMetadata).track
-          .title
-      }`
-    )
-    Analytics.skipRecord(
-      (this.currentResource?.metadata as TrackAudioResourceMetadata).track
-        .trackId || ''
-    )
+    this.log.info(`skipping ${this.currentResource?.metadata.title}`)
+    this.currentResource?.metadata.track.onSkip()
+
     this.processQueue(true)
   }
 
@@ -142,6 +135,7 @@ export class MusicPlayer {
   }
 
   public destroy(): void {
+    this.currentResource?.metadata.track.onSkip()
     Golem.removePlayer(this.voiceConnection.joinConfig.channelId || '')
     this.voiceConnection.destroy()
   }
@@ -161,39 +155,27 @@ export class MusicPlayer {
       this.log.debug(`skipping processing due to state`)
       return
     }
+
     this.queueLock = true
 
     /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
     const nextTrack = this.queue.pop()!
 
-    this.log.info(`playing ${nextTrack.shortName}`)
-    const next = nextTrack.toAudioResource()
-    this.currentResource = next
-    this.audioPlayer.play(this.currentResource)
+    this.log.info(`playing ${nextTrack.listing.shortName}`)
 
-    if (this.queue.queuedTrackCount === 0) {
-      this.log.debug(
-        `triggering processed play analytic for ${
-          (this.currentResource?.metadata as TrackAudioResourceMetadata).track
-            .trackId
-        } `
-      )
-      Analytics.playRecord(
-        (this.currentResource?.metadata as TrackAudioResourceMetadata).track
-          .trackId
-      )
-    } else {
-      this.log.debug(
-        `triggering processed autoplay analytic for ${
-          (this.currentResource?.metadata as TrackAudioResourceMetadata).track
-            .trackId
-        } `
-      )
-      Analytics.autoplayRecord(
-        (this.currentResource?.metadata as TrackAudioResourceMetadata).track
-          .trackId
-      )
+    if (
+      this.currentResource &&
+      this.currentResource?.ended &&
+      this.currentResource.playbackDuration ===
+        this.currentResource?.metadata.duration * 1000
+    ) {
+      console.log('Hit what we think means full play time...')
+      this.currentResource?.metadata.track.onPlay()
     }
+
+    const next = nextTrack.toAudioResource()
+    this.currentResource = next as GolemTrackAudioResource
+    this.audioPlayer.play(this.currentResource)
 
     this.queueLock = false
   }

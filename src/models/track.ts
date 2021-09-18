@@ -1,26 +1,29 @@
 import { AudioResource, createAudioResource } from '@discordjs/voice'
-import { IAudioMetadata } from 'music-metadata'
 import winston from 'winston'
+import { Analytics } from '../analytics'
 import { GolemLogger } from '../utils/logger'
 import { Listing } from './listing'
 
 export interface TrackAudioResourceMetadata {
-  track: {
-    trackId: string
-    artist: string
-    album: string
-    title: string
-    duration: number
-  }
+  internalId: string
+  trackId: string
+  artist: string
+  album: string
+  title: string
+  duration: number
+  track: Track
 }
 
 export class Track {
+  internalId!: string
+  userId!: string
   private readonly log: winston.Logger
 
   public readonly listing!: Listing
 
-  constructor(listing: Listing) {
+  constructor(listing: Listing, userId: string) {
     this.log = GolemLogger.child({ src: 'track' })
+    this.userId = userId
     this.listing = listing
   }
 
@@ -28,48 +31,33 @@ export class Track {
     this.log.debug('converting to audio resource')
     return createAudioResource(this.listing.path, {
       metadata: {
-        track: {
-          trackId: this.listing.trackId,
-          artist: this.listing.artist,
-          album: this.listing.album,
-          title: this.listing.title,
-          duration: this.listing.duration,
-        },
+        internalId: this.internalId,
+        trackId: this.listing.trackId,
+        artist: this.listing.artist,
+        album: this.listing.album,
+        title: this.listing.title,
+        duration: this.listing.duration,
+        track: this,
       },
     })
   }
 
-  isArtist(artist: string): boolean {
-    return (
-      artist.toLowerCase().trim() === this.listing.artist.toLowerCase().trim()
-    )
+  static fromListing(listing: Listing, userId: string): Track {
+    return new Track(listing, userId)
   }
 
-  get searchString(): string {
-    return `${this.listing.artist} ${this.listing.album} ${this.listing.title}`
+  onQueue(): void {
+    console.log('TRACK QUEUED')
+    Analytics.createPlayRecord(this.listing.trackId, this.userId, 'queue')
   }
 
-  get shortNameSearchString(): string {
-    return `${this.listing.artist} ${this.listing.title}`
+  onPlay(): void {
+    console.log('TRACK PLAYED')
+    Analytics.createPlayRecord(this.listing.trackId, this.userId, 'play')
   }
 
-  static fromListing(listing: Listing): Track {
-    return new Track(listing)
-  }
-
-  static async fromMeta(meta: IAudioMetadata, path: string): Promise<Track> {
-    return new Track(await Listing.fromMeta(meta, path))
-  }
-
-  get debugString(): string {
-    return `{artist=${this.listing.artist}; album=${this.listing.album}; track=${this.listing.title}}`
-  }
-
-  get longName(): string {
-    return `${this.listing.artist} | ${this.listing.album} | ${this.listing.title}`
-  }
-
-  get shortName(): string {
-    return `${this.listing.artist} - ${this.listing.title}`.slice(0, 90)
+  onSkip(): void {
+    console.log('TRACK SKIPPED')
+    Analytics.createPlayRecord(this.listing.trackId, this.userId, 'skip')
   }
 }

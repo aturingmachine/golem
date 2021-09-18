@@ -1,6 +1,5 @@
 import fuzzy from 'fuzzy'
 import { Listing } from '../models/listing'
-import { Track } from '../models/track'
 import { isDefined } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { SearchSchemes } from './search-schemes'
@@ -8,49 +7,29 @@ import { SearchSchemes } from './search-schemes'
 const log = GolemLogger.child({ src: LogSources.Search })
 
 export interface SearchResult {
-  track: Track
+  listing: Listing
   isArtistQuery: boolean
   isWideMatch: boolean
 }
 
 export class TrackFinder {
-  public readonly tracks: Track[]
+  public readonly listings: Listing[]
 
-  constructor(tracks: Track[]) {
-    log.info('instantiating track finder')
-    this.tracks = tracks
-  }
-
-  get listings(): Listing[] {
-    return this.tracks.map((track) => track.listing)
+  constructor(listings: Listing[]) {
+    log.info('instantiating track finder', listings)
+    this.listings = listings
+    this.listings.forEach((listing) => {
+      if (!listing.title) {
+        console.log('GOT BAD LISTING - NO TITLE: ', listing.path)
+      }
+    })
   }
 
   search(query: string): SearchResult | undefined {
     log.info(`searching for ${query}`)
     log.debug(`using titleSearch`)
-    // let result = fuzzy.filter(query, this.tracks, titleSearch)
 
-    /* CASCADING SEARCH SCHEME */
-    // if (result.length === 0 || result[0].score < 50) {
-    //   log.debug(
-    //     `titleSearch ${
-    //       result.length ? 'scores: ' + result[0].score : 'miss'
-    //     }; using shortNameSearch`
-    //   )
-    //   result = fuzzy.filter(query, this.tracks, shortNameSearch)
-    // }
-
-    // if (result.length === 0 || result[0].score < 50) {
-    //   log.debug(
-    //     `shortNameSearch ${
-    //       result.length ? 'scores: ' + result[0].score : 'miss'
-    //     }; using baseSearch`
-    //   )
-    //   result = fuzzy.filter(query, this.tracks, baseSearch)
-    // }
-    /* END CASCADING SEARCH SCHEME */
-
-    const result = SearchSchemes.composite(query, this.tracks)
+    const result = SearchSchemes.cascading(query, this.listings)
 
     const isArtistQuery = this.isArtistQuery(query, result)
     const isWideMatch = this.isWideMatch(result)
@@ -63,11 +42,10 @@ export class TrackFinder {
       )
 
       const final = this.weightResult(result).original
-      const hasBeenWeighted =
-        final.listing.path !== result[0].original.listing.path
+      const hasBeenWeighted = final.path !== result[0].original.path
 
       return {
-        track: final,
+        listing: final,
         isArtistQuery,
         isWideMatch: isWideMatch && !hasBeenWeighted,
       }
@@ -77,8 +55,8 @@ export class TrackFinder {
     return undefined
   }
 
-  searchMany(query: string): Track[] {
-    const result = SearchSchemes.composite(query, this.tracks)
+  searchMany(query: string): Listing[] {
+    const result = SearchSchemes.cascading(query, this.listings)
 
     return result.map((r) => r.original)
   }
@@ -101,36 +79,36 @@ export class TrackFinder {
   }
 
   findIdByPath(path: string): { id: string; name: string } {
-    const track = this.tracks.find((t) => t.listing.path === path)
+    const listing = this.listings.find((l) => l.path === path)
 
     return {
-      id: track?.listing.id || '',
-      name: track?.shortName || 'Not found',
+      id: listing?.id || '',
+      name: listing?.shortName || 'Not found',
     }
   }
 
-  findListingsByIds(params: { id: string; [key: string]: any }[]): Track[] {
+  findListingsByIds(params: { id: string; [key: string]: any }[]): Listing[] {
     return params
-      .map((param) => this.tracks.find((t) => t.listing.id === param.id))
+      .map((param) => this.listings.find((l) => l.id === param.id))
       .filter(isDefined)
   }
 
   get trackCount(): number {
-    return this.tracks.length
+    return this.listings.length
   }
 
   private isArtistQuery(
     query: string,
-    res: fuzzy.FilterResult<Track>[]
+    res: fuzzy.FilterResult<Listing>[]
   ): boolean {
     return [res[0], res[1], res[2], res[3]].filter(Boolean).some((r) => {
-      const artist = r.original.listing.artist.toLowerCase().trim()
+      const artist = r.original.artist.toLowerCase().trim()
       const q = query.toLowerCase().trim()
       return artist === query || artist.indexOf(q) === 0
     })
   }
 
-  private isWideMatch(result: fuzzy.FilterResult<Track>[]): boolean {
+  private isWideMatch(result: fuzzy.FilterResult<Listing>[]): boolean {
     return (
       result.length > 5 &&
       result.slice(1, 5).some((r) => result[0].score - r.score < 5)
@@ -141,12 +119,12 @@ export class TrackFinder {
   // it ourselves. Going to "add weight" to base tracks (non inst, live, jp version)
   // since those can be accessed by more exact queries, whereas we cannot work backwards.
   private weightResult(
-    resultSet: fuzzy.FilterResult<Track>[]
-  ): fuzzy.FilterResult<Track> {
+    resultSet: fuzzy.FilterResult<Listing>[]
+  ): fuzzy.FilterResult<Listing> {
     log.debug(
       `\n${resultSet
         .slice(0, 15)
-        .map((r) => `${r.original.listing.title} scored ${r.score}`)
+        .map((r) => `${r.original.title} scored ${r.score}`)
         .join('\n')}`
     )
     let pref = resultSet[0]
@@ -162,14 +140,14 @@ export class TrackFinder {
           .find((result) => !this.isLiveOrInst(result)) || pref
     }
 
-    log.debug(`Returning ${pref.original.listing.title}`)
+    log.debug(`Returning ${pref.original.title}`)
 
     return pref
   }
 
-  private isLiveOrInst(result: fuzzy.FilterResult<Track>): boolean {
+  private isLiveOrInst(result: fuzzy.FilterResult<Listing>): boolean {
     log.debug(
-      `Checking force weighting for ${result.original.listing.title.toLowerCase()}`
+      `Checking force weighting for ${result.original.title.toLowerCase()}`
     )
 
     return [
@@ -181,6 +159,6 @@ export class TrackFinder {
       'eng.',
       'english',
       'remix',
-    ].some((s) => result.original.listing.title.toLowerCase().includes(s))
+    ].some((s) => result.original.title.toLowerCase().includes(s))
   }
 }

@@ -1,8 +1,7 @@
 import * as mm from 'music-metadata'
 import { LibIndexData } from '../models/db/lib-index'
 import { ListingData } from '../models/db/listing'
-import { Listing } from '../models/listing'
-import { Track } from '../models/track'
+import { Listing, ListingInfo } from '../models/listing'
 import { Config, opts } from '../utils/config'
 import { getAllFiles } from '../utils/filesystem'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -12,17 +11,13 @@ const log = GolemLogger.child({ src: LogSources.Loader })
 const reg = /.*\.(png|html|pdf|db|jpg|jpeg|xml|js|css|ini)$/
 
 export class TrackLoader {
-  public readonly tracks: Track[]
+  public readonly listings: Listing[]
 
   constructor() {
-    this.tracks = []
+    this.listings = []
   }
 
-  get listings(): Listing[] {
-    return this.tracks.map((t) => t.listing)
-  }
-
-  async load(): Promise<Track[]> {
+  async load(): Promise<Listing[]> {
     for (const lib of Config.LibraryPaths) {
       const name = lib.split('/').pop() || 'Library'
 
@@ -32,7 +27,8 @@ export class TrackLoader {
         await this.loadTracksFromDB(lib, name)
       }
     }
-    return this.tracks
+
+    return this.listings
   }
 
   private async loadFromDisk(path: string, name: string): Promise<void> {
@@ -45,16 +41,14 @@ export class TrackLoader {
     log.debug(`Found ${paths.length} paths.`)
 
     let errorCount = 0
-    const tracks: Track[] = []
+    const listings: Listing[] = []
 
     for (const trackPath of paths) {
       try {
         const meta = await mm.parseFile(trackPath)
         const listing = await Listing.fromMeta(meta, trackPath)
 
-        // console.log(meta.native['ID3v2.3'] || Object.keys(meta.native))
-
-        tracks.push(Track.fromListing(listing))
+        listings.push(listing)
       } catch (error) {
         log.error(`${trackPath} encountered error.`)
         log.warn('Continuing with library read')
@@ -66,8 +60,8 @@ export class TrackLoader {
     log.warn(`Encountered ${errorCount} errors while loading library.`)
 
     log.info('Attempting backup save')
-    this.save(name, tracks)
-    this.tracks.push(...tracks)
+    this.save(name, listings)
+    this.listings.push(...listings)
     log.info('Backup saved to database')
   }
 
@@ -82,14 +76,14 @@ export class TrackLoader {
     if (dbRead) {
       log.info('DB Record found')
       try {
-        const data: Listing[] = dbRead.listings
+        const data: ListingInfo[] = dbRead.listings
 
         for (const datum of data) {
-          this.tracks.push(Track.fromListing(datum))
+          this.listings.push(new Listing(datum))
         }
       } catch (error) {
         log.warn('unable to parse backup')
-        LibIndexData.deleteOne({ id: { $eq: dbRead._id } })
+        LibIndexData.deleteOne({ _id: { $eq: dbRead._id } })
         await this.loadFromDisk(path, name)
       }
     } else {
@@ -112,11 +106,12 @@ export class TrackLoader {
     }
   }
 
-  private async save(name: string, tracks: Track[]): Promise<void> {
+  private async save(name: string, listings: Listing[]): Promise<Listing[]> {
     const listingIds: string[] = []
 
-    for (const track of tracks) {
-      const listingRecord = new ListingData(track.listing)
+    for (const listing of listings) {
+      const listingRecord = new ListingData(listing)
+      listing._id = listingRecord._id
 
       await listingRecord.save()
 
@@ -126,9 +121,11 @@ export class TrackLoader {
     const record = new LibIndexData({
       name,
       listings: listingIds,
-      count: tracks.length,
+      count: listings.length,
     })
 
     await record.save()
+
+    return listings
   }
 }

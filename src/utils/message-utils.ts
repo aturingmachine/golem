@@ -11,9 +11,9 @@ import {
 import { getAverageColor } from 'fast-average-color-node'
 import { Constants, PlexLogo } from '../constants'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
+import { Listing } from '../models/listing'
 import { MusicPlayer } from '../player/beta-music-player'
 import { Plex } from '../plex'
-import { Track } from '~/models/track'
 import { Config } from './config'
 import { GolemLogger } from './logger'
 import { humanReadableDuration } from './time-utils'
@@ -34,11 +34,11 @@ export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
 }
 
 export const GetEmbedFromListing = async (
-  track: Track,
+  listing: Listing,
   player: MusicPlayer
 ): Promise<{ embed: MessageEmbed; image: MessageAttachment }> => {
-  const color = await averageColor(track.listing.albumArt)
-  const image = GetMessageAttachement(track.listing.albumArt)
+  const color = await averageColor(listing.albumArt)
+  const image = GetMessageAttachement(listing.albumArt)
 
   const embed = new MessageEmbed()
     .setTitle(player.isPlaying ? 'Added to Queue' : 'Now Playing')
@@ -50,33 +50,33 @@ export const GetEmbedFromListing = async (
     .setFields(
       {
         name: 'Artist',
-        value: track.listing.artist,
+        value: listing.artist,
       },
       {
         name: 'Album',
-        value: track.listing.album,
+        value: listing.album,
         inline: true,
       },
       embedFieldSpacer,
       {
         name: 'Duration',
         value: `${
-          track.listing.hasDefaultDuration
+          listing.hasDefaultDuration
             ? '-'
-            : humanReadableDuration(track.listing.duration)
+            : humanReadableDuration(listing.duration)
         }`,
         inline: true,
       },
       {
         name: 'Track',
-        value: track.listing.title,
+        value: listing.title,
         inline: true,
       },
       embedFieldSpacer,
       {
         name: 'Genres',
-        value: track.listing.genres.length
-          ? track.listing.genres.slice(0, 3).join(', ')
+        value: listing.genres.length
+          ? listing.genres.slice(0, 3).join(', ')
           : 'N/A',
         inline: true,
       }
@@ -135,7 +135,7 @@ export const centerString = (longest: number, str: string): string => {
 
 export const getSearchReply = (
   query: string,
-  results: Track[],
+  results: Listing[],
   totalCount: number
 ): MessageOptions => {
   const fields: EmbedFieldData[] = results
@@ -168,15 +168,16 @@ export const getSearchReply = (
 
 export const GetWideSearchEmbed = (
   query: string,
-  results: Track[]
+  results: Listing[]
 ): MessageOptions => {
   GolemLogger.debug(
     `creating wide search embed: ${query}, ${results.length} hits`
   )
+  console.log(results)
   const options: MessageSelectOptionData[] = results.slice(0, 25).map((r) => {
     return {
       label: r.shortName,
-      value: r.listing.id,
+      value: r.id,
     }
   })
 

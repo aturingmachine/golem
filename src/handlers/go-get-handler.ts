@@ -1,7 +1,9 @@
+import { MessageOptions } from 'discord.js'
 import { Golem } from '../golem'
 import { MusicPlayer } from '../player/beta-music-player'
 import { Plex } from '../plex'
 import { GolemLogger } from '../utils/logger'
+import { GetEmbedFromListing } from '../utils/message-utils'
 
 export interface GetOptions {
   value: string | null
@@ -10,29 +12,32 @@ export interface GetOptions {
 
 const noPlayerMsg = 'Unable to find player.'
 
-// TODO stats are broke af right now, says they dont have the conns
 export class GoGet {
-  static it(opts: Partial<GetOptions>): string {
+  static async it(opts: Partial<GetOptions>): Promise<MessageOptions> {
     GolemLogger.debug(`Go Getting With ${opts.value} ${opts.guildId}`, {
       src: 'goget-handler',
     })
     switch (opts.value?.toLowerCase()) {
       case 'time':
-        return GoGet.timeResponse(Golem.getPlayer(opts.guildId || ''))
+        return {
+          content: GoGet.timeResponse(Golem.getPlayer(opts.guildId || '')),
+        }
       case 'count':
-        return GoGet.qCountResponse(Golem.getPlayer(opts.guildId || ''))
+        return {
+          content: GoGet.qCountResponse(Golem.getPlayer(opts.guildId || '')),
+        }
       case 'np':
       case 'nowplaying':
-        return GoGet.npResponse(Golem.getPlayer(opts.guildId || ''))
+        return await GoGet.npResponse(Golem.getPlayer(opts.guildId || ''))
       case 'tcount':
-        return GoGet.tCountResponse
+        return { content: GoGet.tCountResponse }
       // case 'catalog':
       //   return GoGet.catalog
       case 'playlist':
       case 'playlists':
-        return GoGet.playlists
+        return { content: GoGet.playlists }
       default:
-        return GoGet.stats(Golem.getPlayer(opts.guildId || ''))
+        return await GoGet.stats(Golem.getPlayer(opts.guildId || ''))
     }
   }
 
@@ -44,19 +49,37 @@ export class GoGet {
     return `\n**Queued Tracks**: ${player?.stats.count || noPlayerMsg}`
   }
 
-  static npResponse(player?: MusicPlayer): string {
-    return `\n**Now Playing**: ${player?.nowPlaying || noPlayerMsg}`
+  static async npResponse(player?: MusicPlayer): Promise<MessageOptions> {
+    if (player && player.currentResource) {
+      const assets = await GetEmbedFromListing(
+        player.currentResource?.metadata.track.listing,
+        player
+      )
+
+      return {
+        embeds: [assets.embed],
+        files: [assets.image],
+      }
+    } else {
+      return {
+        content: `\n**Now Playing**: ${player?.nowPlaying || noPlayerMsg}`,
+      }
+    }
   }
 
   static get tCountResponse(): string {
     return `\n**Available Tracks**: ${Golem.trackFinder.trackCount}`
   }
 
-  static stats(player?: MusicPlayer): string {
-    return GoGet.timeResponse(player)
-      .concat(GoGet.qCountResponse(player))
-      .concat(GoGet.tCountResponse)
-      .concat(GoGet.npResponse(player))
+  static async stats(player?: MusicPlayer): Promise<MessageOptions> {
+    const np = await GoGet.npResponse(player)
+    return {
+      content: GoGet.timeResponse(player)
+        .concat(GoGet.qCountResponse(player))
+        .concat(GoGet.tCountResponse),
+      embeds: np.embeds || [],
+      files: np.files || [],
+    }
   }
 
   // static get catalog(): string {

@@ -97,6 +97,10 @@ export async function pryDatabase(cmd: string): Promise<void> {
           )
         })
 
-    console.log(results.map((r) => JSON.stringify(r)).join('\n'))
+    console.log(
+      results.length
+        ? results.map((r) => JSON.stringify(r)).join('\n')
+        : 'No results found.'
+    )
   }
 }

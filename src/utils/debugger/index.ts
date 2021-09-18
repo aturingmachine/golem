@@ -33,7 +33,7 @@ const debuggerCompletions = [
 ]
 
 const debugLogSearchResult = (result: SearchResult) => {
-  return `${result.track.longName}\nisArtistQuery=${result.isArtistQuery}\nisWide=${result.isWideMatch}`
+  return `${result.listing.longName}\nisArtistQuery=${result.isArtistQuery}\nisWide=${result.isWideMatch}`
 }
 
 export class Debugger {

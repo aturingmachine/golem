@@ -1,5 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
-import { CommandInteraction, Message, MessageAttachment } from 'discord.js'
+import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { GoGet } from '../handlers/go-get-handler'
 
@@ -25,17 +25,16 @@ const execute = async (
     value = interaction.options.getString('value', false) || ''
   }
 
-  const response = GoGet.it({ value, guildId: interaction.guildId })
+  const response = await GoGet.it({ value, guildId: interaction.guildId })
 
   if (value === 'catalog') {
-    const snippet = new MessageAttachment(
-      Buffer.from(response, 'utf-8'),
-      'catalog.txt'
-    )
-
-    await interaction.reply({ content: 'Current Catalog:', files: [snippet] })
+    // const snippet = new MessageAttachment(
+    //   Buffer.from(response, 'utf-8'),
+    //   'catalog.txt'
+    // )
+    // await interaction.reply({ content: 'Current Catalog:', files: [snippet] })
   } else {
-    await interaction.reply({ content: response })
+    await interaction.reply(response)
   }
 }
 

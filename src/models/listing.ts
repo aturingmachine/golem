@@ -113,13 +113,37 @@ export class Listing {
     return this.duration.toFixed(1)
   }
 
+  get shortName(): string {
+    return `${this.artist} - ${this.title}`.slice(0, 90)
+  }
+
+  get shortNameSearchString(): string {
+    return `${this.artist} ${this.title}`
+  }
+
+  get searchString(): string {
+    return `${this.artist} ${this.album} ${this.title}`
+  }
+
+  get longName(): string {
+    return `${this.artist} | ${this.album} | ${this.title}`
+  }
+
+  get debugString(): string {
+    return `{artist=${this.artist}; album=${this.album}; track=${this.title}}`
+  }
+
+  isArtist(artist: string): boolean {
+    return artist === this.artist
+  }
+
   static async fromMeta(meta: IAudioMetadata, path: string): Promise<Listing> {
-    const split = path
-      .replace(
-        Config.LibraryPaths.find((p) => path.includes(p)) || 'NO PATH FOUND',
-        ''
-      )
-      .split('/')
+    const targetConfig = Config.LibraryPaths.find((p) => path.includes(p))
+    if (targetConfig?.length === 0) {
+      console.log('LISTING GOT BAD PATH', path)
+      console.log(targetConfig)
+    }
+    const split = path.replace(targetConfig || 'NO PATH FOUND', '').split('/')
     const artist = meta.common.artist || meta.common.artists?.[0] || split[1]
     const album = meta.common.album || split[2]
     const track = meta.common.title || split[3]
@@ -136,7 +160,6 @@ export class Listing {
     const moods: string[] = meta.native['ID3v2.3']
       ?.filter((t) => t.id === 'TXXX:mood' && !t.value.includes('Not '))
       .map((t) => t.value)
-    console.log(moods)
 
     return new Listing({
       trackId: id,
@@ -148,7 +171,7 @@ export class Listing {
       path,
       genres: meta.common.genre?.map((g) => g.split('/')).flat(1) || [],
       key,
-      moods: [...moods],
+      moods: moods,
       bpm: bpm ? parseInt(bpm, 10) : undefined,
       albumArt: meta.common.picture
         ? await sharp(meta.common.picture[0].data)

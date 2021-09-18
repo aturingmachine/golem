@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { joinVoiceChannel } from '@discordjs/voice'
 import { Client, Intents, Interaction, Message, Snowflake } from 'discord.js'
-import winston from 'winston'
+import winston, { loggers } from 'winston'
 import { establishConnection } from './db'
 import { EventHandler } from './models/event-handler'
 import { MusicPlayer } from './player/beta-music-player'
@@ -65,7 +65,9 @@ export class Golem {
 
     await Golem.loader.load()
 
-    Golem.trackFinder = new TrackFinder(Golem.loader.tracks)
+    Golem.log.debug(`Loaded ${Golem.loader.listings.length} listings`)
+
+    Golem.trackFinder = new TrackFinder(Golem.loader.listings)
 
     try {
       await Plex.init(Golem.trackFinder)

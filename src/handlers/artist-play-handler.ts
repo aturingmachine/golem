@@ -33,7 +33,7 @@ export const artistPlayButtonHandler = async (
 
     const artistTracks = Golem.trackFinder
       .searchMany(artist)
-      .filter((l) => l.listing.artist.toLowerCase() === artist.toLowerCase())
+      .filter((l) => l.artist.toLowerCase() === artist.toLowerCase())
 
     player.enqueueMany(interaction.member?.user.id || '', artistTracks)
   }
@@ -48,7 +48,7 @@ export const artistPlayButtonHandler = async (
 
     const artistTracks = Golem.trackFinder
       .searchMany(artist)
-      .filter((track) => track.isArtist(artist))
+      .filter((listing) => listing.isArtist(artist))
 
     player.enqueueMany(
       interaction.member?.user.id || '',

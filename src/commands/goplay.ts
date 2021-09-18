@@ -64,15 +64,15 @@ const execute = async (
       return
     }
 
-    log.debug(`Query Result: \n${res.track.debugString}`)
+    log.debug(`Query Result: \n${res.listing.debugString}`)
 
     // Handle artist query
     if (res.isArtistQuery) {
-      const srcs = Golem.trackFinder.artistSample(res.track.listing.artist, 4)
+      const srcs = Golem.trackFinder.artistSample(res.listing.artist, 4)
 
       await interaction.reply(
         await ArtistConfirmReply(
-          res.track.listing.artist,
+          res.listing.artist,
           await fourSquare({
             images: {
               img1: srcs[0].albumArt,
@@ -95,7 +95,7 @@ const execute = async (
     }
     // Handle Catch-All queries
     else {
-      const { image, embed } = await GetEmbedFromListing(res.track, player)
+      const { image, embed } = await GetEmbedFromListing(res.listing, player)
 
       await interaction.reply({
         embeds: [embed],
@@ -104,7 +104,7 @@ const execute = async (
 
       log.debug('GoPlay starting Player.')
 
-      player.enqueue(interaction.member?.user.id || '', res.track)
+      player.enqueue(interaction.member?.user.id || '', res.listing)
     }
   }
 }

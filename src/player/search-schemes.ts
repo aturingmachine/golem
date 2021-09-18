@@ -1,31 +1,31 @@
 import fuzzy from 'fuzzy'
-import { Track } from '../models/track'
+import { Listing } from '../models/listing'
 import { GolemLogger } from '../utils/logger'
 
 const extractors = {
   // full name
   base: {
-    extract: (t: Track) => t.searchString.toLowerCase(),
+    extract: (t: Listing) => t.searchString.toLowerCase(),
   },
 
   // title only
   title: {
-    extract: (t: Track) => t.listing.title.toLowerCase(),
+    extract: (t: Listing) => t.title.toLowerCase(),
   },
 
   // artist only
   artist: {
-    extract: (t: Track) => t.listing.artist.toLowerCase(),
+    extract: (t: Listing) => t.artist.toLowerCase(),
   },
 
   // album only
   album: {
-    extract: (t: Track) => t.listing.album.toLowerCase(),
+    extract: (t: Listing) => t.album.toLowerCase(),
   },
 
   // artist - title
   shortName: {
-    extract: (t: Track) => t.shortNameSearchString.toLowerCase(),
+    extract: (t: Listing) => t.shortNameSearchString.toLowerCase(),
   },
 }
 
@@ -34,8 +34,8 @@ export class SearchSchemes {
 
   static cascading(
     query: string,
-    tracks: Track[]
-  ): fuzzy.FilterResult<Track>[] {
+    tracks: Listing[]
+  ): fuzzy.FilterResult<Listing>[] {
     let result = fuzzy.filter(query, tracks, extractors.title)
 
     if (result.length === 0 || result[0].score < 50) {
@@ -61,8 +61,8 @@ export class SearchSchemes {
 
   static composite(
     query: string,
-    tracks: Track[]
-  ): fuzzy.FilterResult<Track>[] {
+    tracks: Listing[]
+  ): fuzzy.FilterResult<Listing>[] {
     const searchPatterns = [
       extractors.title,
       extractors.artist,
@@ -73,8 +73,8 @@ export class SearchSchemes {
 
     const rawComposite = searchPatterns.reduce((prev, curr) => {
       return prev.concat(fuzzy.filter(query, tracks, curr))
-    }, [] as fuzzy.FilterResult<Track>[])
+    }, [] as fuzzy.FilterResult<Listing>[])
 
-    return rawComposite.sort((l, r) => r.score - l.score)
+    return Array.from(new Set(rawComposite)).sort((l, r) => r.score - l.score)
   }
 }

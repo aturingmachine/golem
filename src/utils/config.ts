@@ -41,7 +41,7 @@ export class Config {
     return {
       FallbackImagePath:
         process.env.IMAGE_FALLBACK_PATH ||
-        path.resolve(__dirname, '../plex-logo.png'),
+        path.resolve(__dirname, '../../plex-logo.png'),
       ColorAlg:
         (process.env.IMAGE_COLOR_ALG as 'sqrt' | 'dominant' | 'simple') ||
         'sqrt',

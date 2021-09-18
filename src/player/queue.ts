@@ -17,7 +17,7 @@ export class TrackQueue {
   }
 
   add(userId: string, track: Track): void {
-    log.info(`${userId} Adding ${track.shortName}`)
+    log.info(`${userId} Adding ${track.listing.shortName}`)
     this._queue.push({ track, queuedBy: userId })
   }
 
