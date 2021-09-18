@@ -3,7 +3,7 @@ import { Golem } from './golem'
 import { Config, opts } from './utils/config'
 
 const main = async (): Promise<void> => {
-  console.log(Config.libraries)
+  console.log(Config.LibraryPaths)
   await Golem.initialize()
 
   if (!opts.noRun) {

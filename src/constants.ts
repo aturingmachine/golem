@@ -1,10 +1,8 @@
 import fs from 'fs'
-import path from 'path'
 import { ColorResolvable } from 'discord.js'
+import { Config } from './utils/config'
 
-export const PlexLogo = fs.readFileSync(
-  path.resolve(__dirname, '../plex-logo.png')
-)
+export const PlexLogo = fs.readFileSync(Config.Image.FallbackImagePath)
 
 export const Constants = {
   baseColor: '#f900d5' as ColorResolvable,

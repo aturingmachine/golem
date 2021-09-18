@@ -6,14 +6,14 @@ import { GolemLogger, LogSources } from './utils/logger'
 
 registerCommands()
 
-const rest = new REST({ version: '9' }).setToken(Config.token)
+const rest = new REST({ version: '9' }).setToken(Config.Discord.Token)
 
 ;(async () => {
   try {
-    for (const guildId of [Config.testGuildId]) {
+    for (const guildId of Config.Discord.GuildIds) {
       const cmdJson = Array.from(Commands.values()).map((x) => x.data.toJSON())
       const resp = await rest.put(
-        Routes.applicationGuildCommands(Config.clientId, guildId),
+        Routes.applicationGuildCommands(Config.Discord.ClientId, guildId),
         {
           body: cmdJson,
         }

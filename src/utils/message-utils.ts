@@ -14,6 +14,7 @@ import { ButtonIdPrefixes } from '../handlers/button-handler'
 import { MusicPlayer } from '../player/beta-music-player'
 import { Plex } from '../plex'
 import { Track } from '~/models/track'
+import { Config } from './config'
 import { GolemLogger } from './logger'
 import { humanReadableDuration } from './time-utils'
 
@@ -23,6 +24,11 @@ const embedFieldSpacer = {
   inline: true,
 }
 
+const averageColor = (img?: Buffer) =>
+  getAverageColor(img || PlexLogo, {
+    algorithm: Config.Image.ColorAlg,
+  })
+
 export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
   return new MessageAttachment(albumArt || PlexLogo, 'cover.png')
 }
@@ -31,9 +37,7 @@ export const GetEmbedFromListing = async (
   track: Track,
   player: MusicPlayer
 ): Promise<{ embed: MessageEmbed; image: MessageAttachment }> => {
-  const color = await getAverageColor(track.listing.albumArt || PlexLogo, {
-    algorithm: 'dominant',
-  })
+  const color = await averageColor(track.listing.albumArt)
   const image = GetMessageAttachement(track.listing.albumArt)
 
   const embed = new MessageEmbed()
@@ -106,9 +110,7 @@ export const ArtistConfirmReply = async (
   albumArt?: Buffer
 ): Promise<MessageOptions> => {
   const image = GetMessageAttachement(albumArt)
-  const color = await getAverageColor(albumArt || PlexLogo, {
-    algorithm: 'dominant',
-  })
+  const color = await averageColor(albumArt)
 
   const row = ArtistConfirmButton(artist)
 

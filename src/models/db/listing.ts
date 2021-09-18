@@ -10,6 +10,9 @@ const schema = new Schema<Listing>({
   hasDefaultDuration: Boolean,
   path: String,
   genres: [String],
+  key: String,
+  moods: [String],
+  bpm: Number,
   albumArt: Buffer,
 })
 

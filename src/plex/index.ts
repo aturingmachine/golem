@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios'
 import { TrackFinder } from '../player/track-finder'
-import { Config } from '../utils/config'
+import { Config, opts } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import {
   PlaylistRecord,
@@ -12,17 +12,18 @@ import {
 const log = GolemLogger.child({ src: LogSources.Plex })
 
 const fixSlashes = (original: string): string => {
-  const match = Config.libraryPath.split('/').pop() || ''
+  const targetLib = original.split('\\').pop() || ''
+  const match = targetLib.split('/').pop() || ''
 
   const normalizing = original.replaceAll('\\', '/')
 
-  return Config.libraryPath.concat(
+  return targetLib.concat(
     normalizing.slice(normalizing.indexOf(match) + match.length)
   )
 }
 
 const PlexHeaders: Record<string, string> = {
-  'X-Plex-Client-Identifier': Config.plexAppId,
+  'X-Plex-Client-Identifier': Config.Plex.AppId,
   'X-Plex-Product': 'Golem',
   'X-Plex-Version': '1.0.0',
   Accept: 'application/json',
@@ -42,12 +43,17 @@ export const Plex: Plex = {
   playlists: [],
 
   async init(trackFinder: TrackFinder): Promise<void> {
+    if (opts.noPlex) {
+      log.info('no-plex flag set, skipping plex init')
+      return
+    }
+
     log.info('Initializing Plex Connection')
     const res = await axios.post(
       'https://plex.tv/api/v2/users/signin',
       {
-        login: Config.plexUsername,
-        password: Config.plexPassword,
+        login: Config.Plex.Username,
+        password: Config.Plex.Password,
       },
       {
         headers: PlexHeaders,
@@ -58,7 +64,7 @@ export const Plex: Plex = {
     PlexHeaders['X-Plex-Token'] = this.token
 
     this.instance = axios.create({
-      baseURL: Config.plexURI,
+      baseURL: Config.Plex.URI,
       headers: PlexHeaders,
     })
     log.info('Plex Connection Initialized')

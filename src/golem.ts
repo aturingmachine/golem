@@ -67,7 +67,12 @@ export class Golem {
 
     Golem.trackFinder = new TrackFinder(Golem.loader.tracks)
 
-    await Plex.init(Golem.trackFinder)
+    try {
+      await Plex.init(Golem.trackFinder)
+    } catch (error) {
+      Golem.log.error('plex connection failed')
+      Golem.log.error(error)
+    }
   }
 
   static getOrCreatePlayer(
@@ -126,7 +131,7 @@ export class Golem {
   }
 
   static async login(): Promise<void> {
-    Golem.client.login(Config.token)
+    Golem.client.login(Config.Discord.Token)
   }
 
   static disconnectAll(): void {

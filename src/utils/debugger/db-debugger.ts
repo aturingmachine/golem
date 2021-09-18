@@ -81,7 +81,7 @@ export async function pryDatabase(cmd: string): Promise<void> {
 
     console.log(query.filter)
 
-    const resultSet = await targetModel.find(query.filter).exec()
+    const resultSet = await targetModel.find(query.filter)
 
     const results = query.fields.length
       ? resultSet.map((res) => {

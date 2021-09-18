@@ -23,7 +23,7 @@ export class TrackLoader {
   }
 
   async load(): Promise<Track[]> {
-    for (const lib of Config.libraries) {
+    for (const lib of Config.LibraryPaths) {
       const name = lib.split('/').pop() || 'Library'
 
       if (opts.bustCache) {
@@ -36,7 +36,7 @@ export class TrackLoader {
   }
 
   private async loadFromDisk(path: string, name: string): Promise<void> {
-    await this.wipeData()
+    await this.wipeData(name)
 
     log.debug('Loading library from filesystem')
     const paths = getAllFiles(path, []).filter(
@@ -51,6 +51,8 @@ export class TrackLoader {
       try {
         const meta = await mm.parseFile(trackPath)
         const listing = await Listing.fromMeta(meta, trackPath)
+
+        // console.log(meta.native['ID3v2.3'] || Object.keys(meta.native))
 
         tracks.push(Track.fromListing(listing))
       } catch (error) {
@@ -96,11 +98,18 @@ export class TrackLoader {
     }
   }
 
-  private async wipeData(): Promise<void> {
-    log.info('Deleting stale cache')
-    await LibIndexData.deleteMany().exec()
-    await ListingData.deleteMany().exec()
-    log.info('Stale cache deleted')
+  private async wipeData(libName: string): Promise<void> {
+    const index = await LibIndexData.findOne({ name: libName }).exec()
+    if (index) {
+      log.info('Deleting stale cache')
+      await ListingData.deleteMany({
+        id: { $in: index?.listings.map((l) => l._id) || [] },
+      }).exec()
+      await index?.delete()
+      log.info('Stale cache deleted')
+    } else {
+      log.info(`no stale cache found for ${libName}`)
+    }
   }
 
   private async save(name: string, tracks: Track[]): Promise<void> {

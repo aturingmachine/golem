@@ -22,6 +22,9 @@ export type ListingInfo = {
   hasDefaultDuration: boolean
   path: string
   genres: string[]
+  moods: string[]
+  key: string
+  bpm?: number
   albumArt?: Buffer
 }
 
@@ -51,6 +54,9 @@ export class Listing {
   hasDefaultDuration!: boolean
   path!: string
   genres!: string[]
+  key!: string
+  moods!: string[]
+  bpm?: number
   albumArt?: Buffer
 
   constructor(info: ListingInfo) {
@@ -61,6 +67,9 @@ export class Listing {
     this.duration = info.duration
     this.path = info.path
     this.genres = info.genres
+    this.key = info.key
+    this.moods = info.moods
+    this.bpm = info.bpm
     this.albumArt = info.albumArt
   }
 
@@ -105,7 +114,12 @@ export class Listing {
   }
 
   static async fromMeta(meta: IAudioMetadata, path: string): Promise<Listing> {
-    const split = path.replace(Config.libraryPath, '').split('/')
+    const split = path
+      .replace(
+        Config.LibraryPaths.find((p) => path.includes(p)) || 'NO PATH FOUND',
+        ''
+      )
+      .split('/')
     const artist = meta.common.artist || meta.common.artists?.[0] || split[1]
     const album = meta.common.album || split[2]
     const track = meta.common.title || split[3]
@@ -115,6 +129,14 @@ export class Listing {
       meta.common.isrc?.[0] ||
       ''
     const id = md5(`${artist} - ${album} - ${track} - ${identifier}`)
+    const key: string =
+      meta.native['ID3v2.3']?.find((t) => t.id === 'TKEY')?.value || 'NA'
+    const bpm: string | undefined =
+      meta.native['ID3v2.3']?.find((t) => t.id === 'TBPM')?.value || undefined
+    const moods: string[] = meta.native['ID3v2.3']
+      ?.filter((t) => t.id === 'TXXX:mood' && !t.value.includes('Not '))
+      .map((t) => t.value)
+    console.log(moods)
 
     return new Listing({
       trackId: id,
@@ -125,6 +147,9 @@ export class Listing {
       hasDefaultDuration: !meta.format.duration,
       path,
       genres: meta.common.genre?.map((g) => g.split('/')).flat(1) || [],
+      key,
+      moods: [...moods],
+      bpm: bpm ? parseInt(bpm, 10) : undefined,
       albumArt: meta.common.picture
         ? await sharp(meta.common.picture[0].data)
             .resize(100, 100)

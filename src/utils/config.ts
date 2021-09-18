@@ -1,45 +1,60 @@
+import path from 'path'
 import { config } from 'dotenv'
 config()
 
+type ConfigValues = {
+  Discord: {
+    Token: string
+    ClientId: string
+    GuildIds: string[]
+  }
+  Image: {
+    FallbackImagePath: string
+    ColorAlg: 'sqrt' | 'dominant' | 'simple'
+  }
+  Plex: {
+    URI: string
+    AppId: string
+    Username: string
+    Password: string
+  }
+}
+
 export class Config {
-  static get libraries(): string[] {
+  static get LibraryPaths(): string[] {
     return process.env.LIBRARY_PATHS?.split(',') || []
   }
 
-  static get token(): string {
-    return process.env.TOKEN || ''
+  static get MongoURI(): string {
+    return process.env.MONGO_URI || ''
   }
 
-  static get clientId(): string {
-    return process.env.CLIENT_ID || ''
+  static get Discord(): ConfigValues['Discord'] {
+    return {
+      Token: process.env.TOKEN || '',
+      ClientId: process.env.CLIENT_ID || '',
+      GuildIds: process.env.SERVER_IDS?.split(',') || [],
+    }
   }
 
-  static get guildIds(): string[] {
-    return (process.env.SERVER_IDS || '').split(',')
+  static get Image(): ConfigValues['Image'] {
+    return {
+      FallbackImagePath:
+        process.env.IMAGE_FALLBACK_PATH ||
+        path.resolve(__dirname, '../plex-logo.png'),
+      ColorAlg:
+        (process.env.IMAGE_COLOR_ALG as 'sqrt' | 'dominant' | 'simple') ||
+        'sqrt',
+    }
   }
 
-  static get libraryPath(): string {
-    return process.env.LIBRARY_PATH || ''
-  }
-
-  static get testGuildId(): string {
-    return process.env.TEST_SERVER_GUILD_ID || ''
-  }
-
-  static get plexURI(): string {
-    return process.env.PLEX_URI || ''
-  }
-
-  static get plexUsername(): string {
-    return process.env.PLEX_USERNAME || ''
-  }
-
-  static get plexPassword(): string {
-    return process.env.PLEX_PASSWORD || ''
-  }
-
-  static get plexAppId(): string {
-    return process.env.PLEX_APPLICATION_ID || ''
+  static get Plex(): ConfigValues['Plex'] {
+    return {
+      URI: process.env.PLEX_URI || '',
+      AppId: process.env.PLEX_APPLICATION_ID || '',
+      Username: process.env.PLEX_USERNAME || '',
+      Password: process.env.PLEX_PASSWORD || '',
+    }
   }
 }
 
@@ -54,4 +69,5 @@ export const opts = {
   loadTest: cliArgs.includes('load-test'),
   logLevel:
     cliArgs.includes('debug') || cliArgs.includes('verbose') ? 'debug' : 'info',
+  noPlex: cliArgs.includes('no-plex'),
 }
