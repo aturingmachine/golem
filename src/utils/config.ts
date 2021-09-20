@@ -71,12 +71,21 @@ const cliArgs = process.argv.slice(2)
 
 export const opts = {
   debug: cliArgs.includes('debug'),
+  get tty(): boolean {
+    return ['tty', ' -i '].some((o) => cliArgs.includes(o))
+  },
   noRun: cliArgs.includes('noRun'),
-  bustCache: cliArgs.includes('bust-cache'),
+  get bustCache(): boolean {
+    return ['bust-cache', 'cache-bust', 'bust', 'refresh'].some((o) =>
+      cliArgs.includes(o)
+    )
+  },
   verbose: cliArgs.includes('verbose'),
-  image: cliArgs.includes('image'),
   loadTest: cliArgs.includes('load-test'),
-  logLevel:
-    cliArgs.includes('debug') || cliArgs.includes('verbose') ? 'debug' : 'info',
+  get logLevel(): string {
+    const isDebug =
+      cliArgs.includes('debug') || cliArgs.includes('verbose') || this.tty
+    return isDebug ? 'debug' : 'info'
+  },
   noPlex: cliArgs.includes('no-plex'),
 }

@@ -5,10 +5,10 @@ import { Golem } from '../golem'
 import { Listing } from '../models/listing'
 import { MixMatcher } from '../player/mix-matcher'
 import { shuffleArray } from '../utils/list-utils'
-import { GolemLogger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { userFrom } from '../utils/message-utils'
 
-const log = GolemLogger.child({ src: '' })
+const log = GolemLogger.child({ src: LogSources.GoMix })
 
 const data = new SlashCommandBuilder()
   .setName(CommandNames.slash.mix)
@@ -66,11 +66,13 @@ const execute = async (
 
     switch (mixBy.toLowerCase()) {
       case 'artist':
+        log.info('mixing by artist')
         result = await MixMatcher.similarArtists(
           player.currentResource.metadata.track.listing
         )
         break
       case 'track':
+        log.info('mixing by track')
         result = await MixMatcher.similarTracks(
           player.currentResource.metadata.track.listing
         )

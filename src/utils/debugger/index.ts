@@ -2,11 +2,10 @@ import chalk from 'chalk'
 import winston from 'winston'
 import { Golem } from '../../golem'
 import { GoGet } from '../../handlers/go-get-handler'
-import { LastFm } from '../../lastfm'
-import { SearchResult } from '../../player/track-finder'
 import { opts } from '../config'
 import { GolemLogger, LogSources } from '../logger'
 import { pryDatabase } from './db-debugger'
+import { MixDebugger } from './mix-debugger'
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const rl = require('serverline')
 
@@ -35,12 +34,15 @@ const debuggerCompletions = [
   'conns',
   'exec',
   'sim',
+  'sim a',
   'sim artist',
+  'sim t',
+  'sim track',
 ]
 
-const debugLogSearchResult = (result: SearchResult) => {
-  return `${result.listing.longName}\nisArtistQuery=${result.isArtistQuery}\nisWide=${result.isWideMatch}`
-}
+// const debugLogSearchResult = (result: SearchResult) => {
+//   return `${result.listing.longName}\nisArtistQuery=${result.isArtistQuery}\nisWide=${result.isWideMatch}`
+// }
 
 export class Debugger {
   log: winston.Logger
@@ -59,7 +61,7 @@ export class Debugger {
 
   setPrompt(): void {
     this.state = 'open'
-    rl.setPrompt(`${chalk.bgYellow.bold('DEBUG >')} `)
+    rl.setPrompt(`${chalk.bgRed('DEBUG >')} `)
   }
 
   listen(): void {
@@ -74,7 +76,7 @@ export class Debugger {
     this.state = 'closed'
   }
 
-  private async handleDebugCommand(cmd: string): Promise<void> {
+  async handleDebugCommand(cmd: string): Promise<void> {
     if (this.state === 'closed') {
       return
     }
@@ -128,30 +130,15 @@ export class Debugger {
         console.log(conns)
         break
       case DebugCommands.Exec:
-        eval(cmd.toLowerCase().split(' ').slice(1).join(' '))
+        eval(cmd.split(' ').slice(1).join(' '))
         break
       case DebugCommands.Similar:
-        const q = cmd.toLowerCase().split(' ').slice(2).join(' ')
-        const search = Golem.trackFinder.search(q)
-        if (search) {
-          const sim = await LastFm.getSimilarArtists(search.listing)
-          const similarLog = Golem.trackFinder
-            .getSimilarArtists(sim)
-            .map((l) => ({
-              ...l,
-              albumArt: undefined,
-            }))
-
-          console.log(similarLog)
-          console.log(sim.slice(0, 10).map((s) => s.name))
-          console.log(`Parsed ${similarLog.length} similar artist matches`)
-        }
+        MixDebugger.debug(cmd)
         break
       default:
         const res = Golem.trackFinder.search(cmd)
         if (res) {
           console.log({ ...res.listing, albumArt: undefined })
-          // console.log(debugLogSearchResult(res))
         }
     }
   }

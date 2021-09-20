@@ -165,20 +165,11 @@ export class MusicPlayer {
 
     this.log.info(`playing ${nextTrack.listing.shortName}`)
 
-    if (
-      this.currentResource &&
-      this.currentResource?.ended &&
-      this.currentResource.playbackDuration ===
-        this.currentResource?.metadata.duration * 1000
-    ) {
-      console.log('Hit what we think means full play time...')
-      this.currentResource?.metadata.track.onPlay()
-    }
-
     const next = nextTrack.toAudioResource()
     this.currentResource = next as GolemTrackAudioResource
     this.currentResource.volume?.setVolume(0.35)
     this.audioPlayer.play(this.currentResource)
+    Golem.client.user?.setActivity(`Jammin' to ${nextTrack.listing.title}`)
 
     this.queueLock = false
   }

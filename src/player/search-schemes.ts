@@ -36,7 +36,21 @@ const extractors = {
 export class SearchSchemes {
   private static log = GolemLogger.child({ src: 'search-schemes' })
 
+  static byTitle(
+    query: string,
+    tracks: Listing[]
+  ): fuzzy.FilterResult<Listing>[] {
+    return fuzzy.filter(query, tracks, extractors.title)
+  }
+
   static byArtist(
+    query: string,
+    tracks: Listing[]
+  ): fuzzy.FilterResult<Listing>[] {
+    return fuzzy.filter(query, tracks, extractors.artist)
+  }
+
+  static byArtistWithMb(
     query: string,
     tracks: Listing[]
   ): fuzzy.FilterResult<Listing>[] {
@@ -54,7 +68,16 @@ export class SearchSchemes {
     query: string,
     tracks: Listing[]
   ): fuzzy.FilterResult<Listing>[] {
-    let result = fuzzy.filter(query, tracks, extractors.title)
+    let result = fuzzy.filter(query, tracks, extractors.artist)
+
+    if (result.length === 0 || result[0].score < 1000) {
+      this.log.debug(
+        `artist ${
+          result.length ? 'scores: ' + result[0].score : 'miss'
+        }; using titleSearch`
+      )
+      result = fuzzy.filter(query, tracks, extractors.title)
+    }
 
     if (result.length === 0 || result[0].score < 50) {
       this.log.debug(

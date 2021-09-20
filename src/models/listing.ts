@@ -169,7 +169,7 @@ export class Listing {
       ?.filter((t) => t.id === 'TXXX:mood' && !t.value.includes('Not '))
       .map((t) => t.value)
     const artistMBId = meta.common.musicbrainz_artistid?.[0] || ''
-    const trackMbId = meta.common.musicbrainz_trackid?.[0] || ''
+    const trackMbId = meta.common.musicbrainz_trackid || ''
 
     const mb: MusicBrainzData = {
       artistId: artistMBId,

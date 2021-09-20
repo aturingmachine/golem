@@ -68,6 +68,8 @@ enum LogSources {
   Analytics = 'analytics',
   LastFm = 'last-fm',
   Mixer = 'mixer',
+  MixDebugger = 'mix-debug',
+  DBDebug = 'db-debug',
 }
 
 const LogSourceColors: Record<LogSources, chalk.Chalk> = {
@@ -101,6 +103,8 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'last-fm': chalk.magentaBright,
   'go-mix': chalk.greenBright,
   mixer: chalk.cyanBright,
+  'mix-debug': chalk.blueBright,
+  'db-debug': chalk.green,
 }
 
 export { logger as GolemLogger, LogSources }

@@ -27,12 +27,18 @@ export class LastFm {
   static async getSimilarArtists(
     listing: Listing
   ): Promise<SimilarArtistMatch[]> {
-    LastFm.log.info(`fetching similar artists for ${listing.artist}`)
+    console.log('SENDING PARAMS', {
+      method: 'artist.getsimilar',
+      artist: listing.artist,
+      mbid: listing.mb.artistId,
+    })
     const response = await LastFm.http.get<SimilarArtistMatchRecord>('', {
       params: {
         method: 'artist.getsimilar',
         artist: listing.artist,
-        mbid: listing.mb.artistId,
+        // mbid: listing.mb.artistId
+        //   ? encodeURIComponent(listing.mb.artistId)
+        //   : undefined,
       },
     })
 
@@ -42,13 +48,15 @@ export class LastFm {
   static async getSimilarTracks(
     listing: Listing
   ): Promise<SimilarTrackMatch[]> {
-    LastFm.log.info(`fetching similar artists for ${listing.artist}`)
+    LastFm.log.info(
+      `fetching similar tracks for ${listing.artist} - ${listing.title}`
+    )
     const response = await LastFm.http.get<SimilarTrackMatchRecord>('', {
       params: {
         method: 'track.getsimilar',
         artist: listing.artist,
         track: listing.title,
-        mbid: listing.mb.trackId,
+        // mbid: listing.mb.trackId,
         limit: 200,
       },
     })

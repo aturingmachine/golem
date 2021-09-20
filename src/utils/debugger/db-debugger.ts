@@ -3,6 +3,9 @@ import { BotInteractionData } from '../../analytics/models/interaction'
 import { PlayRecordData } from '../../analytics/models/play-record'
 import { LibIndexData } from '../../models/db/lib-index'
 import { ListingData } from '../../models/db/listing'
+import { GolemLogger, LogSources } from '../logger'
+
+const log = GolemLogger.child({ src: LogSources.DBDebug })
 
 export class PryQuery {
   raw: string
@@ -75,7 +78,13 @@ export async function pryDatabase(cmd: string): Promise<void> {
 
   if (!!targetModel) {
     if (query.describe) {
-      console.log(targetModel.schema)
+      log.debug(
+        '\n'.concat(
+          Object.entries(targetModel.schema.paths)
+            .map(([key, value]) => `${key}=>${value.instance}`)
+            .join('\n')
+        )
+      )
       return
     }
 

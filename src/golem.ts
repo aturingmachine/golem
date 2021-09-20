@@ -2,7 +2,6 @@ import fs from 'fs'
 import path from 'path'
 import { joinVoiceChannel } from '@discordjs/voice'
 import { Client, Intents, Interaction, Message, Snowflake } from 'discord.js'
-import { terminal, Terminal } from 'terminal-kit'
 import winston from 'winston'
 import { establishConnection } from './db'
 import { LastFm } from './lastfm'
@@ -23,23 +22,13 @@ export class Golem {
   public static loader: TrackLoader
   public static trackFinder: TrackFinder
 
-  private static progressBar: Terminal.ProgressBarController
-  public static progress = 0
-
   static async initialize(): Promise<void> {
-    Golem.progressBar = terminal.progressBar({
-      width: 80,
-      percent: true,
-      inline: true,
-    })
     Golem.players = new Map()
-    Golem.addProgress(1)
+
     Golem.log = GolemLogger.child({ src: LogSources.App })
     Golem.debugger = new Debugger()
-    Golem.addProgress(2)
 
     Golem.loader = new TrackLoader()
-    Golem.addProgress(5)
 
     Golem.client = new Client({
       intents: [
@@ -48,12 +37,10 @@ export class Golem {
         Intents.FLAGS.GUILD_MESSAGES,
       ],
     })
-    Golem.addProgress(3)
 
     const eventFiles = fs
       .readdirSync(path.resolve(__dirname, './events'))
       .filter((file) => file.endsWith('.js'))
-    Golem.addProgress(2)
 
     for (const file of eventFiles) {
       Golem.log.debug(`Attempting to load Event Handler: ${file}`)
@@ -72,32 +59,26 @@ export class Golem {
         )
       }
       Golem.log.debug(`Event Handler Registered: ${event.on}`)
-      Golem.addProgress(1)
     }
 
     Golem.log.info('connecting to database')
     await establishConnection()
     Golem.log.info('connected to database')
-    Golem.addProgress(3)
 
     await Golem.loader.load()
 
     Golem.log.debug(`Loaded ${Golem.loader.listings.length} listings`)
-    Golem.addProgress(1)
 
     Golem.trackFinder = new TrackFinder(Golem.loader.listings)
-    Golem.addProgress(4)
 
     try {
       await Plex.init(Golem.trackFinder)
-      Golem.addProgress(2)
     } catch (error) {
       Golem.log.error('plex connection failed')
       Golem.log.error(error)
     }
 
     LastFm.init()
-    Golem.addProgress(4)
   }
 
   static getOrCreatePlayer(
@@ -164,16 +145,5 @@ export class Golem {
     Golem.players.forEach((player) => {
       player.disconnect()
     })
-  }
-
-  static addProgress(p: number): void {
-    Golem.progress += p / 100
-    Golem.progressBar.update({
-      progress: Golem.progress,
-    })
-
-    if (Golem.progress >= 1) {
-      Golem.progressBar.stop()
-    }
   }
 }

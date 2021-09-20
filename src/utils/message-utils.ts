@@ -39,12 +39,15 @@ export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
 }
 
 const getDurationBar = (current: number, total: number): string => {
-  const ratio = (current - total) / total
+  const barWidth = 20
+  const ratio = (total - current) / total
   console.log('>>> current', current)
   console.log('>>> total', total)
   console.log('>>> ratio', ratio)
-  console.log('>>> hash calced', Math.round(20 * ratio))
-  return ''.padEnd(Math.round(20 * ratio), '#').padEnd(20, '-')
+  console.log('>>> hash calced', Math.round(barWidth * ratio))
+  return `${''
+    .padEnd(Math.round(barWidth * ratio), '\u2588')
+    .padEnd(barWidth, '-')}`
 }
 
 export const GetEmbedFromListing = async (
@@ -67,10 +70,10 @@ export const GetEmbedFromListing = async (
       ? `Starts In: ${player.stats.hTime}`
       : 'Starting Now'
     : player.currentResource
-    ? `[${getDurationBar(
+    ? `\`[${getDurationBar(
         player.currentTrackRemaining,
         player.currentResource.metadata.duration
-      )}] - ${humanReadableTime(player.currentTrackRemaining)}`
+      )}] - ${humanReadableTime(player.currentTrackRemaining)}\``
     : `Remaining: ${humanReadableTime(player.currentTrackRemaining)}`
 
   const embed = new MessageEmbed()
@@ -151,7 +154,7 @@ export const ArtistConfirmReply = async (
       `Looks like you might be looking for the artist: **${artist}**.\nShould I queue their discography?`
     )
     .setColor(color.hex)
-    .setThumbnail('attachment://cover.png')
+    .setImage('attachment://cover.png')
 
   return {
     embeds: [embed],

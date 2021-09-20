@@ -11,7 +11,7 @@ export const fourSquare = async (config: {
   size?: number
 }): Promise<Buffer> => {
   const logo = PlexLogo
-  const dimension = config.size || 100
+  const dimension = config.size || 200
   const halfDimension = dimension / 2
 
   const base = sharp(config.images.img1).resize(dimension, dimension).toBuffer()

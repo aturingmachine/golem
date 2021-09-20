@@ -1,5 +1,5 @@
 import * as mm from 'music-metadata'
-import { Golem } from '../golem'
+import { terminal } from 'terminal-kit'
 import { LibIndexData } from '../models/db/lib-index'
 import { ListingData } from '../models/db/listing'
 import { Listing, ListingInfo } from '../models/listing'
@@ -44,7 +44,17 @@ export class TrackLoader {
     let errorCount = 0
     const listings: Listing[] = []
 
-    for (const trackPath of paths) {
+    const progress = terminal.progressBar({
+      percent: true,
+      inline: true,
+      eta: true,
+      items: paths.length,
+      barChar: '\u2588',
+    })
+    const pathValue = 1 / paths.length
+    console.log(pathValue)
+
+    for (const [index, trackPath] of paths.entries()) {
       try {
         const meta = await mm.parseFile(trackPath)
         const listing = await Listing.fromMeta(meta, trackPath)
@@ -57,8 +67,13 @@ export class TrackLoader {
         errorCount++
       }
 
-      Golem.addProgress(50 / paths.length / Config.LibraryPaths.length)
+      progress.update({
+        progress: pathValue * (index + 1),
+        title: `${trackPath.split('/')[trackPath.split('/').length - 1]}`,
+      })
     }
+
+    progress.stop()
 
     log.warn(`Encountered ${errorCount} errors while loading library.`)
 
@@ -81,9 +96,10 @@ export class TrackLoader {
       try {
         const data: ListingInfo[] = dbRead.listings
 
+        console.log('data value', 1 / data.length)
+
         for (const datum of data) {
           this.listings.push(new Listing(datum))
-          Golem.addProgress(50 / data.length / Config.LibraryPaths.length)
         }
       } catch (error) {
         log.warn('unable to parse backup')

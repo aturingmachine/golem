@@ -19,6 +19,6 @@ export class MixMatcher {
 
     MixMatcher.log.debug(`found ${similar.length} tracks`)
 
-    return Golem.trackFinder.getSimilarArtists(similar)
+    return Golem.trackFinder.getSimilarTracks(similar)
   }
 }

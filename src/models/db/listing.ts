@@ -13,6 +13,9 @@ const schema = new Schema<Listing>({
   key: String,
   moods: [String],
   bpm: Number,
+  mb: {
+    type: Schema.Types.Mixed,
+  },
   albumArt: Buffer,
 })
 
