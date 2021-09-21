@@ -52,7 +52,6 @@ export class TrackLoader {
       barChar: '\u2588',
     })
     const pathValue = 1 / paths.length
-    console.log(pathValue)
 
     for (const [index, trackPath] of paths.entries()) {
       try {
@@ -95,8 +94,6 @@ export class TrackLoader {
       log.info('DB Record found')
       try {
         const data: ListingInfo[] = dbRead.listings
-
-        console.log('data value', 1 / data.length)
 
         for (const datum of data) {
           this.listings.push(new Listing(datum))

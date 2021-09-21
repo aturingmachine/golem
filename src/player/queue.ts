@@ -43,7 +43,9 @@ export class TrackQueue {
 
   peekDeep(depth = 5): Track[] {
     log.info('Deep Peeking')
-    return this._queue.slice(0, depth).map((i) => i.track)
+    return depth > 0
+      ? this._queue.slice(0, depth).map((i) => i.track)
+      : this._queue.map((i) => i.track)
   }
 
   pop(): Track | undefined {

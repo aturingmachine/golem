@@ -22,6 +22,11 @@ export class Golem {
   public static loader: TrackLoader
   public static trackFinder: TrackFinder
 
+  private static voiceConnectionEventHandlers: Record<
+    string,
+    (channelId: string) => void
+  > = {}
+
   static async initialize(): Promise<void> {
     Golem.players = new Map()
 
@@ -111,6 +116,8 @@ export class Golem {
           })
         )
       )
+
+      Golem.triggerVCEventHandlers(voiceChannel?.id || '')
     }
 
     return Golem.players.get(guildId)
@@ -134,6 +141,7 @@ export class Golem {
 
   static removePlayer(channelId: string): void {
     Golem.players.delete(channelId)
+    Golem.triggerVCEventHandlers(channelId)
   }
 
   static async login(): Promise<void> {
@@ -145,5 +153,22 @@ export class Golem {
     Golem.players.forEach((player) => {
       player.disconnect()
     })
+  }
+
+  static addEventHandler(
+    name: string,
+    handler: (channelId: string) => void
+  ): void {
+    Golem.voiceConnectionEventHandlers[name] = handler
+  }
+
+  static removeEventHandler(name: string): void {
+    delete Golem.voiceConnectionEventHandlers[name]
+  }
+
+  static triggerVCEventHandlers(channelId: string): void {
+    Object.values(Golem.voiceConnectionEventHandlers).forEach((fn) =>
+      fn(channelId)
+    )
   }
 }

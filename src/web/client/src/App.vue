@@ -1,17 +1,36 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <div v-for="conn in connections" :key="conn.id">
+      {{ conn.id }}
+       <conn-details :id="conn.id" />
+    </div>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import { VoiceConnectionsWebSocketClient } from './services/websocket-client'
+import ConnDetails from './components/ConnDetails.vue'
 
 export default {
   name: 'App',
+
   components: {
-    HelloWorld
+    ConnDetails,
+  },
+
+  computed: {
+    connections() {
+      return this.$store.state.connections
+    }
+  },
+
+  mounted() {
+    const vcws = new VoiceConnectionsWebSocketClient()
+    vcws.addLogStreamHandler((ev) => {
+      const connectionData = JSON.parse(ev.data)
+
+      this.$store.commit('setConnections', {connections: connectionData.connections})
+    })
   }
 }
 </script>

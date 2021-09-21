@@ -13,6 +13,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/express": "^4.17.13",
     "@types/md5": "^2.3.1",
     "@types/sharp": "^0.29.0",
     "@types/terminal-kit": "^1.28.4",
@@ -38,6 +39,7 @@
     "discord-api-types": "^0.22.0",
     "discord.js": "^13.1.0",
     "dotenv": "^10.0.0",
+    "express": "^4.17.1",
     "fast-average-color-node": "^1.0.3",
     "ffmpeg-static": "^4.4.0",
     "form-data": "^4.0.0",

@@ -184,6 +184,11 @@ export class MusicPlayer {
     ) {
       this.log.debug(`entering Idle state - processing queue`)
       void this.processQueue()
+    } else if (
+      newState.status === AudioPlayerStatus.Playing &&
+      oldState.status === AudioPlayerStatus.Idle
+    ) {
+      Golem.triggerVCEventHandlers(this.voiceConnection.joinConfig.guildId)
     }
   }
 

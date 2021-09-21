@@ -21,6 +21,9 @@ type ConfigValues = {
   LastFm: {
     APIKey: string
   }
+  Web: {
+    APIPort: number
+  }
 }
 
 export class Config {
@@ -65,6 +68,14 @@ export class Config {
       APIKey: process.env.LAST_FM_API_KEY || '',
     }
   }
+
+  static get Web(): ConfigValues['Web'] {
+    return {
+      APIPort: process.env.WEB_SERVER_PORT
+        ? parseInt(process.env.WEB_SERVER_PORT, 10)
+        : 3000,
+    }
+  }
 }
 
 const cliArgs = process.argv.slice(2)
@@ -88,4 +99,5 @@ export const opts = {
     return isDebug ? 'debug' : 'info'
   },
   noPlex: cliArgs.includes('no-plex'),
+  skipClient: cliArgs.includes('no-client'),
 }
