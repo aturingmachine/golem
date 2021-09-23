@@ -13,6 +13,7 @@ const schema = new Schema<Listing>({
   key: String,
   moods: [String],
   bpm: Number,
+  addedAt: Number,
   mb: {
     type: Schema.Types.Mixed,
   },

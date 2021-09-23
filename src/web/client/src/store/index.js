@@ -14,16 +14,20 @@ export default new Vuex.Store({
       state.connections = [...payload.connections]
     },
     updateNowPlaying(state, payload) {
+      const update = payload.nowplaying.nowPlaying ? payload.nowplaying : {...state.nowPlaying[payload.id], currentTime: payload.nowplaying.currentTime}
+
       state.nowPlaying = {
         ...state.nowPlaying,
-        [payload.id]: payload.nowplaying
+        [payload.id]: update
       }
     },
     updateQueues(state, payload) {
       state.queues = {
         ...state.queues,
-        [payload.id]: payload.queue
+        [payload.id]: [...payload.queue]
       }
+
+      // state.queues[payload.id].slice(0)
     }
   },
   actions: {

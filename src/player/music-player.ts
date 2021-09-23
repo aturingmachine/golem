@@ -169,7 +169,9 @@ export class MusicPlayer {
     this.currentResource = next as GolemTrackAudioResource
     this.currentResource.volume?.setVolume(0.35)
     this.audioPlayer.play(this.currentResource)
-    Golem.client.user?.setActivity(`Jammin' to ${nextTrack.listing.title}`)
+    Golem.setPresence(nextTrack.listing)
+
+    Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
 
     this.queueLock = false
   }
@@ -188,7 +190,7 @@ export class MusicPlayer {
       newState.status === AudioPlayerStatus.Playing &&
       oldState.status === AudioPlayerStatus.Idle
     ) {
-      Golem.triggerVCEventHandlers(this.voiceConnection.joinConfig.guildId)
+      Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
     }
   }
 

@@ -6,6 +6,7 @@ import winston from 'winston'
 import { establishConnection } from './db'
 import { LastFm } from './lastfm'
 import { EventHandler } from './models/event-handler'
+import { Listing } from './models/listing'
 import { MusicPlayer } from './player/music-player'
 import { TrackFinder } from './player/track-finder'
 import { TrackLoader } from './player/track-loaders'
@@ -23,9 +24,12 @@ export class Golem {
   public static trackFinder: TrackFinder
 
   private static voiceConnectionEventHandlers: Record<
-    string,
-    (channelId: string) => void
-  > = {}
+    'connection' | 'queue',
+    Record<string, (channelId: string) => void>
+  > = {
+    connection: {},
+    queue: {},
+  }
 
   static async initialize(): Promise<void> {
     Golem.players = new Map()
@@ -117,7 +121,7 @@ export class Golem {
         )
       )
 
-      Golem.triggerVCEventHandlers(voiceChannel?.id || '')
+      Golem.triggerEvent('connection', voiceChannel?.id || '')
     }
 
     return Golem.players.get(guildId)
@@ -141,7 +145,7 @@ export class Golem {
 
   static removePlayer(channelId: string): void {
     Golem.players.delete(channelId)
-    Golem.triggerVCEventHandlers(channelId)
+    Golem.triggerEvent('connection', channelId)
   }
 
   static async login(): Promise<void> {
@@ -155,20 +159,40 @@ export class Golem {
     })
   }
 
-  static addEventHandler(
+  static on(
+    event: 'connection' | 'queue',
     name: string,
     handler: (channelId: string) => void
   ): void {
-    Golem.voiceConnectionEventHandlers[name] = handler
+    Golem.voiceConnectionEventHandlers[event][name] = handler
   }
 
-  static removeEventHandler(name: string): void {
-    delete Golem.voiceConnectionEventHandlers[name]
+  static off(event: 'connection' | 'queue', name: string): void {
+    delete Golem.voiceConnectionEventHandlers[event][name]
   }
 
-  static triggerVCEventHandlers(channelId: string): void {
-    Object.values(Golem.voiceConnectionEventHandlers).forEach((fn) =>
-      fn(channelId)
-    )
+  static async triggerEvent(
+    event: 'connection' | 'queue' | 'all',
+    channelId: string
+  ): Promise<void> {
+    Golem.log.debug(`triggering ${event} handlers with channelId ${channelId}`)
+    if (event === 'all') {
+      Object.values(Golem.voiceConnectionEventHandlers['queue']).forEach((fn) =>
+        fn(channelId)
+      )
+      Object.values(Golem.voiceConnectionEventHandlers['connection']).forEach(
+        (fn) => fn(channelId)
+      )
+    } else {
+      Object.values(Golem.voiceConnectionEventHandlers[event]).forEach((fn) =>
+        fn(channelId)
+      )
+    }
+  }
+
+  static setPresence(listing: Listing): void {
+    Golem.client.user?.setActivity(`${listing.artist} - ${listing.title}`, {
+      type: 'LISTENING',
+    })
   }
 }

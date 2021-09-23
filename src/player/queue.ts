@@ -55,11 +55,11 @@ export class TrackQueue {
 
   shuffle(): void {
     log.info('shuffling')
-    let temp = [...this._queue]
-    temp.shift()
-    temp = shuffleArray(temp)
-    temp.unshift(this._queue[0])
-    this._queue = temp
+    const temp = [...this._queue]
+    // temp.shift()
+    // temp = shuffleArray(temp)
+    // temp.unshift(this._queue[0])
+    this._queue = shuffleArray(temp)
     log.info('shuffled')
   }
 

@@ -3,15 +3,17 @@ import express from 'express'
 import { Config } from '../../utils/config'
 import { GolemLogger, LogSources } from '../../utils/logger'
 import { cors } from './middleware/cors'
+import { playerRouter } from './player/rest'
 import {
-  playerRouter,
   PlayerWebSocket,
+  QueueWebSocket,
   VoiceConnectionsWebSocket,
-} from './player'
+} from './player/ws'
 
 const log = GolemLogger.child({ src: LogSources.API })
 
 export const startApi = (): void => {
+  log.info('mounting express server')
   const app = express()
 
   app.use(cors)
@@ -21,6 +23,7 @@ export const startApi = (): void => {
   log.debug(`Attempting to run on port ${Config.Web.APIPort}`)
 
   const server = app.listen(Config.Web.APIPort)
+  log.info('server mounted')
   let connectionWs: VoiceConnectionsWebSocket
 
   server.on('upgrade', (request, socket: Socket, head) => {
@@ -40,6 +43,16 @@ export const startApi = (): void => {
         const playerWs = new PlayerWebSocket(id)
 
         playerWs.handleUpgrade(request, socket, head)
+      }
+    }
+
+    if (pathname?.startsWith('/ws/queue')) {
+      const id = pathname.split('/')[3]
+
+      if (id) {
+        const queueWs = new QueueWebSocket(id)
+
+        queueWs.handleUpgrade(request, socket, head)
       }
     }
   })

@@ -1,3 +1,4 @@
+import fs from 'fs'
 import * as mm from 'music-metadata'
 import { terminal } from 'terminal-kit'
 import { LibIndexData } from '../models/db/lib-index'
@@ -55,8 +56,9 @@ export class TrackLoader {
 
     for (const [index, trackPath] of paths.entries()) {
       try {
+        const birthTime = fs.statSync(trackPath).birthtimeMs
         const meta = await mm.parseFile(trackPath)
-        const listing = await Listing.fromMeta(meta, trackPath)
+        const listing = await Listing.fromMeta(meta, trackPath, birthTime)
 
         listings.push(listing)
       } catch (error) {

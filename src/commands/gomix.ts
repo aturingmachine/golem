@@ -66,13 +66,17 @@ const execute = async (
 
     switch (mixBy.toLowerCase()) {
       case 'artist':
-        log.info('mixing by artist')
+        log.info(
+          `mixing by artist using "${player.currentResource.metadata.artist}"`
+        )
         result = await MixMatcher.similarArtists(
           player.currentResource.metadata.track.listing
         )
         break
       case 'track':
-        log.info('mixing by track')
+        log.info(
+          `mixing by track using "${player.currentResource.metadata.title}"`
+        )
         result = await MixMatcher.similarTracks(
           player.currentResource.metadata.track.listing
         )

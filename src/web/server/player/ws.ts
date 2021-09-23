@@ -1,76 +1,11 @@
 import { IncomingMessage } from 'http'
 import { Socket } from 'net'
 import { Snowflake } from 'discord-api-types'
-import express from 'express'
 import ws from 'ws'
 import { Golem } from '../../../golem'
 import { Listing } from '../../../models/listing'
 import { MusicPlayer } from '../../../player/music-player'
 import { resize } from '../../../utils/image-utils'
-
-const router = express.Router()
-
-/**
- * Get All Active Voice Connections
- */
-router.get('/connections', (req, res) => {
-  const serverIds: { id: Snowflake; isPlaying: boolean }[] = []
-  const it = Golem.players.entries()
-
-  let next = it.next()
-  while (!next.done) {
-    serverIds.push({ id: next.value[0], isPlaying: next.value[1].isPlaying })
-    next = it.next()
-  }
-
-  res.json({ connections: serverIds })
-})
-
-/**
- * Get the Now Playing for a Connection
- */
-router.get('/:serverId/nowplaying', async (req, res) => {
-  const serverId = req.params.serverId
-  const player = Golem.getPlayer(serverId)
-
-  if (!player || !player?.currentResource) {
-    res.status(404).json({ error: `No player for server ${serverId}` })
-    return
-  }
-
-  const playing: Listing = player.currentResource.metadata.track.listing
-
-  res.json({
-    nowPlaying: {
-      ...playing,
-      albumArt: (await resize(playing.albumArt)).toString('base64'),
-    },
-  })
-})
-
-/**
- * Get queued tracks for a given connection
- */
-router.get('/:serverId/queue', (req, res) => {
-  const serverId = req.params.serverId
-  const player = Golem.getPlayer(serverId)
-
-  if (!player || !player?.currentResource) {
-    res.status(404).json({ error: `No player for server ${serverId}` })
-    return
-  }
-
-  const queue = player.peek(-1)
-
-  res.json({
-    queue: queue.map((t) => ({
-      ...t.listing,
-      albumArt: t.listing.albumArt?.toString('base64'),
-    })),
-  })
-})
-
-export { router as playerRouter }
 
 export class VoiceConnectionsWebSocket {
   private wsServer: ws.Server
@@ -82,11 +17,7 @@ export class VoiceConnectionsWebSocket {
     this.wsServer = new ws.Server({ noServer: true })
     this.wsServer.on('connection', this.onConnection.bind(this))
 
-    Golem.addEventHandler('connection-ws', this.updateConnections.bind(this))
-
-    this.timer = setInterval(() => {
-      this.updateConnections()
-    }, 10000)
+    Golem.on('connection', 'connection-ws', this.updateConnections.bind(this))
   }
 
   handleUpgrade(request: any, socket: Socket, head: any): void {
@@ -97,6 +28,12 @@ export class VoiceConnectionsWebSocket {
 
   private onConnection(socket: ws, _request: IncomingMessage): void {
     this.socket = socket
+
+    this.timer = setInterval(() => {
+      this.updateConnections()
+    }, 10000)
+
+    this.updateConnections()
   }
 
   private updateConnections(): void {
@@ -141,6 +78,7 @@ export class PlayerWebSocket {
       })
 
       this.wsServer.on('connection', this.onConnection.bind(this))
+      // this.wsServer.once('connection', this.setUpdateInterval.bind(this))
     }
   }
 
@@ -151,7 +89,6 @@ export class PlayerWebSocket {
   }
 
   private onConnection(socket: ws, _request: IncomingMessage): void {
-    console.log('GOT ONCONNECTION', socket)
     this.socket = socket
 
     this.setUpdateInterval()
@@ -160,33 +97,100 @@ export class PlayerWebSocket {
   private setUpdateInterval(): void {
     this.timer = setInterval(async () => {
       await this.updateNowPlaying()
-    }, 2000)
+    }, 500)
   }
 
   private async updateNowPlaying(): Promise<void> {
     if (this.player?.nowPlaying) {
+      let data
       const np = this.player.nowPlaying
-      if (this.nowPlaying?.trackId !== np.trackId) {
-        this.nowPlaying = np
-        this.b64Art = (await resize(np.albumArt)).toString('base64')
-      }
-
       const currentTime = this.player.currentTrackRemaining
 
+      if (this.nowPlaying?.trackId !== np.trackId) {
+        this.nowPlaying = np
+        this.b64Art = (await resize(np.albumArt, 300)).toString('base64')
+
+        data = {
+          nowPlaying: { ...np, albumArt: this.b64Art },
+          currentTime,
+        }
+      } else {
+        data = {
+          currentTime: this.player.currentTrackRemaining,
+        }
+      }
+
       try {
-        this.socket.send(
-          JSON.stringify({
-            nowPlaying: {
-              ...np,
-              albumArt: this.b64Art,
-            },
-            currentTime,
-          })
-        )
+        this.socket.send(JSON.stringify(data))
       } catch (error) {
         console.error(error)
         console.error('SOCKET SEND FAILED!')
       }
+    }
+  }
+}
+
+export class QueueWebSocket {
+  private wsServer: ws.Server
+  private socket!: ws
+  private timer!: NodeJS.Timer
+  private player?: MusicPlayer
+  private imageCache: Record<string, string> = {}
+
+  constructor(private guildId: string) {
+    this.wsServer = new ws.Server({ noServer: true })
+    this.player = Golem.getPlayer(guildId)
+
+    if (this.player) {
+      this.wsServer.on('close', () => {
+        clearInterval(this.timer)
+      })
+
+      this.wsServer.on('connection', this.onConnection.bind(this))
+    }
+  }
+
+  handleUpgrade(request: any, socket: Socket, head: any): void {
+    this.wsServer.handleUpgrade(request, socket, head, (socket) => {
+      this.wsServer.emit('connection', socket, request)
+    })
+  }
+
+  private onConnection(socket: ws, _request: IncomingMessage): void {
+    this.socket = socket
+
+    Golem.on('queue', `${this.guildId}-queue-ws`, this.updateQueue.bind(this))
+
+    this.updateQueue()
+  }
+
+  private async updateQueue(): Promise<void> {
+    const queue = this.player?.peek(-1)
+
+    if (queue) {
+      const data = []
+      for (const item of queue) {
+        if (!this.imageCache[item.listing.album]) {
+          const art = (await resize(item.listing.albumArt, 100)).toString(
+            'base64'
+          )
+
+          this.imageCache[item.listing.album] = art
+        }
+
+        data.push({
+          ...item.listing,
+          albumArt: this.imageCache[item.listing.album],
+        })
+      }
+      // const data = {
+      //   queue: queue.map((t) => ({
+      //     ...t.listing,
+      //     albumArt: (await resize(t.listing.albumArt, 100)).toString('base64'),
+      //   })),
+      // }
+
+      this.socket.send(JSON.stringify({ queue: data }))
     }
   }
 }
