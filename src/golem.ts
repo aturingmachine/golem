@@ -14,6 +14,7 @@ import { Plex } from './plex'
 import { Config } from './utils/config'
 import { Debugger } from './utils/debugger'
 import { GolemLogger, LogSources } from './utils/logger'
+import { EzProgressBar } from './utils/progress-bar'
 
 export class Golem {
   private static log: winston.Logger
@@ -47,28 +48,9 @@ export class Golem {
       ],
     })
 
-    const eventFiles = fs
-      .readdirSync(path.resolve(__dirname, './events'))
-      .filter((file) => file.endsWith('.js'))
-
-    for (const file of eventFiles) {
-      Golem.log.debug(`Attempting to load Event Handler: ${file}`)
-      /* eslint-disable-next-line @typescript-eslint/no-var-requires */
-      const event: EventHandler<any> = require(`./events/${file}`).default
-      Golem.log.debug(`Event Handler Loaded: ${event}`)
-      if (event.once) {
-        Golem.client.once(
-          event.on,
-          async (...args) => await event.execute(...args)
-        )
-      } else {
-        Golem.client.on(
-          event.on,
-          async (...args) => await event.execute(...args)
-        )
-      }
-      Golem.log.debug(`Event Handler Registered: ${event.on}`)
-    }
+    Golem.log.info('Loading event handlers')
+    Golem.loadEventHandlers()
+    Golem.log.info('Event Handlers loaded')
 
     Golem.log.info('connecting to database')
     await establishConnection()
@@ -194,5 +176,35 @@ export class Golem {
     Golem.client.user?.setActivity(`${listing.artist} - ${listing.title}`, {
       type: 'LISTENING',
     })
+  }
+
+  private static loadEventHandlers(): void {
+    const eventFiles = fs
+      .readdirSync(path.resolve(__dirname, './events'))
+      .filter((file) => file.endsWith('.js'))
+
+    EzProgressBar.start(eventFiles.length)
+
+    for (const file of eventFiles) {
+      Golem.log.debug(`Attempting to load Event Handler: ${file}`)
+      /* eslint-disable-next-line @typescript-eslint/no-var-requires */
+      const event: EventHandler<any> = require(`./events/${file}`).default
+      EzProgressBar.add(1 / eventFiles.length, event.on)
+      Golem.log.debug(`Event Handler Loaded: ${event.on}`)
+      if (event.once) {
+        Golem.client.once(
+          event.on,
+          async (...args) => await event.execute(...args)
+        )
+      } else {
+        Golem.client.on(
+          event.on,
+          async (...args) => await event.execute(...args)
+        )
+      }
+      Golem.log.debug(`Event Handler Registered: ${event.on}`)
+    }
+
+    EzProgressBar.stop()
   }
 }

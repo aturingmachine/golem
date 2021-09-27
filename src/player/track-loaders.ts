@@ -1,12 +1,12 @@
 import fs from 'fs'
 import * as mm from 'music-metadata'
-import { terminal } from 'terminal-kit'
 import { LibIndexData } from '../models/db/lib-index'
 import { ListingData } from '../models/db/listing'
 import { Listing, ListingInfo } from '../models/listing'
 import { Config, opts } from '../utils/config'
 import { getAllFiles } from '../utils/filesystem'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { EzProgressBar } from '../utils/progress-bar'
 
 const log = GolemLogger.child({ src: LogSources.Loader })
 
@@ -45,16 +45,9 @@ export class TrackLoader {
     let errorCount = 0
     const listings: Listing[] = []
 
-    const progress = terminal.progressBar({
-      percent: true,
-      inline: true,
-      eta: true,
-      items: paths.length,
-      barChar: '\u2588',
-    })
-    const pathValue = 1 / paths.length
+    EzProgressBar.start(paths.length)
 
-    for (const [index, trackPath] of paths.entries()) {
+    for (const trackPath of paths) {
       try {
         const birthTime = fs.statSync(trackPath).birthtimeMs
         const meta = await mm.parseFile(trackPath)
@@ -68,13 +61,13 @@ export class TrackLoader {
         errorCount++
       }
 
-      progress.update({
-        progress: pathValue * (index + 1),
-        title: `${trackPath.split('/')[trackPath.split('/').length - 1]}`,
-      })
+      EzProgressBar.add(
+        1 / paths.length,
+        `${trackPath.split('/')[trackPath.split('/').length - 1]}`
+      )
     }
 
-    progress.stop()
+    EzProgressBar.stop()
 
     log.warn(`Encountered ${errorCount} errors while loading library.`)
 

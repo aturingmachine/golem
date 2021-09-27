@@ -1,8 +1,8 @@
 import axios, { AxiosInstance } from 'axios'
-import { terminal } from 'terminal-kit'
 import { TrackFinder } from '../player/track-finder'
 import { Config, opts } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { EzProgressBar } from '../utils/progress-bar'
 import {
   PlaylistRecord,
   PlaylistDetailsContainer,
@@ -72,16 +72,21 @@ export const Plex: Plex = {
 
     const playlistRecords = await this.getPlaylists()
 
-    log.info('Mapping Playlists')
     playlistRecords.forEach((record) => {
       this.playlists.push({
         name: record.name,
         count: record.count,
-        listings: record.filePaths.map((path) =>
-          trackFinder.findIdByPath(path)
-        ),
+        listings: record.filePaths.map((path) => {
+          EzProgressBar.add(
+            1 / record.filePaths.length / playlistRecords.length,
+            path.split('/').pop()
+          )
+          return trackFinder.findIdByPath(path)
+        }),
       })
     })
+    EzProgressBar.stop()
+
     log.info('Playlists Mapped')
   },
 
@@ -92,17 +97,9 @@ export const Plex: Plex = {
     if (playlists) {
       log.info(`Found ${playlists.data.MediaContainer.size} playlists.`)
 
-      const progress = terminal.progressBar({
-        width: 100,
-        percent: true,
-        inline: true,
-        items: playlists.data.MediaContainer.Metadata.length,
-      })
+      EzProgressBar.start(playlists.data.MediaContainer.Metadata.length)
 
-      for (const [
-        index,
-        playlist,
-      ] of playlists.data.MediaContainer.Metadata.entries()) {
+      for (const playlist of playlists.data.MediaContainer.Metadata) {
         const details = await this.getPlaylistById(playlist.ratingKey)
 
         records.push({
@@ -114,14 +111,11 @@ export const Plex: Plex = {
             ) || [],
         })
 
-        progress.update({
-          progress:
-            (1 / playlists.data.MediaContainer.Metadata.length) * (index + 1),
-          title: details?.MediaContainer.title,
-        })
+        EzProgressBar.add(
+          0.5 / playlists.data.MediaContainer.Metadata.length,
+          details?.MediaContainer.title
+        )
       }
-
-      progress.stop()
     }
 
     return records
