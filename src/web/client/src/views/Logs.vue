@@ -3,11 +3,7 @@
     <div class="filter-container">
       <v-container>
         <v-row>
-          <v-col
-            cols="12"
-            sm="6"
-            md="3"
-          >
+          <v-col cols="12" sm="6" md="3">
             <v-select
               v-model="selectedSources"
               @change="updateFilter()"
@@ -18,11 +14,7 @@
             ></v-select>
           </v-col>
 
-          <v-col
-            cols="12"
-            sm="6"
-            md="3"
-          >
+          <v-col cols="12" sm="6" md="3">
             <v-select
               v-model="selectedLevels"
               @change="updateFilter()"
@@ -33,11 +25,7 @@
             ></v-select>
           </v-col>
 
-          <v-col
-            cols="12"
-            sm="6"
-            md="3"
-          >
+          <v-col cols="12" sm="6" md="3">
             <v-form>
               <v-text-field
                 v-model="filterString"
@@ -59,7 +47,7 @@
 </template>
 
 <script>
-import { LogWebSocketClient } from '../services/websocket-client';
+import { LogWebSocketClient } from '../services/websocket-client'
 import { logInfoClassMappings } from '../utils/log-prettifier'
 
 export default {
@@ -80,7 +68,7 @@ export default {
 
     sources() {
       return Object.keys(logInfoClassMappings).sort()
-    }
+    },
   },
 
   methods: {
@@ -88,9 +76,9 @@ export default {
       this.$store.commit('logs/filter', {
         levels: this.selectedLevels,
         sources: this.selectedSources,
-        filterString: this.filterString
+        filterString: this.filterString,
       })
-    }
+    },
   },
 
   mounted() {
@@ -98,12 +86,12 @@ export default {
 
     this.logsService.addUpdateHandler((ev) => {
       try {
-        this.$store.commit('logs/addLog', {logs: [JSON.parse(ev.data)]})
+        this.$store.commit('logs/addLog', { logs: [JSON.parse(ev.data)] })
 
         window.scrollTo({
           top: document.body.scrollHeight,
           left: 0,
-          behavior: 'smooth'
+          behavior: 'smooth',
         })
       } catch (error) {
         //
@@ -113,8 +101,8 @@ export default {
 
   destroyed() {
     this.logsService.disconnect()
-  }
-};
+  },
+}
 </script>
 
 <style lang="scss">

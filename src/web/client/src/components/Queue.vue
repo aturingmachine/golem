@@ -1,30 +1,29 @@
 <template>
-  <div
-    v-if="queue && queue.length"
-  >
-    <h6 class="text-h6 pl-3 pb-2">{{ queue.length }} Queued Tracks
-    </h6>
-    <v-virtual-scroll
-      bench="1"
-      :items="queue"
-      height="300"
-      item-height="100"
-    >
+  <div v-if="queue && queue.length">
+    <h6 class="text-h6 pl-3 pb-2">{{ queue.length }} Queued Tracks</h6>
+    <v-virtual-scroll bench="1" :items="queue" height="300" item-height="100">
       <template v-slot:default="{ item }">
         <v-list-item :key="item.track_id">
           <v-list-item-content class="d-flex align-center">
             <v-list-item-title class="d-flex align-center">
-              <v-btn 
-                class="rounded-lg elevation-6 mr-4 align-center justify-center d-flex" 
-                icon 
+              <v-btn
+                class="
+                  rounded-lg
+                  elevation-6
+                  mr-4
+                  align-center
+                  justify-center
+                  d-flex
+                "
+                icon
                 :style="`background-image: url(data:image/png;base64,${item.albumArt}); background-size: cover; width: 50px; height: 50px;`"
               >
                 <v-icon color="primary">mdi-play</v-icon>
               </v-btn>
-              {{item.title}}
+              {{ item.title }}
             </v-list-item-title>
             <v-list-item-subtitle class="pl-16">
-              {{item.artist}}
+              {{ item.artist }}
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
@@ -33,9 +32,7 @@
       </template>
     </v-virtual-scroll>
   </div>
-  <div v-else>
-    No Queued Tracks
-  </div>
+  <div v-else>No Queued Tracks</div>
 </template>
 
 <script>
@@ -44,17 +41,17 @@ export default {
   name: 'Queue',
 
   props: {
-    id: String
+    id: String,
   },
 
   data: () => ({
-    ws: undefined
+    ws: undefined,
   }),
 
   computed: {
     queue() {
       return this.$store.state.queues[this.id]
-    }
+    },
   },
 
   mounted() {
@@ -65,10 +62,9 @@ export default {
 
       this.$store.commit('updateQueues', { id: this.id, queue: data.queue })
     })
-  }
+  },
 }
 </script>
 
 <style>
-
 </style>

@@ -1,7 +1,7 @@
 <template>
   <v-expansion-panel>
     <v-expansion-panel-header class="text-h5">
-      {{ connection.name }} 
+      {{ connection.name }}
     </v-expansion-panel-header>
     <v-expansion-panel-content>
       <conn-details :id="connection.id" />
@@ -20,18 +20,18 @@ export default {
   },
 
   props: {
-    connection: Object
+    connection: Object,
   },
 
   data: () => ({
-    isOpen: false
+    isOpen: false,
   }),
 }
 </script>
 
 <style lang="scss">
 .v-expansion-panel-content__wrap {
-  @media screen and (max-width: 1264px){
+  @media screen and (max-width: 1264px) {
     padding: 0 !important;
   }
 }

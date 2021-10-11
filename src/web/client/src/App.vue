@@ -1,10 +1,6 @@
 <template>
   <v-app>
-    <v-app-bar
-      app
-      color="primary"
-      clipped-left
-    >
+    <v-app-bar app color="primary" clipped-left>
       <div class="d-flex align-center">
         <v-btn color="white" dark @click="drawer = !drawer" icon x-large>
           <v-icon class="text-h2">א</v-icon>
@@ -24,7 +20,7 @@
 
     <v-main>
       <v-container fluid class="pa-lg-10 pa-0">
-        <router-view/>
+        <router-view />
       </v-container>
     </v-main>
   </v-app>
@@ -44,20 +40,20 @@ export default {
       {
         name: 'connections',
         route: '/connections',
-        title: 'Connections'
+        title: 'Connections',
       },
       {
         name: 'logs',
         route: '/logs',
-        title: 'Logs'
+        title: 'Logs',
       },
-    ]
+    ],
   }),
 
   computed: {
     connections() {
       return this.$store.state.connections
-    }
+    },
   },
 
   mounted() {
@@ -65,8 +61,10 @@ export default {
     vcws.addLogStreamHandler((ev) => {
       const connectionData = JSON.parse(ev.data)
 
-      this.$store.commit('setConnections', {connections: connectionData.connections})
+      this.$store.commit('setConnections', {
+        connections: connectionData.connections,
+      })
     })
-  }
-};
+  },
+}
 </script>

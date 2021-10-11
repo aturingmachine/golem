@@ -5,18 +5,39 @@
     </v-card-title>
     <v-card-subtitle>
       -{{ remainingTime }}
-      <v-progress-linear striped :value="position" height="8" rounded class="mt-3"></v-progress-linear>
+      <v-progress-linear
+        striped
+        :value="position"
+        height="8"
+        rounded
+        class="mt-3"
+      ></v-progress-linear>
     </v-card-subtitle>
     <v-card-text class="pa-0">
       <v-container>
         <v-row align="center">
           <v-col cols="12" md="5" align="center" class="d-flex justify-center">
-            <v-btn color="primary" fab class="align-self-center mr-4"><v-icon x-large>mdi-skip-previous</v-icon></v-btn>
-              <img class="rounded-lg elevation-6" width="200" :src="`data:image/png;base64,${nowPlaying.albumArt}`" />
-            <v-btn @click="skipTrack()" color="primary" fab class="align-self-center ml-4"><v-icon x-large>mdi-skip-next</v-icon></v-btn>
-
-
+            <img
+              class="rounded-lg elevation-6"
+              width="200"
+              :src="`data:image/png;base64,${nowPlaying.albumArt}`"
+            />
+            <v-btn
+              @click="skipTrack()"
+              color="primary"
+              fab
+              class="align-self-center ml-4"
+              ><v-icon x-large>mdi-play</v-icon></v-btn
+            >
+            <v-btn
+              @click="skipTrack()"
+              color="primary"
+              fab
+              class="align-self-center ml-4"
+              ><v-icon x-large>mdi-skip-next</v-icon></v-btn
+            >
           </v-col>
+
           <v-col cols="12" md="7">
             <v-simple-table>
               <template v-slot:default>
@@ -31,11 +52,23 @@
                   </tr>
                   <tr>
                     <td>Genres:</td>
-                    <td class="text-right">{{ nowPlaying.genres.length ? nowPlaying.genres.join(', ') : 'N/A' }}</td>
+                    <td class="text-right">
+                      {{
+                        nowPlaying.genres.length
+                          ? nowPlaying.genres.join(', ')
+                          : 'N/A'
+                      }}
+                    </td>
                   </tr>
                   <tr>
                     <td>Moods:</td>
-                    <td class="text-right">{{ nowPlaying.moods.length ? nowPlaying.moods.join(', ') : 'N/A' }}</td>
+                    <td class="text-right">
+                      {{
+                        nowPlaying.moods.length
+                          ? nowPlaying.moods.join(', ')
+                          : 'N/A'
+                      }}
+                    </td>
                   </tr>
                   <tr>
                     <td>Key:</td>
@@ -62,7 +95,7 @@ import Queue from './Queue.vue'
 export default {
   name: 'ConnDetails',
   props: {
-    id: String
+    id: String,
   },
 
   components: {
@@ -71,7 +104,7 @@ export default {
 
   data: () => ({
     ws: {},
-    service: undefined
+    service: undefined,
   }),
 
   computed: {
@@ -84,7 +117,13 @@ export default {
     },
 
     position() {
-      return !this.record ? 0 : (((this.nowPlaying.duration - this.record.currentTime) / this.nowPlaying.duration) * 100).toFixed(2)
+      return !this.record
+        ? 0
+        : (
+            ((this.nowPlaying.duration - this.record.currentTime) /
+              this.nowPlaying.duration) *
+            100
+          ).toFixed(2)
     },
 
     remainingTime() {
@@ -97,13 +136,13 @@ export default {
       return `${minutes}:${(Math.round(seconds * 100) / 100)
         .toFixed(0)
         .padStart(2, '0')}`
-    }
+    },
   },
 
   methods: {
     skipTrack() {
       this.service.skip()
-    }
+    },
   },
 
   mounted() {
@@ -111,7 +150,7 @@ export default {
 
     this.ws.addStatusHandler((ev) => {
       const np = JSON.parse(ev.data)
-      this.$store.commit('updateNowPlaying', {id: this.id, nowplaying: np })
+      this.$store.commit('updateNowPlaying', { id: this.id, nowplaying: np })
     })
 
     this.service = new PlayerService(this.id)
@@ -119,7 +158,7 @@ export default {
 
   destroyed() {
     this.ws.close()
-  }
+  },
 }
 </script>
 

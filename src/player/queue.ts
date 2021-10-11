@@ -17,44 +17,44 @@ export class TrackQueue {
   }
 
   add(userId: string, track: Track): void {
-    log.info(`${userId} Adding ${track.listing.shortName}`)
+    log.debug(`${userId} Adding ${track.listing.shortName}`)
     this._queue.push({ track, queuedBy: userId })
   }
 
   addMany(userId: string, tracks: Track[]): void {
-    log.info(`Adding many - ${tracks.length} tracks`)
+    log.debug(`Adding many - ${tracks.length} tracks`)
     this._queue.push(...tracks.map((track) => ({ track, queuedBy: userId })))
   }
 
   skip(): void {
-    log.info(`Skipping ${this._queue[0]?.track.listing.name}`)
+    log.debug(`Skipping ${this._queue[0]?.track.listing.name}`)
     this._queue.shift()
   }
 
   clear(): void {
-    log.info('Clearing')
+    log.debug('Clearing')
     this._queue = []
   }
 
   peek(): Track | undefined {
-    log.info('Peeking')
+    log.debug('Peeking')
     return this._queue[0]?.track
   }
 
   peekDeep(depth = 5): Track[] {
-    log.info('Deep Peeking')
+    log.debug('Deep Peeking')
     return depth > 0
       ? this._queue.slice(0, depth).map((i) => i.track)
       : this._queue.map((i) => i.track)
   }
 
   pop(): Track | undefined {
-    log.info('Popping Next track')
+    log.debug('Popping Next track')
     return this._queue.shift()?.track
   }
 
   shuffle(): void {
-    log.info('shuffling')
+    log.debug('shuffling')
     const temp = [...this._queue]
     // temp.shift()
     // temp = shuffleArray(temp)
@@ -75,7 +75,7 @@ export class TrackQueue {
       return prev + curr.track.listing.duration
     }, 0)
 
-    log.info(`Estimated Runtime ${estRunTime}`)
+    log.debug(`Estimated Runtime ${estRunTime}`)
 
     return estRunTime
   }

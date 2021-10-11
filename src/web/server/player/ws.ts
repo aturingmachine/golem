@@ -6,7 +6,7 @@ import { Golem } from '../../../golem'
 import { Listing } from '../../../models/listing'
 import { MusicPlayer } from '../../../player/music-player'
 import { resize } from '../../../utils/image-utils'
-import { GolemLogger } from '~/utils/logger'
+import { GolemLogger } from '../../../utils/logger'
 
 export class VoiceConnectionsWebSocket {
   private wsServer: ws.Server
@@ -223,36 +223,8 @@ export class LogWebSocket {
   }
 
   private async streamLogs(): Promise<void> {
-    // const queue = this.player?.peek(-1)
-
-    // if (queue) {
-    //   const data = []
-    //   for (const item of queue) {
-    //     if (!this.imageCache[item.listing.album]) {
-    //       const art = (await resize(item.listing.albumArt, 100)).toString(
-    //         'base64'
-    //       )
-
-    //       this.imageCache[item.listing.album] = art
-    //     }
-
-    //     data.push({
-    //       ...item.listing,
-    //       albumArt: this.imageCache[item.listing.album],
-    //     })
-    //   }
-    //   // const data = {
-    //   //   queue: queue.map((t) => ({
-    //   //     ...t.listing,
-    //   //     albumArt: (await resize(t.listing.albumArt, 100)).toString('base64'),
-    //   //   })),
-    //   // }
-
-    //   this.socket.send(JSON.stringify({ queue: data }))
-    // }
-
-    GolemLogger.stream({ start: -1 }).on('log', (log) => {
-      this.socket.send(JSON.stringify({ log }))
+    GolemLogger.on('data', (data: any) => {
+      this.socket.send(JSON.stringify(data))
     })
   }
 }
