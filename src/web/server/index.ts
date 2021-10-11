@@ -5,6 +5,7 @@ import { GolemLogger, LogSources } from '../../utils/logger'
 import { cors } from './middleware/cors'
 import { playerRouter } from './player/rest'
 import {
+  LogWebSocket,
   PlayerWebSocket,
   QueueWebSocket,
   VoiceConnectionsWebSocket,
@@ -54,6 +55,12 @@ export const startApi = (): void => {
 
         queueWs.handleUpgrade(request, socket, head)
       }
+    }
+
+    if (pathname?.startsWith('/ws/logs')) {
+      const logWs = new LogWebSocket()
+
+      logWs.handleUpgrade(request, socket, head)
     }
   })
 }

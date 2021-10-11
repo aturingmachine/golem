@@ -75,3 +75,14 @@ export class QueueWebSocketClient extends WebSocketClient {
     this.addMessageHandler(`${this.channelId}-QueueHandler`, handler)
   }
 }
+
+export class LogWebSocketClient extends WebSocketClient {
+  constructor(channelId) {
+    super(`ws://${window.location.hostname}:3000/ws/logs`)
+    this.channelId = channelId
+  }
+
+  addUpdateHandler(handler) {
+    this.addMessageHandler(`${this.channelId}-LogsHandler`, handler)
+  }
+}

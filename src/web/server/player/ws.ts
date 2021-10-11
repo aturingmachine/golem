@@ -6,6 +6,7 @@ import { Golem } from '../../../golem'
 import { Listing } from '../../../models/listing'
 import { MusicPlayer } from '../../../player/music-player'
 import { resize } from '../../../utils/image-utils'
+import { GolemLogger } from '~/utils/logger'
 
 export class VoiceConnectionsWebSocket {
   private wsServer: ws.Server
@@ -192,5 +193,66 @@ export class QueueWebSocket {
 
       this.socket.send(JSON.stringify({ queue: data }))
     }
+  }
+}
+
+export class LogWebSocket {
+  private wsServer: ws.Server
+  private socket!: ws
+  private player?: MusicPlayer
+  private imageCache: Record<string, string> = {}
+
+  constructor() {
+    this.wsServer = new ws.Server({ noServer: true })
+
+    this.wsServer.on('connection', this.onConnection.bind(this))
+  }
+
+  handleUpgrade(request: any, socket: Socket, head: any): void {
+    this.wsServer.handleUpgrade(request, socket, head, (socket) => {
+      this.wsServer.emit('connection', socket, request)
+    })
+  }
+
+  private onConnection(socket: ws, _request: IncomingMessage): void {
+    this.socket = socket
+
+    // Golem.on('queue', `${this.guildId}-queue-ws`, this.updateQueue.bind(this))
+
+    this.streamLogs()
+  }
+
+  private async streamLogs(): Promise<void> {
+    // const queue = this.player?.peek(-1)
+
+    // if (queue) {
+    //   const data = []
+    //   for (const item of queue) {
+    //     if (!this.imageCache[item.listing.album]) {
+    //       const art = (await resize(item.listing.albumArt, 100)).toString(
+    //         'base64'
+    //       )
+
+    //       this.imageCache[item.listing.album] = art
+    //     }
+
+    //     data.push({
+    //       ...item.listing,
+    //       albumArt: this.imageCache[item.listing.album],
+    //     })
+    //   }
+    //   // const data = {
+    //   //   queue: queue.map((t) => ({
+    //   //     ...t.listing,
+    //   //     albumArt: (await resize(t.listing.albumArt, 100)).toString('base64'),
+    //   //   })),
+    //   // }
+
+    //   this.socket.send(JSON.stringify({ queue: data }))
+    // }
+
+    GolemLogger.stream({ start: -1 }).on('log', (log) => {
+      this.socket.send(JSON.stringify({ log }))
+    })
   }
 }
