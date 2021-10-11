@@ -111,8 +111,6 @@ export class MusicPlayer {
     this.log.info(`force stopping player`)
     this.audioPlayer.stop(true)
     this.queueLock = false
-    // hack to resolve the player becoming unstartable after stopping
-    this.disconnect()
   }
 
   public skip(): void {

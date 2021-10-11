@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "npm run build && node dist/index.js",
+    "dev:debug": "npm run dev debug tty",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "test": "jest",

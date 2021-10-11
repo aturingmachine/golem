@@ -123,9 +123,12 @@ export class TrackLoader {
 
     for (const listing of listings) {
       const listingRecord = new ListingData(listing)
-      listing._id = listingRecord._id
 
       await listingRecord.save()
+
+      listing._id = listingRecord._id.toString()
+
+      console.log(listing._id, listing.id)
 
       listingIds.push(listingRecord._id)
     }

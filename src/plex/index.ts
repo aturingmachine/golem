@@ -81,11 +81,18 @@ export const Plex: Plex = {
             1 / record.filePaths.length / playlistRecords.length,
             path.split('/').pop()
           )
-          return trackFinder.findIdByPath(path)
+
+          const res = trackFinder.findIdByPath(path)
+
+          return res
         }),
       })
     })
     EzProgressBar.stop()
+
+    // console.log(this.playlists[0].listings[0])
+
+    // process.exit(0)
 
     log.info('Playlists Mapped')
   },

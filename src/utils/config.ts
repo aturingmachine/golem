@@ -100,4 +100,5 @@ export const opts = {
   },
   noPlex: cliArgs.includes('no-plex'),
   skipClient: cliArgs.includes('no-client'),
+  service: cliArgs.includes('service'),
 }
