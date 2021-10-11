@@ -16,14 +16,19 @@ export interface SearchResult {
 export class TrackFinder {
   public readonly listings: Listing[]
 
+  private _artistNames!: string[]
+
   constructor(listings: Listing[]) {
     log.info('instantiating track finder', listings)
     this.listings = listings
-    this.listings.forEach((listing) => {
-      if (!listing.title) {
-        console.log('GOT BAD LISTING - NO TITLE: ', listing.path)
-      }
-    })
+  }
+
+  private get artistNames(): string[] {
+    if (!this._artistNames) {
+      this._artistNames = this.listings.map((l) => l.artist.toLowerCase())
+    }
+
+    return this._artistNames
   }
 
   search(query: string): SearchResult | undefined {
@@ -67,11 +72,20 @@ export class TrackFinder {
     takeArtists = 10,
     takeTracks = 5
   ): Listing[] {
+    log.info('get similar artists')
     const artistNames = similarMatches.map((m) => m.name.toLowerCase())
-    return shuffleArray(similarMatches)
+
+    const availableSimilarArtists = similarMatches.filter((similar) =>
+      this.artistNames.includes(similar.name.toLowerCase())
+    )
+
+    console.log(`${availableSimilarArtists.length} available similar artists`)
+    console.log(availableSimilarArtists.map((x) => x.name).join('\n'))
+
+    return shuffleArray(availableSimilarArtists)
       .slice(0, takeArtists)
       .reduce((prev, curr) => {
-        const res = SearchSchemes.byArtist(curr.name, this.listings)
+        const res = SearchSchemes.byArtistWithMb(curr.name, this.listings)
         return prev.concat(
           res
             .map((r) => r.original)
@@ -83,26 +97,30 @@ export class TrackFinder {
 
   getSimilarTracks(
     similarMatches: SimilarTrackMatch[],
-    takeArtists = 10,
-    takeTracks = 5
+    takeTracks = 30
   ): Listing[] {
-    return shuffleArray(similarMatches)
-      .slice(0, takeArtists)
-      .reduce((prev, curr) => {
-        const res = SearchSchemes.byArtist(curr.name, this.listings)
-        return prev.concat(res.map((r) => r.original).slice(0, takeTracks))
+    log.info('get similar tracks')
+    return shuffleArray(
+      similarMatches.reduce((prev, curr) => {
+        const res = SearchSchemes.byTitle(curr.name, this.listings)
+        return res[0] ? prev.concat(res[0].original) : prev
       }, [] as Listing[])
+    ).slice(0, takeTracks)
   }
 
   artistSample(artist: string, count = 1): Listing[] {
     const res = []
-    const listings = this.listings
-      .filter(
-        (l) => l.artist.toLowerCase() === artist.toLowerCase() && l.albumArt
-      )
-      .filter(
-        (l, index, self) => self.map((x) => x.album).indexOf(l.album) === index
-      )
+    let listings = this.listings.filter(
+      (l) => l.artist.toLowerCase() === artist.toLowerCase() && l.albumArt
+    )
+
+    const uniques = listings.filter(
+      (l, index, self) => self.map((x) => x.album).indexOf(l.album) === index
+    )
+
+    if (count < uniques.length) {
+      listings = uniques
+    }
 
     for (let i = 0; i < count; i++) {
       res.push(listings[Math.floor(Math.random() * listings.length)])

@@ -30,6 +30,7 @@ export type ListingInfo = {
   moods: string[]
   key: string
   mb: MusicBrainzData
+  addedAt: number
   bpm?: number
   albumArt?: Buffer
 }
@@ -63,6 +64,7 @@ export class Listing {
   key!: string
   moods!: string[]
   mb: MusicBrainzData
+  addedAt: number
   bpm?: number
   albumArt?: Buffer
 
@@ -77,6 +79,7 @@ export class Listing {
     this.key = info.key
     this.moods = info.moods
     this.bpm = info.bpm
+    this.addedAt = info.addedAt
     this.mb = info.mb
     this.albumArt = info.albumArt
   }
@@ -145,7 +148,11 @@ export class Listing {
     return artist === this.artist
   }
 
-  static async fromMeta(meta: IAudioMetadata, path: string): Promise<Listing> {
+  static async fromMeta(
+    meta: IAudioMetadata,
+    path: string,
+    birthTime: number
+  ): Promise<Listing> {
     const targetConfig = Config.LibraryPaths.find((p) => path.includes(p))
     if (targetConfig?.length === 0) {
       console.log('LISTING GOT BAD PATH', path)
@@ -169,7 +176,7 @@ export class Listing {
       ?.filter((t) => t.id === 'TXXX:mood' && !t.value.includes('Not '))
       .map((t) => t.value)
     const artistMBId = meta.common.musicbrainz_artistid?.[0] || ''
-    const trackMbId = meta.common.musicbrainz_trackid?.[0] || ''
+    const trackMbId = meta.common.musicbrainz_trackid || ''
 
     const mb: MusicBrainzData = {
       artistId: artistMBId,
@@ -188,10 +195,11 @@ export class Listing {
       key,
       moods: moods,
       bpm: bpm ? parseInt(bpm, 10) : undefined,
+      addedAt: birthTime,
       mb,
       albumArt: meta.common.picture
         ? await sharp(meta.common.picture[0].data)
-            .resize(100, 100)
+            .resize(200, 200)
             .toFormat('png')
             .toBuffer()
         : undefined,

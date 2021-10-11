@@ -2,11 +2,11 @@ import fs from 'fs'
 import path from 'path'
 import { joinVoiceChannel } from '@discordjs/voice'
 import { Client, Intents, Interaction, Message, Snowflake } from 'discord.js'
-import { terminal, Terminal } from 'terminal-kit'
 import winston from 'winston'
 import { establishConnection } from './db'
 import { LastFm } from './lastfm'
 import { EventHandler } from './models/event-handler'
+import { Listing } from './models/listing'
 import { MusicPlayer } from './player/music-player'
 import { TrackFinder } from './player/track-finder'
 import { TrackLoader } from './player/track-loaders'
@@ -14,6 +14,7 @@ import { Plex } from './plex'
 import { Config } from './utils/config'
 import { Debugger } from './utils/debugger'
 import { GolemLogger, LogSources } from './utils/logger'
+import { EzProgressBar } from './utils/progress-bar'
 
 export class Golem {
   private static log: winston.Logger
@@ -23,23 +24,21 @@ export class Golem {
   public static loader: TrackLoader
   public static trackFinder: TrackFinder
 
-  private static progressBar: Terminal.ProgressBarController
-  public static progress = 0
+  private static voiceConnectionEventHandlers: Record<
+    'connection' | 'queue',
+    Record<string, (channelId: string) => void>
+  > = {
+    connection: {},
+    queue: {},
+  }
 
   static async initialize(): Promise<void> {
-    Golem.progressBar = terminal.progressBar({
-      width: 80,
-      percent: true,
-      inline: true,
-    })
     Golem.players = new Map()
-    Golem.addProgress(1)
+
     Golem.log = GolemLogger.child({ src: LogSources.App })
     Golem.debugger = new Debugger()
-    Golem.addProgress(2)
 
     Golem.loader = new TrackLoader()
-    Golem.addProgress(5)
 
     Golem.client = new Client({
       intents: [
@@ -48,56 +47,29 @@ export class Golem {
         Intents.FLAGS.GUILD_MESSAGES,
       ],
     })
-    Golem.addProgress(3)
 
-    const eventFiles = fs
-      .readdirSync(path.resolve(__dirname, './events'))
-      .filter((file) => file.endsWith('.js'))
-    Golem.addProgress(2)
-
-    for (const file of eventFiles) {
-      Golem.log.debug(`Attempting to load Event Handler: ${file}`)
-      /* eslint-disable-next-line @typescript-eslint/no-var-requires */
-      const event: EventHandler<any> = require(`./events/${file}`).default
-      Golem.log.debug(`Event Handler Loaded: ${event}`)
-      if (event.once) {
-        Golem.client.once(
-          event.on,
-          async (...args) => await event.execute(...args)
-        )
-      } else {
-        Golem.client.on(
-          event.on,
-          async (...args) => await event.execute(...args)
-        )
-      }
-      Golem.log.debug(`Event Handler Registered: ${event.on}`)
-      Golem.addProgress(1)
-    }
+    Golem.log.info('Loading event handlers')
+    Golem.loadEventHandlers()
+    Golem.log.info('Event Handlers loaded')
 
     Golem.log.info('connecting to database')
     await establishConnection()
     Golem.log.info('connected to database')
-    Golem.addProgress(3)
 
     await Golem.loader.load()
 
     Golem.log.debug(`Loaded ${Golem.loader.listings.length} listings`)
-    Golem.addProgress(1)
 
     Golem.trackFinder = new TrackFinder(Golem.loader.listings)
-    Golem.addProgress(4)
 
     try {
       await Plex.init(Golem.trackFinder)
-      Golem.addProgress(2)
     } catch (error) {
       Golem.log.error('plex connection failed')
       Golem.log.error(error)
     }
 
     LastFm.init()
-    Golem.addProgress(4)
   }
 
   static getOrCreatePlayer(
@@ -130,6 +102,8 @@ export class Golem {
           })
         )
       )
+
+      Golem.triggerEvent('connection', voiceChannel?.id || '')
     }
 
     return Golem.players.get(guildId)
@@ -153,6 +127,7 @@ export class Golem {
 
   static removePlayer(channelId: string): void {
     Golem.players.delete(channelId)
+    Golem.triggerEvent('connection', channelId)
   }
 
   static async login(): Promise<void> {
@@ -166,14 +141,70 @@ export class Golem {
     })
   }
 
-  static addProgress(p: number): void {
-    Golem.progress += p / 100
-    Golem.progressBar.update({
-      progress: Golem.progress,
-    })
+  static on(
+    event: 'connection' | 'queue',
+    name: string,
+    handler: (channelId: string) => void
+  ): void {
+    Golem.voiceConnectionEventHandlers[event][name] = handler
+  }
 
-    if (Golem.progress >= 1) {
-      Golem.progressBar.stop()
+  static off(event: 'connection' | 'queue', name: string): void {
+    delete Golem.voiceConnectionEventHandlers[event][name]
+  }
+
+  static async triggerEvent(
+    event: 'connection' | 'queue' | 'all',
+    channelId: string
+  ): Promise<void> {
+    Golem.log.debug(`triggering ${event} handlers with channelId ${channelId}`)
+    if (event === 'all') {
+      Object.values(Golem.voiceConnectionEventHandlers['queue']).forEach((fn) =>
+        fn(channelId)
+      )
+      Object.values(Golem.voiceConnectionEventHandlers['connection']).forEach(
+        (fn) => fn(channelId)
+      )
+    } else {
+      Object.values(Golem.voiceConnectionEventHandlers[event]).forEach((fn) =>
+        fn(channelId)
+      )
     }
+  }
+
+  static setPresence(listing: Listing): void {
+    Golem.client.user?.setActivity(`${listing.artist} - ${listing.title}`, {
+      type: 'LISTENING',
+    })
+  }
+
+  private static loadEventHandlers(): void {
+    const eventFiles = fs
+      .readdirSync(path.resolve(__dirname, './events'))
+      .filter((file) => file.endsWith('.js'))
+
+    EzProgressBar.start(eventFiles.length)
+
+    for (const file of eventFiles) {
+      Golem.log.debug(`Attempting to load Event Handler: ${file}`)
+      /* eslint-disable-next-line @typescript-eslint/no-var-requires */
+      const event: EventHandler<any> = require(`./events/${file}`).default
+      EzProgressBar.add(1 / eventFiles.length, event.on)
+      Golem.log.debug(`Event Handler Loaded: ${event.on}`)
+      if (event.once) {
+        Golem.client.once(
+          event.on,
+          async (...args) => await event.execute(...args)
+        )
+      } else {
+        Golem.client.on(
+          event.on,
+          async (...args) => await event.execute(...args)
+        )
+      }
+      Golem.log.debug(`Event Handler Registered: ${event.on}`)
+    }
+
+    EzProgressBar.stop()
   }
 }

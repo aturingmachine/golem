@@ -1,6 +1,11 @@
 import sharp, { gravity } from 'sharp'
 import { PlexLogo } from '../constants'
 
+export const resize = async (
+  img: Buffer = PlexLogo,
+  size = 200
+): Promise<Buffer> => await sharp(img).resize(size, size).toBuffer()
+
 export const fourSquare = async (config: {
   images: {
     img1?: Buffer
@@ -11,7 +16,7 @@ export const fourSquare = async (config: {
   size?: number
 }): Promise<Buffer> => {
   const logo = PlexLogo
-  const dimension = config.size || 100
+  const dimension = config.size || 200
   const halfDimension = dimension / 2
 
   const base = sharp(config.images.img1).resize(dimension, dimension).toBuffer()

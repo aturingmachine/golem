@@ -111,8 +111,6 @@ export class MusicPlayer {
     this.log.info(`force stopping player`)
     this.audioPlayer.stop(true)
     this.queueLock = false
-    // hack to resolve the player becoming unstartable after stopping
-    this.disconnect()
   }
 
   public skip(): void {
@@ -165,20 +163,13 @@ export class MusicPlayer {
 
     this.log.info(`playing ${nextTrack.listing.shortName}`)
 
-    if (
-      this.currentResource &&
-      this.currentResource?.ended &&
-      this.currentResource.playbackDuration ===
-        this.currentResource?.metadata.duration * 1000
-    ) {
-      console.log('Hit what we think means full play time...')
-      this.currentResource?.metadata.track.onPlay()
-    }
-
     const next = nextTrack.toAudioResource()
     this.currentResource = next as GolemTrackAudioResource
     this.currentResource.volume?.setVolume(0.35)
     this.audioPlayer.play(this.currentResource)
+    Golem.setPresence(nextTrack.listing)
+
+    Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
 
     this.queueLock = false
   }
@@ -193,6 +184,11 @@ export class MusicPlayer {
     ) {
       this.log.debug(`entering Idle state - processing queue`)
       void this.processQueue()
+    } else if (
+      newState.status === AudioPlayerStatus.Playing &&
+      oldState.status === AudioPlayerStatus.Idle
+    ) {
+      Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
     }
   }
 

@@ -1,11 +1,12 @@
+import fs from 'fs'
 import * as mm from 'music-metadata'
-import { Golem } from '../golem'
 import { LibIndexData } from '../models/db/lib-index'
 import { ListingData } from '../models/db/listing'
 import { Listing, ListingInfo } from '../models/listing'
 import { Config, opts } from '../utils/config'
 import { getAllFiles } from '../utils/filesystem'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { EzProgressBar } from '../utils/progress-bar'
 
 const log = GolemLogger.child({ src: LogSources.Loader })
 
@@ -44,10 +45,13 @@ export class TrackLoader {
     let errorCount = 0
     const listings: Listing[] = []
 
+    EzProgressBar.start(paths.length)
+
     for (const trackPath of paths) {
       try {
+        const birthTime = fs.statSync(trackPath).birthtimeMs
         const meta = await mm.parseFile(trackPath)
-        const listing = await Listing.fromMeta(meta, trackPath)
+        const listing = await Listing.fromMeta(meta, trackPath, birthTime)
 
         listings.push(listing)
       } catch (error) {
@@ -57,8 +61,13 @@ export class TrackLoader {
         errorCount++
       }
 
-      Golem.addProgress(50 / paths.length / Config.LibraryPaths.length)
+      EzProgressBar.add(
+        1 / paths.length,
+        `${trackPath.split('/')[trackPath.split('/').length - 1]}`
+      )
     }
+
+    EzProgressBar.stop()
 
     log.warn(`Encountered ${errorCount} errors while loading library.`)
 
@@ -83,7 +92,6 @@ export class TrackLoader {
 
         for (const datum of data) {
           this.listings.push(new Listing(datum))
-          Golem.addProgress(50 / data.length / Config.LibraryPaths.length)
         }
       } catch (error) {
         log.warn('unable to parse backup')
@@ -115,9 +123,12 @@ export class TrackLoader {
 
     for (const listing of listings) {
       const listingRecord = new ListingData(listing)
-      listing._id = listingRecord._id
 
       await listingRecord.save()
+
+      listing._id = listingRecord._id.toString()
+
+      console.log(listing._id, listing.id)
 
       listingIds.push(listingRecord._id)
     }

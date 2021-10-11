@@ -2,6 +2,9 @@
   "include": [
     "src/**/*",
   ],
+  "exclude": [
+    "src/client/**"
+  ],
   "compilerOptions": {
     "target": "esnext",
     "module": "commonjs",

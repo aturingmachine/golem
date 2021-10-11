@@ -24,6 +24,9 @@ export async function AliasedCommand(msg: Message): Promise<boolean> {
     case '$skip':
       await RegisteredCommands.goSkip.execute(msg, parseInt(args, 10))
       break
+    case '$pause':
+      await RegisteredCommands.goPause.execute(msg)
+      break
     default:
       return false
   }
@@ -168,6 +171,6 @@ export class LegacyCommandHandler {
           inline: true,
         }
       )
-      .setFooter('Commands also available via /go<command>')
+      .setFooter('Some commands also available via /go<command>')
   }
 }

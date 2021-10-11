@@ -13,10 +13,7 @@ const messageCreate: EventHandler<'messageCreate'> = {
 
     log.debug(`received ${message}`)
 
-    if (
-      message.content.startsWith('$go') ||
-      message.content.startsWith('$play')
-    ) {
+    if (message.content.startsWith('$go') || message.content.startsWith('$')) {
       await LegacyCommandHandler.parseMessage(message)
     }
   },

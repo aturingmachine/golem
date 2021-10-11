@@ -21,7 +21,12 @@ const execute = async (
   GolemLogger.info('executing', { src: LogSources.GoStop })
 
   await interaction.reply('Clearing the queue!')
-  player.stop()
+
+  try {
+    player.stop()
+  } catch (error) {
+    GolemLogger.warn('player stop threw error')
+  }
 }
 
 export default {

@@ -1,8 +1,8 @@
 import axios, { AxiosInstance } from 'axios'
-import { Golem } from '../golem'
 import { TrackFinder } from '../player/track-finder'
 import { Config, opts } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { EzProgressBar } from '../utils/progress-bar'
 import {
   PlaylistRecord,
   PlaylistDetailsContainer,
@@ -72,17 +72,28 @@ export const Plex: Plex = {
 
     const playlistRecords = await this.getPlaylists()
 
-    log.info('Mapping Playlists')
     playlistRecords.forEach((record) => {
       this.playlists.push({
         name: record.name,
         count: record.count,
-        listings: record.filePaths.map((path) =>
-          trackFinder.findIdByPath(path)
-        ),
+        listings: record.filePaths.map((path) => {
+          EzProgressBar.add(
+            1 / record.filePaths.length / playlistRecords.length,
+            path.split('/').pop()
+          )
+
+          const res = trackFinder.findIdByPath(path)
+
+          return res
+        }),
       })
-      Golem.addProgress(10 / playlistRecords.length)
     })
+    EzProgressBar.stop()
+
+    // console.log(this.playlists[0].listings[0])
+
+    // process.exit(0)
+
     log.info('Playlists Mapped')
   },
 
@@ -93,9 +104,10 @@ export const Plex: Plex = {
     if (playlists) {
       log.info(`Found ${playlists.data.MediaContainer.size} playlists.`)
 
+      EzProgressBar.start(playlists.data.MediaContainer.Metadata.length)
+
       for (const playlist of playlists.data.MediaContainer.Metadata) {
         const details = await this.getPlaylistById(playlist.ratingKey)
-        log.info(`Parsing ${details?.MediaContainer.title}`)
 
         records.push({
           name: details?.MediaContainer.title || '',
@@ -105,6 +117,11 @@ export const Plex: Plex = {
               fixSlashes(data.Media[0].Part[0].file)
             ) || [],
         })
+
+        EzProgressBar.add(
+          0.5 / playlists.data.MediaContainer.Metadata.length,
+          details?.MediaContainer.title
+        )
       }
     }
 
