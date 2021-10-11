@@ -10,7 +10,6 @@
 
 <script>
 import Connection from '../components/Connection.vue'
-// import { VoiceConnectionsWebSocketClient } from './services/websocket-client'
 
 export default {
   name: 'NowPlaying',
@@ -24,15 +23,6 @@ export default {
       return this.$store.state.connections
     },
   },
-
-  // mounted() {
-  //   const vcws = new VoiceConnectionsWebSocketClient()
-  //   vcws.addLogStreamHandler((ev) => {
-  //     const connectionData = JSON.parse(ev.data)
-
-  //     this.$store.commit('setConnections', {connections: connectionData.connections})
-  //   })
-  // }
 }
 </script>
 
