@@ -6,7 +6,7 @@
       clipped-left
     >
       <div class="d-flex align-center">
-        <v-btn color="red" dark @click="drawer = !drawer" icon x-large>
+        <v-btn color="white" dark @click="drawer = !drawer" icon x-large>
           <v-icon class="text-h2">א</v-icon>
         </v-btn>
       </div>
@@ -14,31 +14,44 @@
       <v-spacer></v-spacer>
     </v-app-bar>
 
-    <v-navigation-drawer app clipped v-model="drawer"></v-navigation-drawer>
+    <v-navigation-drawer app clipped v-model="drawer">
+      <v-list nav>
+        <v-list-item v-for="link in links" :key="link.name" :to="link.route">
+          {{ link.title }}
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
 
     <v-main>
       <v-container fluid class="pa-lg-10 pa-0">
-        <v-expansion-panels v-if="connections && connections.length" accordian class="pa-md-0">
-          <connection v-for="conn of connections" :key="conn.id" :connection="conn"/>
-      </v-expansion-panels>
+        <router-view/>
       </v-container>
     </v-main>
   </v-app>
 </template>
 
+
+
 <script>
-import Connection from './components/Connection.vue';
 import { VoiceConnectionsWebSocketClient } from './services/websocket-client'
 
 export default {
   name: 'App',
 
-  components: {
-    Connection,
-  },
-
   data: () => ({
-    drawer: false
+    drawer: false,
+    links: [
+      {
+        name: 'connections',
+        route: '/connections',
+        title: 'Connections'
+      },
+      {
+        name: 'logs',
+        route: '/logs',
+        title: 'Logs'
+      },
+    ]
   }),
 
   computed: {
