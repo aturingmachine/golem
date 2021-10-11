@@ -9,11 +9,6 @@ Vue.use(VueRouter)
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: Home
-  },
-  {
-    path: '/connections',
     name: 'Connections',
     component: NowPlaying
   },

@@ -38,9 +38,9 @@ export default {
     drawer: false,
     links: [
       {
-        name: 'connections',
-        route: '/connections',
-        title: 'Connections',
+        name: 'Home',
+        route: '/',
+        title: 'Home',
       },
       {
         name: 'logs',
