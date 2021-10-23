@@ -1,12 +1,11 @@
 import { terminal, Terminal } from 'terminal-kit'
-import { opts } from './config'
 
 export class EzProgressBar {
   private static amount = 0
   private static bar?: Terminal.ProgressBarController
 
   static start(items?: number): void {
-    if (!EzProgressBar.bar && !opts.service) {
+    if (!EzProgressBar.bar) {
       EzProgressBar.bar = terminal.progressBar({
         width: 100,
         percent: true,

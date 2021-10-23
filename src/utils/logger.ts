@@ -1,7 +1,12 @@
 import chalk from 'chalk'
 import { v4 as uuidv4 } from 'uuid'
 import winston from 'winston'
-import { opts } from './config'
+import { GolemConf } from './config'
+
+export enum LogLevel {
+  Debug = 'debug',
+  Info = 'info',
+}
 
 const { combine, timestamp, colorize, printf, json, splat } = winston.format
 
@@ -25,7 +30,7 @@ const id = winston.format((info) => {
 })
 
 const logger = winston.createLogger({
-  level: opts.logLevel,
+  level: GolemConf.logLevel,
   format: combine(splat(), timestamp(), id(), json()),
   transports: [
     new winston.transports.File({

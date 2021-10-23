@@ -2,7 +2,7 @@ import chalk from 'chalk'
 import winston from 'winston'
 import { Golem } from '../../golem'
 import { GoGet } from '../../handlers/go-get-handler'
-import { opts } from '../config'
+import { GolemConf } from '../config'
 import { GolemLogger, LogSources } from '../logger'
 import { pryDatabase } from './db-debugger'
 import { MixDebugger } from './mix-debugger'
@@ -112,7 +112,7 @@ export class Debugger {
 
       case DebugCommands.Inspect:
         console.log(
-          `\n${Object.entries(opts)
+          `\n${Object.entries(GolemConf.options)
             .map(([key, val]) => `${key}=${val}`)
             .join('\n')}`
         )

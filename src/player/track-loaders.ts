@@ -3,7 +3,7 @@ import * as mm from 'music-metadata'
 import { LibIndexData } from '../models/db/lib-index'
 import { ListingData } from '../models/db/listing'
 import { Listing, ListingInfo } from '../models/listing'
-import { Config, opts } from '../utils/config'
+import { Config, GolemConf, opts } from '../utils/config'
 import { getAllFiles } from '../utils/filesystem'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { EzProgressBar } from '../utils/progress-bar'
@@ -23,7 +23,7 @@ export class TrackLoader {
     for (const lib of Config.LibraryPaths) {
       const name = lib.split('/').pop() || 'Library'
 
-      if (opts.bustCache) {
+      if (GolemConf.options.BustCache) {
         await this.loadFromDisk(lib, name)
       } else {
         await this.loadTracksFromDB(lib, name)
