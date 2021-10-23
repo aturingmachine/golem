@@ -16,7 +16,7 @@ import { ButtonIdPrefixes } from '../handlers/button-handler'
 import { Listing } from '../models/listing'
 import { MusicPlayer } from '../player/music-player'
 import { Plex } from '../plex'
-import { Config } from './config'
+import { GolemConf } from './config'
 import { GolemLogger } from './logger'
 import { humanReadableDuration, humanReadableTime } from './time-utils'
 
@@ -28,7 +28,7 @@ const embedFieldSpacer = {
 
 const averageColor = (img?: Buffer) =>
   getAverageColor(img || PlexLogo, {
-    algorithm: Config.Image.ColorAlg,
+    algorithm: GolemConf.image.avgColorAlgorithm,
   })
 
 export const userFrom = (interaction: Message | Interaction): string =>

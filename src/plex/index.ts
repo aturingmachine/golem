@@ -109,20 +109,24 @@ export const Plex: Plex = {
       for (const playlist of playlists.data.MediaContainer.Metadata) {
         const details = await this.getPlaylistById(playlist.ratingKey)
 
-        records.push({
-          name: details?.MediaContainer.title || '',
-          count: details?.MediaContainer.leafCount || 0,
-          filePaths:
-            details?.MediaContainer.Metadata.map((data) =>
-              fixSlashes(data.Media[0].Part[0].file)
-            ) || [],
-        })
+        if (details?.MediaContainer && details.MediaContainer.Metadata) {
+          records.push({
+            name: details?.MediaContainer.title || '',
+            count: details?.MediaContainer.leafCount || 0,
+            filePaths:
+              details?.MediaContainer.Metadata.map((data) =>
+                fixSlashes(data.Media[0].Part[0].file)
+              ) || [],
+          })
+        }
 
         EzProgressBar.add(
-          0.5 / playlists.data.MediaContainer.Metadata.length,
+          1 / playlists.data.MediaContainer.Metadata.length,
           details?.MediaContainer.title
         )
       }
+
+      EzProgressBar.stop()
     }
 
     return records

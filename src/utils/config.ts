@@ -1,99 +1,25 @@
 import path from 'path'
 import { config } from 'dotenv'
+import {
+  JSONConfig,
+  CliOption,
+  GolemModule,
+  DiscordConfig,
+  ImageConfig,
+  LastFmConfig,
+  LibraryConfig,
+  MongoConfig,
+  PlexConfig,
+  WebConfig,
+} from '../models/config'
 import { LogLevel } from './logger'
 config({ path: path.resolve(__dirname, '../../.env') })
+
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
-const rawJSConfig: JsonConfig = require(path.resolve(
+const rawJSConfig: JSONConfig = require(path.resolve(
   __dirname,
   '../../config.js'
 ))
-
-type DiscordConfig = {
-  token: string
-  clientId: string
-  serverIds: string[]
-}
-
-type ImageConfig = {
-  fallbackPath: string
-  avgColorAlgorithm: 'sqrt' | 'dominant' | 'simple'
-}
-
-type LastFmConfig = {
-  apiKey: string
-}
-
-type LibraryConfig = {
-  paths: string[]
-}
-
-type MongoConfig = {
-  uri: string
-}
-
-type PlexConfig = {
-  uri: string
-  appId: string
-  username: string
-  password: string
-}
-
-type WebConfig = {
-  apiPort: number
-}
-
-type JsonConfig = {
-  discord?: DiscordConfig
-  image?: ImageConfig
-  lastfm?: LastFmConfig
-  library?: LibraryConfig
-  mongo?: MongoConfig
-  plex?: PlexConfig
-  web?: WebConfig
-}
-
-enum GolemModule {
-  Plex = 'Plex',
-  LastFm = 'LastFm',
-  Web = 'Web',
-}
-
-type Conf = {
-  values: JsonConfig
-  enabledModules: GolemModule[]
-  validate(): void
-}
-
-export const conf: Conf = {
-  values: rawJSConfig,
-  enabledModules: [],
-  validate(): void {
-    // kill application if no required config
-    if (!this.values.discord) {
-      throw new Error('')
-    }
-
-    // check all potential optional modules
-    if (!!this.values.plex) {
-      this.enabledModules.push(GolemModule.Plex)
-    }
-
-    if (!!this.values.lastfm) {
-      this.enabledModules.push(GolemModule.LastFm)
-    }
-
-    if (!!this.values.web) {
-      this.enabledModules.push(GolemModule.Web)
-    }
-  },
-}
-
-enum CliOption {
-  TTY = 'TTY',
-  BustCache = 'BustCache',
-  Verbose = 'Verbose',
-  Debug = 'Debug',
-}
 
 const optFlags: Record<CliOption, string[]> = {
   TTY: ['tty', '-i'],
@@ -123,206 +49,103 @@ class CliOptions {
   }
 }
 
-class Configuration {
-  private values = rawJSConfig
-  private enabledModules: GolemModule[] = []
-  private cliOptions: CliOptions
+// TODO should probably add some more extendable/complex validation pattern
+export const GolemConf = {
+  values: rawJSConfig,
+  enabledModules: [] as GolemModule[],
+  cliOptions: new CliOptions(new Args(process.argv.slice(2))),
 
-  constructor() {
+  init(): void {
     // kill application if no required config
-    if (!this.values.discord) {
+    if (!GolemConf.values.discord) {
       console.error('No Discord Config found. Terminating.')
       process.exit(1)
     }
 
-    this.cliOptions = new CliOptions(new Args(process.argv.slice(2)))
-
     // check all potential optional modules
-    if (!!this.values.plex) {
-      this.enabledModules.push(GolemModule.Plex)
+    if (!!GolemConf.values.plex) {
+      GolemConf.enabledModules.push(GolemModule.Plex)
     }
 
-    if (!!this.values.lastfm) {
-      this.enabledModules.push(GolemModule.LastFm)
+    if (!!GolemConf.values.lastfm) {
+      GolemConf.enabledModules.push(GolemModule.LastFm)
     }
 
-    if (!!this.values.web) {
-      this.enabledModules.push(GolemModule.Web)
+    if (!!GolemConf.values.web) {
+      GolemConf.enabledModules.push(GolemModule.Web)
     }
-  }
+  },
 
   get options(): Record<CliOption, boolean> {
-    return this.cliOptions.options
-  }
+    return GolemConf.cliOptions.options
+  },
 
   get logLevel(): LogLevel {
-    return this.options.Debug || this.options.Verbose
+    GolemConf.init()
+    return GolemConf.options.Debug || GolemConf.options.Verbose
       ? LogLevel.Debug
       : LogLevel.Info
-  }
+  },
 
   get modules(): Record<GolemModule, boolean> {
     return {
-      Plex: this.enabledModules.includes(GolemModule.Plex),
-      LastFm: this.enabledModules.includes(GolemModule.LastFm),
-      Web: this.enabledModules.includes(GolemModule.Web),
+      Plex: GolemConf.enabledModules.includes(GolemModule.Plex),
+      LastFm: GolemConf.enabledModules.includes(GolemModule.LastFm),
+      Web: GolemConf.enabledModules.includes(GolemModule.Web),
     }
-  }
+  },
 
   get discord(): DiscordConfig {
     return {
-      token: this.values.discord?.token || '',
-      clientId: this.values.discord?.clientId || '',
-      serverIds: this.values.discord?.serverIds || [],
+      token: GolemConf.values.discord?.token || '',
+      clientId: GolemConf.values.discord?.clientId || '',
+      serverIds: GolemConf.values.discord?.serverIds || [],
     }
-  }
+  },
 
   get image(): ImageConfig {
     return {
-      fallbackPath: this.values.image?.fallbackPath || '',
+      fallbackPath: GolemConf.values.image?.fallbackPath || '',
       avgColorAlgorithm:
-        this.values.image?.avgColorAlgorithm &&
+        GolemConf.values.image?.avgColorAlgorithm &&
         ['sqrt', 'dominant', 'simple'].includes(
-          this.values.image?.avgColorAlgorithm
+          GolemConf.values.image?.avgColorAlgorithm
         )
-          ? this.values.image.avgColorAlgorithm
+          ? GolemConf.values.image.avgColorAlgorithm
           : 'sqrt',
     }
-  }
+  },
 
   get lastfm(): LastFmConfig {
     return {
-      apiKey: this.values.lastfm?.apiKey || '',
+      apiKey: GolemConf.values.lastfm?.apiKey || '',
     }
-  }
+  },
 
   get library(): LibraryConfig {
     return {
-      paths: this.values.library?.paths || [],
+      paths: GolemConf.values.library?.paths || [],
     }
-  }
+  },
 
   get mongo(): MongoConfig {
     return {
-      uri: this.values.mongo?.uri || '',
+      uri: GolemConf.values.mongo?.uri || '',
     }
-  }
+  },
 
   get plex(): PlexConfig {
     return {
-      uri: this.values.plex?.uri || '',
-      appId: this.values.plex?.appId || '',
-      username: this.values.plex?.username || '',
-      password: this.values.plex?.password || '',
+      uri: GolemConf.values.plex?.uri || '',
+      appId: GolemConf.values.plex?.appId || '',
+      username: GolemConf.values.plex?.username || '',
+      password: GolemConf.values.plex?.password || '',
     }
-  }
+  },
 
   get web(): WebConfig {
     return {
-      apiPort: this.values.web?.apiPort || 3000,
+      apiPort: GolemConf.values.web?.apiPort || 3000,
     }
-  }
+  },
 }
-
-export const GolemConf = new Configuration()
-
-type ConfigValues = {
-  Discord: {
-    Token: string
-    ClientId: string
-    GuildIds: string[]
-  }
-  Image: {
-    FallbackImagePath: string
-    ColorAlg: 'sqrt' | 'dominant' | 'simple'
-  }
-  Plex: {
-    URI: string
-    AppId: string
-    Username: string
-    Password: string
-  }
-  LastFm: {
-    APIKey: string
-  }
-  Web: {
-    APIPort: number
-  }
-}
-
-export class Config {
-  static get LibraryPaths(): string[] {
-    return process.env.LIBRARY_PATHS?.split(',') || []
-  }
-
-  static get MongoURI(): string {
-    return process.env.MONGO_URI || ''
-  }
-
-  static get Discord(): ConfigValues['Discord'] {
-    return {
-      Token: process.env.TOKEN || '',
-      ClientId: process.env.CLIENT_ID || '',
-      GuildIds: process.env.SERVER_IDS?.split(',') || [],
-    }
-  }
-
-  static get Image(): ConfigValues['Image'] {
-    return {
-      FallbackImagePath:
-        process.env.IMAGE_FALLBACK_PATH ||
-        path.resolve(__dirname, '../../plex-logo.png'),
-      ColorAlg:
-        (process.env.IMAGE_COLOR_ALG as 'sqrt' | 'dominant' | 'simple') ||
-        'sqrt',
-    }
-  }
-
-  static get Plex(): ConfigValues['Plex'] {
-    return {
-      URI: process.env.PLEX_URI || '',
-      AppId: process.env.PLEX_APPLICATION_ID || '',
-      Username: process.env.PLEX_USERNAME || '',
-      Password: process.env.PLEX_PASSWORD || '',
-    }
-  }
-
-  static get LastFm(): ConfigValues['LastFm'] {
-    return {
-      APIKey: process.env.LAST_FM_API_KEY || '',
-    }
-  }
-
-  static get Web(): ConfigValues['Web'] {
-    return {
-      APIPort: process.env.WEB_SERVER_PORT
-        ? parseInt(process.env.WEB_SERVER_PORT, 10)
-        : 3000,
-    }
-  }
-}
-
-// const cliArgs = process.argv.slice(2)
-
-// export const opts = {
-//   debug: cliArgs.includes('debug'),
-//   get tty(): boolean {
-//     return ['tty', ' -i '].some((o) => cliArgs.includes(o))
-//   },
-//   noRun: cliArgs.includes('noRun'),
-//   get bustCache(): boolean {
-//     return ['bust-cache', 'cache-bust', 'bust', 'refresh'].some((o) =>
-//       cliArgs.includes(o)
-//     )
-//   },
-//   verbose: cliArgs.includes('verbose'),
-//   loadTest: cliArgs.includes('load-test'),
-//   get logLevel(): string {
-//     const isDebug =
-//       cliArgs.includes('debug') || cliArgs.includes('verbose') || this.tty
-//     return isDebug ? 'debug' : 'info'
-//   },
-//   noPlex: cliArgs.includes('no-plex'),
-//   skipClient: cliArgs.includes('no-client'),
-//   service: cliArgs.includes('service'),
-// }

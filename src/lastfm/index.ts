@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios'
 import { Listing } from '../models/listing'
-import { Config } from '../utils/config'
+import { GolemConf } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import {
   SimilarArtistMatch,
@@ -18,7 +18,7 @@ export class LastFm {
     LastFm.http = axios.create({
       baseURL: 'http://ws.audioscrobbler.com/2.0',
       params: {
-        api_key: Config.LastFm.APIKey,
+        api_key: GolemConf.lastfm.apiKey,
         format: 'json',
       },
     })

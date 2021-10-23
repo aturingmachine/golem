@@ -3,7 +3,7 @@ import * as mm from 'music-metadata'
 import { LibIndexData } from '../models/db/lib-index'
 import { ListingData } from '../models/db/listing'
 import { Listing, ListingInfo } from '../models/listing'
-import { Config, GolemConf, opts } from '../utils/config'
+import { GolemConf } from '../utils/config'
 import { getAllFiles } from '../utils/filesystem'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { EzProgressBar } from '../utils/progress-bar'
@@ -20,7 +20,7 @@ export class TrackLoader {
   }
 
   async load(): Promise<Listing[]> {
-    for (const lib of Config.LibraryPaths) {
+    for (const lib of GolemConf.library.paths) {
       const name = lib.split('/').pop() || 'Library'
 
       if (GolemConf.options.BustCache) {
@@ -128,7 +128,7 @@ export class TrackLoader {
 
       listing._id = listingRecord._id.toString()
 
-      console.log(listing._id, listing.id)
+      // console.log(listing._id, listing.id)
 
       listingIds.push(listingRecord._id)
     }

@@ -1,7 +1,7 @@
 import md5 from 'md5'
 import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
-import { Config } from '../utils/config'
+import { GolemConf } from '../utils/config'
 
 interface MusicBrainzData {
   artistId?: string
@@ -153,11 +153,8 @@ export class Listing {
     path: string,
     birthTime: number
   ): Promise<Listing> {
-    const targetConfig = Config.LibraryPaths.find((p) => path.includes(p))
-    if (targetConfig?.length === 0) {
-      console.log('LISTING GOT BAD PATH', path)
-      console.log(targetConfig)
-    }
+    const targetConfig = GolemConf.library.paths.find((p) => path.includes(p))
+
     const split = path.replace(targetConfig || 'NO PATH FOUND', '').split('/')
     const artist = meta.common.artist || meta.common.artists?.[0] || split[1]
     const album = meta.common.album || split[2]

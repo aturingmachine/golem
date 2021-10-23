@@ -1,6 +1,6 @@
 import { Socket } from 'net'
 import express from 'express'
-import { Config } from '../../utils/config'
+import { GolemConf } from '../../utils/config'
 import { GolemLogger, LogSources } from '../../utils/logger'
 import { cors } from './middleware/cors'
 import { playerRouter } from './player/rest'
@@ -21,9 +21,9 @@ export const startApi = (): void => {
 
   app.use('/api/player', playerRouter)
 
-  log.debug(`Attempting to run on port ${Config.Web.APIPort}`)
+  log.debug(`Attempting to run on port ${GolemConf.web.apiPort}`)
 
-  const server = app.listen(Config.Web.APIPort)
+  const server = app.listen(GolemConf.web.apiPort)
   log.info('server mounted')
   let connectionWs: VoiceConnectionsWebSocket
 
