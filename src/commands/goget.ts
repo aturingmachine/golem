@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { GoGet } from '../handlers/go-get-handler'
+import { _Command } from '../models/commands'
 
 const data = new SlashCommandBuilder()
   .setName(CommandNames.slash.get)
@@ -38,7 +39,6 @@ const execute = async (
   }
 }
 
-export default {
-  data,
-  execute,
-}
+const goGetCommand = new _Command('go-get', data, execute)
+
+export default goGetCommand

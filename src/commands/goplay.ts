@@ -11,6 +11,7 @@ import {
   GetEmbedFromListing,
   GetWideSearchEmbed,
 } from '../utils/message-utils'
+import { _Command } from '../models/commands'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
@@ -113,7 +114,6 @@ const execute = async (
   }
 }
 
-export default {
-  data,
-  execute,
-}
+const goPlayCommand = new _Command(LogSources.GoPlay, data, execute)
+
+export default goPlayCommand

@@ -4,6 +4,7 @@ import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPeekEmbed } from '../utils/message-utils'
+import { _Command } from '../models/commands'
 
 const log = GolemLogger.child({ src: LogSources.GoPeek })
 
@@ -28,7 +29,6 @@ const execute = async (
   await interaction.reply({ embeds: [embed] })
 }
 
-export default {
-  data,
-  execute,
-}
+const goPeekCommand = new _Command(LogSources.GoPeek, data, execute)
+
+export default goPeekCommand

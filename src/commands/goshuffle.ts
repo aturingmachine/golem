@@ -4,6 +4,7 @@ import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPeekEmbed } from '../utils/message-utils'
+import { _Command } from '../models/commands'
 
 const data = new SlashCommandBuilder()
   .setName(CommandNames.slash.shuffle)
@@ -30,4 +31,6 @@ const execute = async (
   }
 }
 
-export default { data, execute }
+const goShuffleCommand = new _Command(LogSources.GoShuffle, data, execute)
+
+export default goShuffleCommand

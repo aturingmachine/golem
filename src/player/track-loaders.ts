@@ -88,10 +88,10 @@ export class TrackLoader {
     if (dbRead) {
       log.info('DB Record found')
       try {
-        const data: ListingInfo[] = dbRead.listings
+        const data = dbRead.listings
 
         for (const datum of data) {
-          this.listings.push(new Listing(datum))
+          this.listings.push(new Listing(datum, datum.id))
         }
       } catch (error) {
         log.warn('unable to parse backup')

@@ -1,7 +1,7 @@
 import fs from 'fs'
 import { Collection } from 'discord.js'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { Command } from '~/models/commands'
+import { Command } from '../models/commands'
 import goGet from './goget'
 import goMix from './gomix'
 import goPause from './gopause'

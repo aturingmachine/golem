@@ -7,6 +7,7 @@ import { MixMatcher } from '../player/mix-matcher'
 import { shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { userFrom } from '../utils/message-utils'
+import { _Command } from '../models/commands'
 
 const log = GolemLogger.child({ src: LogSources.GoMix })
 
@@ -107,7 +108,6 @@ const execute = async (
   return
 }
 
-export default {
-  data,
-  execute,
-}
+const goMixCommand = new _Command(LogSources.GoMix, data, execute)
+
+export default goMixCommand

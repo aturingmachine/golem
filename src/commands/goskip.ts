@@ -4,6 +4,7 @@ import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
+import { _Command } from '../models/commands'
 
 const log = GolemLogger.child({ src: LogSources.GoSkip })
 
@@ -58,7 +59,6 @@ const execute = async (
   }
 }
 
-export default {
-  data,
-  execute,
-}
+const goSkipCommand = new _Command(LogSources.GoSkip, data, execute)
+
+export default goSkipCommand

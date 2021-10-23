@@ -68,7 +68,7 @@ export class Listing {
   bpm?: number
   albumArt?: Buffer
 
-  constructor(info: ListingInfo) {
+  constructor(info: ListingInfo, id?: string) {
     this.trackId = info.trackId
     this.artist = info.artist
     this.album = info.album
@@ -82,6 +82,10 @@ export class Listing {
     this.addedAt = info.addedAt
     this.mb = info.mb
     this.albumArt = info.albumArt
+
+    if (id) {
+      this._id = id
+    }
   }
 
   /**

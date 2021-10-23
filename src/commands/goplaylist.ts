@@ -6,6 +6,7 @@ import { Plex } from '../plex'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPlaylistEmbed } from '../utils/message-utils'
 import { Replier } from '../utils/replies'
+import { _Command } from '../models/commands'
 
 const log = GolemLogger.child({ src: LogSources.GoPlayList })
 
@@ -63,7 +64,6 @@ const execute = async (
   }
 }
 
-export default {
-  data,
-  execute,
-}
+const goPlaylistCommand = new _Command(LogSources.GoPlayList, data, execute)
+
+export default goPlaylistCommand

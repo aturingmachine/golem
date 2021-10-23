@@ -33,6 +33,8 @@ export class Golem {
   }
 
   static async initialize(): Promise<void> {
+    GolemConf.init()
+
     Golem.players = new Map()
 
     Golem.log = GolemLogger.child({ src: LogSources.App })

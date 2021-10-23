@@ -1,11 +1,19 @@
 import chalk from 'chalk'
 import { v4 as uuidv4 } from 'uuid'
 import winston from 'winston'
-import { GolemConf } from './config'
 
 export enum LogLevel {
   Debug = 'debug',
   Info = 'info',
+}
+
+function determineLogLevel(): LogLevel {
+  const debugLevelArgs = ['debug', '-D', 'verbose', '-V']
+  const args = process.argv.slice(2)
+
+  return args.some((arg) => debugLevelArgs.some((debugArg) => debugArg === arg))
+    ? LogLevel.Debug
+    : LogLevel.Info
 }
 
 const { combine, timestamp, colorize, printf, json, splat } = winston.format
@@ -30,7 +38,7 @@ const id = winston.format((info) => {
 })
 
 const logger = winston.createLogger({
-  level: GolemConf.logLevel,
+  level: determineLogLevel(),
   format: combine(splat(), timestamp(), id(), json()),
   transports: [
     new winston.transports.File({
