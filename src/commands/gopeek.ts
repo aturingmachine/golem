@@ -2,9 +2,9 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPeekEmbed } from '../utils/message-utils'
-import { _Command } from '../models/commands'
 
 const log = GolemLogger.child({ src: LogSources.GoPeek })
 
@@ -29,6 +29,6 @@ const execute = async (
   await interaction.reply({ embeds: [embed] })
 }
 
-const goPeekCommand = new _Command(LogSources.GoPeek, data, execute)
+const goPeekCommand = new Command(LogSources.GoPeek, data, execute)
 
 export default goPeekCommand

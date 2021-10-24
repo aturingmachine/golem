@@ -28,6 +28,10 @@ export type PlexConfig = {
   password: string
 }
 
+export type SearchConfig = {
+  forceWeightTerms: string[]
+}
+
 export type WebConfig = {
   apiPort: number
 }
@@ -39,6 +43,7 @@ export type JSONConfig = {
   library?: LibraryConfig
   mongo?: MongoConfig
   plex?: PlexConfig
+  search?: SearchConfig
   web?: WebConfig
 }
 

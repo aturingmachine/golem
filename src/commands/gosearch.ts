@@ -2,9 +2,9 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { getSearchReply } from '../utils/message-utils'
-import { _Command } from '../models/commands'
 
 const log = GolemLogger.child({ src: LogSources.GoSearch })
 
@@ -65,6 +65,6 @@ const execute = async (
   }
 }
 
-const goSearchCommand = new _Command(LogSources.GoSearch, data, execute)
+const goSearchCommand = new Command(LogSources.GoSearch, data, execute)
 
 export default goSearchCommand

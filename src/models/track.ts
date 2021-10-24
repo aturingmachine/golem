@@ -48,17 +48,14 @@ export class Track {
   }
 
   onQueue(): void {
-    console.log('TRACK QUEUED')
     Analytics.createPlayRecord(this.listing.trackId, this.userId, 'queue')
   }
 
   onPlay(): void {
-    console.log('TRACK PLAYED')
     Analytics.createPlayRecord(this.listing.trackId, this.userId, 'play')
   }
 
   onSkip(): void {
-    console.log('TRACK SKIPPED')
     Analytics.createPlayRecord(this.listing.trackId, this.userId, 'skip')
   }
 }

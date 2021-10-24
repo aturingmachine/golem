@@ -11,6 +11,7 @@ import {
   MongoConfig,
   PlexConfig,
   WebConfig,
+  SearchConfig,
 } from '../models/config'
 import { LogLevel } from './logger'
 config({ path: path.resolve(__dirname, '../../.env') })
@@ -140,6 +141,17 @@ export const GolemConf = {
       appId: GolemConf.values.plex?.appId || '',
       username: GolemConf.values.plex?.username || '',
       password: GolemConf.values.plex?.password || '',
+    }
+  },
+
+  get search(): SearchConfig {
+    return {
+      forceWeightTerms: GolemConf.values.search?.forceWeightTerms || [
+        'instrumental',
+        'inst.',
+        'live',
+        'remix',
+      ],
     }
   },
 

@@ -2,9 +2,9 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
-import { _Command } from '../models/commands'
 
 const log = GolemLogger.child({ src: LogSources.GoSkip })
 
@@ -59,6 +59,6 @@ const execute = async (
   }
 }
 
-const goSkipCommand = new _Command(LogSources.GoSkip, data, execute)
+const goSkipCommand = new Command(LogSources.GoSkip, data, execute)
 
 export default goSkipCommand

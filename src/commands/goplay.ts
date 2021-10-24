@@ -4,6 +4,7 @@ import { Analytics } from '../analytics'
 import { CommandAnalyticsInteraction } from '../analytics/models/interaction'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
+import { Command } from '../models/commands'
 import { fourSquare } from '../utils/image-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import {
@@ -11,7 +12,6 @@ import {
   GetEmbedFromListing,
   GetWideSearchEmbed,
 } from '../utils/message-utils'
-import { _Command } from '../models/commands'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
@@ -114,6 +114,6 @@ const execute = async (
   }
 }
 
-const goPlayCommand = new _Command(LogSources.GoPlay, data, execute)
+const goPlayCommand = new Command(LogSources.GoPlay, data, execute)
 
 export default goPlayCommand

@@ -1,12 +1,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders'
-import { CommandInteraction, Interaction, Message } from 'discord.js'
+import { CommandInteraction, Message } from 'discord.js'
 import { GolemConf } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
-
-export interface Command {
-  data: any
-  execute: (interaction: Interaction | Message) => Promise<any>
-}
 
 export type CommandHandlerFn = (
   interaction: Message | CommandInteraction,
@@ -19,7 +14,7 @@ export type CommandErrorHandlerFn = (
   ...args: any[]
 ) => Promise<any>
 
-export class _Command {
+export class Command {
   constructor(
     public source: LogSources | string,
     public data: Partial<SlashCommandBuilder>,
@@ -35,7 +30,7 @@ export class _Command {
         if (this.errorHandler) {
           this.errorHandler(error as Error, interaction, ...args)
         } else {
-          _Command.BaseErrorHandler(
+          Command.BaseErrorHandler(
             this.source,
             error as Error,
             interaction,

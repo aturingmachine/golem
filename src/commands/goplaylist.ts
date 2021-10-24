@@ -2,11 +2,11 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
+import { Command } from '../models/commands'
 import { Plex } from '../plex'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPlaylistEmbed } from '../utils/message-utils'
 import { Replier } from '../utils/replies'
-import { _Command } from '../models/commands'
 
 const log = GolemLogger.child({ src: LogSources.GoPlayList })
 
@@ -64,6 +64,6 @@ const execute = async (
   }
 }
 
-const goPlaylistCommand = new _Command(LogSources.GoPlayList, data, execute)
+const goPlaylistCommand = new Command(LogSources.GoPlayList, data, execute)
 
 export default goPlaylistCommand
