@@ -14,14 +14,35 @@ export class TrackQueue {
   private passiveQueue!: QueuedTrack[]
 
   constructor() {
+    this.explicitQueue = []
     this.passiveQueue = []
   }
 
+  /**
+   * Add a track to the explicit queue
+   * @param userId
+   * @param track
+   */
+  addNext(userId: string, track: Track): void {
+    log.debug(`${userId} Adding Next ${track.listing.shortName}`)
+    this.explicitQueue.push({ track, queuedBy: userId })
+  }
+
+  /**
+   * Adds a track to the passive queue
+   * @param userId
+   * @param track
+   */
   add(userId: string, track: Track): void {
     log.debug(`${userId} Adding ${track.listing.shortName}`)
     this.passiveQueue.push({ track, queuedBy: userId })
   }
 
+  /**
+   * Adds many tracks to the passive queue
+   * @param userId
+   * @param tracks
+   */
   addMany(userId: string, tracks: Track[]): void {
     log.debug(`Adding many - ${tracks.length} tracks`)
     this.passiveQueue.push(
@@ -30,39 +51,50 @@ export class TrackQueue {
   }
 
   skip(): void {
-    log.debug(`Skipping ${this.passiveQueue[0]?.track.listing.name}`)
-    this.passiveQueue.shift()
+    log.debug(`Skipping ${this.queue[0]?.track.listing.name}`)
+
+    if (this.explicitQueue.length > 0) {
+      this.explicitQueue.shift()
+    } else {
+      this.passiveQueue.shift()
+    }
   }
 
   clear(): void {
     log.debug('Clearing')
+    this.explicitQueue = []
     this.passiveQueue = []
   }
 
   peek(): Track | undefined {
     log.debug('Peeking')
-    return this.passiveQueue[0]?.track
+    return this.queue[0]?.track
   }
 
   peekDeep(depth = 5): Track[] {
     log.debug('Deep Peeking')
     return depth > 0
-      ? this.passiveQueue.slice(0, depth).map((i) => i.track)
-      : this.passiveQueue.map((i) => i.track)
+      ? this.queue.slice(0, depth).map((i) => i.track)
+      : this.queue.map((i) => i.track)
   }
 
   pop(): Track | undefined {
     log.debug('Popping Next track')
+
+    if (this.explicitQueue.length > 0) {
+      return this.explicitQueue.shift()?.track
+    }
+
     return this.passiveQueue.shift()?.track
   }
 
   shuffle(): void {
     log.debug('shuffling')
-    const temp = [...this.passiveQueue]
-    // temp.shift()
-    // temp = shuffleArray(temp)
-    // temp.unshift(this._queue[0])
-    this.passiveQueue = shuffleArray(temp)
+    const passiveTemp = [...this.passiveQueue]
+    const explicitTemp = [...this.explicitQueue]
+
+    this.passiveQueue = shuffleArray(passiveTemp)
+    this.explicitQueue = shuffleArray(explicitTemp)
     log.info('shuffled')
   }
 

@@ -61,6 +61,7 @@ enum LogSources {
   GoPause = 'go-pause',
   GoPeek = 'go-peek',
   GoPlay = 'go-play',
+  GoPlayNext = 'go-play-next',
   GoPlayList = 'go-playlist',
   GoSearch = 'go-search',
   GoShuffle = 'go-shuffle',
@@ -120,6 +121,7 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'mix-debug': chalk.blueBright,
   'db-debug': chalk.green,
   'web-server': chalk.magenta,
+  'go-play-next': chalk.cyanBright,
 }
 
 export { logger as GolemLogger, LogSources }

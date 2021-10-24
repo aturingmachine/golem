@@ -17,7 +17,10 @@ export type CommandErrorHandlerFn = (
 export class Command {
   constructor(
     public source: LogSources | string,
-    public data: Partial<SlashCommandBuilder>,
+    public data: Omit<
+      SlashCommandBuilder,
+      'addSubcommand' | 'addSubcommandGroup'
+    >,
     public handler: CommandHandlerFn,
     public errorHandler?: CommandErrorHandlerFn
   ) {}
