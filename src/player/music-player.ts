@@ -75,10 +75,20 @@ export class MusicPlayer {
     this.voiceConnection.subscribe(this.audioPlayer)
   }
 
-  public enqueue(userId: string, listing: Listing): void {
+  public enqueue(
+    userId: string,
+    listing: Listing,
+    enqueueAsNext = false
+  ): void {
     this.log.info(`queueing ${listing.shortName}`)
     const track = new Track(listing, userId)
-    this.queue.add(userId, track)
+
+    if (enqueueAsNext) {
+      this.queue.addNext(userId, track)
+    } else {
+      this.queue.add(userId, track)
+    }
+
     track.onPlay()
 
     void this.processQueue()

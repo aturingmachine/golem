@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 
 const data = new SlashCommandBuilder()
@@ -24,4 +25,6 @@ const execute = async (
   player.pause()
 }
 
-export default { data, execute }
+const goPauseCommand = new Command(LogSources.GoPause, data, execute)
+
+export default goPauseCommand

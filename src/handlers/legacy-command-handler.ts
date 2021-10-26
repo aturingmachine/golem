@@ -14,6 +14,12 @@ export async function AliasedCommand(msg: Message): Promise<boolean> {
         msg.content.split(' ').slice(1).join(' ')
       )
       break
+    case '$playnext':
+      await RegisteredCommands.goPlayNext.execute(
+        msg,
+        msg.content.split(' ').slice(1).join(' ')
+      )
+      break
     case '$np':
     case '$nowplaying':
       await RegisteredCommands.goGet.execute(msg, 'np')
@@ -43,6 +49,7 @@ export class LegacyCommandHandler {
       }
     }
 
+    // Handle a $go style command
     const subcommand = msg.content.split(' ')[1]
 
     if (!subcommand) {

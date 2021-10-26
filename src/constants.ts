@@ -1,8 +1,8 @@
 import fs from 'fs'
 import { ColorResolvable } from 'discord.js'
-import { Config } from './utils/config'
+import { GolemConf } from './utils/config'
 
-export const PlexLogo = fs.readFileSync(Config.Image.FallbackImagePath)
+export const PlexLogo = fs.readFileSync(GolemConf.image.fallbackPath)
 
 export const Constants = {
   baseColor: '#f900d5' as ColorResolvable,
@@ -14,6 +14,7 @@ export const CommandBase = {
   pause: 'pause',
   peek: 'peek',
   play: 'play',
+  playNext: 'playnext',
   playlist: 'playlist',
   search: 'search',
   shuffle: 'shuffle',
@@ -27,6 +28,7 @@ const SlashCommands = {
   pause: `go${CommandBase.pause}`,
   peek: `go${CommandBase.peek}`,
   play: `go${CommandBase.play}`,
+  playNext: `go${CommandBase.playNext}`,
   playlist: `go${CommandBase.playlist}`,
   search: `go${CommandBase.search}`,
   shuffle: `go${CommandBase.shuffle}`,

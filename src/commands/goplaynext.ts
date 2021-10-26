@@ -5,19 +5,14 @@ import { CommandAnalyticsInteraction } from '../analytics/models/interaction'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { Command } from '../models/commands'
-import { fourSquare } from '../utils/image-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
-import {
-  ArtistConfirmReply,
-  GetEmbedFromListing,
-  GetWideSearchEmbed,
-} from '../utils/message-utils'
+import { GetEmbedFromListing, GetWideSearchEmbed } from '../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
 const data = new SlashCommandBuilder()
   .setName(CommandNames.slash.play)
-  .setDescription('Play Something')
+  .setDescription('Add a track to the front of the play queue')
   .addStringOption((option) =>
     option
       .setName('query')
@@ -55,7 +50,7 @@ const execute = async (
   }
 
   if (!commandQuery) {
-    player.unpause()
+    await interaction.reply('No track query provided, cannot play next.')
   } else {
     const res = Golem.trackFinder.search(commandQuery)
 
@@ -69,21 +64,24 @@ const execute = async (
 
     // Handle artist query
     if (res.isArtistQuery) {
-      const srcs = Golem.trackFinder.artistSample(res.listing.artist, 4)
-
       await interaction.reply(
-        await ArtistConfirmReply(
-          res.listing.artist,
-          await fourSquare({
-            images: {
-              img1: srcs[0].albumArt,
-              img2: srcs[1].albumArt,
-              img3: srcs[2].albumArt,
-              img4: srcs[3].albumArt,
-            },
-          })
-        )
+        'cannot add artist discography to the front of the queue'
       )
+      // const srcs = Golem.trackFinder.artistSample(res.listing.artist, 4)
+
+      // await interaction.reply(
+      //   await ArtistConfirmReply(
+      //     res.listing.artist,
+      //     await fourSquare({
+      //       images: {
+      //         img1: srcs[0].albumArt,
+      //         img2: srcs[1].albumArt,
+      //         img3: srcs[2].albumArt,
+      //         img4: srcs[3].albumArt,
+      //       },
+      //     })
+      //   )
+      // )
     }
     // Handle Wide Queries
     else if (res.isWideMatch) {
@@ -107,13 +105,13 @@ const execute = async (
         files: [image],
       })
 
-      log.debug('GoPlay starting Player.')
+      log.debug('GoPlayNext starting Player.')
 
-      player.enqueue(interaction.member?.user.id || '', res.listing)
+      player.enqueue(interaction.member?.user.id || '', res.listing, true)
     }
   }
 }
 
-const goPlayCommand = new Command(LogSources.GoPlay, data, execute)
+const goPlayNextCommand = new Command(LogSources.GoPlayNext, data, execute)
 
-export default goPlayCommand
+export default goPlayNextCommand

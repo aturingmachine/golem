@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios'
 import { TrackFinder } from '../player/track-finder'
-import { Config, opts } from '../utils/config'
+import { GolemConf } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { EzProgressBar } from '../utils/progress-bar'
 import {
@@ -24,7 +24,7 @@ const fixSlashes = (original: string): string => {
 }
 
 const PlexHeaders: Record<string, string> = {
-  'X-Plex-Client-Identifier': Config.Plex.AppId,
+  'X-Plex-Client-Identifier': GolemConf.plex.appId,
   'X-Plex-Product': 'Golem',
   'X-Plex-Version': '1.0.0',
   Accept: 'application/json',
@@ -44,8 +44,8 @@ export const Plex: Plex = {
   playlists: [],
 
   async init(trackFinder: TrackFinder): Promise<void> {
-    if (opts.noPlex) {
-      log.info('no-plex flag set, skipping plex init')
+    if (!GolemConf.modules.Plex) {
+      log.info('plex module not loaded')
       return
     }
 
@@ -53,8 +53,8 @@ export const Plex: Plex = {
     const res = await axios.post(
       'https://plex.tv/api/v2/users/signin',
       {
-        login: Config.Plex.Username,
-        password: Config.Plex.Password,
+        login: GolemConf.plex.username,
+        password: GolemConf.plex.password,
       },
       {
         headers: PlexHeaders,
@@ -65,7 +65,7 @@ export const Plex: Plex = {
     PlexHeaders['X-Plex-Token'] = this.token
 
     this.instance = axios.create({
-      baseURL: Config.Plex.URI,
+      baseURL: GolemConf.plex.uri,
       headers: PlexHeaders,
     })
     log.info('Plex Connection Initialized')
@@ -109,20 +109,24 @@ export const Plex: Plex = {
       for (const playlist of playlists.data.MediaContainer.Metadata) {
         const details = await this.getPlaylistById(playlist.ratingKey)
 
-        records.push({
-          name: details?.MediaContainer.title || '',
-          count: details?.MediaContainer.leafCount || 0,
-          filePaths:
-            details?.MediaContainer.Metadata.map((data) =>
-              fixSlashes(data.Media[0].Part[0].file)
-            ) || [],
-        })
+        if (details?.MediaContainer && details.MediaContainer.Metadata) {
+          records.push({
+            name: details?.MediaContainer.title || '',
+            count: details?.MediaContainer.leafCount || 0,
+            filePaths:
+              details?.MediaContainer.Metadata.map((data) =>
+                fixSlashes(data.Media[0].Part[0].file)
+              ) || [],
+          })
+        }
 
         EzProgressBar.add(
-          0.5 / playlists.data.MediaContainer.Metadata.length,
+          1 / playlists.data.MediaContainer.Metadata.length,
           details?.MediaContainer.title
         )
       }
+
+      EzProgressBar.stop()
     }
 
     return records

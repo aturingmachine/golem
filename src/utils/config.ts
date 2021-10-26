@@ -1,104 +1,163 @@
 import path from 'path'
 import { config } from 'dotenv'
-config()
+import {
+  JSONConfig,
+  CliOption,
+  GolemModule,
+  DiscordConfig,
+  ImageConfig,
+  LastFmConfig,
+  LibraryConfig,
+  MongoConfig,
+  PlexConfig,
+  WebConfig,
+  SearchConfig,
+} from '../models/config'
+import { LogLevel } from './logger'
+config({ path: path.resolve(__dirname, '../../.env') })
 
-type ConfigValues = {
-  Discord: {
-    Token: string
-    ClientId: string
-    GuildIds: string[]
-  }
-  Image: {
-    FallbackImagePath: string
-    ColorAlg: 'sqrt' | 'dominant' | 'simple'
-  }
-  Plex: {
-    URI: string
-    AppId: string
-    Username: string
-    Password: string
-  }
-  LastFm: {
-    APIKey: string
-  }
-  Web: {
-    APIPort: number
+/* eslint-disable-next-line @typescript-eslint/no-var-requires */
+const rawJSConfig: JSONConfig = require(path.resolve(
+  __dirname,
+  '../../config.js'
+))
+
+const optFlags: Record<CliOption, string[]> = {
+  TTY: ['tty', '-i'],
+  BustCache: ['bust-cache', 'cache-bust', 'bust', 'refresh'],
+  Verbose: ['verbose', '-V'],
+  Debug: ['debug', '-D'],
+}
+
+class Args {
+  constructor(private values: string[]) {}
+
+  includes(opt: CliOption): boolean {
+    return this.values.some((val) => optFlags[opt].some((flag) => flag === val))
   }
 }
 
-export class Config {
-  static get LibraryPaths(): string[] {
-    return process.env.LIBRARY_PATHS?.split(',') || []
-  }
+class CliOptions {
+  constructor(private args: Args) {}
 
-  static get MongoURI(): string {
-    return process.env.MONGO_URI || ''
-  }
-
-  static get Discord(): ConfigValues['Discord'] {
+  get options(): Record<CliOption, boolean> {
     return {
-      Token: process.env.TOKEN || '',
-      ClientId: process.env.CLIENT_ID || '',
-      GuildIds: process.env.SERVER_IDS?.split(',') || [],
-    }
-  }
-
-  static get Image(): ConfigValues['Image'] {
-    return {
-      FallbackImagePath:
-        process.env.IMAGE_FALLBACK_PATH ||
-        path.resolve(__dirname, '../../plex-logo.png'),
-      ColorAlg:
-        (process.env.IMAGE_COLOR_ALG as 'sqrt' | 'dominant' | 'simple') ||
-        'sqrt',
-    }
-  }
-
-  static get Plex(): ConfigValues['Plex'] {
-    return {
-      URI: process.env.PLEX_URI || '',
-      AppId: process.env.PLEX_APPLICATION_ID || '',
-      Username: process.env.PLEX_USERNAME || '',
-      Password: process.env.PLEX_PASSWORD || '',
-    }
-  }
-
-  static get LastFm(): ConfigValues['LastFm'] {
-    return {
-      APIKey: process.env.LAST_FM_API_KEY || '',
-    }
-  }
-
-  static get Web(): ConfigValues['Web'] {
-    return {
-      APIPort: process.env.WEB_SERVER_PORT
-        ? parseInt(process.env.WEB_SERVER_PORT, 10)
-        : 3000,
+      TTY: this.args.includes(CliOption.TTY),
+      BustCache: this.args.includes(CliOption.BustCache),
+      Verbose: this.args.includes(CliOption.Verbose),
+      Debug: this.args.includes(CliOption.Debug),
     }
   }
 }
 
-const cliArgs = process.argv.slice(2)
+// TODO should probably add some more extendable/complex validation pattern
+export const GolemConf = {
+  values: rawJSConfig,
+  enabledModules: [] as GolemModule[],
+  cliOptions: new CliOptions(new Args(process.argv.slice(2))),
 
-export const opts = {
-  debug: cliArgs.includes('debug'),
-  get tty(): boolean {
-    return ['tty', ' -i '].some((o) => cliArgs.includes(o))
+  init(): void {
+    // kill application if no required config
+    if (!GolemConf.values.discord) {
+      console.error('No Discord Config found. Terminating.')
+      process.exit(1)
+    }
+
+    // check all potential optional modules
+    if (!!GolemConf.values.plex) {
+      GolemConf.enabledModules.push(GolemModule.Plex)
+    }
+
+    if (!!GolemConf.values.lastfm) {
+      GolemConf.enabledModules.push(GolemModule.LastFm)
+    }
+
+    if (!!GolemConf.values.web) {
+      GolemConf.enabledModules.push(GolemModule.Web)
+    }
   },
-  noRun: cliArgs.includes('noRun'),
-  get bustCache(): boolean {
-    return ['bust-cache', 'cache-bust', 'bust', 'refresh'].some((o) =>
-      cliArgs.includes(o)
-    )
+
+  get options(): Record<CliOption, boolean> {
+    return GolemConf.cliOptions.options
   },
-  verbose: cliArgs.includes('verbose'),
-  loadTest: cliArgs.includes('load-test'),
-  get logLevel(): string {
-    const isDebug =
-      cliArgs.includes('debug') || cliArgs.includes('verbose') || this.tty
-    return isDebug ? 'debug' : 'info'
+
+  get logLevel(): LogLevel {
+    GolemConf.init()
+    return GolemConf.options.Debug || GolemConf.options.Verbose
+      ? LogLevel.Debug
+      : LogLevel.Info
   },
-  noPlex: cliArgs.includes('no-plex'),
-  skipClient: cliArgs.includes('no-client'),
-  service: cliArgs.includes('service'),
+
+  get modules(): Record<GolemModule, boolean> {
+    return {
+      Plex: GolemConf.enabledModules.includes(GolemModule.Plex),
+      LastFm: GolemConf.enabledModules.includes(GolemModule.LastFm),
+      Web: GolemConf.enabledModules.includes(GolemModule.Web),
+    }
+  },
+
+  get discord(): DiscordConfig {
+    return {
+      token: GolemConf.values.discord?.token || '',
+      clientId: GolemConf.values.discord?.clientId || '',
+      serverIds: GolemConf.values.discord?.serverIds || [],
+    }
+  },
+
+  get image(): ImageConfig {
+    return {
+      fallbackPath: GolemConf.values.image?.fallbackPath || '',
+      avgColorAlgorithm:
+        GolemConf.values.image?.avgColorAlgorithm &&
+        ['sqrt', 'dominant', 'simple'].includes(
+          GolemConf.values.image?.avgColorAlgorithm
+        )
+          ? GolemConf.values.image.avgColorAlgorithm
+          : 'sqrt',
+    }
+  },
+
+  get lastfm(): LastFmConfig {
+    return {
+      apiKey: GolemConf.values.lastfm?.apiKey || '',
+    }
+  },
+
+  get library(): LibraryConfig {
+    return {
+      paths: GolemConf.values.library?.paths || [],
+    }
+  },
+
+  get mongo(): MongoConfig {
+    return {
+      uri: GolemConf.values.mongo?.uri || '',
+    }
+  },
+
+  get plex(): PlexConfig {
+    return {
+      uri: GolemConf.values.plex?.uri || '',
+      appId: GolemConf.values.plex?.appId || '',
+      username: GolemConf.values.plex?.username || '',
+      password: GolemConf.values.plex?.password || '',
+    }
+  },
+
+  get search(): SearchConfig {
+    return {
+      forceWeightTerms: GolemConf.values.search?.forceWeightTerms || [
+        'instrumental',
+        'inst.',
+        'live',
+        'remix',
+      ],
+    }
+  },
+
+  get web(): WebConfig {
+    return {
+      apiPort: GolemConf.values.web?.apiPort || 3000,
+    }
+  },
 }

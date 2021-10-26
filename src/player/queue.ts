@@ -10,68 +10,103 @@ interface QueuedTrack {
 }
 
 export class TrackQueue {
-  private _queue!: QueuedTrack[]
+  private explicitQueue!: QueuedTrack[]
+  private passiveQueue!: QueuedTrack[]
 
   constructor() {
-    this._queue = []
+    this.explicitQueue = []
+    this.passiveQueue = []
   }
 
+  /**
+   * Add a track to the explicit queue
+   * @param userId
+   * @param track
+   */
+  addNext(userId: string, track: Track): void {
+    log.debug(`${userId} Adding Next ${track.listing.shortName}`)
+    this.explicitQueue.push({ track, queuedBy: userId })
+  }
+
+  /**
+   * Adds a track to the passive queue
+   * @param userId
+   * @param track
+   */
   add(userId: string, track: Track): void {
     log.debug(`${userId} Adding ${track.listing.shortName}`)
-    this._queue.push({ track, queuedBy: userId })
+    this.passiveQueue.push({ track, queuedBy: userId })
   }
 
+  /**
+   * Adds many tracks to the passive queue
+   * @param userId
+   * @param tracks
+   */
   addMany(userId: string, tracks: Track[]): void {
     log.debug(`Adding many - ${tracks.length} tracks`)
-    this._queue.push(...tracks.map((track) => ({ track, queuedBy: userId })))
+    this.passiveQueue.push(
+      ...tracks.map((track) => ({ track, queuedBy: userId }))
+    )
   }
 
   skip(): void {
-    log.debug(`Skipping ${this._queue[0]?.track.listing.name}`)
-    this._queue.shift()
+    log.debug(`Skipping ${this.queue[0]?.track.listing.name}`)
+
+    if (this.explicitQueue.length > 0) {
+      this.explicitQueue.shift()
+    } else {
+      this.passiveQueue.shift()
+    }
   }
 
   clear(): void {
     log.debug('Clearing')
-    this._queue = []
+    this.explicitQueue = []
+    this.passiveQueue = []
   }
 
   peek(): Track | undefined {
     log.debug('Peeking')
-    return this._queue[0]?.track
+    return this.queue[0]?.track
   }
 
   peekDeep(depth = 5): Track[] {
     log.debug('Deep Peeking')
     return depth > 0
-      ? this._queue.slice(0, depth).map((i) => i.track)
-      : this._queue.map((i) => i.track)
+      ? this.queue.slice(0, depth).map((i) => i.track)
+      : this.queue.map((i) => i.track)
   }
 
   pop(): Track | undefined {
     log.debug('Popping Next track')
-    return this._queue.shift()?.track
+
+    if (this.explicitQueue.length > 0) {
+      return this.explicitQueue.shift()?.track
+    }
+
+    return this.passiveQueue.shift()?.track
   }
 
   shuffle(): void {
     log.debug('shuffling')
-    const temp = [...this._queue]
-    // temp.shift()
-    // temp = shuffleArray(temp)
-    // temp.unshift(this._queue[0])
-    this._queue = shuffleArray(temp)
+    const passiveTemp = [...this.passiveQueue]
+    const explicitTemp = [...this.explicitQueue]
+
+    this.passiveQueue = shuffleArray(passiveTemp)
+    this.explicitQueue = shuffleArray(explicitTemp)
     log.info('shuffled')
   }
 
   get first(): Track {
-    return this._queue[0].track
+    return this.queue[0].track
   }
 
   /**
    * Get rough runtime in seconds
    */
   get runTime(): number {
-    const estRunTime = this._queue.reduce((prev, curr) => {
+    const estRunTime = this.queue.reduce((prev, curr) => {
       return prev + curr.track.listing.duration
     }, 0)
 
@@ -81,6 +116,10 @@ export class TrackQueue {
   }
 
   get queuedTrackCount(): number {
-    return this._queue.length
+    return this.queue.length
+  }
+
+  private get queue(): QueuedTrack[] {
+    return [...this.explicitQueue, ...this.passiveQueue]
   }
 }

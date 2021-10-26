@@ -1,7 +1,20 @@
 import chalk from 'chalk'
 import { v4 as uuidv4 } from 'uuid'
 import winston from 'winston'
-import { opts } from './config'
+
+export enum LogLevel {
+  Debug = 'debug',
+  Info = 'info',
+}
+
+function determineLogLevel(): LogLevel {
+  const debugLevelArgs = ['debug', '-D', 'verbose', '-V']
+  const args = process.argv.slice(2)
+
+  return args.some((arg) => debugLevelArgs.some((debugArg) => debugArg === arg))
+    ? LogLevel.Debug
+    : LogLevel.Info
+}
 
 const { combine, timestamp, colorize, printf, json, splat } = winston.format
 
@@ -25,7 +38,7 @@ const id = winston.format((info) => {
 })
 
 const logger = winston.createLogger({
-  level: opts.logLevel,
+  level: determineLogLevel(),
   format: combine(splat(), timestamp(), id(), json()),
   transports: [
     new winston.transports.File({
@@ -48,6 +61,7 @@ enum LogSources {
   GoPause = 'go-pause',
   GoPeek = 'go-peek',
   GoPlay = 'go-play',
+  GoPlayNext = 'go-play-next',
   GoPlayList = 'go-playlist',
   GoSearch = 'go-search',
   GoShuffle = 'go-shuffle',
@@ -107,6 +121,7 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'mix-debug': chalk.blueBright,
   'db-debug': chalk.green,
   'web-server': chalk.magenta,
+  'go-play-next': chalk.cyanBright,
 }
 
 export { logger as GolemLogger, LogSources }

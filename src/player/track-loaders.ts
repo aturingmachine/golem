@@ -2,8 +2,8 @@ import fs from 'fs'
 import * as mm from 'music-metadata'
 import { LibIndexData } from '../models/db/lib-index'
 import { ListingData } from '../models/db/listing'
-import { Listing, ListingInfo } from '../models/listing'
-import { Config, opts } from '../utils/config'
+import { Listing } from '../models/listing'
+import { GolemConf } from '../utils/config'
 import { getAllFiles } from '../utils/filesystem'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { EzProgressBar } from '../utils/progress-bar'
@@ -20,10 +20,10 @@ export class TrackLoader {
   }
 
   async load(): Promise<Listing[]> {
-    for (const lib of Config.LibraryPaths) {
+    for (const lib of GolemConf.library.paths) {
       const name = lib.split('/').pop() || 'Library'
 
-      if (opts.bustCache) {
+      if (GolemConf.options.BustCache) {
         await this.loadFromDisk(lib, name)
       } else {
         await this.loadTracksFromDB(lib, name)
@@ -88,10 +88,10 @@ export class TrackLoader {
     if (dbRead) {
       log.info('DB Record found')
       try {
-        const data: ListingInfo[] = dbRead.listings
+        const data = dbRead.listings
 
         for (const datum of data) {
-          this.listings.push(new Listing(datum))
+          this.listings.push(new Listing(datum, datum.id))
         }
       } catch (error) {
         log.warn('unable to parse backup')
@@ -128,7 +128,7 @@ export class TrackLoader {
 
       listing._id = listingRecord._id.toString()
 
-      console.log(listing._id, listing.id)
+      // console.log(listing._id, listing.id)
 
       listingIds.push(listingRecord._id)
     }

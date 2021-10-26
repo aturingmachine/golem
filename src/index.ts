@@ -1,20 +1,18 @@
 import mongoose from 'mongoose'
 import { Golem } from './golem'
-import { opts } from './utils/config'
+import { GolemConf } from './utils/config'
 import { startApi } from './web/server'
 
 const main = async (): Promise<void> => {
   await Golem.initialize()
 
-  if (!opts.noRun) {
-    await Golem.login()
-  }
+  await Golem.login()
 
-  if (!opts.skipClient) {
+  if (GolemConf.modules.Web) {
     startApi()
   }
 
-  if (opts.tty) {
+  if (GolemConf.options.TTY) {
     Golem.debugger.start()
     Golem.debugger.setPrompt()
     Golem.debugger.listen()

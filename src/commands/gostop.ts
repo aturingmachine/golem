@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 
 const data = new SlashCommandBuilder()
@@ -29,7 +30,6 @@ const execute = async (
   }
 }
 
-export default {
-  data,
-  execute,
-}
+const goStopCommand = new Command(LogSources.GoStop, data, execute)
+
+export default goStopCommand

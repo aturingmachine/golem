@@ -2,6 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
+import { Command } from '../models/commands'
 import { Listing } from '../models/listing'
 import { MixMatcher } from '../player/mix-matcher'
 import { shuffleArray } from '../utils/list-utils'
@@ -107,7 +108,6 @@ const execute = async (
   return
 }
 
-export default {
-  data,
-  execute,
-}
+const goMixCommand = new Command(LogSources.GoMix, data, execute)
+
+export default goMixCommand

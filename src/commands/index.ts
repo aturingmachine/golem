@@ -1,13 +1,14 @@
 import fs from 'fs'
 import { Collection } from 'discord.js'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { Command } from '~/models/commands'
 import goGet from './goget'
 import goMix from './gomix'
 import goPause from './gopause'
 import goPeek from './gopeek'
 import goPlay from './goplay'
 import goPlaylist from './goplaylist'
+import goPlayNext from './goplaynext'
 import goSearch from './gosearch'
 import goShuffle from './goshuffle'
 import goSkip from './goskip'
@@ -40,6 +41,7 @@ export const RegisteredCommands = {
   goSearch,
   goPeek,
   goPlaylist,
+  goPlayNext,
   goShuffle,
   goMix,
 }

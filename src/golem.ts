@@ -11,7 +11,7 @@ import { MusicPlayer } from './player/music-player'
 import { TrackFinder } from './player/track-finder'
 import { TrackLoader } from './player/track-loaders'
 import { Plex } from './plex'
-import { Config } from './utils/config'
+import { GolemConf } from './utils/config'
 import { Debugger } from './utils/debugger'
 import { GolemLogger, LogSources } from './utils/logger'
 import { EzProgressBar } from './utils/progress-bar'
@@ -33,6 +33,8 @@ export class Golem {
   }
 
   static async initialize(): Promise<void> {
+    GolemConf.init()
+
     Golem.players = new Map()
 
     Golem.log = GolemLogger.child({ src: LogSources.App })
@@ -64,9 +66,10 @@ export class Golem {
 
     try {
       await Plex.init(Golem.trackFinder)
-    } catch (error) {
+    } catch (error: any) {
       Golem.log.error('plex connection failed')
       Golem.log.error(error)
+      console.error(error.stack)
     }
 
     LastFm.init()
@@ -131,7 +134,7 @@ export class Golem {
   }
 
   static async login(): Promise<void> {
-    Golem.client.login(Config.Discord.Token)
+    Golem.client.login(GolemConf.discord.token)
   }
 
   static disconnectAll(): void {
