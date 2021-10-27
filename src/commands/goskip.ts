@@ -43,7 +43,7 @@ const execute = async (
     if (player.nowPlaying && player.currentResource) {
       player.skip()
       const assets = await GetEmbedFromListing(
-        player.currentResource.metadata.track.listing,
+        player.nowPlaying,
         player,
         'playing'
       )
@@ -51,7 +51,7 @@ const execute = async (
       await interaction.reply({
         content: 'Skipped!',
         embeds: [assets.embed],
-        files: [assets.image],
+        files: assets.image ? [assets.image] : [],
       })
     } else {
       await interaction.reply('No track to skip')

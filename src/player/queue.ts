@@ -1,4 +1,4 @@
-import { LocalTrack } from '../models/track'
+import { Track } from '../models/track'
 import { shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 
@@ -6,7 +6,7 @@ const log = GolemLogger.child({ src: LogSources.Queue })
 
 interface QueuedTrack {
   queuedBy: string
-  track: LocalTrack
+  track: Track
 }
 
 export class TrackQueue {
@@ -23,8 +23,8 @@ export class TrackQueue {
    * @param userId
    * @param track
    */
-  addNext(userId: string, track: LocalTrack): void {
-    log.debug(`${userId} Adding Next ${track.listing.shortName}`)
+  addNext(userId: string, track: Track): void {
+    // log.debug(`${userId} Adding Next ${track.listing.shortName}`)
     this.explicitQueue.push({ track, queuedBy: userId })
   }
 
@@ -33,8 +33,8 @@ export class TrackQueue {
    * @param userId
    * @param track
    */
-  add(userId: string, track: LocalTrack): void {
-    log.debug(`${userId} Adding ${track.listing.shortName}`)
+  add(userId: string, track: Track): void {
+    // log.debug(`${userId} Adding ${track.listing.shortName}`)
     this.passiveQueue.push({ track, queuedBy: userId })
   }
 
@@ -43,7 +43,7 @@ export class TrackQueue {
    * @param userId
    * @param tracks
    */
-  addMany(userId: string, tracks: LocalTrack[]): void {
+  addMany(userId: string, tracks: Track[]): void {
     log.debug(`Adding many - ${tracks.length} tracks`)
     this.passiveQueue.push(
       ...tracks.map((track) => ({ track, queuedBy: userId }))
@@ -51,7 +51,7 @@ export class TrackQueue {
   }
 
   skip(): void {
-    log.debug(`Skipping ${this.queue[0]?.track.listing.name}`)
+    // log.debug(`Skipping ${this.queue[0]?.track.listing.name}`)
 
     if (this.explicitQueue.length > 0) {
       this.explicitQueue.shift()
@@ -66,19 +66,19 @@ export class TrackQueue {
     this.passiveQueue = []
   }
 
-  peek(): LocalTrack | undefined {
+  peek(): Track | undefined {
     log.debug('Peeking')
     return this.queue[0]?.track
   }
 
-  peekDeep(depth = 5): LocalTrack[] {
+  peekDeep(depth = 5): Track[] {
     log.debug('Deep Peeking')
     return depth > 0
       ? this.queue.slice(0, depth).map((i) => i.track)
       : this.queue.map((i) => i.track)
   }
 
-  pop(): LocalTrack | undefined {
+  pop(): Track | undefined {
     log.debug('Popping Next track')
 
     if (this.explicitQueue.length > 0) {
@@ -98,7 +98,7 @@ export class TrackQueue {
     log.info('shuffled')
   }
 
-  get first(): LocalTrack {
+  get first(): Track {
     return this.queue[0].track
   }
 
@@ -107,7 +107,7 @@ export class TrackQueue {
    */
   get runTime(): number {
     const estRunTime = this.queue.reduce((prev, curr) => {
-      return prev + curr.track.listing.duration
+      return prev + curr.track.metadata.duration
     }, 0)
 
     log.debug(`Estimated Runtime ${estRunTime}`)

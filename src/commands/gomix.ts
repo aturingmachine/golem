@@ -4,6 +4,7 @@ import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { Command, CommandHelp } from '../models/commands'
 import { Listing } from '../models/listing'
+import { LocalTrack } from '../models/track'
 import { MixMatcher } from '../player/mix-matcher'
 import { shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -58,7 +59,10 @@ const execute = async (
   }
 
   if (['artist', 'track'].includes(mixBy.toLowerCase())) {
-    if (!player.currentResource) {
+    if (
+      !player.currentResource ||
+      !(player.currentResource.metadata.track instanceof LocalTrack)
+    ) {
       await interaction.reply('No current playing resource to mix off of.')
       return
     }
@@ -89,7 +93,10 @@ const execute = async (
     )
   } else {
     // assume we want to mix the current artist?
-    if (player.currentResource) {
+    if (
+      player.currentResource &&
+      player.currentResource.metadata.track instanceof LocalTrack
+    ) {
       const result = await MixMatcher.similarArtists(
         player.currentResource?.metadata.track.listing
       )

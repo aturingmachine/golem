@@ -13,8 +13,8 @@ import {
 } from '@discordjs/voice'
 import winston from 'winston'
 import { Golem } from '../golem'
-import { Listing } from '../models/listing'
-import { LocalTrack, TrackAudioResourceMetadata } from '../models/track'
+import { Listing, TrackListingInfo } from '../models/listing'
+import { LocalTrack, Track, TrackAudioResourceMetadata } from '../models/track'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { humanReadableTime } from '../utils/time-utils'
 import { TrackQueue } from './queue'
@@ -40,8 +40,8 @@ export class MusicPlayer {
     return this.audioPlayer.state.status === AudioPlayerStatus.Playing
   }
 
-  get nowPlaying(): Listing | undefined {
-    return this.currentResource?.metadata.track.listing
+  get nowPlaying(): TrackListingInfo | undefined {
+    return this.currentResource?.metadata.track.metadata
   }
 
   get currentTrackRemaining(): number {
@@ -75,18 +75,13 @@ export class MusicPlayer {
     this.voiceConnection.subscribe(this.audioPlayer)
   }
 
-  public enqueue(
-    userId: string,
-    listing: Listing,
-    enqueueAsNext = false
-  ): void {
-    this.log.info(`queueing ${listing.shortName}`)
-    const track = new LocalTrack(listing, userId)
+  public enqueue(track: Track, enqueueAsNext = false): void {
+    this.log.info(`queueing ${track.name}`)
 
     if (enqueueAsNext) {
-      this.queue.addNext(userId, track)
+      this.queue.addNext(track.userId, track)
     } else {
-      this.queue.add(userId, track)
+      this.queue.add(track.userId, track)
     }
 
     track.onPlay()
@@ -137,7 +132,7 @@ export class MusicPlayer {
     this.queue.shuffle()
   }
 
-  public peek(depth = 5): LocalTrack[] {
+  public peek(depth = 5): Track[] {
     this.log.info('peeking')
     return this.queue.peekDeep(depth)
   }
@@ -164,7 +159,17 @@ export class MusicPlayer {
           this.audioPlayer.state.status !== AudioPlayerStatus.Idle)) ||
       this.queue.queuedTrackCount === 0
     ) {
-      this.log.debug(`skipping processing due to state`)
+      this.log.debug(
+        `skipping processing due to state; force=${force}; queueLock=${
+          this.queueLock
+        }; status=${
+          this.audioPlayer.state.status !== AudioPlayerStatus.Idle
+        }; queuedTrackCount=${this.queue.queuedTrackCount === 0};`
+      )
+
+      if (this.queue.queuedTrackCount === 0) {
+        this.currentResource = undefined
+      }
       return
     }
 
@@ -173,13 +178,13 @@ export class MusicPlayer {
     /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
     const nextTrack = this.queue.pop()!
 
-    this.log.info(`playing ${nextTrack.listing.shortName}`)
+    // this.log.info(`playing ${nextTrack.listing.shortName}`)
 
     const next = nextTrack.toAudioResource()
-    this.currentResource = next as GolemTrackAudioResource
+    this.currentResource = next
     this.currentResource.volume?.setVolume(0.35)
     this.audioPlayer.play(this.currentResource)
-    Golem.setPresence(nextTrack.listing)
+    Golem.setPresence(nextTrack.metadata)
 
     Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
 

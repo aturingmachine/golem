@@ -27,11 +27,10 @@ export class LastFm {
   static async getSimilarArtists(
     listing: Listing
   ): Promise<SimilarArtistMatch[]> {
-    console.log('SENDING PARAMS', {
-      method: 'artist.getsimilar',
-      artist: listing.artist,
-      mbid: listing.mb.artistId,
-    })
+    LastFm.log.info(
+      `fetching similar tracks for ${listing.artist} - ${listing.title} by ARTIST`
+    )
+
     const response = await LastFm.http.get<SimilarArtistMatchRecord>('', {
       params: {
         method: 'artist.getsimilar',
@@ -49,7 +48,7 @@ export class LastFm {
     listing: Listing
   ): Promise<SimilarTrackMatch[]> {
     LastFm.log.info(
-      `fetching similar tracks for ${listing.artist} - ${listing.title}`
+      `fetching similar tracks for ${listing.artist} - ${listing.title} by TRACK`
     )
     const response = await LastFm.http.get<SimilarTrackMatchRecord>('', {
       params: {

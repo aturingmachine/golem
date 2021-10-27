@@ -6,7 +6,7 @@ import winston from 'winston'
 import { establishConnection } from './db'
 import { LastFm } from './lastfm'
 import { EventHandler } from './models/event-handler'
-import { Listing } from './models/listing'
+import { TrackListingInfo } from './models/listing'
 import { MusicPlayer } from './player/music-player'
 import { TrackFinder } from './player/track-finder'
 import { TrackLoader } from './player/track-loaders'
@@ -175,7 +175,7 @@ export class Golem {
     }
   }
 
-  static setPresence(listing: Listing): void {
+  static setPresence(listing: TrackListingInfo): void {
     Golem.client.user?.setActivity(`${listing.artist} - ${listing.title}`, {
       type: 'LISTENING',
     })

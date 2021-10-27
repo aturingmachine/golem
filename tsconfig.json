@@ -20,10 +20,5 @@
       "jest"
     ],
     "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "~/*": [
-        "./src/*"
-      ]
-    },
   },
 }

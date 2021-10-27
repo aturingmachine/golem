@@ -7,10 +7,27 @@ import { SearchSchemes } from './search-schemes'
 
 const log = GolemLogger.child({ src: LogSources.Search })
 
+export enum ResultType {
+  Wide = 'wide',
+  Artist = 'artist',
+  Track = 'track',
+}
+
 export interface SearchResult {
   listing: Listing
-  isArtistQuery: boolean
-  isWideMatch: boolean
+  type: ResultType
+}
+
+export class SearchResult {
+  constructor(public listing: Listing, public type: ResultType) {}
+
+  get isArtistQuery(): boolean {
+    return this.type === ResultType.Artist
+  }
+
+  get isWideQuery(): boolean {
+    return this.type === ResultType.Wide
+  }
 }
 
 export class TrackFinder {
@@ -50,11 +67,13 @@ export class TrackFinder {
       const final = this.weightResult(result).original
       const hasBeenWeighted = final.path !== result[0].original.path
 
-      return {
-        listing: final,
-        isArtistQuery,
-        isWideMatch: isWideMatch && !hasBeenWeighted,
-      }
+      return new SearchResult(
+        final,
+        TrackFinder.getResultType(
+          isArtistQuery,
+          isWideMatch && !hasBeenWeighted
+        )
+      )
     }
 
     log.warn(`No Results found for ${query}`)
@@ -78,9 +97,6 @@ export class TrackFinder {
     const availableSimilarArtists = similarMatches.filter((similar) =>
       this.artistNames.includes(similar.name.toLowerCase())
     )
-
-    console.log(`${availableSimilarArtists.length} available similar artists`)
-    console.log(availableSimilarArtists.map((x) => x.name).join('\n'))
 
     return shuffleArray(availableSimilarArtists)
       .slice(0, takeArtists)
@@ -211,5 +227,19 @@ export class TrackFinder {
       'english',
       'remix',
     ].some((s) => result.original.title.toLowerCase().includes(s))
+  }
+
+  private static getResultType(
+    isArtistQuery: boolean,
+    isWide: boolean
+  ): ResultType {
+    if (isArtistQuery) {
+      return ResultType.Artist
+    }
+    if (isWide) {
+      return ResultType.Wide
+    }
+
+    return ResultType.Track
   }
 }

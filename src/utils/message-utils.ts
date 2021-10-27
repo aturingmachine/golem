@@ -13,7 +13,7 @@ import {
 import { getAverageColor } from 'fast-average-color-node'
 import { Constants, PlexLogo } from '../constants'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
-import { Listing } from '../models/listing'
+import { Listing, TrackListingInfo } from '../models/listing'
 import { MusicPlayer } from '../player/music-player'
 import { Plex } from '../plex'
 import { GolemConf } from './config'
@@ -26,7 +26,7 @@ const embedFieldSpacer = {
   inline: true,
 }
 
-const averageColor = (img?: Buffer) =>
+export const averageColor = (img?: Buffer | string): any =>
   getAverageColor(img || PlexLogo, {
     algorithm: GolemConf.image.avgColorAlgorithm,
   })
@@ -41,23 +41,23 @@ export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
 const getDurationBar = (current: number, total: number): string => {
   const barWidth = 20
   const ratio = (total - current) / total
-  console.log('>>> current', current)
-  console.log('>>> total', total)
-  console.log('>>> ratio', ratio)
-  console.log('>>> hash calced', Math.round(barWidth * ratio))
   return `${''
     .padEnd(Math.round(barWidth * ratio), '\u2588')
     .padEnd(barWidth, '-')}`
 }
 
 export const GetEmbedFromListing = async (
-  listing: Listing,
+  listing: TrackListingInfo,
   player: MusicPlayer,
   context: 'queue' | 'playing'
-): Promise<{ embed: MessageEmbed; image: MessageAttachment }> => {
+): Promise<{ embed: MessageEmbed; image?: MessageAttachment }> => {
   const isQueue = context === 'queue'
   const color = await averageColor(listing.albumArt)
-  const image = GetMessageAttachement(listing.albumArt)
+
+  let image: MessageAttachment | undefined
+  if (typeof listing.albumArt !== 'string') {
+    image = GetMessageAttachement(listing.albumArt)
+  }
 
   const title = isQueue
     ? player.isPlaying
@@ -76,45 +76,59 @@ export const GetEmbedFromListing = async (
       )}] - ${humanReadableTime(player.currentTrackRemaining)}\``
     : `Remaining: ${humanReadableTime(player.currentTrackRemaining)}`
 
+  const isLocalListing = listing instanceof Listing
+  const duration = isLocalListing
+    ? `${
+        listing.hasDefaultDuration
+          ? '-'
+          : humanReadableDuration(listing.duration)
+      }`
+    : humanReadableDuration(listing.duration)
+
+  const fields: EmbedFieldData[] = [
+    {
+      name: 'Artist',
+      value: listing.artist,
+    },
+    {
+      name: 'Album',
+      value: listing.album,
+      inline: true,
+    },
+    embedFieldSpacer,
+    {
+      name: 'Duration',
+      value: duration,
+      inline: true,
+    },
+    {
+      name: 'Track',
+      value: listing.title,
+      inline: true,
+    },
+    embedFieldSpacer,
+  ]
+
+  if (isLocalListing) {
+    fields.push({
+      name: 'Genres',
+      value: listing.genres.length
+        ? listing.genres.slice(0, 3).join(', ')
+        : 'N/A',
+      inline: true,
+    })
+  }
+
   const embed = new MessageEmbed()
     .setTitle(title)
     .setDescription(description)
     .setColor(color.hex)
-    .setThumbnail(`attachment://cover.png`)
-    .setFields(
-      {
-        name: 'Artist',
-        value: listing.artist,
-      },
-      {
-        name: 'Album',
-        value: listing.album,
-        inline: true,
-      },
-      embedFieldSpacer,
-      {
-        name: 'Duration',
-        value: `${
-          listing.hasDefaultDuration
-            ? '-'
-            : humanReadableDuration(listing.duration)
-        }`,
-        inline: true,
-      },
-      {
-        name: 'Track',
-        value: listing.title,
-        inline: true,
-      },
-      embedFieldSpacer,
-      {
-        name: 'Genres',
-        value: listing.genres.length
-          ? listing.genres.slice(0, 3).join(', ')
-          : 'N/A',
-        inline: true,
-      }
+    .setThumbnail(
+      typeof listing.albumArt !== 'string'
+        ? `attachment://cover.png`
+        : listing.albumArt || ''
     )
+    .setFields(...fields)
 
   return {
     embed,
@@ -159,7 +173,7 @@ export const ArtistConfirmReply = async (
   return {
     embeds: [embed],
     components: [row],
-    files: [image],
+    files: image ? [image] : [],
   }
 }
 
@@ -187,8 +201,6 @@ export const getSearchReply = (
       return prev
     }, [] as EmbedFieldData[])
 
-  console.log(fields)
-
   const embed = new MessageEmbed()
     .setTitle(`Top ${results.length} for "${query.toUpperCase()}"`)
     .setDescription(`Taken from **${totalCount}** total results`)
@@ -207,7 +219,6 @@ export const GetWideSearchEmbed = (
   GolemLogger.debug(
     `creating wide search embed: ${query}, ${results.length} hits`
   )
-  console.log(results)
   const options: MessageSelectOptionData[] = results.slice(0, 25).map((r) => {
     return {
       label: r.shortName,
@@ -262,7 +273,7 @@ export const GetPeekEmbed = (player: MusicPlayer): MessageEmbed => {
 
   const fields = peekedTracks.map((track, index) => ({
     name: index === 0 ? 'Up Next' : `Position: ${index + 1}`,
-    value: track.listing.longName,
+    value: track.metadata.title,
   })) as EmbedFieldData[]
 
   return new MessageEmbed()

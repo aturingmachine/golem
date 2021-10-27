@@ -4,9 +4,9 @@ import { Analytics } from '../analytics'
 import { CommandAnalyticsInteraction } from '../analytics/models/interaction'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
+import { PlayHandler } from '../handlers/play-handler'
 import { Command, CommandHelp } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { GetEmbedFromListing, GetWideSearchEmbed } from '../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
@@ -51,65 +51,43 @@ const execute = async (
 
   if (!commandQuery) {
     await interaction.reply('No track query provided, cannot play next.')
-  } else {
-    const res = Golem.trackFinder.search(commandQuery)
 
-    if (!res) {
-      log.debug(`GoPlay: No ResultSet`)
-      await interaction.reply(`No Results for **${query}**`)
-      return
-    }
-
-    log.debug(`Query Result: \n${res.listing.debugString}`)
-
-    // Handle artist query
-    if (res.isArtistQuery) {
-      await interaction.reply(
-        'cannot add artist discography to the front of the queue'
-      )
-      // const srcs = Golem.trackFinder.artistSample(res.listing.artist, 4)
-
-      // await interaction.reply(
-      //   await ArtistConfirmReply(
-      //     res.listing.artist,
-      //     await fourSquare({
-      //       images: {
-      //         img1: srcs[0].albumArt,
-      //         img2: srcs[1].albumArt,
-      //         img3: srcs[2].albumArt,
-      //         img4: srcs[3].albumArt,
-      //       },
-      //     })
-      //   )
-      // )
-    }
-    // Handle Wide Queries
-    else if (res.isWideMatch) {
-      await interaction.reply(
-        GetWideSearchEmbed(
-          commandQuery,
-          Golem.trackFinder.searchMany(commandQuery)
-        )
-      )
-    }
-    // Handle Catch-All queries
-    else {
-      const { image, embed } = await GetEmbedFromListing(
-        res.listing,
-        player,
-        'queue'
-      )
-
-      await interaction.reply({
-        embeds: [embed],
-        files: [image],
-      })
-
-      log.debug('GoPlayNext starting Player.')
-
-      player.enqueue(interaction.member?.user.id || '', res.listing, true)
-    }
+    return
   }
+
+  if (PlayHandler.isYoutubeQuery(commandQuery)) {
+    await PlayHandler.ytPlay(commandQuery, interaction, player)
+
+    return
+  }
+
+  const res = Golem.trackFinder.search(commandQuery)
+
+  if (!res) {
+    log.debug(`No ResultSet`)
+    await interaction.reply(`No Results for **${query}**`)
+    return
+  }
+
+  log.debug(`Query Result: \n${res.listing.debugString}`)
+
+  // Handle artist query
+  if (res.isArtistQuery) {
+    await interaction.reply(
+      'cannot add artist discography to the front of the queue'
+    )
+
+    return
+  }
+  // Handle Wide Queries
+  if (res.isWideQuery) {
+    await interaction.reply('cannot execute wide queries for play next')
+
+    return
+  }
+  // Handle Catch-All queries
+
+  PlayHandler.playLocal(res.listing, interaction, player, true)
 }
 
 const helpInfo: CommandHelp = {
