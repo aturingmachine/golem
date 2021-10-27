@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command } from '../models/commands'
+import { Command, CommandHelp } from '../models/commands'
 import { Listing } from '../models/listing'
 import { MixMatcher } from '../player/mix-matcher'
 import { shuffleArray } from '../utils/list-utils'
@@ -108,6 +108,25 @@ const execute = async (
   return
 }
 
-const goMixCommand = new Command(LogSources.GoMix, data, execute)
+const helpInfo: CommandHelp = {
+  name: 'mix',
+  msg: 'Play tracks based off the current track or artist.',
+  args: [
+    {
+      name: 'mix-type',
+      type: 'string',
+      required: false,
+      description: 'Whether to mix by track or artist.',
+      default: 'artist',
+    },
+  ],
+}
+
+const goMixCommand = new Command({
+  source: LogSources.GoMix,
+  data,
+  handler: execute,
+  helpInfo,
+})
 
 export default goMixCommand

@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command } from '../models/commands'
+import { Command, CommandHelp } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
 
@@ -59,6 +59,25 @@ const execute = async (
   }
 }
 
-const goSkipCommand = new Command(LogSources.GoSkip, data, execute)
+const helpInfo: CommandHelp = {
+  name: 'skip',
+  msg: 'Skip a number of tracks.',
+  args: [
+    {
+      name: 'count',
+      type: 'number',
+      required: false,
+      description: 'The number of tracks to skip.',
+      default: '1',
+    },
+  ],
+}
+
+const goSkipCommand = new Command({
+  source: LogSources.GoSkip,
+  data,
+  handler: execute,
+  helpInfo,
+})
 
 export default goSkipCommand

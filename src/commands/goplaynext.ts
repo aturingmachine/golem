@@ -4,7 +4,7 @@ import { Analytics } from '../analytics'
 import { CommandAnalyticsInteraction } from '../analytics/models/interaction'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command } from '../models/commands'
+import { Command, CommandHelp } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing, GetWideSearchEmbed } from '../utils/message-utils'
 
@@ -112,6 +112,25 @@ const execute = async (
   }
 }
 
-const goPlayNextCommand = new Command(LogSources.GoPlayNext, data, execute)
+const helpInfo: CommandHelp = {
+  name: 'playnext',
+  msg: 'Play a track, queues at the front of the queue. (Behind other playnext tracks).',
+  args: [
+    {
+      name: 'query',
+      type: 'string',
+      required: true,
+      description: 'The track to search for and play.',
+    },
+  ],
+  alias: '$playnext',
+}
+
+const goPlayNextCommand = new Command({
+  source: LogSources.GoPlayNext,
+  data,
+  handler: execute,
+  helpInfo,
+})
 
 export default goPlayNextCommand

@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command } from '../models/commands'
+import { Command, CommandHelp } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { getSearchReply } from '../utils/message-utils'
 
@@ -65,6 +65,24 @@ const execute = async (
   }
 }
 
-const goSearchCommand = new Command(LogSources.GoSearch, data, execute)
+const helpInfo: CommandHelp = {
+  name: 'search',
+  msg: 'Search for tracks, uses the same algorithm as $play.',
+  args: [
+    {
+      name: 'query',
+      type: 'string',
+      required: true,
+      description: 'The track to search for and play.',
+    },
+  ],
+}
+
+const goSearchCommand = new Command({
+  source: LogSources.GoSearch,
+  data,
+  handler: execute,
+  helpInfo,
+})
 
 export default goSearchCommand

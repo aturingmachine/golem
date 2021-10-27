@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command } from '../models/commands'
+import { Command, CommandHelp } from '../models/commands'
 import { Plex } from '../plex'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPlaylistEmbed } from '../utils/message-utils'
@@ -64,6 +64,25 @@ const execute = async (
   }
 }
 
-const goPlaylistCommand = new Command(LogSources.GoPlayList, data, execute)
+const helpInfo: CommandHelp = {
+  name: 'playlist',
+  msg: 'Play a playlist sourced from a Plex server.',
+  args: [
+    {
+      name: 'playlist',
+      type: 'string',
+      required: false,
+      description: 'The playlist to play.',
+      default: 'Returns a select of all playlists.',
+    },
+  ],
+}
+
+const goPlaylistCommand = new Command({
+  source: LogSources.GoPlayList,
+  data,
+  handler: execute,
+  helpInfo,
+})
 
 export default goPlaylistCommand

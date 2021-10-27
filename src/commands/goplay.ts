@@ -4,7 +4,7 @@ import { Analytics } from '../analytics'
 import { CommandAnalyticsInteraction } from '../analytics/models/interaction'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command } from '../models/commands'
+import { Command, CommandHelp } from '../models/commands'
 import { fourSquare } from '../utils/image-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import {
@@ -114,6 +114,25 @@ const execute = async (
   }
 }
 
-const goPlayCommand = new Command(LogSources.GoPlay, data, execute)
+const helpInfo: CommandHelp = {
+  name: 'stop',
+  msg: 'Search for and play a track.',
+  args: [
+    {
+      name: 'query',
+      type: 'string',
+      required: true,
+      description: 'The track to search for and play.',
+    },
+  ],
+  alias: '$play',
+}
+
+const goPlayCommand = new Command({
+  source: LogSources.GoPlay,
+  data,
+  handler: execute,
+  helpInfo,
+})
 
 export default goPlayCommand

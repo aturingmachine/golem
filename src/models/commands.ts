@@ -14,16 +14,43 @@ export type CommandErrorHandlerFn = (
   ...args: any[]
 ) => Promise<any>
 
+type CommandArgDefinition = {
+  name: string
+  type: string
+  required: boolean
+  description: string
+  default?: string
+}
+
+export type CommandHelp = {
+  name: string
+  msg: string
+  args: CommandArgDefinition[]
+  alias?: string
+}
+
+export type CommandParams = {
+  source: LogSources | string
+  data: Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
+  handler: CommandHandlerFn
+  helpInfo: CommandHelp
+  errorHandler?: CommandErrorHandlerFn
+}
+
 export class Command {
-  constructor(
-    public source: LogSources | string,
-    public data: Omit<
-      SlashCommandBuilder,
-      'addSubcommand' | 'addSubcommandGroup'
-    >,
-    public handler: CommandHandlerFn,
-    public errorHandler?: CommandErrorHandlerFn
-  ) {}
+  public source: LogSources | string
+  public data: Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
+  public handler: CommandHandlerFn
+  public helpInfo: CommandHelp
+  public errorHandler?: CommandErrorHandlerFn
+
+  constructor(params: CommandParams) {
+    this.source = params.source
+    this.data = params.data
+    this.handler = params.handler
+    this.helpInfo = params.helpInfo
+    this.errorHandler = params.errorHandler
+  }
 
   get execute(): CommandHandlerFn {
     return async (interaction, ...args: any[]) => {
@@ -42,6 +69,46 @@ export class Command {
         }
       }
     }
+  }
+
+  // toString(): string {
+  //   return `
+  // **${this.helpInfo.name}**${
+  //     this.helpInfo.alias ? ' ** - ' + this.helpInfo.alias + '**' : ''
+  //   }
+  //   _${this.helpInfo.msg}_
+  //   ${
+  //     this.helpInfo.args.length
+  //       ? this.helpInfo.args.map(
+  //           (arg) =>
+  //             `\`${arg.name}\` - ${
+  //               arg.required ? 'required' : 'optional'
+  //             }\n\t\t_${arg.description}_\n\t\t${
+  //               arg.default ? '`Default: ' + arg.default + '`\n' : ''
+  //             }`
+  //         )
+  //       : ''
+  //   }`
+  // }
+
+  toString(): string {
+    return `
+  ${this.helpInfo.name})${
+      this.helpInfo.alias ? ' - ' + this.helpInfo.alias + '' : ''
+    }
+    ${this.helpInfo.msg}
+    Arguments:
+    ${
+      this.helpInfo.args.length
+        ? this.helpInfo.args.map((arg) => {
+            const argWrappers = arg.required ? ['<', '>'] : ['[', ']']
+
+            return `${argWrappers[0]}${arg.name}${argWrappers[1]}\n\t\t${
+              arg.description
+            }\n\t\t${arg.default ? 'Default: {' + arg.default + '}\n' : ''}`
+          })
+        : ''
+    }`
   }
 
   static async BaseErrorHandler(

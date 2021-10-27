@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { GoGet } from '../handlers/go-get-handler'
-import { Command } from '../models/commands'
+import { Command, CommandHelp } from '../models/commands'
 
 const data = new SlashCommandBuilder()
   .setName(CommandNames.slash.get)
@@ -39,6 +39,27 @@ const execute = async (
   }
 }
 
-const goGetCommand = new Command('go-get', data, execute)
+const helpInfo: CommandHelp = {
+  name: 'get',
+  msg: 'Get information about the current Golem instance.',
+  args: [
+    {
+      name: 'resource',
+      type: 'string',
+      required: false,
+      description:
+        'time: estimated queue time\n\t\tcount: current queue count\n\t\tnp|nowplaying: current playing track\n\t\ttcount: library size\n\t\tplaylist[s]: list all playlists',
+      default: 'Return a collection of all information.',
+    },
+  ],
+  alias: '$np|$nowplaying',
+}
+
+const goGetCommand = new Command({
+  source: 'go-get',
+  data,
+  handler: execute,
+  helpInfo,
+})
 
 export default goGetCommand

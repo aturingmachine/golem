@@ -192,7 +192,6 @@ export class Golem {
       Golem.log.debug(`Attempting to load Event Handler: ${file}`)
       /* eslint-disable-next-line @typescript-eslint/no-var-requires */
       const event: EventHandler<any> = require(`./events/${file}`).default
-      EzProgressBar.add(1 / eventFiles.length, event.on)
       Golem.log.debug(`Event Handler Loaded: ${event.on}`)
       if (event.once) {
         Golem.client.once(
@@ -205,9 +204,12 @@ export class Golem {
           async (...args) => await event.execute(...args)
         )
       }
+
       Golem.log.debug(`Event Handler Registered: ${event.on}`)
+      EzProgressBar.add(1 / eventFiles.length, event.on)
     }
 
+    EzProgressBar.add(1 / eventFiles.length)
     EzProgressBar.stop()
   }
 }

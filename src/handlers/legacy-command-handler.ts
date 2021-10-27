@@ -1,4 +1,4 @@
-import { Message, MessageEmbed } from 'discord.js'
+import { Message } from 'discord.js'
 import { RegisteredCommands } from '../commands'
 import { CommandNames } from '../constants'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -72,7 +72,7 @@ export class LegacyCommandHandler {
   ): Promise<void> {
     switch (subcommand) {
       case CommandNames.help:
-        await msg.reply({ embeds: [LegacyCommandHandler.helpMsg] })
+        await msg.reply(LegacyCommandHandler.helpMessage())
         break
       case CommandNames.play:
         await RegisteredCommands.goPlay.execute(msg, args)
@@ -120,64 +120,11 @@ export class LegacyCommandHandler {
     }
   }
 
-  private static get helpMsg(): MessageEmbed {
-    return new MessageEmbed()
-      .setColor('#f900d5')
-      .setTitle('Golem - Help')
-      .setDescription('`$go <command>`')
-      .addFields(
-        {
-          name: 'get [stat]',
-          value: `\`time\`: estimated queue time
-       \`count\`: current queue count
-       \`np | nowplaying\`: current playing track
-       \`tcount\`: library size
-       \`playlist[s]\`: list all playlists
-       returns all stats if invoked with no parameters`,
-          inline: true,
-        },
-        {
-          name: 'play [query]',
-          value:
-            'search for [query] and play top hit or look for further input\n no [query] will resume playback of a paused track',
-          inline: true,
-        },
-        {
-          name: 'pause',
-          value: 'pause the currently playing track',
-          inline: true,
-        },
-        {
-          name: 'stop',
-          value: 'stop playback and clear the queue',
-          inline: true,
-        },
-        {
-          name: 'skip [count]',
-          value: 'skip the current track, or [count] tracks',
-          inline: true,
-        },
-        {
-          name: 'peek',
-          value: 'see the next 5 queued tracks',
-          inline: true,
-        },
-        {
-          name: 'search -c [count]',
-          value: 'search for up [count] tracks, max 10, default 5',
-          inline: true,
-        },
-        {
-          name: 'playlist[s] [playlist-name]',
-          value: 'queue playlist [playlist-name] or choose from a menu',
-          inline: true,
-        },
-        {
-          name: 'shuffle',
-          value: 'shuffle the queue',
-          inline: true,
-        }
-      )
-      .setFooter('Some commands also available via /go<command>')
+  private static helpMessage(): string {
+    return Object.values(RegisteredCommands)
+      .reduce((prev, curr) => {
+        return prev.concat(curr.toString())
+      }, '```')
+      .concat('```')
   }
 }
