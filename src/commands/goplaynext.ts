@@ -7,6 +7,7 @@ import { Golem } from '../golem'
 import { PlayHandler } from '../handlers/play-handler'
 import { Command, CommandHelp } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { Youtube } from '../youtube/youtils'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
@@ -64,7 +65,16 @@ const execute = async (
   const res = Golem.trackFinder.search(commandQuery)
 
   if (!res) {
-    log.debug(`No ResultSet`)
+    log.debug(`No local ResultSet for ${commandQuery}`)
+
+    const url = await Youtube.search(commandQuery)
+
+    if (url) {
+      PlayHandler.ytPlay(url, interaction, player)
+
+      return
+    }
+
     await interaction.reply(`No Results for **${query}**`)
     return
   }

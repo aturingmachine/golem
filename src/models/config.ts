@@ -30,6 +30,7 @@ export type PlexConfig = {
 
 export type SearchConfig = {
   forceWeightTerms: string[]
+  minimumScore: number
 }
 
 export type WebConfig = {

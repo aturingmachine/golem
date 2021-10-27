@@ -176,7 +176,8 @@ export class Golem {
   }
 
   static setPresence(listing: TrackListingInfo): void {
-    Golem.client.user?.setActivity(`${listing.artist} - ${listing.title}`, {
+    Golem.client.user?.setActivity({
+      name: `${listing.artist} - ${listing.title}`,
       type: 'LISTENING',
     })
   }

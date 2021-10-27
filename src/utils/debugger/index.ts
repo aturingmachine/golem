@@ -2,6 +2,7 @@ import chalk from 'chalk'
 import winston from 'winston'
 import { Golem } from '../../golem'
 import { GoGet } from '../../handlers/go-get-handler'
+import { Youtube } from '../../youtube/youtils'
 import { GolemConf } from '../config'
 import { GolemLogger, LogSources } from '../logger'
 import { pryDatabase } from './db-debugger'
@@ -19,6 +20,7 @@ enum DebugCommands {
   Stats = 'stats',
   Exec = 'exec',
   Similar = 'sim',
+  Youtube = 'yt',
 }
 
 const debuggerCompletions = [
@@ -95,6 +97,10 @@ export class Debugger {
       case DebugCommands.Pry:
         this.setPrompt()
         rl.resume()
+        break
+      case DebugCommands.Youtube:
+        const result = await Youtube.search(cmd.split(' ').slice(1).join(' '))
+        console.log(result)
         break
       case DebugCommands.Stats:
         const id = cmd.split(' ')[1] || Golem.players.keys().next().value || ''

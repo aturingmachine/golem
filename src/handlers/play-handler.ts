@@ -9,13 +9,13 @@ export class PlayHandler {
   private static log = GolemLogger.child({ src: LogSources.PlayHandler })
 
   static async ytPlay(
-    query: string,
+    url: string,
     interaction: CommandInteraction | Message,
     player: MusicPlayer,
     playNext = false
   ): Promise<void> {
     const track = await YoutubeTrack.fromURL(
-      query,
+      url,
       interaction.member?.user.id || ''
     )
 

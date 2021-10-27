@@ -175,18 +175,20 @@ export class MusicPlayer {
 
     this.queueLock = true
 
-    /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
-    const nextTrack = this.queue.pop()!
+    const nextTrack = this.queue.pop()
 
     // this.log.info(`playing ${nextTrack.listing.shortName}`)
 
-    const next = nextTrack.toAudioResource()
-    this.currentResource = next
-    this.currentResource.volume?.setVolume(0.35)
-    this.audioPlayer.play(this.currentResource)
-    Golem.setPresence(nextTrack.metadata)
+    // Be careful in case the skip is forced and the last run
+    if (nextTrack) {
+      const next = nextTrack.toAudioResource()
+      this.currentResource = next
+      this.currentResource.volume?.setVolume(0.35)
+      this.audioPlayer.play(this.currentResource)
+      Golem.setPresence(nextTrack.metadata)
 
-    Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
+      Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
+    }
 
     this.queueLock = false
   }

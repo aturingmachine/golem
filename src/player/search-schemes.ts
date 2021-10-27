@@ -1,5 +1,6 @@
 import fuzzy from 'fuzzy'
 import { Listing } from '../models/listing'
+import { GolemConf } from '../utils/config'
 import { GolemLogger } from '../utils/logger'
 
 const extractors = {
@@ -97,7 +98,7 @@ export class SearchSchemes {
       result = fuzzy.filter(query, tracks, extractors.base)
     }
 
-    return result
+    return result[0]?.score > GolemConf.search.minimumScore ? result : []
   }
 
   static composite(

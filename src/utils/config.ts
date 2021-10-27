@@ -51,12 +51,12 @@ class CliOptions {
 }
 
 // TODO should probably add some more extendable/complex validation pattern
-export const GolemConf = {
-  values: rawJSConfig,
-  enabledModules: [] as GolemModule[],
-  cliOptions: new CliOptions(new Args(process.argv.slice(2))),
+export class GolemConf {
+  private static values = rawJSConfig
+  static enabledModules = [] as GolemModule[]
+  static cliOptions = new CliOptions(new Args(process.argv.slice(2)))
 
-  init(): void {
+  static init(): void {
     // kill application if no required config
     if (!GolemConf.values.discord) {
       console.error('No Discord Config found. Terminating.')
@@ -75,36 +75,36 @@ export const GolemConf = {
     if (!!GolemConf.values.web) {
       GolemConf.enabledModules.push(GolemModule.Web)
     }
-  },
+  }
 
-  get options(): Record<CliOption, boolean> {
+  static get options(): Record<CliOption, boolean> {
     return GolemConf.cliOptions.options
-  },
+  }
 
-  get logLevel(): LogLevel {
+  static get logLevel(): LogLevel {
     GolemConf.init()
     return GolemConf.options.Debug || GolemConf.options.Verbose
       ? LogLevel.Debug
       : LogLevel.Info
-  },
+  }
 
-  get modules(): Record<GolemModule, boolean> {
+  static get modules(): Record<GolemModule, boolean> {
     return {
       Plex: GolemConf.enabledModules.includes(GolemModule.Plex),
       LastFm: GolemConf.enabledModules.includes(GolemModule.LastFm),
       Web: GolemConf.enabledModules.includes(GolemModule.Web),
     }
-  },
+  }
 
-  get discord(): DiscordConfig {
+  static get discord(): DiscordConfig {
     return {
       token: GolemConf.values.discord?.token || '',
       clientId: GolemConf.values.discord?.clientId || '',
       serverIds: GolemConf.values.discord?.serverIds || [],
     }
-  },
+  }
 
-  get image(): ImageConfig {
+  static get image(): ImageConfig {
     return {
       fallbackPath: GolemConf.values.image?.fallbackPath || '',
       avgColorAlgorithm:
@@ -115,36 +115,36 @@ export const GolemConf = {
           ? GolemConf.values.image.avgColorAlgorithm
           : 'sqrt',
     }
-  },
+  }
 
-  get lastfm(): LastFmConfig {
+  static get lastfm(): LastFmConfig {
     return {
       apiKey: GolemConf.values.lastfm?.apiKey || '',
     }
-  },
+  }
 
-  get library(): LibraryConfig {
+  static get library(): LibraryConfig {
     return {
       paths: GolemConf.values.library?.paths || [],
     }
-  },
+  }
 
-  get mongo(): MongoConfig {
+  static get mongo(): MongoConfig {
     return {
       uri: GolemConf.values.mongo?.uri || '',
     }
-  },
+  }
 
-  get plex(): PlexConfig {
+  static get plex(): PlexConfig {
     return {
       uri: GolemConf.values.plex?.uri || '',
       appId: GolemConf.values.plex?.appId || '',
       username: GolemConf.values.plex?.username || '',
       password: GolemConf.values.plex?.password || '',
     }
-  },
+  }
 
-  get search(): SearchConfig {
+  static get search(): SearchConfig {
     return {
       forceWeightTerms: GolemConf.values.search?.forceWeightTerms || [
         'instrumental',
@@ -152,12 +152,13 @@ export const GolemConf = {
         'live',
         'remix',
       ],
+      minimumScore: GolemConf.values.search?.minimumScore || 35,
     }
-  },
+  }
 
-  get web(): WebConfig {
+  static get web(): WebConfig {
     return {
       apiPort: GolemConf.values.web?.apiPort || 3000,
     }
-  },
+  }
 }

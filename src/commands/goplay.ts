@@ -9,6 +9,7 @@ import { Command, CommandHelp } from '../models/commands'
 import { ArtistConfirmReply } from '../models/messages/artist-confirm'
 import { WideSearch } from '../models/messages/wide-search'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { Youtube } from '../youtube/youtils'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
@@ -67,7 +68,17 @@ const execute = async (
   const res = Golem.trackFinder.search(commandQuery)
 
   if (!res) {
-    log.debug(`GoPlay: No ResultSet`)
+    // here we want to search for yt
+    log.debug(`No local ResultSet for ${commandQuery}`)
+
+    const url = await Youtube.search(commandQuery)
+
+    if (url) {
+      PlayHandler.ytPlay(url, interaction, player)
+
+      return
+    }
+
     await interaction.reply(`No Results for **${query}**`)
     return
   }
