@@ -14,7 +14,7 @@ import {
 import winston from 'winston'
 import { Golem } from '../golem'
 import { Listing } from '../models/listing'
-import { Track, TrackAudioResourceMetadata } from '../models/track'
+import { LocalTrack, TrackAudioResourceMetadata } from '../models/track'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { humanReadableTime } from '../utils/time-utils'
 import { TrackQueue } from './queue'
@@ -81,7 +81,7 @@ export class MusicPlayer {
     enqueueAsNext = false
   ): void {
     this.log.info(`queueing ${listing.shortName}`)
-    const track = new Track(listing, userId)
+    const track = new LocalTrack(listing, userId)
 
     if (enqueueAsNext) {
       this.queue.addNext(userId, track)
@@ -95,7 +95,9 @@ export class MusicPlayer {
   }
 
   public enqueueMany(userId: string, listings: Listing[]): void {
-    const tracks = listings.map((listing) => Track.fromListing(listing, userId))
+    const tracks = listings.map((listing) =>
+      LocalTrack.fromListing(listing, userId)
+    )
     this.log.info(`enqueueing ${tracks.length} listings`)
     this.queue.addMany(userId, tracks)
     tracks.forEach((t) => t.onPlay())
@@ -135,7 +137,7 @@ export class MusicPlayer {
     this.queue.shuffle()
   }
 
-  public peek(depth = 5): Track[] {
+  public peek(depth = 5): LocalTrack[] {
     this.log.info('peeking')
     return this.queue.peekDeep(depth)
   }

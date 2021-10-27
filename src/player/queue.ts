@@ -1,4 +1,4 @@
-import { Track } from '../models/track'
+import { LocalTrack } from '../models/track'
 import { shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 
@@ -6,7 +6,7 @@ const log = GolemLogger.child({ src: LogSources.Queue })
 
 interface QueuedTrack {
   queuedBy: string
-  track: Track
+  track: LocalTrack
 }
 
 export class TrackQueue {
@@ -23,7 +23,7 @@ export class TrackQueue {
    * @param userId
    * @param track
    */
-  addNext(userId: string, track: Track): void {
+  addNext(userId: string, track: LocalTrack): void {
     log.debug(`${userId} Adding Next ${track.listing.shortName}`)
     this.explicitQueue.push({ track, queuedBy: userId })
   }
@@ -33,7 +33,7 @@ export class TrackQueue {
    * @param userId
    * @param track
    */
-  add(userId: string, track: Track): void {
+  add(userId: string, track: LocalTrack): void {
     log.debug(`${userId} Adding ${track.listing.shortName}`)
     this.passiveQueue.push({ track, queuedBy: userId })
   }
@@ -43,7 +43,7 @@ export class TrackQueue {
    * @param userId
    * @param tracks
    */
-  addMany(userId: string, tracks: Track[]): void {
+  addMany(userId: string, tracks: LocalTrack[]): void {
     log.debug(`Adding many - ${tracks.length} tracks`)
     this.passiveQueue.push(
       ...tracks.map((track) => ({ track, queuedBy: userId }))
@@ -66,19 +66,19 @@ export class TrackQueue {
     this.passiveQueue = []
   }
 
-  peek(): Track | undefined {
+  peek(): LocalTrack | undefined {
     log.debug('Peeking')
     return this.queue[0]?.track
   }
 
-  peekDeep(depth = 5): Track[] {
+  peekDeep(depth = 5): LocalTrack[] {
     log.debug('Deep Peeking')
     return depth > 0
       ? this.queue.slice(0, depth).map((i) => i.track)
       : this.queue.map((i) => i.track)
   }
 
-  pop(): Track | undefined {
+  pop(): LocalTrack | undefined {
     log.debug('Popping Next track')
 
     if (this.explicitQueue.length > 0) {
@@ -98,7 +98,7 @@ export class TrackQueue {
     log.info('shuffled')
   }
 
-  get first(): Track {
+  get first(): LocalTrack {
     return this.queue[0].track
   }
 
