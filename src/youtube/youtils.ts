@@ -21,13 +21,16 @@ export class Youtube {
     return topVideo?.url
   }
 
-  static async getPlaylist(url: string): Promise<{
+  static async getPlaylist(
+    url: string,
+    limit = 20
+  ): Promise<{
     urls: string[]
     title: string
     thumbnail: string | null
   }> {
     Youtube.log.debug(`getting playlist for ${url}`)
-    const result = await ytpl(url, { limit: 20 })
+    const result = await ytpl(url, { limit })
 
     return {
       title: result.title,

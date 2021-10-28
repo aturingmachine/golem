@@ -4,6 +4,7 @@ import { YoutubePlaylistEmbed } from '../models/messages/yt-playlist'
 import { LocalTrack, QueuedYoutubeTrack, YoutubeTrack } from '../models/track'
 import { MusicPlayer } from '../player/music-player'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { parseMessageArgs } from '../utils/message-args'
 import { GetEmbedFromListing, userFrom } from '../utils/message-utils'
 import { Youtube } from '../youtube/youtils'
 
@@ -92,10 +93,12 @@ export class PlayHandler {
     player: MusicPlayer
   ): Promise<void> {
     try {
+      const { base: cleanPlaylistUrl, args } = parseMessageArgs(playlistUrl)
+      const limit = args.limit ? parseInt(args.limit, 10) : undefined
       const userId = userFrom(interaction)
 
       PlayHandler.log.debug(`getting playlist`)
-      const playlist = await Youtube.getPlaylist(playlistUrl)
+      const playlist = await Youtube.getPlaylist(cleanPlaylistUrl, limit)
 
       PlayHandler.log.debug(`got playlist`)
 
