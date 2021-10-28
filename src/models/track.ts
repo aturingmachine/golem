@@ -22,17 +22,19 @@ export interface TrackAudioResourceMetadata {
 export abstract class Track {
   constructor(public userId: string) {}
 
-  abstract toAudioResource(): AudioResource<TrackAudioResourceMetadata>
+  abstract toAudioResource():
+    | AudioResource<TrackAudioResourceMetadata>
+    | Promise<AudioResource<TrackAudioResourceMetadata>>
 
   abstract get metadata(): TrackListingInfo
 
   abstract get name(): string
 
-  abstract onQueue(): void
+  abstract onQueue(): void | Promise<void>
 
-  abstract onPlay(): void
+  abstract onPlay(): void | Promise<void>
 
-  abstract onSkip(): void
+  abstract onSkip(): void | Promise<void>
 }
 
 export class LocalTrack extends Track {
@@ -96,6 +98,75 @@ export class LocalTrack extends Track {
 
   static fromListings(listings: Listing[], userId: string): LocalTrack[] {
     return listings.map((listing) => LocalTrack.fromListing(listing, userId))
+  }
+}
+
+export class QueuedYoutubeTrack extends Track {
+  public meta!: TrackListingInfo
+
+  private audioResource!: AudioResource<TrackAudioResourceMetadata>
+
+  constructor(userId: string, public url: string) {
+    super(userId)
+  }
+
+  async toAudioResource(): Promise<AudioResource<TrackAudioResourceMetadata>> {
+    await this.init()
+    return this.audioResource
+  }
+
+  get metadata(): TrackListingInfo {
+    return this.meta
+  }
+
+  get name(): string {
+    return this.meta ? `${this.meta.artist} - ${this.meta.title}` : this.url
+  }
+
+  onQueue(): void {
+    // Analytics.createPlayRecord(this.listing.trackId, this.userId, 'queue')
+  }
+
+  async onPlay(): Promise<void> {
+    // Analytics.createPlayRecord(this.listing.trackId, this.userId, 'play')
+    await this.init()
+  }
+
+  onSkip(): void {
+    // Analytics.createPlayRecord(this.listing.trackId, this.userId, 'skip')
+  }
+
+  async init(): Promise<void> {
+    const info = await getInfo(this.url)
+
+    const _imgUrl = info.videoDetails.thumbnails.find(
+      (thumbnail) => thumbnail.width > 300
+    )?.url
+
+    const imgUrl = _imgUrl?.slice(0, _imgUrl.indexOf('?'))
+
+    this.meta = {
+      title: info.videoDetails.title,
+      duration: parseInt(info.videoDetails.lengthSeconds, 10),
+      artist: info.videoDetails.ownerChannelName,
+      album: '-',
+      albumArt: imgUrl,
+    }
+
+    const stream = ytdl(this.url, {
+      quality: 'highestaudio',
+      filter: 'audioonly',
+    })
+
+    const demux = await demuxProbe(stream)
+
+    this.audioResource = createAudioResource<TrackAudioResourceMetadata>(
+      demux.stream,
+      {
+        inputType: demux.type,
+        metadata: { ...this.meta, track: this },
+      }
+    )
   }
 }
 

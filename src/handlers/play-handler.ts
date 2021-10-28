@@ -1,7 +1,7 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { Listing } from '../models/listing'
 import { YoutubePlaylistEmbed } from '../models/messages/yt-playlist'
-import { LocalTrack, YoutubeTrack } from '../models/track'
+import { LocalTrack, QueuedYoutubeTrack, YoutubeTrack } from '../models/track'
 import { MusicPlayer } from '../player/music-player'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing, userFrom } from '../utils/message-utils'
@@ -44,7 +44,7 @@ export class PlayHandler {
 
     const track = new LocalTrack(listing, interaction.member?.user.id || '')
 
-    player.enqueue(track, playNext)
+    await player.enqueue(track, playNext)
   }
 
   static isYoutubeQuery(query: string): boolean {
@@ -71,7 +71,7 @@ export class PlayHandler {
 
     PlayHandler.log.debug('enqueing youtube track')
 
-    player.enqueue(track, playNext)
+    await player.enqueue(track, playNext)
 
     const { embed } = await GetEmbedFromListing(track.metadata, player, 'queue')
 
@@ -102,10 +102,11 @@ export class PlayHandler {
       PlayHandler.log.info(`enqueing youtube playlist ${playlist.title}`)
 
       for (const url of playlist.urls) {
-        PlayHandler.log.debug(`creating track from url ${url}`)
-        const track = await YoutubeTrack.fromURL(url, userId)
-        PlayHandler.log.debug(`enqueueing track maade from url ${url}`)
-        player.enqueue(track)
+        const cleanedUrl = url.slice(0, url.indexOf('&list='))
+        PlayHandler.log.debug(`creating track from url ${cleanedUrl}`)
+        const track = new QueuedYoutubeTrack(userId, cleanedUrl)
+        PlayHandler.log.debug(`enqueueing track made from url ${cleanedUrl}`)
+        await player.enqueue(track)
       }
 
       const embed = await YoutubePlaylistEmbed.from(
@@ -119,7 +120,7 @@ export class PlayHandler {
       PlayHandler.log.error(`error queueing youtube playlist ${error}`)
 
       await interaction.reply(
-        `Something went wrong. Couldn't queue YouTube playlist.`
+        `Something went wrong. Couldn't queue YouTube playlist. One or more tracks may not have queued.`
       )
     }
   }

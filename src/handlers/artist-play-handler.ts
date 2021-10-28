@@ -38,7 +38,10 @@ export const artistPlayButtonHandler = async (
       .searchMany(artist)
       .filter((l) => l.artist.toLowerCase() === artist.toLowerCase())
 
-    player.enqueueMany(userId, LocalTrack.fromListings(artistTracks, userId))
+    await player.enqueueMany(
+      userId,
+      LocalTrack.fromListings(artistTracks, userId)
+    )
   }
   // Shuffle
   else if (interaction.customId.includes(ButtonIdPrefixes.shuffleArtistPlay)) {
@@ -53,7 +56,7 @@ export const artistPlayButtonHandler = async (
       .searchMany(artist)
       .filter((listing) => listing.isArtist(artist))
 
-    player.enqueueMany(
+    await player.enqueueMany(
       userId,
       LocalTrack.fromListings(shuffleArray(artistTracks), userId)
     )

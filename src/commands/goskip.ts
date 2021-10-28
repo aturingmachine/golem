@@ -41,7 +41,7 @@ const execute = async (
   for (let i = 0; i < skipCount; i++) {
     log.debug('Attempting to skip')
     if (player.nowPlaying && player.currentResource) {
-      player.skip()
+      await player.skip()
       const assets = await GetEmbedFromListing(
         player.nowPlaying,
         player,

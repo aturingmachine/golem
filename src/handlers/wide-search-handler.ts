@@ -31,5 +31,5 @@ export const wideSearchHandler = async (
     components: [],
   })
 
-  player.enqueue(new LocalTrack(listing, interaction.user.id))
+  await player.enqueue(new LocalTrack(listing, interaction.user.id))
 }

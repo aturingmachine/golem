@@ -43,7 +43,7 @@ export const playlistMenuHandler = async (
 
       log.debug('Playlist Menu Handler: starting Player.')
 
-      player.enqueueMany(
+      await player.enqueueMany(
         userFrom(interaction),
         LocalTrack.fromListings(listings, userFrom(interaction))
       )

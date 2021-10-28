@@ -67,6 +67,12 @@ const execute = async (
       return
     }
 
+    if (!(player.currentResource.metadata.track instanceof LocalTrack)) {
+      await interaction.reply('Currently unable to mix off non-local tracks.')
+
+      return
+    }
+
     let result: Listing[] = []
 
     switch (mixBy.toLowerCase()) {
@@ -105,7 +111,7 @@ const execute = async (
         `Mixing ${result.length} tracks off ${player.currentResource.metadata.artist}`
       )
 
-      player.enqueueMany(
+      await player.enqueueMany(
         userFrom(interaction),
         LocalTrack.fromListings(shuffleArray(result), userFrom(interaction))
       )

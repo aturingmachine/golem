@@ -50,7 +50,7 @@ const execute = async (
 
     if (list) {
       log.debug(`Enqueuing List ${list.name}`)
-      player.enqueueMany(
+      await player.enqueueMany(
         interaction.member?.user.id || '',
         LocalTrack.fromListings(
           Golem.trackFinder.findListingsByIds(list.listings),
