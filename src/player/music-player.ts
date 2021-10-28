@@ -152,10 +152,10 @@ export class MusicPlayer {
   private async processQueue(force = false): Promise<void> {
     this.log.debug(`processing queue${force ? ' - forcing next' : ''}`)
     if (
-      (!force &&
-        (this.queueLock ||
-          this.audioPlayer.state.status !== AudioPlayerStatus.Idle)) ||
-      this.queue.queuedTrackCount === 0
+      !force &&
+      (this.queueLock ||
+        this.audioPlayer.state.status !== AudioPlayerStatus.Idle)
+      // ||      this.queue.queuedTrackCount === 0
     ) {
       this.log.debug(
         `skipping processing due to state; force=${force}; queueLock=${
@@ -165,9 +165,9 @@ export class MusicPlayer {
         }; queuedTrackCount=${this.queue.queuedTrackCount === 0};`
       )
 
-      if (this.queue.queuedTrackCount === 0) {
-        this.currentResource = undefined
-      }
+      // if (this.queue.queuedTrackCount === 0) {
+      //   this.currentResource = undefined
+      // }
       return
     }
 
@@ -192,6 +192,9 @@ export class MusicPlayer {
         this.log.error(`error processing queue ${error}`)
         this.skip()
       }
+    } else {
+      this.stop()
+      Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
     }
 
     this.queueLock = false

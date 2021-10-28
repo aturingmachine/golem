@@ -46,12 +46,14 @@ export type JSONConfig = {
   plex?: PlexConfig
   search?: SearchConfig
   web?: WebConfig
+  youtube?: boolean
 }
 
 export enum GolemModule {
   Plex = 'Plex',
   LastFm = 'LastFm',
   Web = 'Web',
+  Youtube = 'Youtube',
 }
 
 export enum CliOption {

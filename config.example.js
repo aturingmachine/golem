@@ -83,4 +83,9 @@ module.exports = {
   web: {
     apiPort: 3000,
   },
+
+  /**
+   * Enable/disable the ability to play YouTube videos as Tracks.
+   */
+  youtube: true,
 }

@@ -3,6 +3,7 @@ import { Listing } from '../models/listing'
 import { YoutubePlaylistEmbed } from '../models/messages/yt-playlist'
 import { LocalTrack, QueuedYoutubeTrack, YoutubeTrack } from '../models/track'
 import { MusicPlayer } from '../player/music-player'
+import { GolemConf } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { parseMessageArgs } from '../utils/message-args'
 import { GetEmbedFromListing, userFrom } from '../utils/message-utils'
@@ -17,6 +18,16 @@ export class PlayHandler {
     player: MusicPlayer,
     playNext = false
   ): Promise<void> {
+    if (!GolemConf.modules.Youtube) {
+      PlayHandler.log.info(
+        'Cannot play youtube resource, Youtube module not enabled'
+      )
+      await interaction.reply(
+        'Cannot play youtube resource, the YouTube module is not enabled.'
+      )
+      return
+    }
+
     PlayHandler.log.info('Playing youtube resource')
 
     if (url.includes('list=')) {

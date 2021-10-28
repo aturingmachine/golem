@@ -11,10 +11,16 @@ import {
 
 export class LastFm {
   private static log = GolemLogger.child({ src: LogSources.LastFm })
-  // http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=cher&api_key=YOUR_API_KEY&format=json
   private static http: AxiosInstance
 
   static init(): void {
+    if (!GolemConf.modules.LastFm) {
+      this.log.error(
+        `Cannot init LastFM, missing required module: ${GolemConf.modules.LastFm}`
+      )
+      return
+    }
+
     LastFm.http = axios.create({
       baseURL: 'http://ws.audioscrobbler.com/2.0',
       params: {

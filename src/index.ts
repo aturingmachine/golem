@@ -21,7 +21,10 @@ const main = async (): Promise<void> => {
 
 process.on('exit', () => {
   mongoose.connection.close()
-  Golem.disconnectAll()
+
+  try {
+    Golem.disconnectAll()
+  } catch (error) {}
 })
 
 main()
