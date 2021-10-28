@@ -3,6 +3,7 @@ import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { Command, CommandHelp } from '../models/commands'
+import { LocalTrack } from '../models/track'
 import { Plex } from '../plex'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPlaylistEmbed } from '../utils/message-utils'
@@ -51,7 +52,10 @@ const execute = async (
       log.debug(`Enqueuing List ${list.name}`)
       player.enqueueMany(
         interaction.member?.user.id || '',
-        Golem.trackFinder.findListingsByIds(list.listings)
+        LocalTrack.fromListings(
+          Golem.trackFinder.findListingsByIds(list.listings),
+          interaction.member?.user.id || ''
+        )
       )
       await interaction.reply(
         `${Replier.affirmative}, I'll queue up ${list.name}`

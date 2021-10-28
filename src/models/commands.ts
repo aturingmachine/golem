@@ -71,26 +71,6 @@ export class Command {
     }
   }
 
-  // toString(): string {
-  //   return `
-  // **${this.helpInfo.name}**${
-  //     this.helpInfo.alias ? ' ** - ' + this.helpInfo.alias + '**' : ''
-  //   }
-  //   _${this.helpInfo.msg}_
-  //   ${
-  //     this.helpInfo.args.length
-  //       ? this.helpInfo.args.map(
-  //           (arg) =>
-  //             `\`${arg.name}\` - ${
-  //               arg.required ? 'required' : 'optional'
-  //             }\n\t\t_${arg.description}_\n\t\t${
-  //               arg.default ? '`Default: ' + arg.default + '`\n' : ''
-  //             }`
-  //         )
-  //       : ''
-  //   }`
-  // }
-
   toString(): string {
     return `
   ${this.helpInfo.name})${

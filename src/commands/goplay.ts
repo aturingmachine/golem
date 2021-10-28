@@ -107,14 +107,15 @@ const execute = async (
 }
 
 const helpInfo: CommandHelp = {
-  name: 'stop',
-  msg: 'Search for and play a track.',
+  name: 'play',
+  msg: 'Search for and play a track. Will search youtube if query returns no local results.',
   args: [
     {
       name: 'query',
       type: 'string',
       required: true,
-      description: 'The track to search for and play.',
+      description:
+        'The track to search for and play|A YouTube video/playlist URL to play.',
     },
   ],
   alias: '$play',

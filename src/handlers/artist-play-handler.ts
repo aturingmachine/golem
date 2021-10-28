@@ -1,5 +1,6 @@
 import { MessageComponentInteraction } from 'discord.js'
 import { Golem } from '../golem'
+import { LocalTrack } from '../models/track'
 import { shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Replier } from '../utils/replies'
@@ -22,6 +23,8 @@ export const artistPlayButtonHandler = async (
     .replace(ButtonIdPrefixes.shuffleArtistPlay, '')
     .replace(ButtonIdPrefixes.abortArtistPlay, '')
 
+  const userId = interaction.member?.user.id || ''
+
   // Confirm
   if (interaction.customId.includes(ButtonIdPrefixes.confirmArtistPlay)) {
     log.info(`Button Confirmed Play ${interaction.customId}`)
@@ -35,7 +38,7 @@ export const artistPlayButtonHandler = async (
       .searchMany(artist)
       .filter((l) => l.artist.toLowerCase() === artist.toLowerCase())
 
-    player.enqueueMany(interaction.member?.user.id || '', artistTracks)
+    player.enqueueMany(userId, LocalTrack.fromListings(artistTracks, userId))
   }
   // Shuffle
   else if (interaction.customId.includes(ButtonIdPrefixes.shuffleArtistPlay)) {
@@ -51,8 +54,8 @@ export const artistPlayButtonHandler = async (
       .filter((listing) => listing.isArtist(artist))
 
     player.enqueueMany(
-      interaction.member?.user.id || '',
-      shuffleArray(artistTracks)
+      userId,
+      LocalTrack.fromListings(shuffleArray(artistTracks), userId)
     )
   }
   // Cancel

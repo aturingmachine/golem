@@ -93,6 +93,10 @@ export class LocalTrack extends Track {
   static fromListing(listing: Listing, userId: string): LocalTrack {
     return new LocalTrack(listing, userId)
   }
+
+  static fromListings(listings: Listing[], userId: string): LocalTrack[] {
+    return listings.map((listing) => LocalTrack.fromListing(listing, userId))
+  }
 }
 
 export class YoutubeTrack extends Track {

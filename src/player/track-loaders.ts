@@ -128,8 +128,6 @@ export class TrackLoader {
 
       listing._id = listingRecord._id.toString()
 
-      // console.log(listing._id, listing.id)
-
       listingIds.push(listingRecord._id)
     }
 

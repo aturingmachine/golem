@@ -105,7 +105,10 @@ const execute = async (
         `Mixing ${result.length} tracks off ${player.currentResource.metadata.artist}`
       )
 
-      player.enqueueMany(userFrom(interaction), shuffleArray(result))
+      player.enqueueMany(
+        userFrom(interaction),
+        LocalTrack.fromListings(shuffleArray(result), userFrom(interaction))
+      )
     } else {
       // we have no current to work off of...
       await interaction.reply('No current playing resource to mix off of.')

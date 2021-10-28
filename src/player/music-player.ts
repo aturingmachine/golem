@@ -13,8 +13,8 @@ import {
 } from '@discordjs/voice'
 import winston from 'winston'
 import { Golem } from '../golem'
-import { Listing, TrackListingInfo } from '../models/listing'
-import { LocalTrack, Track, TrackAudioResourceMetadata } from '../models/track'
+import { TrackListingInfo } from '../models/listing'
+import { Track, TrackAudioResourceMetadata } from '../models/track'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { humanReadableTime } from '../utils/time-utils'
 import { TrackQueue } from './queue'
@@ -89,10 +89,7 @@ export class MusicPlayer {
     void this.processQueue()
   }
 
-  public enqueueMany(userId: string, listings: Listing[]): void {
-    const tracks = listings.map((listing) =>
-      LocalTrack.fromListing(listing, userId)
-    )
+  public enqueueMany(userId: string, tracks: Track[]): void {
     this.log.info(`enqueueing ${tracks.length} listings`)
     this.queue.addMany(userId, tracks)
     tracks.forEach((t) => t.onPlay())
