@@ -86,6 +86,7 @@ enum LogSources {
   DBDebug = 'db-debug',
   API = 'web-server',
   PlayHandler = 'play-handler',
+  GoAlias = 'go-alias',
 }
 
 const LogSourceColors: Record<LogSources, chalk.Chalk> = {
@@ -124,6 +125,7 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'web-server': chalk.magenta,
   'go-play-next': chalk.cyanBright,
   'play-handler': chalk.green,
+  'go-alias': chalk.magenta,
 }
 
 export { logger as GolemLogger, LogSources }

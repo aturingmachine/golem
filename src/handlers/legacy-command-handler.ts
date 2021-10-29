@@ -3,22 +3,19 @@ import { RegisteredCommands } from '../commands'
 import { CommandNames } from '../constants'
 import { GolemLogger, LogSources } from '../utils/logger'
 
-export async function AliasedCommand(msg: Message): Promise<boolean> {
-  const command = msg.content.split(' ').slice(0, 1).join(' ')
-  const args = msg.content.split(' ').slice(1).join(' ')
+export async function AliasedCommand(
+  msg: Message,
+  content: string
+): Promise<boolean> {
+  const command = content.split(' ').slice(0, 1).join(' ')
+  const args = content.split(' ').slice(1).join(' ')
 
   switch (command) {
     case '$play':
-      await RegisteredCommands.goPlay.execute(
-        msg,
-        msg.content.split(' ').slice(1).join(' ')
-      )
+      await RegisteredCommands.goPlay.execute(msg, args)
       break
     case '$playnext':
-      await RegisteredCommands.goPlayNext.execute(
-        msg,
-        msg.content.split(' ').slice(1).join(' ')
-      )
+      await RegisteredCommands.goPlayNext.execute(msg, args)
       break
     case '$np':
     case '$nowplaying':
@@ -40,29 +37,45 @@ export async function AliasedCommand(msg: Message): Promise<boolean> {
 }
 
 export class LegacyCommandHandler {
-  static async parseMessage(msg: Message): Promise<void> {
+  static async parseMessage(
+    msg: Message,
+    overrideContent?: string
+  ): Promise<void> {
     // Early exit on an aliased command
-    if (!msg.content.startsWith('$go ') && msg.content.startsWith('$')) {
-      const hasRun = await AliasedCommand(msg)
+
+    console.log('legacy overide:', overrideContent)
+    const content = overrideContent || msg.content
+    console.log('legacy content', content)
+
+    if (!content.startsWith('$go ') && content.startsWith('$')) {
+      console.log('Running', content, 'as aliased command')
+      const hasRun = await AliasedCommand(msg, content)
       if (hasRun) {
         return
       }
     }
 
     // Handle a $go style command
-    const subcommand = msg.content.split(' ')[1]
+    const subcommand = content.split(' ')[1]
 
     if (!subcommand) {
       return
     }
 
-    const args = msg.content.split(' ').slice(2).join(' ')
+    const args = content.split(' ').slice(2).join(' ')
 
-    GolemLogger.info(`subcommand=${subcommand}, args="${args}"`, {
+    GolemLogger.debug(`subcommand=${subcommand}, args="${args}"`, {
       src: LogSources.LegacyHandler,
     })
 
     await LegacyCommandHandler.executeCommand(subcommand, args, msg)
+  }
+
+  static async executeCustomAlias(
+    msg: Message,
+    fullCommand: string
+  ): Promise<void> {
+    await LegacyCommandHandler.parseMessage(msg, fullCommand)
   }
 
   static async executeCommand(
@@ -115,6 +128,10 @@ export class LegacyCommandHandler {
           args.split(' ').slice(0, 1).join(''),
           args.split(' ').slice(1).join(' ')
         )
+        break
+      case CommandNames.alias:
+        await RegisteredCommands.goAlias.execute(msg, args)
+        break
       default:
         break
     }

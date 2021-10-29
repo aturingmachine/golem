@@ -27,6 +27,7 @@ const optFlags: Record<CliOption, string[]> = {
   BustCache: ['bust-cache', 'cache-bust', 'bust', 'refresh'],
   Verbose: ['verbose', '-V'],
   Debug: ['debug', '-D'],
+  NoRun: ['noRun'],
 }
 
 class Args {
@@ -46,6 +47,7 @@ class CliOptions {
       BustCache: this.args.includes(CliOption.BustCache),
       Verbose: this.args.includes(CliOption.Verbose),
       Debug: this.args.includes(CliOption.Debug),
+      NoRun: this.args.includes(CliOption.NoRun),
     }
   }
 }

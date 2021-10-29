@@ -2,6 +2,7 @@ import fs from 'fs'
 import { Collection } from 'discord.js'
 import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
+import goAlias from './goalias'
 import goGet from './goget'
 import goMix from './gomix'
 import goPause from './gopause'
@@ -44,6 +45,7 @@ export const RegisteredCommands = {
   goPlayNext,
   goShuffle,
   goMix,
+  goAlias,
 }
 
 type CommandArg = {

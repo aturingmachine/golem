@@ -4,10 +4,12 @@ import {
   demuxProbe,
 } from '@discordjs/voice'
 import winston from 'winston'
-import ytdl, { getInfo } from 'ytdl-core'
+import { raw as ytdl } from 'youtube-dl-exec'
+import { getInfo } from 'ytdl-core'
 import { Analytics } from '../analytics'
 import { GolemLogger } from '../utils/logger'
 import { Listing, TrackListingInfo } from './listing'
+import { YoutubeListing } from './youtube'
 
 export interface TrackAudioResourceMetadata {
   title: string
@@ -37,21 +39,26 @@ export abstract class Track {
   abstract onSkip(): void | Promise<void>
 }
 
+/**
+ * A Track created from a Listing of a locally
+ * stored audio file.
+ */
 export class LocalTrack extends Track {
   internalId!: string
 
-  private readonly log: winston.Logger
+  private static readonly log: winston.Logger = GolemLogger.child({
+    src: 'local-track',
+  })
 
   constructor(public readonly listing: Listing, userId: string) {
     super(userId)
 
-    this.log = GolemLogger.child({ src: 'track' })
     this.userId = userId
     this.listing = listing
   }
 
   toAudioResource(): AudioResource<TrackAudioResourceMetadata> {
-    this.log.debug('converting to audio resource')
+    LocalTrack.log.debug('converting to audio resource')
     return createAudioResource<TrackAudioResourceMetadata>(this.listing.path, {
       inlineVolume: true,
       metadata: {
@@ -101,18 +108,17 @@ export class LocalTrack extends Track {
   }
 }
 
-export class QueuedYoutubeTrack extends Track {
-  public meta!: TrackListingInfo
+export class YoutubeTrack extends Track {
+  private static readonly log: winston.Logger = GolemLogger.child({
+    src: 'yt-track',
+  })
 
-  private audioResource!: AudioResource<TrackAudioResourceMetadata>
-
-  constructor(userId: string, public url: string) {
+  constructor(
+    userId: string,
+    public url: string,
+    public meta: TrackListingInfo
+  ) {
     super(userId)
-  }
-
-  async toAudioResource(): Promise<AudioResource<TrackAudioResourceMetadata>> {
-    await this.init()
-    return this.audioResource
   }
 
   get metadata(): TrackListingInfo {
@@ -123,106 +129,89 @@ export class QueuedYoutubeTrack extends Track {
     return this.meta ? `${this.meta.artist} - ${this.meta.title}` : this.url
   }
 
+  // TODO handle analytics for youtube tracks
   onQueue(): void {
     // Analytics.createPlayRecord(this.listing.trackId, this.userId, 'queue')
   }
 
   async onPlay(): Promise<void> {
     // Analytics.createPlayRecord(this.listing.trackId, this.userId, 'play')
-    await this.init()
+    // await this.init()
   }
 
   onSkip(): void {
     // Analytics.createPlayRecord(this.listing.trackId, this.userId, 'skip')
   }
 
-  async init(): Promise<void> {
-    const info = await getInfo(this.url)
+  async toAudioResource(): Promise<AudioResource<TrackAudioResourceMetadata>> {
+    return new Promise((resolve, reject) => {
+      const process = ytdl(
+        this.url,
+        {
+          o: '-',
+          q: true,
+          f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio',
+          r: '100K',
+        },
+        { stdio: ['ignore', 'pipe', 'ignore'] }
+      )
 
-    const _imgUrl = info.videoDetails.thumbnails.find(
-      (thumbnail) => thumbnail.width > 300
-    )?.url
-
-    const imgUrl = _imgUrl?.slice(0, _imgUrl.indexOf('?'))
-
-    this.meta = {
-      title: info.videoDetails.title,
-      duration: parseInt(info.videoDetails.lengthSeconds, 10),
-      artist: info.videoDetails.ownerChannelName,
-      album: '-',
-      albumArt: imgUrl,
-    }
-
-    const stream = ytdl(this.url, {
-      quality: 'highestaudio',
-      filter: 'audioonly',
-    })
-
-    const demux = await demuxProbe(stream)
-
-    this.audioResource = createAudioResource<TrackAudioResourceMetadata>(
-      demux.stream,
-      {
-        inputType: demux.type,
-        metadata: { ...this.meta, track: this },
+      if (!process.stdout) {
+        reject(new Error('No stdout'))
+        return
       }
-    )
-  }
-}
 
-export class YoutubeTrack extends Track {
-  private audioResource!: AudioResource<TrackAudioResourceMetadata>
+      const stream = process.stdout
 
-  constructor(
-    userId: string,
-    public url: string,
-    public meta: TrackListingInfo
-  ) {
-    super(userId)
-  }
+      const onError = (error: Error) => {
+        YoutubeTrack.log.error(error.message)
+        if (!process.killed) {
+          YoutubeTrack.log.verbose(`process for track ${this.url} killed`)
+          process.kill()
+        }
 
-  toAudioResource(): AudioResource<TrackAudioResourceMetadata> {
-    return this.audioResource
-  }
-
-  get metadata(): TrackListingInfo {
-    return this.meta
-  }
-
-  get name(): string {
-    return `${this.meta.artist} - ${this.meta.title}`
-  }
-
-  onQueue(): void {
-    // Analytics.createPlayRecord(this.listing.trackId, this.userId, 'queue')
-  }
-
-  onPlay(): void {
-    // Analytics.createPlayRecord(this.listing.trackId, this.userId, 'play')
-  }
-
-  onSkip(): void {
-    // Analytics.createPlayRecord(this.listing.trackId, this.userId, 'skip')
-  }
-
-  private async createAudioResource(): Promise<void> {
-    const stream = ytdl(this.url, {
-      quality: 'highestaudio',
-      filter: 'audioonly',
-    })
-
-    const demux = await demuxProbe(stream)
-
-    this.audioResource = createAudioResource<TrackAudioResourceMetadata>(
-      demux.stream,
-      {
-        inputType: demux.type,
-        metadata: { ...this.meta, track: this },
+        YoutubeTrack.log.verbose(
+          `process for track ${this.url} errored - resuming now`
+        )
+        stream.resume()
+        reject(error)
       }
-    )
+
+      process.once('spawn', async () => {
+        try {
+          const metadata: TrackAudioResourceMetadata = {
+            ...this.meta,
+            track: this,
+          }
+          const demux = await demuxProbe(stream)
+          const audioResource = createAudioResource<TrackAudioResourceMetadata>(
+            stream,
+            {
+              metadata,
+              inputType: demux.type,
+            }
+          )
+
+          resolve(audioResource)
+        } catch (error) {
+          YoutubeTrack.log.error(`demux error track=${this.url}`)
+          YoutubeTrack.log.error(error)
+          onError(error as Error)
+        }
+      })
+
+      process.once('error', onError)
+    })
   }
 
-  static async fromURL(url: string, userId = ''): Promise<YoutubeTrack> {
+  /**
+   * Create a Track from a YouTube URL
+   *
+   * @param userId
+   * @param url
+   * @returns
+   */
+  static async fromUrl(userId: string, url: string): Promise<YoutubeTrack> {
     const info = await getInfo(url)
 
     const _imgUrl = info.videoDetails.thumbnails.find(
@@ -231,16 +220,33 @@ export class YoutubeTrack extends Track {
 
     const imgUrl = _imgUrl?.slice(0, _imgUrl.indexOf('?'))
 
-    const track = new YoutubeTrack(userId, url, {
+    return new YoutubeTrack(userId, url, {
       title: info.videoDetails.title,
       duration: parseInt(info.videoDetails.lengthSeconds, 10),
       artist: info.videoDetails.ownerChannelName,
       album: '-',
       albumArt: imgUrl,
     })
+  }
 
-    await track.createAudioResource()
-
-    return track
+  /**
+   * Create a Track from aready processed YouTube data in the form
+   * of a YouTubeListing
+   *
+   * @param userId
+   * @param listing
+   * @returns
+   */
+  static fromYoutubeListing(
+    userId: string,
+    listing: YoutubeListing
+  ): YoutubeTrack {
+    return new YoutubeTrack(userId, listing.url, {
+      album: '-',
+      artist: listing.author,
+      title: listing.title,
+      duration: listing.duration,
+      albumArt: listing.artworkUrl,
+    })
   }
 }

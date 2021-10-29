@@ -13,14 +13,29 @@ import { Youtube } from '../youtube/youtils'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
+const helpInfo: CommandHelp = {
+  name: 'play',
+  msg: 'Search for and play a track. Will search youtube if query returns no local results.',
+  args: [
+    {
+      name: 'query',
+      type: 'string',
+      required: true,
+      description:
+        'The track to search for and play|A YouTube video/playlist URL to play.',
+    },
+  ],
+  alias: '$play',
+}
+
 const data = new SlashCommandBuilder()
   .setName(CommandNames.slash.play)
   .setDescription('Play Something')
   .addStringOption((option) =>
     option
-      .setName('query')
-      .setDescription('query for a track')
-      .setRequired(true)
+      .setName(helpInfo.args[0].name)
+      .setDescription(helpInfo.args[0].description)
+      .setRequired(helpInfo.args[0].required)
   )
 
 const execute = async (
@@ -104,21 +119,6 @@ const execute = async (
 
   // Handle Catch-All queries
   await PlayHandler.playLocal(res.listing, interaction, player)
-}
-
-const helpInfo: CommandHelp = {
-  name: 'play',
-  msg: 'Search for and play a track. Will search youtube if query returns no local results.',
-  args: [
-    {
-      name: 'query',
-      type: 'string',
-      required: true,
-      description:
-        'The track to search for and play|A YouTube video/playlist URL to play.',
-    },
-  ],
-  alias: '$play',
 }
 
 const goPlayCommand = new Command({

@@ -21,6 +21,7 @@ export const CommandBase = {
   skip: 'skip',
   stop: 'stop',
   mix: 'mix',
+  alias: 'alias',
 }
 
 const SlashCommands = {
@@ -35,6 +36,7 @@ const SlashCommands = {
   skip: `go${CommandBase.skip}`,
   stop: `go${CommandBase.stop}`,
   mix: `go${CommandBase.mix}`,
+  alias: `go${CommandBase.alias}`,
 }
 
 export const CommandNames = {
