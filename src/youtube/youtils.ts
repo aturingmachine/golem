@@ -1,5 +1,6 @@
 import ytpl from 'ytpl'
 import ytsr from 'ytsr'
+import { YoutubeListing, YoutubePlaylistListing } from '../models/youtube'
 import { GolemConf } from '../utils/config'
 import { GolemLogger } from '../utils/logger'
 
@@ -24,17 +25,15 @@ export class Youtube {
   static async getPlaylist(
     url: string,
     limit = 20
-  ): Promise<{
-    urls: string[]
-    title: string
-    thumbnail: string | null
-  }> {
+  ): Promise<YoutubePlaylistListing> {
     Youtube.log.debug(`getting playlist for ${url}`)
     const result = await ytpl(url, { limit })
 
+    result.items
+
     return {
       title: result.title,
-      urls: result.items.map((item) => item.url),
+      listings: result.items.map(YoutubeListing.fromPlaylistItem),
       thumbnail: result.bestThumbnail.url,
     }
   }

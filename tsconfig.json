@@ -3,7 +3,8 @@
     "src/**/*",
   ],
   "exclude": [
-    "src/client/**"
+    "src/client/**",
+    "dist/**"
   ],
   "compilerOptions": {
     "target": "esnext",
