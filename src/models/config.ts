@@ -61,4 +61,5 @@ export enum CliOption {
   BustCache = 'BustCache',
   Verbose = 'Verbose',
   Debug = 'Debug',
+  NoRun = 'NoRun',
 }

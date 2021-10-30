@@ -2,7 +2,7 @@ import { MessageOptions } from 'discord.js'
 import { Golem } from '../golem'
 import { MusicPlayer } from '../player/music-player'
 import { Plex } from '../plex'
-import { GolemLogger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
 
 export interface GetOptions {
@@ -15,7 +15,7 @@ const noPlayerMsg = 'Unable to find player.'
 export class GoGet {
   static async it(opts: Partial<GetOptions>): Promise<MessageOptions> {
     GolemLogger.debug(`Go Getting With ${opts.value} ${opts.guildId}`, {
-      src: 'goget-handler',
+      src: LogSources.GoGetHandler,
     })
     switch (opts.value?.toLowerCase()) {
       case 'time':
