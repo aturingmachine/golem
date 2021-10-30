@@ -5,15 +5,42 @@ import winston from 'winston'
 export enum LogLevel {
   Debug = 'debug',
   Info = 'info',
+  Verbose = 'verbose',
+  Silly = 'silly',
 }
 
+// TODO Probably a better way to do this but its ok for now
 function determineLogLevel(): LogLevel {
-  const debugLevelArgs = ['debug', '-D', 'verbose', '-V']
+  let level = LogLevel.Info
+
+  const debugLevelArgs = ['debug', '-D']
+  const verboseArgs = ['verbose', '-V']
+  const sillyArgs = ['silly']
   const args = process.argv.slice(2)
 
-  return args.some((arg) => debugLevelArgs.some((debugArg) => debugArg === arg))
-    ? LogLevel.Debug
-    : LogLevel.Info
+  let isDebug = false
+  let isVerbose = false
+  let isSilly = false
+
+  args.forEach((arg) => {
+    isDebug ||= debugLevelArgs.includes(arg)
+    isVerbose ||= verboseArgs.includes(arg)
+    isSilly ||= sillyArgs.includes(arg)
+  })
+
+  if (isDebug) {
+    level = LogLevel.Debug
+  }
+
+  if (isVerbose) {
+    level = LogLevel.Verbose
+  }
+
+  if (isSilly) {
+    level = LogLevel.Silly
+  }
+
+  return level
 }
 
 const { combine, timestamp, colorize, printf, json, splat } = winston.format
@@ -92,6 +119,7 @@ enum LogSources {
   YoutubeTrack = 'yt-track',
   SearchSchemes = 'search-schemes',
   Youtils = 'youtils',
+  YoutubeListing = 'youtube-listing',
 }
 
 const LogSourceColors: Record<LogSources, chalk.Chalk> = {
@@ -136,6 +164,7 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'yt-track': chalk.cyanBright,
   'search-schemes': chalk.blue,
   youtils: chalk.yellow,
+  'youtube-listing': chalk.magentaBright,
 }
 
 export { logger as GolemLogger, LogSources }

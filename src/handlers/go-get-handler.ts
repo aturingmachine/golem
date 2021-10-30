@@ -14,7 +14,7 @@ const noPlayerMsg = 'Unable to find player.'
 
 export class GoGet {
   static async it(opts: Partial<GetOptions>): Promise<MessageOptions> {
-    GolemLogger.debug(`Go Getting With ${opts.value} ${opts.guildId}`, {
+    GolemLogger.verbose(`Go Getting With ${opts.value} ${opts.guildId}`, {
       src: LogSources.GoGetHandler,
     })
     switch (opts.value?.toLowerCase()) {

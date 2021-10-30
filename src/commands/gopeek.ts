@@ -15,7 +15,7 @@ const data = new SlashCommandBuilder()
 const execute = async (
   interaction: CommandInteraction | Message
 ): Promise<void> => {
-  log.debug('Executing')
+  log.verbose('Executing')
   const player = Golem.getPlayer(interaction)
 
   if (!player) {

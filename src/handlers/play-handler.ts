@@ -31,10 +31,10 @@ export class PlayHandler {
     PlayHandler.log.info(`Playing youtube resource ${url}`)
 
     if (url.includes('list=')) {
-      PlayHandler.log.debug('Playing youtube playlist')
+      PlayHandler.log.verbose('Playing youtube playlist')
       await PlayHandler.playYtPlaylist(url, interaction, player)
     } else {
-      PlayHandler.log.debug('Playing youtube track')
+      PlayHandler.log.verbose('Playing youtube track')
       await PlayHandler.playYtTrack(url, interaction, player, playNext)
     }
   }
@@ -52,7 +52,7 @@ export class PlayHandler {
       files: image ? [image] : [],
     })
 
-    PlayHandler.log.debug('enqueing local track')
+    PlayHandler.log.verbose('enqueing local track')
 
     const track = new LocalTrack(listing, interaction.member?.user.id || '')
 
@@ -81,7 +81,7 @@ export class PlayHandler {
       url
     )
 
-    PlayHandler.log.debug('enqueing youtube track')
+    PlayHandler.log.verbose('enqueing youtube track')
 
     await player.enqueue(track, playNext)
 
@@ -108,10 +108,10 @@ export class PlayHandler {
       const limit = args.limit ? parseInt(args.limit, 10) : undefined
       const userId = userFrom(interaction)
 
-      PlayHandler.log.debug(`getting playlist`)
+      PlayHandler.log.verbose(`getting playlist`)
       const playlist = await Youtube.getPlaylist(cleanPlaylistUrl, limit)
 
-      PlayHandler.log.debug(`got playlist`)
+      PlayHandler.log.verbose(`got playlist`)
 
       PlayHandler.log.info(`enqueing youtube playlist ${playlist.title}`)
 

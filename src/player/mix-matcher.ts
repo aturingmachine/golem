@@ -9,7 +9,7 @@ export class MixMatcher {
   static async similarArtists(listing: Listing): Promise<Listing[]> {
     const similar = await LastFm.getSimilarArtists(listing)
 
-    MixMatcher.log.debug(`found ${similar.length} artists`)
+    MixMatcher.log.verbose(`found ${similar.length} artists`)
 
     return Golem.trackFinder.getSimilarArtists(similar)
   }
@@ -17,7 +17,7 @@ export class MixMatcher {
   static async similarTracks(listing: Listing): Promise<Listing[]> {
     const similar = await LastFm.getSimilarTracks(listing)
 
-    MixMatcher.log.debug(`found ${similar.length} tracks`)
+    MixMatcher.log.verbose(`found ${similar.length} tracks`)
 
     return Golem.trackFinder.getSimilarTracks(similar)
   }

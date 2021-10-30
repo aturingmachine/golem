@@ -26,7 +26,7 @@ export class Youtube {
     url: string,
     limit = 20
   ): Promise<YoutubePlaylistListing> {
-    Youtube.log.debug(`getting playlist for ${url}`)
+    Youtube.log.verbose(`getting playlist for ${url}`)
     const result = await ytpl(url, { limit })
 
     return {

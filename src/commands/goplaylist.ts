@@ -26,7 +26,7 @@ const execute = async (
   interaction: CommandInteraction | Message,
   playlist?: string
 ): Promise<void> => {
-  log.debug('invoked')
+  log.verbose('invoked')
   const player = Golem.getOrCreatePlayer(interaction)
 
   if (!player) {
@@ -41,16 +41,16 @@ const execute = async (
     listName = interaction.options.getString('playlist') || ''
   }
 
-  log.debug(`invoked with ${playlist}`)
+  log.verbose(`invoked with ${playlist}`)
 
   if (listName.length) {
-    log.debug(`Attempting to find playlist`)
+    log.verbose(`Attempting to find playlist`)
     const list = Plex.playlists.find((list) =>
       list.name.toLowerCase().includes(listName.toLowerCase())
     )
 
     if (list) {
-      log.debug(`Enqueuing List ${list.name}`)
+      log.verbose(`Enqueuing List ${list.name}`)
       await player.enqueueMany(
         interaction.member?.user.id || '',
         LocalTrack.fromListings(

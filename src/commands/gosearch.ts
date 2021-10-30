@@ -39,7 +39,7 @@ const execute = async (
     searchCount = interaction.options.getInteger('count') || 5
   }
 
-  log.debug(`executing Query=${searchQuery}; Count=${searchCount}`)
+  log.verbose(`executing Query=${searchQuery}; Count=${searchCount}`)
 
   searchCount = searchCount > 10 ? 10 : searchCount
 
@@ -55,7 +55,7 @@ const execute = async (
       await interaction.reply(`No results found for ${searchQuery}`)
       return
     }
-    log.debug(`Found ${results.length} results for ${searchQuery}`)
+    log.verbose(`Found ${results.length} results for ${searchQuery}`)
 
     const trimmedResults = results.slice(0, searchCount)
 

@@ -39,7 +39,7 @@ const execute = async (
   }
 
   for (let i = 0; i < skipCount; i++) {
-    log.debug('Attempting to skip')
+    log.verbose('Attempting to skip')
     if (player.nowPlaying && player.currentResource) {
       await player.skip()
       if (player.currentResource) {

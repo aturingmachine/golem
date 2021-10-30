@@ -41,7 +41,7 @@ export const playlistMenuHandler = async (
     if (playlist) {
       const listings = Golem.trackFinder.findListingsByIds(playlist?.listings)
 
-      log.debug('Playlist Menu Handler: starting Player.')
+      log.verbose('Playlist Menu Handler: starting Player.')
 
       await player.enqueueMany(
         userFrom(interaction),

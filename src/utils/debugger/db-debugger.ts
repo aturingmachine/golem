@@ -78,7 +78,7 @@ export async function pryDatabase(cmd: string): Promise<void> {
 
   if (!!targetModel) {
     if (query.describe) {
-      log.debug(
+      log.verbose(
         '\n'.concat(
           Object.entries(targetModel.schema.paths)
             .map(([key, value]) => `${key}=>${value.instance}`)

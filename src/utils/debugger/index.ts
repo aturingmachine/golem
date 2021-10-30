@@ -88,10 +88,10 @@ export class Debugger {
         await pryDatabase(cmd)
         break
       case DebugCommands.Kill:
-        this.log.debug('removing an aleph')
+        this.log.verbose('removing an aleph')
         process.exit(2)
       case DebugCommands.Exit:
-        this.log.debug('closing debug console')
+        this.log.verbose('closing debug console')
         this.closePrompt()
         break
       case DebugCommands.Pry:

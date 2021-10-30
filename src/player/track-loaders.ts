@@ -36,11 +36,11 @@ export class TrackLoader {
   private async loadFromDisk(path: string, name: string): Promise<void> {
     await this.wipeData(name)
 
-    log.debug('Loading library from filesystem')
+    log.verbose('Loading library from filesystem')
     const paths = getAllFiles(path, []).filter(
       (trackPath) => !reg.test(trackPath)
     )
-    log.debug(`Found ${paths.length} paths.`)
+    log.verbose(`Found ${paths.length} paths.`)
 
     let errorCount = 0
     const listings: Listing[] = []

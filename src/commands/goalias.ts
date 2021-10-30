@@ -51,7 +51,7 @@ const execute = async (
     const alias = await CustomAlias.fromString(aliasCommand, guildId, userId)
     const record = new CustomAliasData(alias)
 
-    log.debug(`saving new alias ${alias.name} -> ${alias.fullCommand}`)
+    log.verbose(`saving new alias ${alias.name} -> ${alias.fullCommand}`)
     await record.save()
 
     await interaction.reply(

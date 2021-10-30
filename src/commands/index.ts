@@ -24,7 +24,7 @@ export const registerCommands = (): void => {
       /* eslint-disable-next-line @typescript-eslint/no-var-requires */
       const command = require(`./${file}`).default
 
-      GolemLogger.debug(`Registering Command ${file}`, {
+      GolemLogger.verbose(`Registering Command ${file}`, {
         src: LogSources.CommandRegister,
       })
       // Set a new item in the Collection

@@ -150,14 +150,14 @@ export class MusicPlayer {
   }
 
   private async processQueue(force = false): Promise<void> {
-    this.log.debug(`processing queue${force ? ' - forcing next' : ''}`)
+    this.log.verbose(`processing queue${force ? ' - forcing next' : ''}`)
     if (
       !force &&
       (this.queueLock ||
         this.audioPlayer.state.status !== AudioPlayerStatus.Idle)
       // ||      this.queue.queuedTrackCount === 0
     ) {
-      this.log.debug(
+      this.log.verbose(
         `skipping processing due to state; force=${force}; queueLock=${
           this.queueLock
         }; status=${
@@ -181,6 +181,7 @@ export class MusicPlayer {
     if (nextTrack) {
       try {
         const next = await nextTrack.toAudioResource()
+        this.log.debug(`audio resouce generated`)
         this.currentResource = next
         this.currentResource.volume?.setVolume(0.35)
         this.audioPlayer.play(this.currentResource)
@@ -208,7 +209,7 @@ export class MusicPlayer {
       newState.status === AudioPlayerStatus.Idle &&
       oldState.status !== AudioPlayerStatus.Idle
     ) {
-      this.log.debug(`entering Idle state - processing queue`)
+      this.log.verbose(`entering Idle state - processing queue`)
       void (await this.processQueue())
     } else if (
       newState.status === AudioPlayerStatus.Playing &&

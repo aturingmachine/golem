@@ -13,7 +13,7 @@ const messageCreate: EventHandler<'messageCreate'> = {
       return
     }
 
-    log.debug(`received ${message}`)
+    log.silly(`received: ${message}`)
 
     if (message.content.startsWith('$go') || message.content.startsWith('$')) {
       const alias = await CustomAlias.getAliasFor(
@@ -22,7 +22,6 @@ const messageCreate: EventHandler<'messageCreate'> = {
       )
 
       if (alias) {
-        console.log('Running with alias')
         await alias.run(message)
 
         return

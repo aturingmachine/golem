@@ -58,7 +58,7 @@ export class LocalTrack extends Track {
   }
 
   toAudioResource(): AudioResource<TrackAudioResourceMetadata> {
-    LocalTrack.log.debug('converting to audio resource')
+    LocalTrack.log.verbose('converting to audio resource')
     return createAudioResource<TrackAudioResourceMetadata>(this.listing.path, {
       inlineVolume: true,
       metadata: {
@@ -166,11 +166,11 @@ export class YoutubeTrack extends Track {
       const onError = (error: Error) => {
         YoutubeTrack.log.error(error.message)
         if (!process.killed) {
-          YoutubeTrack.log.verbose(`process for track ${this.url} killed`)
+          YoutubeTrack.log.debug(`process for track ${this.url} killed`)
           process.kill()
         }
 
-        YoutubeTrack.log.verbose(
+        YoutubeTrack.log.debug(
           `process for track ${this.url} errored - resuming now`
         )
         stream.resume()

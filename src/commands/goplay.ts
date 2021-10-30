@@ -84,7 +84,7 @@ const execute = async (
 
   if (!res) {
     // here we want to search for yt
-    log.debug(`No local ResultSet for ${commandQuery}`)
+    log.verbose(`No local ResultSet for ${commandQuery}`)
 
     const url = await Youtube.search(commandQuery)
 
@@ -98,7 +98,7 @@ const execute = async (
     return
   }
 
-  log.debug(`Query Result: \n${res.listing.debugString}`)
+  log.verbose(`Query Result: \n${res.listing.debugString}`)
 
   // Handle artist query
   if (res.isArtistQuery) {

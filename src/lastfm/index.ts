@@ -15,7 +15,7 @@ export class LastFm {
 
   static init(): void {
     if (!GolemConf.modules.LastFm) {
-      this.log.error(
+      this.log.warn(
         `Cannot init LastFM, missing required module: ${GolemConf.modules.LastFm}`
       )
       return

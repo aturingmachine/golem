@@ -21,7 +21,7 @@ export const wideSearchHandler = async (
 
   const listing = Golem.trackFinder.findListingsByIds([{ id: listingId }])[0]
 
-  log.debug(`Got ${listing.shortName} from id ${listingId}`)
+  log.verbose(`Got ${listing.shortName} from id ${listingId}`)
 
   const { image, embed } = await GetEmbedFromListing(listing, player, 'queue')
 

@@ -61,7 +61,7 @@ export class LegacyCommandHandler {
 
     const args = content.split(' ').slice(2).join(' ')
 
-    GolemLogger.debug(`subcommand=${subcommand}, args="${args}"`, {
+    GolemLogger.verbose(`subcommand=${subcommand}, args="${args}"`, {
       src: LogSources.LegacyHandler,
     })
 

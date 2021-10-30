@@ -17,7 +17,6 @@ import { Listing, TrackListingInfo } from '../models/listing'
 import { MusicPlayer } from '../player/music-player'
 import { Plex } from '../plex'
 import { GolemConf } from './config'
-import { GolemLogger } from './logger'
 import { humanReadableDuration, humanReadableTime } from './time-utils'
 
 const embedFieldSpacer = {
@@ -219,9 +218,6 @@ export const GetWideSearchEmbed = (
   query: string,
   results: Listing[]
 ): MessageOptions => {
-  GolemLogger.debug(
-    `creating wide search embed: ${query}, ${results.length} hits`
-  )
   const options: MessageSelectOptionData[] = results.slice(0, 25).map((r) => {
     return {
       label: r.shortName,

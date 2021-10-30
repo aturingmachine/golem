@@ -72,7 +72,7 @@ export class SearchSchemes {
     let result = fuzzy.filter(query, tracks, extractors.artist)
 
     if (result.length === 0 || result[0].score < 1000) {
-      this.log.debug(
+      this.log.verbose(
         `artist ${
           result.length ? 'scores: ' + result[0].score : 'miss'
         }; using titleSearch`
@@ -81,7 +81,7 @@ export class SearchSchemes {
     }
 
     if (result.length === 0 || result[0].score < 50) {
-      this.log.debug(
+      this.log.verbose(
         `titleSearch ${
           result.length ? 'scores: ' + result[0].score : 'miss'
         }; using shortNameSearch`
@@ -90,7 +90,7 @@ export class SearchSchemes {
     }
 
     if (result.length === 0 || result[0].score < 50) {
-      this.log.debug(
+      this.log.verbose(
         `shortNameSearch ${
           result.length ? 'scores: ' + result[0].score : 'miss'
         }; using baseSearch`
