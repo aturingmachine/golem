@@ -42,17 +42,23 @@ const execute = async (
     log.debug('Attempting to skip')
     if (player.nowPlaying && player.currentResource) {
       await player.skip()
-      const assets = await GetEmbedFromListing(
-        player.nowPlaying,
-        player,
-        'playing'
-      )
+      if (player.currentResource) {
+        const assets = await GetEmbedFromListing(
+          player.nowPlaying,
+          player,
+          'playing'
+        )
 
-      await interaction.reply({
-        content: 'Skipped!',
-        embeds: [assets.embed],
-        files: assets.image ? [assets.image] : [],
-      })
+        await interaction.reply({
+          content: 'Skipped!',
+          embeds: [assets.embed],
+          files: assets.image ? [assets.image] : [],
+        })
+      } else {
+        await interaction.reply({
+          content: 'Skipped! Queue empty.',
+        })
+      }
     } else {
       await interaction.reply('No track to skip')
     }

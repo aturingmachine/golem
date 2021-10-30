@@ -27,6 +27,7 @@ const optFlags: Record<CliOption, string[]> = {
   BustCache: ['bust-cache', 'cache-bust', 'bust', 'refresh'],
   Verbose: ['verbose', '-V'],
   Debug: ['debug', '-D'],
+  NoRun: ['noRun'],
 }
 
 class Args {
@@ -46,6 +47,7 @@ class CliOptions {
       BustCache: this.args.includes(CliOption.BustCache),
       Verbose: this.args.includes(CliOption.Verbose),
       Debug: this.args.includes(CliOption.Debug),
+      NoRun: this.args.includes(CliOption.NoRun),
     }
   }
 }
@@ -58,7 +60,11 @@ export class GolemConf {
 
   static init(): void {
     // kill application if no required config
-    if (!GolemConf.values.discord) {
+    if (
+      !GolemConf.values.discord ||
+      !GolemConf.values.discord.clientId ||
+      !GolemConf.values.discord.token
+    ) {
       console.error('No Discord Config found. Terminating.')
       process.exit(1)
     }
@@ -74,6 +80,10 @@ export class GolemConf {
 
     if (!!GolemConf.values.web) {
       GolemConf.enabledModules.push(GolemModule.Web)
+    }
+
+    if (!!GolemConf.values.youtube) {
+      GolemConf.enabledModules.push(GolemModule.Youtube)
     }
   }
 
@@ -93,6 +103,7 @@ export class GolemConf {
       Plex: GolemConf.enabledModules.includes(GolemModule.Plex),
       LastFm: GolemConf.enabledModules.includes(GolemModule.LastFm),
       Web: GolemConf.enabledModules.includes(GolemModule.Web),
+      Youtube: GolemConf.enabledModules.includes(GolemModule.Youtube),
     }
   }
 

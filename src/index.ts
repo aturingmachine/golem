@@ -4,6 +4,11 @@ import { GolemConf } from './utils/config'
 import { startApi } from './web/server'
 
 const main = async (): Promise<void> => {
+  if (GolemConf.options.NoRun) {
+    console.log('NoRun set - exiting')
+    process.exit(0)
+  }
+
   await Golem.initialize()
 
   await Golem.login()
@@ -21,7 +26,10 @@ const main = async (): Promise<void> => {
 
 process.on('exit', () => {
   mongoose.connection.close()
-  Golem.disconnectAll()
+
+  try {
+    Golem.disconnectAll()
+  } catch (error) {}
 })
 
 main()

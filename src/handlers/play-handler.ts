@@ -1,8 +1,9 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { Listing } from '../models/listing'
 import { YoutubePlaylistEmbed } from '../models/messages/yt-playlist'
-import { LocalTrack, QueuedYoutubeTrack, YoutubeTrack } from '../models/track'
+import { LocalTrack, YoutubeTrack } from '../models/track'
 import { MusicPlayer } from '../player/music-player'
+import { GolemConf } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { parseMessageArgs } from '../utils/message-args'
 import { GetEmbedFromListing, userFrom } from '../utils/message-utils'
@@ -17,7 +18,17 @@ export class PlayHandler {
     player: MusicPlayer,
     playNext = false
   ): Promise<void> {
-    PlayHandler.log.info('Playing youtube resource')
+    if (!GolemConf.modules.Youtube) {
+      PlayHandler.log.info(
+        'Cannot play youtube resource, Youtube module not enabled'
+      )
+      await interaction.reply(
+        'Cannot play youtube resource, the YouTube module is not enabled.'
+      )
+      return
+    }
+
+    PlayHandler.log.info(`Playing youtube resource ${url}`)
 
     if (url.includes('list=')) {
       PlayHandler.log.debug('Playing youtube playlist')
@@ -65,9 +76,9 @@ export class PlayHandler {
     player: MusicPlayer,
     playNext = false
   ): Promise<void> {
-    const track = await YoutubeTrack.fromURL(
-      url,
-      interaction.member?.user.id || ''
+    const track = await YoutubeTrack.fromUrl(
+      interaction.member?.user.id || '',
+      url
     )
 
     PlayHandler.log.debug('enqueing youtube track')
@@ -104,13 +115,11 @@ export class PlayHandler {
 
       PlayHandler.log.info(`enqueing youtube playlist ${playlist.title}`)
 
-      for (const url of playlist.urls) {
-        const cleanedUrl = url.slice(0, url.indexOf('&list='))
-        PlayHandler.log.debug(`creating track from url ${cleanedUrl}`)
-        const track = new QueuedYoutubeTrack(userId, cleanedUrl)
-        PlayHandler.log.debug(`enqueueing track made from url ${cleanedUrl}`)
-        await player.enqueue(track)
-      }
+      const tracks = playlist.listings.map((listing) =>
+        YoutubeTrack.fromYoutubeListing(userId, listing)
+      )
+
+      await player.enqueueMany(userId, tracks)
 
       const embed = await YoutubePlaylistEmbed.from(
         playlist.title,

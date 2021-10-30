@@ -12,12 +12,14 @@ import { Youtube } from '../youtube/youtils'
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
 const data = new SlashCommandBuilder()
-  .setName(CommandNames.slash.play)
-  .setDescription('Add a track to the front of the play queue')
+  .setName(CommandNames.slash.playNext)
+  .setDescription('Add a track to the front of the play queue.')
   .addStringOption((option) =>
     option
       .setName('query')
-      .setDescription('query for a track')
+      .setDescription(
+        'The track to search for and play|A YouTube video/playlist URL to play.'
+      )
       .setRequired(true)
   )
 
@@ -70,7 +72,7 @@ const execute = async (
     const url = await Youtube.search(commandQuery)
 
     if (url) {
-      PlayHandler.ytPlay(url, interaction, player)
+      PlayHandler.ytPlay(url, interaction, player, true)
 
       return
     }
@@ -108,7 +110,8 @@ const helpInfo: CommandHelp = {
       name: 'query',
       type: 'string',
       required: true,
-      description: 'The track to search for and play.',
+      description:
+        'The track to search for and play|A YouTube video/playlist URL to play.',
     },
   ],
   alias: '$playnext',

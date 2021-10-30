@@ -3,6 +3,7 @@ import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { Command, CommandHelp } from '../models/commands'
+import { GolemModule } from '../models/config'
 import { LocalTrack } from '../models/track'
 import { Plex } from '../plex'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -87,6 +88,7 @@ const goPlaylistCommand = new Command({
   data,
   handler: execute,
   helpInfo,
+  requiredModules: [GolemModule.Plex],
 })
 
 export default goPlaylistCommand

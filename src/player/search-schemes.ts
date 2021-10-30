@@ -1,7 +1,7 @@
 import fuzzy from 'fuzzy'
 import { Listing } from '../models/listing'
 import { GolemConf } from '../utils/config'
-import { GolemLogger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 
 const extractors = {
   // full name
@@ -35,7 +35,7 @@ const extractors = {
 }
 
 export class SearchSchemes {
-  private static log = GolemLogger.child({ src: 'search-schemes' })
+  private static log = GolemLogger.child({ src: LogSources.SearchSchemes })
 
   static byTitle(
     query: string,

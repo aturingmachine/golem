@@ -3,6 +3,7 @@ import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { Command, CommandHelp } from '../models/commands'
+import { GolemModule } from '../models/config'
 import { Listing } from '../models/listing'
 import { LocalTrack } from '../models/track'
 import { MixMatcher } from '../player/mix-matcher'
@@ -44,13 +45,11 @@ const execute = async (
   }
 
   let mixBy = mixtype || ''
-  // let commandQuery = query || ''
 
   const isSlashCommand = interaction instanceof CommandInteraction
 
   if (isSlashCommand) {
     mixBy = interaction.options.getString('mixtype') || ''
-    // commandQuery = interaction.options.getString('query') || ''
   }
 
   log.info(`executing with mixtype: ${mixBy || 'blank'}`)
@@ -143,6 +142,7 @@ const goMixCommand = new Command({
   data,
   handler: execute,
   helpInfo,
+  requiredModules: [GolemModule.LastFm],
 })
 
 export default goMixCommand

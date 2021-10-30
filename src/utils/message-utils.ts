@@ -34,6 +34,9 @@ export const averageColor = (img?: Buffer | string): any =>
 export const userFrom = (interaction: Message | Interaction): string =>
   interaction.member?.user.id || ''
 
+export const guildIdFrom = (interaction: Message | Interaction): string =>
+  interaction.guild?.id || interaction.guildId || ''
+
 export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
   return new MessageAttachment(albumArt || PlexLogo, 'cover.png')
 }
