@@ -2,6 +2,7 @@ import { LegacyCommandHandler } from '../handlers/legacy-command-handler'
 import { CustomAlias } from '../models/custom-alias'
 import { EventHandler } from '../models/event-handler'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { guildIdFrom } from '../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.MessageCreate })
 
@@ -15,8 +16,11 @@ const messageCreate: EventHandler<'messageCreate'> = {
     log.debug(`received ${message}`)
 
     if (message.content.startsWith('$go') || message.content.startsWith('$')) {
-      const alias = await CustomAlias.getAliasFor(message.content)
-      console.log('msg create:', alias)
+      const alias = await CustomAlias.getAliasFor(
+        message.content,
+        guildIdFrom(message)
+      )
+
       if (alias) {
         console.log('Running with alias')
         await alias.run(message)

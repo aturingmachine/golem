@@ -14,7 +14,6 @@ export class CustomAlias {
 
   // TODO get this to take in args as well or some shit idk
   async run(msg: Message): Promise<void> {
-    console.log('Running using', this.fullCommand)
     await LegacyCommandHandler.executeCustomAlias(msg, this.fullCommand)
   }
 
@@ -22,31 +21,59 @@ export class CustomAlias {
     return `${this.command} ${this.args.trimStart()}`.trimStart()
   }
 
-  static validateName(name: string): boolean {
-    return !Object.values(RegisteredCommands).some(
-      (cmd) => cmd.data.name === name || cmd.helpInfo.alias?.includes(name)
-    )
+  static async fromString(
+    aliasCommand: string,
+    guildId: string,
+    userId: string
+  ): Promise<CustomAlias> {
+    const parts = aliasCommand.split('=>')
+    const aliasName = parts[0].replaceAll(' ', '')
+
+    const fullCommand = parts[1].trim()
+    const commandSplitIndex = fullCommand.startsWith('$go')
+      ? fullCommand.indexOf(' ', fullCommand.indexOf(' '))
+      : fullCommand.indexOf(' ')
+    const command = fullCommand.slice(0, commandSplitIndex)
+    const args = fullCommand.slice(commandSplitIndex).trim()
+
+    if (!(await CustomAlias.isValidName(aliasName, guildId))) {
+      throw new Error(`alias name ${aliasName} already registered`)
+    }
+
+    return new CustomAlias(aliasName, command, args, userId, guildId)
   }
 
-  static async getAliases(): Promise<CustomAlias[]> {
-    return CustomAliasData.find({})
+  static async isValidName(name: string, guildId: string): Promise<boolean> {
+    const builtInCommands = Object.values(RegisteredCommands)
+    const builtInNames = builtInCommands.map((cmd) => cmd.data.name)
+    const builtInAliases = builtInCommands.map((cmd) => cmd.helpInfo.alias)
+    const customAliases = await CustomAlias.getAliases(guildId)
+
+    return ![
+      ...builtInNames,
+      ...builtInAliases,
+      ...customAliases.map((alias) => alias.name),
+    ].some((cmd) => cmd === name)
   }
 
-  static async getAliasFor(command: string): Promise<CustomAlias | undefined> {
-    console.log('Getting alias for raw command', command)
+  static async getAliases(guildId: string): Promise<CustomAlias[]> {
+    return await CustomAliasData.find({ guildId })
+  }
+
+  static async getAliasFor(
+    command: string,
+    guildId: string
+  ): Promise<CustomAlias | undefined> {
     const parsedCommand =
       command.indexOf(' ') > -1
         ? command.slice(0, command.indexOf(' '))
         : command
-    const aliases = await CustomAlias.getAliases()
 
-    console.log(parsedCommand, aliases)
+    const aliases = await CustomAlias.getAliases(guildId)
 
     const match = aliases.find(
       (alias) => alias.name === parsedCommand.replace('$', '')
     )
-
-    console.log('match: ', match)
 
     return match
       ? new CustomAlias(

@@ -5,7 +5,8 @@ import { Command, CommandHelp } from '../models/commands'
 import { CustomAlias } from '../models/custom-alias'
 import { CustomAliasData } from '../models/db/custom-alias'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { userFrom } from '../utils/message-utils'
+import { guildIdFrom, userFrom } from '../utils/message-utils'
+import { Replier } from '../utils/replies'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
@@ -16,7 +17,7 @@ const data = new SlashCommandBuilder()
     option
       .setName('aliascommand')
       .setDescription(
-        'Formatted as `<alias> $<command>`; anything before the $ will be the alias name.'
+        'Formatted as `<alias> => $<command>` anything after the ";" will be executed as a command.'
       )
       .setRequired(true)
   )
@@ -37,24 +38,33 @@ const execute = async (
     return
   }
 
-  const guildId = interaction.guildId || interaction.guild?.id || ''
+  const guildId = guildIdFrom(interaction)
   const userId = userFrom(interaction)
 
   if (!guildId || !userId) {
-    log.error(`Missing reuiqred values: guildId=${guildId}; userId={userId};`)
+    log.error(`Missing required values: guildId=${guildId}; userId=${userId};`)
+
+    return
   }
 
-  const buckIndex = aliasCommand.indexOf('$')
-  const aliasName = aliasCommand.slice(0, buckIndex).replaceAll(' ', '')
-  const fullCommand = aliasCommand.slice(buckIndex)
-  const command = fullCommand.slice(0, fullCommand.indexOf(' '))
-  const args = fullCommand.slice(fullCommand.indexOf(' '))
+  try {
+    const alias = await CustomAlias.fromString(aliasCommand, guildId, userId)
+    const record = new CustomAliasData(alias)
 
-  const alias = new CustomAlias(aliasName, command, args, guildId, userId)
+    log.debug(`saving new alias ${alias.name} -> ${alias.fullCommand}`)
+    await record.save()
 
-  const record = new CustomAliasData(alias)
-  log.debug(`saving new alias ${aliasName} -> ${fullCommand}`)
-  record.save()
+    await interaction.reply(
+      `${Replier.affirmative}! $${alias.name} will now execute as ${alias.fullCommand}`
+    )
+  } catch (error) {
+    log.error(error)
+    await interaction.reply(
+      `${Replier.negative}, I couldn't make that alias. ${
+        (error as Error).message
+      }`
+    )
+  }
 }
 
 const helpInfo: CommandHelp = {
@@ -66,7 +76,7 @@ const helpInfo: CommandHelp = {
       type: 'string',
       required: true,
       description:
-        'Formatted as `<aliasname> $<command-string>`; anything before the $ will have whitespace removed to form the alias name. Example: "$go alias myalias $play twice tt" will bind $myalias to equal $play twice tt.',
+        'Formatted as `<alias> => $<command>`; anything before the => will have whitespace removed to form the alias name. Example: "$go alias my alias => $play twice tt" will bind "$myalias" to equal "$play twice tt."',
     },
   ],
 }

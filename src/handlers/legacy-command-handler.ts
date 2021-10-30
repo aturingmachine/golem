@@ -43,12 +43,9 @@ export class LegacyCommandHandler {
   ): Promise<void> {
     // Early exit on an aliased command
 
-    console.log('legacy overide:', overrideContent)
     const content = overrideContent || msg.content
-    console.log('legacy content', content)
 
     if (!content.startsWith('$go ') && content.startsWith('$')) {
-      console.log('Running', content, 'as aliased command')
       const hasRun = await AliasedCommand(msg, content)
       if (hasRun) {
         return
