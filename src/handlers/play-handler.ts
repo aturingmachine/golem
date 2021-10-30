@@ -28,7 +28,7 @@ export class PlayHandler {
       return
     }
 
-    PlayHandler.log.info('Playing youtube resource')
+    PlayHandler.log.info(`Playing youtube resource ${url}`)
 
     if (url.includes('list=')) {
       PlayHandler.log.debug('Playing youtube playlist')

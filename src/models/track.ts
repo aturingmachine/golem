@@ -7,7 +7,7 @@ import winston from 'winston'
 import { raw as ytdl } from 'youtube-dl-exec'
 import { getInfo } from 'ytdl-core'
 import { Analytics } from '../analytics'
-import { GolemLogger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { Listing, TrackListingInfo } from './listing'
 import { YoutubeListing } from './youtube'
 
@@ -47,7 +47,7 @@ export class LocalTrack extends Track {
   internalId!: string
 
   private static readonly log: winston.Logger = GolemLogger.child({
-    src: 'local-track',
+    src: LogSources.LocalTrack,
   })
 
   constructor(public readonly listing: Listing, userId: string) {
@@ -110,7 +110,7 @@ export class LocalTrack extends Track {
 
 export class YoutubeTrack extends Track {
   private static readonly log: winston.Logger = GolemLogger.child({
-    src: 'yt-track',
+    src: LogSources.YoutubeTrack,
   })
 
   constructor(

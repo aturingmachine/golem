@@ -87,6 +87,11 @@ enum LogSources {
   API = 'web-server',
   PlayHandler = 'play-handler',
   GoAlias = 'go-alias',
+  GoGetHandler = 'goget-handler',
+  LocalTrack = 'local-track',
+  YoutubeTrack = 'yt-track',
+  SearchSchemes = 'search-schemes',
+  Youtils = 'youtils',
 }
 
 const LogSourceColors: Record<LogSources, chalk.Chalk> = {
@@ -126,6 +131,11 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'go-play-next': chalk.cyanBright,
   'play-handler': chalk.green,
   'go-alias': chalk.magenta,
+  'goget-handler': chalk.magenta,
+  'local-track': chalk.blueBright,
+  'yt-track': chalk.cyanBright,
+  'search-schemes': chalk.blue,
+  youtils: chalk.yellow,
 }
 
 export { logger as GolemLogger, LogSources }

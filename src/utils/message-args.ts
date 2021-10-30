@@ -10,7 +10,10 @@ export function parseMessageArgs(message: string): {
   )
 
   return {
-    base: message.slice(0, message.indexOf(' -- ')),
+    base:
+      message.indexOf(' -- ') > 0
+        ? message.slice(0, message.indexOf(' -- '))
+        : message,
     args,
   }
 }

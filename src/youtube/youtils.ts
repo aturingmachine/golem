@@ -2,10 +2,10 @@ import ytpl from 'ytpl'
 import ytsr from 'ytsr'
 import { YoutubeListing, YoutubePlaylistListing } from '../models/youtube'
 import { GolemConf } from '../utils/config'
-import { GolemLogger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 
 export class Youtube {
-  private static log = GolemLogger.child({ src: 'youtils' })
+  private static log = GolemLogger.child({ src: LogSources.Youtils })
 
   static async search(query: string): Promise<string | undefined> {
     Youtube.log.info(`searching for query ${query}`)
@@ -28,8 +28,6 @@ export class Youtube {
   ): Promise<YoutubePlaylistListing> {
     Youtube.log.debug(`getting playlist for ${url}`)
     const result = await ytpl(url, { limit })
-
-    result.items
 
     return {
       title: result.title,
