@@ -3,6 +3,17 @@ import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
 import { GolemConf } from '../utils/config'
 
+/**
+ * Core Data for a track.
+ */
+export interface TrackListingInfo {
+  title: string
+  duration: number
+  artist: string
+  album: string
+  albumArt?: Buffer | string
+}
+
 interface MusicBrainzData {
   artistId?: string
   trackId?: string

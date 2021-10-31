@@ -24,7 +24,7 @@ export class TrackQueue {
    * @param track
    */
   addNext(userId: string, track: Track): void {
-    log.debug(`${userId} Adding Next ${track.listing.shortName}`)
+    // log.verbose(`${userId} Adding Next ${track.listing.shortName}`)
     this.explicitQueue.push({ track, queuedBy: userId })
   }
 
@@ -34,7 +34,7 @@ export class TrackQueue {
    * @param track
    */
   add(userId: string, track: Track): void {
-    log.debug(`${userId} Adding ${track.listing.shortName}`)
+    // log.verbose(`${userId} Adding ${track.listing.shortName}`)
     this.passiveQueue.push({ track, queuedBy: userId })
   }
 
@@ -44,14 +44,14 @@ export class TrackQueue {
    * @param tracks
    */
   addMany(userId: string, tracks: Track[]): void {
-    log.debug(`Adding many - ${tracks.length} tracks`)
+    log.verbose(`Adding many - ${tracks.length} tracks`)
     this.passiveQueue.push(
       ...tracks.map((track) => ({ track, queuedBy: userId }))
     )
   }
 
   skip(): void {
-    log.debug(`Skipping ${this.queue[0]?.track.listing.name}`)
+    // log.verbose(`Skipping ${this.queue[0]?.track.listing.name}`)
 
     if (this.explicitQueue.length > 0) {
       this.explicitQueue.shift()
@@ -61,25 +61,25 @@ export class TrackQueue {
   }
 
   clear(): void {
-    log.debug('Clearing')
+    log.verbose('Clearing')
     this.explicitQueue = []
     this.passiveQueue = []
   }
 
   peek(): Track | undefined {
-    log.debug('Peeking')
+    log.verbose('Peeking')
     return this.queue[0]?.track
   }
 
   peekDeep(depth = 5): Track[] {
-    log.debug('Deep Peeking')
+    log.verbose('Deep Peeking')
     return depth > 0
       ? this.queue.slice(0, depth).map((i) => i.track)
       : this.queue.map((i) => i.track)
   }
 
   pop(): Track | undefined {
-    log.debug('Popping Next track')
+    log.verbose('Popping Next track')
 
     if (this.explicitQueue.length > 0) {
       return this.explicitQueue.shift()?.track
@@ -89,7 +89,7 @@ export class TrackQueue {
   }
 
   shuffle(): void {
-    log.debug('shuffling')
+    log.verbose('shuffling')
     const passiveTemp = [...this.passiveQueue]
     const explicitTemp = [...this.explicitQueue]
 
@@ -107,10 +107,10 @@ export class TrackQueue {
    */
   get runTime(): number {
     const estRunTime = this.queue.reduce((prev, curr) => {
-      return prev + curr.track.listing.duration
+      return prev + curr.track.metadata.duration
     }, 0)
 
-    log.debug(`Estimated Runtime ${estRunTime}`)
+    log.verbose(`Estimated Runtime ${estRunTime}`)
 
     return estRunTime
   }

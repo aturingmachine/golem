@@ -1,6 +1,6 @@
-import { promisify } from 'util'
 import {
   AudioPlayer,
+  AudioPlayerError,
   AudioPlayerState,
   AudioPlayerStatus,
   AudioResource,
@@ -13,13 +13,11 @@ import {
 } from '@discordjs/voice'
 import winston from 'winston'
 import { Golem } from '../golem'
-import { Listing } from '../models/listing'
+import { TrackListingInfo } from '../models/listing'
 import { Track, TrackAudioResourceMetadata } from '../models/track'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { humanReadableTime } from '../utils/time-utils'
+import { humanReadableTime, wait } from '../utils/time-utils'
 import { TrackQueue } from './queue'
-
-const wait = promisify(setTimeout)
 
 type GolemTrackAudioResource = AudioResource & {
   metadata: TrackAudioResourceMetadata
@@ -40,8 +38,8 @@ export class MusicPlayer {
     return this.audioPlayer.state.status === AudioPlayerStatus.Playing
   }
 
-  get nowPlaying(): Listing | undefined {
-    return this.currentResource?.metadata.track.listing
+  get nowPlaying(): TrackListingInfo | undefined {
+    return this.currentResource?.metadata.track.metadata
   }
 
   get currentTrackRemaining(): number {
@@ -72,34 +70,31 @@ export class MusicPlayer {
 
     this.audioPlayer.on('stateChange', this.playerStateHandler.bind(this))
 
+    this.audioPlayer.on('error', this.audioPlayErrorHandler.bind(this))
+
     this.voiceConnection.subscribe(this.audioPlayer)
   }
 
-  public enqueue(
-    userId: string,
-    listing: Listing,
-    enqueueAsNext = false
-  ): void {
-    this.log.info(`queueing ${listing.shortName}`)
-    const track = new Track(listing, userId)
+  public async enqueue(track: Track, enqueueAsNext = false): Promise<void> {
+    this.log.info(`queueing ${track.name}`)
 
     if (enqueueAsNext) {
-      this.queue.addNext(userId, track)
+      this.queue.addNext(track.userId, track)
     } else {
-      this.queue.add(userId, track)
+      this.queue.add(track.userId, track)
     }
 
+    // TODO thinking these should be moved into the process queue function?
     track.onPlay()
 
-    void this.processQueue()
+    void (await this.processQueue())
   }
 
-  public enqueueMany(userId: string, listings: Listing[]): void {
-    const tracks = listings.map((listing) => Track.fromListing(listing, userId))
+  public async enqueueMany(userId: string, tracks: Track[]): Promise<void> {
     this.log.info(`enqueueing ${tracks.length} listings`)
     this.queue.addMany(userId, tracks)
     tracks.forEach((t) => t.onPlay())
-    void this.processQueue()
+    void (await this.processQueue())
   }
 
   public pause(): void {
@@ -123,11 +118,11 @@ export class MusicPlayer {
     this.queueLock = false
   }
 
-  public skip(): void {
+  public async skip(): Promise<void> {
     this.log.info(`skipping ${this.currentResource?.metadata.title}`)
     this.currentResource?.metadata.track.onSkip()
 
-    this.processQueue(true)
+    await this.processQueue(true)
   }
 
   public shuffle(): void {
@@ -154,46 +149,68 @@ export class MusicPlayer {
     return this.queue.queuedTrackCount + (this.isPlaying ? 1 : 0)
   }
 
-  private processQueue(force = false): void {
-    this.log.debug(`processing queue${force ? ' - forcing next' : ''}`)
+  private async processQueue(force = false): Promise<void> {
+    this.log.verbose(`processing queue${force ? ' - forcing next' : ''}`)
     if (
-      (!force &&
-        (this.queueLock ||
-          this.audioPlayer.state.status !== AudioPlayerStatus.Idle)) ||
-      this.queue.queuedTrackCount === 0
+      !force &&
+      (this.queueLock ||
+        this.audioPlayer.state.status !== AudioPlayerStatus.Idle)
+      // ||      this.queue.queuedTrackCount === 0
     ) {
-      this.log.debug(`skipping processing due to state`)
+      this.log.verbose(
+        `skipping processing due to state; force=${force}; queueLock=${
+          this.queueLock
+        }; status=${
+          this.audioPlayer.state.status !== AudioPlayerStatus.Idle
+        }; queuedTrackCount=${this.queue.queuedTrackCount === 0};`
+      )
+
+      // if (this.queue.queuedTrackCount === 0) {
+      //   this.currentResource = undefined
+      // }
       return
     }
 
     this.queueLock = true
 
-    /* eslint-disable-next-line @typescript-eslint/no-non-null-assertion */
-    const nextTrack = this.queue.pop()!
+    const nextTrack = this.queue.pop()
 
-    this.log.info(`playing ${nextTrack.listing.shortName}`)
+    // this.log.info(`playing ${nextTrack.listing.shortName}`)
 
-    const next = nextTrack.toAudioResource()
-    this.currentResource = next as GolemTrackAudioResource
-    this.currentResource.volume?.setVolume(0.35)
-    this.audioPlayer.play(this.currentResource)
-    Golem.setPresence(nextTrack.listing)
+    // Be careful in case the skip is forced and the last run
+    if (nextTrack) {
+      try {
+        const next = await nextTrack.toAudioResource()
+        this.log.debug(`audio resouce generated`)
+        this.currentResource = next
+        this.currentResource.volume?.setVolume(0.35)
+        this.audioPlayer.play(this.currentResource)
+        Golem.setPresence(nextTrack.metadata)
 
-    Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
+        Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
+      } catch (error) {
+        console.error(error)
+        this.log.error(`error processing queue ${error}`)
+        this.skip()
+      }
+    } else {
+      this.stop()
+      Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
+    }
 
     this.queueLock = false
   }
 
-  private playerStateHandler(
+  private async playerStateHandler(
     oldState: AudioPlayerState,
     newState: AudioPlayerState
-  ): void {
+  ): Promise<void> {
     if (
       newState.status === AudioPlayerStatus.Idle &&
       oldState.status !== AudioPlayerStatus.Idle
     ) {
-      this.log.debug(`entering Idle state - processing queue`)
-      void this.processQueue()
+      this.log.verbose(`entering Idle state - processing queue`)
+      void (await this.processQueue())
     } else if (
       newState.status === AudioPlayerStatus.Playing &&
       oldState.status === AudioPlayerStatus.Idle
@@ -265,5 +282,11 @@ export class MusicPlayer {
         this.readyLock = false
       }
     }
+  }
+
+  private audioPlayErrorHandler(error: AudioPlayerError): void {
+    console.error(error)
+    this.skip()
+    this.log.error(`audio player error occurred ${error.message}`)
   }
 }

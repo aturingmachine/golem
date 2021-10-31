@@ -3,7 +3,8 @@
     "src/**/*",
   ],
   "exclude": [
-    "src/client/**"
+    "src/client/**",
+    "dist/**"
   ],
   "compilerOptions": {
     "target": "esnext",
@@ -20,10 +21,5 @@
       "jest"
     ],
     "forceConsistentCasingInFileNames": true,
-    "paths": {
-      "~/*": [
-        "./src/*"
-      ]
-    },
   },
 }

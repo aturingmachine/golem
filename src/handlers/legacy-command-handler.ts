@@ -1,24 +1,21 @@
-import { Message, MessageEmbed } from 'discord.js'
+import { Message } from 'discord.js'
 import { RegisteredCommands } from '../commands'
 import { CommandNames } from '../constants'
 import { GolemLogger, LogSources } from '../utils/logger'
 
-export async function AliasedCommand(msg: Message): Promise<boolean> {
-  const command = msg.content.split(' ').slice(0, 1).join(' ')
-  const args = msg.content.split(' ').slice(1).join(' ')
+export async function AliasedCommand(
+  msg: Message,
+  content: string
+): Promise<boolean> {
+  const command = content.split(' ').slice(0, 1).join(' ')
+  const args = content.split(' ').slice(1).join(' ')
 
   switch (command) {
     case '$play':
-      await RegisteredCommands.goPlay.execute(
-        msg,
-        msg.content.split(' ').slice(1).join(' ')
-      )
+      await RegisteredCommands.goPlay.execute(msg, args)
       break
     case '$playnext':
-      await RegisteredCommands.goPlayNext.execute(
-        msg,
-        msg.content.split(' ').slice(1).join(' ')
-      )
+      await RegisteredCommands.goPlayNext.execute(msg, args)
       break
     case '$np':
     case '$nowplaying':
@@ -40,29 +37,42 @@ export async function AliasedCommand(msg: Message): Promise<boolean> {
 }
 
 export class LegacyCommandHandler {
-  static async parseMessage(msg: Message): Promise<void> {
+  static async parseMessage(
+    msg: Message,
+    overrideContent?: string
+  ): Promise<void> {
     // Early exit on an aliased command
-    if (!msg.content.startsWith('$go ') && msg.content.startsWith('$')) {
-      const hasRun = await AliasedCommand(msg)
+
+    const content = overrideContent || msg.content
+
+    if (!content.startsWith('$go ') && content.startsWith('$')) {
+      const hasRun = await AliasedCommand(msg, content)
       if (hasRun) {
         return
       }
     }
 
     // Handle a $go style command
-    const subcommand = msg.content.split(' ')[1]
+    const subcommand = content.split(' ')[1]
 
     if (!subcommand) {
       return
     }
 
-    const args = msg.content.split(' ').slice(2).join(' ')
+    const args = content.split(' ').slice(2).join(' ')
 
-    GolemLogger.info(`subcommand=${subcommand}, args="${args}"`, {
+    GolemLogger.verbose(`subcommand=${subcommand}, args="${args}"`, {
       src: LogSources.LegacyHandler,
     })
 
     await LegacyCommandHandler.executeCommand(subcommand, args, msg)
+  }
+
+  static async executeCustomAlias(
+    msg: Message,
+    fullCommand: string
+  ): Promise<void> {
+    await LegacyCommandHandler.parseMessage(msg, fullCommand)
   }
 
   static async executeCommand(
@@ -72,7 +82,7 @@ export class LegacyCommandHandler {
   ): Promise<void> {
     switch (subcommand) {
       case CommandNames.help:
-        await msg.reply({ embeds: [LegacyCommandHandler.helpMsg] })
+        await msg.reply(LegacyCommandHandler.helpMessage())
         break
       case CommandNames.play:
         await RegisteredCommands.goPlay.execute(msg, args)
@@ -115,69 +125,20 @@ export class LegacyCommandHandler {
           args.split(' ').slice(0, 1).join(''),
           args.split(' ').slice(1).join(' ')
         )
+        break
+      case CommandNames.alias:
+        await RegisteredCommands.goAlias.execute(msg, args)
+        break
       default:
         break
     }
   }
 
-  private static get helpMsg(): MessageEmbed {
-    return new MessageEmbed()
-      .setColor('#f900d5')
-      .setTitle('Golem - Help')
-      .setDescription('`$go <command>`')
-      .addFields(
-        {
-          name: 'get [stat]',
-          value: `\`time\`: estimated queue time
-       \`count\`: current queue count
-       \`np | nowplaying\`: current playing track
-       \`tcount\`: library size
-       \`playlist[s]\`: list all playlists
-       returns all stats if invoked with no parameters`,
-          inline: true,
-        },
-        {
-          name: 'play [query]',
-          value:
-            'search for [query] and play top hit or look for further input\n no [query] will resume playback of a paused track',
-          inline: true,
-        },
-        {
-          name: 'pause',
-          value: 'pause the currently playing track',
-          inline: true,
-        },
-        {
-          name: 'stop',
-          value: 'stop playback and clear the queue',
-          inline: true,
-        },
-        {
-          name: 'skip [count]',
-          value: 'skip the current track, or [count] tracks',
-          inline: true,
-        },
-        {
-          name: 'peek',
-          value: 'see the next 5 queued tracks',
-          inline: true,
-        },
-        {
-          name: 'search -c [count]',
-          value: 'search for up [count] tracks, max 10, default 5',
-          inline: true,
-        },
-        {
-          name: 'playlist[s] [playlist-name]',
-          value: 'queue playlist [playlist-name] or choose from a menu',
-          inline: true,
-        },
-        {
-          name: 'shuffle',
-          value: 'shuffle the queue',
-          inline: true,
-        }
-      )
-      .setFooter('Some commands also available via /go<command>')
+  private static helpMessage(): string {
+    return Object.values(RegisteredCommands)
+      .reduce((prev, curr) => {
+        return prev.concat(curr.toString())
+      }, '```')
+      .concat('```')
   }
 }

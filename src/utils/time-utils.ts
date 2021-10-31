@@ -1,3 +1,5 @@
+import { promisify } from 'util'
+
 export const humanReadableTime = (totalSeconds: number): string => {
   if (!totalSeconds) {
     return 'Now'
@@ -30,3 +32,5 @@ export const humanReadableDuration = (totalSeconds: number): string => {
     .toFixed(0)
     .padStart(2, '0')}`
 }
+
+export const wait = promisify(setTimeout)

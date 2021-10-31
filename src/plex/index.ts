@@ -90,10 +90,6 @@ export const Plex: Plex = {
     })
     EzProgressBar.stop()
 
-    // console.log(this.playlists[0].listings[0])
-
-    // process.exit(0)
-
     log.info('Playlists Mapped')
   },
 

@@ -1,7 +1,8 @@
 import mongoose from 'mongoose'
 import { GolemConf } from '../utils/config'
 
-export const establishConnection = async (): Promise<typeof mongoose> => {
-  const connection = await mongoose.connect(GolemConf.mongo.uri)
-  return connection
+export const establishConnection = (): Promise<typeof mongoose> => {
+  return mongoose.connect(GolemConf.mongo.uri, {
+    connectTimeoutMS: 5000,
+  })
 }

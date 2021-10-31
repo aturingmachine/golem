@@ -1,6 +1,7 @@
 import fuzzy from 'fuzzy'
 import { Listing } from '../models/listing'
-import { GolemLogger } from '../utils/logger'
+import { GolemConf } from '../utils/config'
+import { GolemLogger, LogSources } from '../utils/logger'
 
 const extractors = {
   // full name
@@ -34,7 +35,7 @@ const extractors = {
 }
 
 export class SearchSchemes {
-  private static log = GolemLogger.child({ src: 'search-schemes' })
+  private static log = GolemLogger.child({ src: LogSources.SearchSchemes })
 
   static byTitle(
     query: string,
@@ -71,7 +72,7 @@ export class SearchSchemes {
     let result = fuzzy.filter(query, tracks, extractors.artist)
 
     if (result.length === 0 || result[0].score < 1000) {
-      this.log.debug(
+      this.log.verbose(
         `artist ${
           result.length ? 'scores: ' + result[0].score : 'miss'
         }; using titleSearch`
@@ -80,7 +81,7 @@ export class SearchSchemes {
     }
 
     if (result.length === 0 || result[0].score < 50) {
-      this.log.debug(
+      this.log.verbose(
         `titleSearch ${
           result.length ? 'scores: ' + result[0].score : 'miss'
         }; using shortNameSearch`
@@ -89,7 +90,7 @@ export class SearchSchemes {
     }
 
     if (result.length === 0 || result[0].score < 50) {
-      this.log.debug(
+      this.log.verbose(
         `shortNameSearch ${
           result.length ? 'scores: ' + result[0].score : 'miss'
         }; using baseSearch`
@@ -97,7 +98,7 @@ export class SearchSchemes {
       result = fuzzy.filter(query, tracks, extractors.base)
     }
 
-    return result
+    return result[0]?.score > GolemConf.search.minimumScore ? result : []
   }
 
   static composite(

@@ -21,7 +21,7 @@ export const startApi = (): void => {
 
   app.use('/api/player', playerRouter)
 
-  log.debug(`Attempting to run on port ${GolemConf.web.apiPort}`)
+  log.verbose(`Attempting to run on port ${GolemConf.web.apiPort}`)
 
   const server = app.listen(GolemConf.web.apiPort)
   log.info('server mounted')

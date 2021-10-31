@@ -2,7 +2,9 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command } from '../models/commands'
+import { Command, CommandHelp } from '../models/commands'
+import { GolemModule } from '../models/config'
+import { LocalTrack } from '../models/track'
 import { Plex } from '../plex'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPlaylistEmbed } from '../utils/message-utils'
@@ -24,7 +26,7 @@ const execute = async (
   interaction: CommandInteraction | Message,
   playlist?: string
 ): Promise<void> => {
-  log.debug('invoked')
+  log.verbose('invoked')
   const player = Golem.getOrCreatePlayer(interaction)
 
   if (!player) {
@@ -39,19 +41,22 @@ const execute = async (
     listName = interaction.options.getString('playlist') || ''
   }
 
-  log.debug(`invoked with ${playlist}`)
+  log.verbose(`invoked with ${playlist}`)
 
   if (listName.length) {
-    log.debug(`Attempting to find playlist`)
+    log.verbose(`Attempting to find playlist`)
     const list = Plex.playlists.find((list) =>
       list.name.toLowerCase().includes(listName.toLowerCase())
     )
 
     if (list) {
-      log.debug(`Enqueuing List ${list.name}`)
-      player.enqueueMany(
+      log.verbose(`Enqueuing List ${list.name}`)
+      await player.enqueueMany(
         interaction.member?.user.id || '',
-        Golem.trackFinder.findListingsByIds(list.listings)
+        LocalTrack.fromListings(
+          Golem.trackFinder.findListingsByIds(list.listings),
+          interaction.member?.user.id || ''
+        )
       )
       await interaction.reply(
         `${Replier.affirmative}, I'll queue up ${list.name}`
@@ -64,6 +69,26 @@ const execute = async (
   }
 }
 
-const goPlaylistCommand = new Command(LogSources.GoPlayList, data, execute)
+const helpInfo: CommandHelp = {
+  name: 'playlist',
+  msg: 'Play a playlist sourced from a Plex server.',
+  args: [
+    {
+      name: 'playlist',
+      type: 'string',
+      required: false,
+      description: 'The playlist to play.',
+      default: 'Returns a select of all playlists.',
+    },
+  ],
+}
+
+const goPlaylistCommand = new Command({
+  source: LogSources.GoPlayList,
+  data,
+  handler: execute,
+  helpInfo,
+  requiredModules: [GolemModule.Plex],
+})
 
 export default goPlaylistCommand

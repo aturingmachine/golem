@@ -7,10 +7,27 @@ import { SearchSchemes } from './search-schemes'
 
 const log = GolemLogger.child({ src: LogSources.Search })
 
+export enum ResultType {
+  Wide = 'wide',
+  Artist = 'artist',
+  Track = 'track',
+}
+
 export interface SearchResult {
   listing: Listing
-  isArtistQuery: boolean
-  isWideMatch: boolean
+  type: ResultType
+}
+
+export class SearchResult {
+  constructor(public listing: Listing, public type: ResultType) {}
+
+  get isArtistQuery(): boolean {
+    return this.type === ResultType.Artist
+  }
+
+  get isWideQuery(): boolean {
+    return this.type === ResultType.Wide
+  }
 }
 
 export class TrackFinder {
@@ -33,28 +50,30 @@ export class TrackFinder {
 
   search(query: string): SearchResult | undefined {
     log.info(`searching for ${query}`)
-    log.debug(`using titleSearch`)
+    log.verbose(`using titleSearch`)
 
     const result = SearchSchemes.cascading(query, this.listings)
 
     const isArtistQuery = this.isArtistQuery(query, result)
     const isWideMatch = this.isWideMatch(result)
 
-    log.debug(`${query}: ${result.length} Matches`)
+    log.verbose(`${query}: ${result.length} Matches`)
 
     if (result.length) {
-      log.debug(
+      log.verbose(
         `Pre-weighting\nResult=${result[0].string};\nArtistQuery=${isArtistQuery};\nWideMatch=${isWideMatch}`
       )
 
       const final = this.weightResult(result).original
       const hasBeenWeighted = final.path !== result[0].original.path
 
-      return {
-        listing: final,
-        isArtistQuery,
-        isWideMatch: isWideMatch && !hasBeenWeighted,
-      }
+      return new SearchResult(
+        final,
+        TrackFinder.getResultType(
+          isArtistQuery,
+          isWideMatch && !hasBeenWeighted
+        )
+      )
     }
 
     log.warn(`No Results found for ${query}`)
@@ -78,9 +97,6 @@ export class TrackFinder {
     const availableSimilarArtists = similarMatches.filter((similar) =>
       this.artistNames.includes(similar.name.toLowerCase())
     )
-
-    console.log(`${availableSimilarArtists.length} available similar artists`)
-    console.log(availableSimilarArtists.map((x) => x.name).join('\n'))
 
     return shuffleArray(availableSimilarArtists)
       .slice(0, takeArtists)
@@ -172,7 +188,7 @@ export class TrackFinder {
   private weightResult(
     resultSet: fuzzy.FilterResult<Listing>[]
   ): fuzzy.FilterResult<Listing> {
-    log.debug(
+    log.verbose(
       `\n${resultSet
         .slice(0, 15)
         .map((r) => `${r.original.title} scored ${r.score}`)
@@ -180,10 +196,10 @@ export class TrackFinder {
     )
     let pref = resultSet[0]
     const startingScore = pref.score
-    log.debug(`Post-Weight: Starting with ${pref.original.longName}`)
+    log.verbose(`Post-Weight: Starting with ${pref.original.longName}`)
 
     if (this.isLiveOrInst(pref)) {
-      log.debug(`Post-Weight: Pref flagged, searching for alternatives`)
+      log.verbose(`Post-Weight: Pref flagged, searching for alternatives`)
       pref =
         resultSet
           .slice(0, 10)
@@ -191,13 +207,13 @@ export class TrackFinder {
           .find((result) => !this.isLiveOrInst(result)) || pref
     }
 
-    log.debug(`Returning ${pref.original.title}`)
+    log.verbose(`Returning ${pref.original.title}`)
 
     return pref
   }
 
   private isLiveOrInst(result: fuzzy.FilterResult<Listing>): boolean {
-    log.debug(
+    log.verbose(
       `Checking force weighting for ${result.original.title.toLowerCase()}`
     )
 
@@ -211,5 +227,19 @@ export class TrackFinder {
       'english',
       'remix',
     ].some((s) => result.original.title.toLowerCase().includes(s))
+  }
+
+  private static getResultType(
+    isArtistQuery: boolean,
+    isWide: boolean
+  ): ResultType {
+    if (isArtistQuery) {
+      return ResultType.Artist
+    }
+    if (isWide) {
+      return ResultType.Wide
+    }
+
+    return ResultType.Track
   }
 }

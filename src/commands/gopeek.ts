@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command } from '../models/commands'
+import { Command, CommandHelp } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPeekEmbed } from '../utils/message-utils'
 
@@ -15,7 +15,7 @@ const data = new SlashCommandBuilder()
 const execute = async (
   interaction: CommandInteraction | Message
 ): Promise<void> => {
-  log.debug('Executing')
+  log.verbose('Executing')
   const player = Golem.getPlayer(interaction)
 
   if (!player) {
@@ -29,6 +29,17 @@ const execute = async (
   await interaction.reply({ embeds: [embed] })
 }
 
-const goPeekCommand = new Command(LogSources.GoPeek, data, execute)
+const helpInfo: CommandHelp = {
+  name: 'peek',
+  msg: 'View the top of the play queue.',
+  args: [],
+}
+
+const goPeekCommand = new Command({
+  source: LogSources.GoPeek,
+  data,
+  handler: execute,
+  helpInfo,
+})
 
 export default goPeekCommand

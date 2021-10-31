@@ -11,10 +11,16 @@ import {
 
 export class LastFm {
   private static log = GolemLogger.child({ src: LogSources.LastFm })
-  // http://ws.audioscrobbler.com/2.0/?method=artist.getsimilar&artist=cher&api_key=YOUR_API_KEY&format=json
   private static http: AxiosInstance
 
   static init(): void {
+    if (!GolemConf.modules.LastFm) {
+      this.log.warn(
+        `Cannot init LastFM, missing required module: ${GolemConf.modules.LastFm}`
+      )
+      return
+    }
+
     LastFm.http = axios.create({
       baseURL: 'http://ws.audioscrobbler.com/2.0',
       params: {
@@ -27,11 +33,10 @@ export class LastFm {
   static async getSimilarArtists(
     listing: Listing
   ): Promise<SimilarArtistMatch[]> {
-    console.log('SENDING PARAMS', {
-      method: 'artist.getsimilar',
-      artist: listing.artist,
-      mbid: listing.mb.artistId,
-    })
+    LastFm.log.info(
+      `fetching similar tracks for ${listing.artist} - ${listing.title} by ARTIST`
+    )
+
     const response = await LastFm.http.get<SimilarArtistMatchRecord>('', {
       params: {
         method: 'artist.getsimilar',
@@ -49,7 +54,7 @@ export class LastFm {
     listing: Listing
   ): Promise<SimilarTrackMatch[]> {
     LastFm.log.info(
-      `fetching similar tracks for ${listing.artist} - ${listing.title}`
+      `fetching similar tracks for ${listing.artist} - ${listing.title} by TRACK`
     )
     const response = await LastFm.http.get<SimilarTrackMatchRecord>('', {
       params: {

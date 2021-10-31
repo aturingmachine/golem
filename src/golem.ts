@@ -6,7 +6,7 @@ import winston from 'winston'
 import { establishConnection } from './db'
 import { LastFm } from './lastfm'
 import { EventHandler } from './models/event-handler'
-import { Listing } from './models/listing'
+import { TrackListingInfo } from './models/listing'
 import { MusicPlayer } from './player/music-player'
 import { TrackFinder } from './player/track-finder'
 import { TrackLoader } from './player/track-loaders'
@@ -54,23 +54,15 @@ export class Golem {
     Golem.loadEventHandlers()
     Golem.log.info('Event Handlers loaded')
 
-    Golem.log.info('connecting to database')
-    await establishConnection()
-    Golem.log.info('connected to database')
+    await Golem.connectToMongo()
 
     await Golem.loader.load()
 
-    Golem.log.debug(`Loaded ${Golem.loader.listings.length} listings`)
+    Golem.log.verbose(`Loaded ${Golem.loader.listings.length} listings`)
 
     Golem.trackFinder = new TrackFinder(Golem.loader.listings)
 
-    try {
-      await Plex.init(Golem.trackFinder)
-    } catch (error: any) {
-      Golem.log.error('plex connection failed')
-      Golem.log.error(error)
-      console.error(error.stack)
-    }
+    await Golem.connectToPlex()
 
     LastFm.init()
   }
@@ -83,7 +75,7 @@ export class Golem {
     const voiceChannel = member?.voice.channel
 
     Golem.log.debug(
-      `getting player guild=${guild?.name}, member=${member?.user.username}, voiceChannel=${voiceChannel?.id}`
+      `getting player guild=${guild?.name}; member=${member?.user.username}; voiceChannel=${voiceChannel?.id}`
     )
 
     if (!interaction.guild || !interaction.guildId) {
@@ -94,7 +86,7 @@ export class Golem {
     const guildId = interaction.guildId
 
     if (!Golem.players.has(guildId)) {
-      this.log.debug(`no player for ${guildId} - creating new`)
+      this.log.verbose(`no player for ${guildId} - creating new`)
       Golem.players.set(
         guildId,
         new MusicPlayer(
@@ -116,7 +108,7 @@ export class Golem {
     searchVal: string | Message | Interaction
   ): MusicPlayer | undefined {
     if (typeof searchVal === 'string') {
-      this.log.debug(`string get player for: "${searchVal}"`)
+      this.log.silly(`string get player for: "${searchVal}"`)
       return Golem.players.get(searchVal.trim())
     }
 
@@ -124,7 +116,7 @@ export class Golem {
       return undefined
     }
 
-    this.log.debug(`interaction get player for: ${searchVal.guild.id}`)
+    this.log.verbose(`interaction get player for: ${searchVal.guild.id}`)
     return Golem.players.get(searchVal.guild.id)
   }
 
@@ -138,7 +130,7 @@ export class Golem {
   }
 
   static disconnectAll(): void {
-    this.log.info('Disconnection players')
+    this.log.info('Disconnecting all players')
     Golem.players.forEach((player) => {
       player.disconnect()
     })
@@ -160,7 +152,7 @@ export class Golem {
     event: 'connection' | 'queue' | 'all',
     channelId: string
   ): Promise<void> {
-    Golem.log.debug(`triggering ${event} handlers with channelId ${channelId}`)
+    Golem.log.silly(`triggering ${event} handlers with channelId ${channelId}`)
     if (event === 'all') {
       Object.values(Golem.voiceConnectionEventHandlers['queue']).forEach((fn) =>
         fn(channelId)
@@ -175,8 +167,9 @@ export class Golem {
     }
   }
 
-  static setPresence(listing: Listing): void {
-    Golem.client.user?.setActivity(`${listing.artist} - ${listing.title}`, {
+  static setPresence(listing: TrackListingInfo): void {
+    Golem.client.user?.setActivity({
+      name: `${listing.artist} - ${listing.title}`,
       type: 'LISTENING',
     })
   }
@@ -192,7 +185,6 @@ export class Golem {
       Golem.log.debug(`Attempting to load Event Handler: ${file}`)
       /* eslint-disable-next-line @typescript-eslint/no-var-requires */
       const event: EventHandler<any> = require(`./events/${file}`).default
-      EzProgressBar.add(1 / eventFiles.length, event.on)
       Golem.log.debug(`Event Handler Loaded: ${event.on}`)
       if (event.once) {
         Golem.client.once(
@@ -205,9 +197,33 @@ export class Golem {
           async (...args) => await event.execute(...args)
         )
       }
+
       Golem.log.debug(`Event Handler Registered: ${event.on}`)
+      EzProgressBar.add(1 / eventFiles.length, event.on)
     }
 
+    EzProgressBar.add(1 / eventFiles.length)
     EzProgressBar.stop()
+  }
+
+  private static async connectToMongo(): Promise<void> {
+    Golem.log.info('connecting to database')
+    try {
+      await establishConnection()
+      Golem.log.info('connected to database')
+    } catch (error) {
+      Golem.log.error(`could not connect to database ${error}`)
+      console.error(error)
+    }
+  }
+
+  private static async connectToPlex(): Promise<void> {
+    try {
+      await Plex.init(Golem.trackFinder)
+    } catch (error: any) {
+      Golem.log.error('plex connection failed')
+      Golem.log.error(error)
+      console.error(error.stack)
+    }
   }
 }

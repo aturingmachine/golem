@@ -1,8 +1,9 @@
 import { SelectMenuInteraction } from 'discord.js'
 import { Golem } from '../golem'
+import { LocalTrack } from '../models/track'
 import { Plex } from '../plex'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { GetPlaylistEmbed } from '../utils/message-utils'
+import { GetPlaylistEmbed, userFrom } from '../utils/message-utils'
 import { Replier } from '../utils/replies'
 import { ButtonIdPrefixes } from './button-handler'
 
@@ -40,9 +41,12 @@ export const playlistMenuHandler = async (
     if (playlist) {
       const listings = Golem.trackFinder.findListingsByIds(playlist?.listings)
 
-      log.debug('Playlist Menu Handler: starting Player.')
+      log.verbose('Playlist Menu Handler: starting Player.')
 
-      player.enqueueMany(interaction.member?.user.id || '', listings)
+      await player.enqueueMany(
+        userFrom(interaction),
+        LocalTrack.fromListings(listings, userFrom(interaction))
+      )
 
       await interaction.reply({
         content: `${Replier.affirmative}, I'll queue up the playlist **${listName}**`,

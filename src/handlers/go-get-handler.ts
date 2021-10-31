@@ -2,7 +2,7 @@ import { MessageOptions } from 'discord.js'
 import { Golem } from '../golem'
 import { MusicPlayer } from '../player/music-player'
 import { Plex } from '../plex'
-import { GolemLogger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
 
 export interface GetOptions {
@@ -14,8 +14,8 @@ const noPlayerMsg = 'Unable to find player.'
 
 export class GoGet {
   static async it(opts: Partial<GetOptions>): Promise<MessageOptions> {
-    GolemLogger.debug(`Go Getting With ${opts.value} ${opts.guildId}`, {
-      src: 'goget-handler',
+    GolemLogger.verbose(`Go Getting With ${opts.value} ${opts.guildId}`, {
+      src: LogSources.GoGetHandler,
     })
     switch (opts.value?.toLowerCase()) {
       case 'time':
@@ -50,20 +50,22 @@ export class GoGet {
   }
 
   static async npResponse(player?: MusicPlayer): Promise<MessageOptions> {
-    if (player && player.currentResource) {
+    if (player && player.currentResource && player.nowPlaying) {
       const assets = await GetEmbedFromListing(
-        player.currentResource?.metadata.track.listing,
+        player.nowPlaying,
         player,
         'playing'
       )
 
       return {
         embeds: [assets.embed],
-        files: [assets.image],
+        files: assets.image ? [assets.image] : [],
       }
     } else {
       return {
-        content: `\n**Now Playing**: ${player?.nowPlaying || noPlayerMsg}`,
+        content: `\n**Now Playing**: ${
+          player?.nowPlaying || 'No track currently playing.'
+        }`,
       }
     }
   }

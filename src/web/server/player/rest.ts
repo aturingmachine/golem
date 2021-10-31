@@ -1,7 +1,6 @@
 import { Snowflake } from 'discord-api-types'
 import express from 'express'
 import { Golem } from '../../../golem'
-import { Listing } from '../../../models/listing'
 import { resize } from '../../../utils/image-utils'
 
 const router = express.Router()
@@ -34,14 +33,16 @@ router.get('/:serverId/nowplaying', async (req, res) => {
     return
   }
 
-  const playing: Listing = player.currentResource.metadata.track.listing
+  const playing = player.nowPlaying
 
-  res.json({
-    nowPlaying: {
-      ...playing,
-      albumArt: (await resize(playing.albumArt)).toString('base64'),
-    },
-  })
+  // res.json({
+  //   nowPlaying: {
+  //     ...playing,
+  //     albumArt: playing
+  //       ? (await resize(playing.albumArt)).toString('base64')
+  //       : '',
+  //   },
+  // })
 })
 
 /**
@@ -60,8 +61,8 @@ router.get('/:serverId/queue', (req, res) => {
 
   res.json({
     queue: queue.map((t) => ({
-      ...t.listing,
-      albumArt: t.listing.albumArt?.toString('base64'),
+      ...t.metadata,
+      albumArt: t.metadata.albumArt?.toString('base64'),
     })),
   })
 })

@@ -2,7 +2,7 @@ import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command } from '../models/commands'
+import { Command, CommandHelp } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
 
@@ -39,26 +39,51 @@ const execute = async (
   }
 
   for (let i = 0; i < skipCount; i++) {
-    log.debug('Attempting to skip')
+    log.verbose('Attempting to skip')
     if (player.nowPlaying && player.currentResource) {
-      player.skip()
-      const assets = await GetEmbedFromListing(
-        player.currentResource.metadata.track.listing,
-        player,
-        'playing'
-      )
+      await player.skip()
+      if (player.currentResource) {
+        const assets = await GetEmbedFromListing(
+          player.nowPlaying,
+          player,
+          'playing'
+        )
 
-      await interaction.reply({
-        content: 'Skipped!',
-        embeds: [assets.embed],
-        files: [assets.image],
-      })
+        await interaction.reply({
+          content: 'Skipped!',
+          embeds: [assets.embed],
+          files: assets.image ? [assets.image] : [],
+        })
+      } else {
+        await interaction.reply({
+          content: 'Skipped! Queue empty.',
+        })
+      }
     } else {
       await interaction.reply('No track to skip')
     }
   }
 }
 
-const goSkipCommand = new Command(LogSources.GoSkip, data, execute)
+const helpInfo: CommandHelp = {
+  name: 'skip',
+  msg: 'Skip a number of tracks.',
+  args: [
+    {
+      name: 'count',
+      type: 'number',
+      required: false,
+      description: 'The number of tracks to skip.',
+      default: '1',
+    },
+  ],
+}
+
+const goSkipCommand = new Command({
+  source: LogSources.GoSkip,
+  data,
+  handler: execute,
+  helpInfo,
+})
 
 export default goSkipCommand

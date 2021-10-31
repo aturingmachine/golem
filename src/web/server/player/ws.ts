@@ -102,32 +102,29 @@ export class PlayerWebSocket {
   }
 
   private async updateNowPlaying(): Promise<void> {
-    if (this.player?.nowPlaying) {
-      let data
-      const np = this.player.nowPlaying
-      const currentTime = this.player.currentTrackRemaining
-
-      if (this.nowPlaying?.trackId !== np.trackId) {
-        this.nowPlaying = np
-        this.b64Art = (await resize(np.albumArt, 300)).toString('base64')
-
-        data = {
-          nowPlaying: { ...np, albumArt: this.b64Art },
-          currentTime,
-        }
-      } else {
-        data = {
-          currentTime: this.player.currentTrackRemaining,
-        }
-      }
-
-      try {
-        this.socket.send(JSON.stringify(data))
-      } catch (error) {
-        console.error(error)
-        console.error('SOCKET SEND FAILED!')
-      }
-    }
+    // if (this.player?.nowPlaying) {
+    //   let data
+    //   const np = this.player.nowPlaying
+    //   const currentTime = this.player.currentTrackRemaining
+    //   if (this.nowPlaying?.trackId !== np.trackId) {
+    //     this.nowPlaying = np
+    //     this.b64Art = (await resize(np.albumArt, 300)).toString('base64')
+    //     data = {
+    //       nowPlaying: { ...np, albumArt: this.b64Art },
+    //       currentTime,
+    //     }
+    //   } else {
+    //     data = {
+    //       currentTime: this.player.currentTrackRemaining,
+    //     }
+    //   }
+    //   try {
+    //     this.socket.send(JSON.stringify(data))
+    //   } catch (error) {
+    //     console.error(error)
+    //     console.error('SOCKET SEND FAILED!')
+    //   }
+    // }
   }
 }
 
@@ -171,17 +168,14 @@ export class QueueWebSocket {
     if (queue) {
       const data = []
       for (const item of queue) {
-        if (!this.imageCache[item.listing.album]) {
-          const art = (await resize(item.listing.albumArt, 100)).toString(
-            'base64'
-          )
-
-          this.imageCache[item.listing.album] = art
+        if (!this.imageCache[item.metadata.album]) {
+          // const art = (await resize(item.meta.albumArt, 100)).toString('base64')
+          // this.imageCache[item.meta.album] = art
         }
 
         data.push({
-          ...item.listing,
-          albumArt: this.imageCache[item.listing.album],
+          ...item.metadata,
+          albumArt: this.imageCache[item.metadata.album],
         })
       }
       // const data = {
