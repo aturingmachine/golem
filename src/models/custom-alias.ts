@@ -1,23 +1,187 @@
 import { Message } from 'discord.js'
 import { RegisteredCommands } from '../commands'
 import { LegacyCommandHandler } from '../handlers/legacy-command-handler'
+import { shuffleArray } from '../utils/list-utils'
+import { GolemLogger } from '../utils/logger'
+import { ParsedMessage } from '../utils/message-args'
 import { CustomAliasData } from './db/custom-alias'
 
+export enum AliasFunctionType {
+  Random = ':random',
+  RandomNumber = ':randomNum',
+}
+
+export abstract class AliasFunction {
+  public abstract type: AliasFunctionType
+
+  constructor(public evalString: string) {}
+
+  abstract run(): string
+
+  static fromString(raw: string): AliasFunction[] {
+    const fns: AliasFunction[] = []
+
+    if (!!raw.match(RandomAliasFunction.signature)) {
+      fns.push(...RandomAliasFunction.parseMatches(raw, []))
+    }
+
+    if (!!raw.match(RandomIntFunction.signature)) {
+      fns.push(...RandomIntFunction.parseMatches(raw, []))
+    }
+
+    return fns
+  }
+}
+
+export class RandomAliasFunction extends AliasFunction {
+  private options: string[]
+
+  private static startKey = ':random['
+  private static endKey = ']'
+
+  public static signature = /:random\[.+\]/
+
+  public type: AliasFunctionType = AliasFunctionType.Random
+
+  constructor(evalString: string) {
+    super(evalString)
+
+    this.options = evalString
+      .slice(evalString.indexOf('[') + 1, evalString.indexOf(']'))
+      .split(';')
+
+    if (this.options.length === 0) {
+      throw new Error('Cannot use :random with no options')
+    }
+  }
+
+  run(): string {
+    return shuffleArray(this.options).pop() || ''
+  }
+
+  static parseMatches(
+    str: string,
+    results: RandomAliasFunction[]
+  ): RandomAliasFunction[] {
+    const firstIndex = str.indexOf(RandomAliasFunction.startKey)
+
+    if (firstIndex < 0) {
+      return results
+    }
+
+    const slice1 = str.slice(
+      firstIndex,
+      str.indexOf(RandomAliasFunction.endKey) + 1
+    )
+    console.log('parseFn - ', str, ' - slice1', slice1)
+
+    results.push(new RandomAliasFunction(slice1))
+
+    return this.parseMatches(str.replace(slice1, ''), results)
+  }
+}
+
+export class RandomIntFunction extends AliasFunction {
+  private min: number
+  private max: number
+
+  private static startKey = ':randomNum['
+  private static endKey = ']'
+
+  public static signature = /:randomNum\[(?:\d+-{0,1})+\]+/
+
+  public type: AliasFunctionType = AliasFunctionType.RandomNumber
+
+  constructor(evalString: string) {
+    super(evalString)
+
+    console.log('RANDOM NUM FUNCTION evalString => ', evalString)
+
+    const values = evalString
+      .slice(evalString.indexOf('[') + 1, evalString.indexOf(']'))
+      .split('-')
+
+    console.log(
+      'RANDOM NUM FUNCTION slice => ',
+      evalString.slice(evalString.indexOf('[') + 1, evalString.indexOf(']'))
+    )
+    console.log('RANDOM NUM FUNCTION values => ', values)
+
+    if (values.length !== 2) {
+      throw new Error(
+        'Cannot use :randomNum with no provided numbers formatted start-end'
+      )
+    }
+
+    this.min = parseInt(values[0], 10)
+    this.max = parseInt(values[1], 10)
+  }
+
+  run(): string {
+    return Math.floor(
+      Math.random() * (this.max - this.min + 1) + this.min
+    ).toString()
+  }
+
+  static parseMatches(
+    str: string,
+    results: RandomIntFunction[]
+  ): RandomIntFunction[] {
+    const firstIndex = str.indexOf(RandomIntFunction.startKey)
+
+    if (firstIndex < 0) {
+      console.log('RANDOM NUMBER FUNCTION RETURNING', results)
+      return results
+    }
+
+    console.log(
+      `\n  RandomIntFunction SLICING USING firstIndex=${firstIndex}; str.charAt=${str.charAt(
+        firstIndex
+      )}\n`
+    )
+
+    const slice1 = str.slice(
+      firstIndex,
+      str.indexOf(RandomIntFunction.endKey, firstIndex) + 1
+    )
+    // console.log('parseFn - ', str, ' - slice1', slice1)
+
+    console.log('\n NEW RandomIntFunction USING', slice1, '\n')
+    results.push(new RandomIntFunction(slice1))
+
+    return this.parseMatches(str.replace(slice1, ''), results)
+  }
+}
+
 export class CustomAlias {
+  private static log = GolemLogger.child({ src: 'cutsom-alias' })
+
+  public functions: AliasFunction[] = []
+
   constructor(
     public name: string,
     public command: string,
     public args: string,
     public createdBy: string,
-    public guildId: string
-  ) {}
+    public guildId: string,
+    public description?: string
+  ) {
+    this.functions = AliasFunction.fromString(this.unevaluated)
+  }
 
   // TODO get this to take in args as well or some shit idk
   async run(msg: Message): Promise<void> {
-    await LegacyCommandHandler.executeCustomAlias(msg, this.fullCommand)
+    await LegacyCommandHandler.executeCustomAlias(msg, this.evaluated)
   }
 
-  get fullCommand(): string {
+  get evaluated(): string {
+    console.log(this.functions.map((f) => f.evalString))
+    return this.functions.reduce((prev, curr) => {
+      return prev.replace(curr.evalString, curr.run())
+    }, this.unevaluated)
+  }
+
+  get unevaluated(): string {
     return `${this.command} ${this.args.trimStart()}`.trimStart()
   }
 
@@ -26,7 +190,10 @@ export class CustomAlias {
     guildId: string,
     userId: string
   ): Promise<CustomAlias> {
-    const parts = aliasCommand.split('=>')
+    const parsed = new ParsedMessage(aliasCommand)
+    const cleanCommand = parsed.content
+
+    const parts = cleanCommand.split('=>')
     const aliasName = parts[0].replaceAll(' ', '')
 
     const fullCommand = parts[1].trim()
@@ -40,24 +207,23 @@ export class CustomAlias {
       throw new Error(`alias name ${aliasName} already registered`)
     }
 
-    return new CustomAlias(aliasName, command, args, userId, guildId)
-  }
+    console.log('>>>>>>>', parsed.args)
 
-  static async isValidName(name: string, guildId: string): Promise<boolean> {
-    const builtInCommands = Object.values(RegisteredCommands)
-    const builtInNames = builtInCommands.map((cmd) => cmd.data.name)
-    const builtInAliases = builtInCommands.map((cmd) => cmd.helpInfo.alias)
-    const customAliases = await CustomAlias.getAliases(guildId)
-
-    return ![
-      ...builtInNames,
-      ...builtInAliases,
-      ...customAliases.map((alias) => alias.name),
-    ].some((cmd) => cmd === name)
+    return new CustomAlias(
+      aliasName,
+      command,
+      args,
+      userId,
+      guildId,
+      parsed.args.desc
+    )
   }
 
   static async getAliases(guildId: string): Promise<CustomAlias[]> {
-    return await CustomAliasData.find({ guildId })
+    CustomAlias.log.silly(`getting aliases for guild=${guildId}`)
+    const aliases = await CustomAliasData.find({ guildId })
+    CustomAlias.log.silly(`found ${aliases.length} custom aliases`)
+    return aliases
   }
 
   static async getAliasFor(
@@ -81,8 +247,25 @@ export class CustomAlias {
           match.command,
           match.args,
           match.createdBy,
-          match.guildId
+          match.guildId,
+          match.description
         )
       : undefined
+  }
+
+  private static async isValidName(
+    name: string,
+    guildId: string
+  ): Promise<boolean> {
+    const builtInCommands = Object.values(RegisteredCommands)
+    const builtInNames = builtInCommands.map((cmd) => cmd.data.name)
+    const builtInAliases = builtInCommands.map((cmd) => cmd.helpInfo.alias)
+    const customAliases = await CustomAlias.getAliases(guildId)
+
+    return ![
+      ...builtInNames,
+      ...builtInAliases,
+      ...customAliases.map((alias) => alias.name),
+    ].some((cmd) => cmd === name)
   }
 }

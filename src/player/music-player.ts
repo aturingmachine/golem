@@ -5,7 +5,10 @@ import {
   AudioPlayerStatus,
   AudioResource,
   createAudioPlayer,
+  CreateVoiceConnectionOptions,
   entersState,
+  joinVoiceChannel,
+  JoinVoiceChannelOptions,
   VoiceConnection,
   VoiceConnectionDisconnectReason,
   VoiceConnectionState,
@@ -24,15 +27,18 @@ type GolemTrackAudioResource = AudioResource & {
 }
 
 export class MusicPlayer {
-  private readonly queue: TrackQueue
+  static readonly autoDCTime = 300000
+  private readonly queue!: TrackQueue
   private readonly log: winston.Logger
-  public currentResource?: GolemTrackAudioResource
+
+  private leaveTimeout!: NodeJS.Timeout
 
   public queueLock = false
   public readyLock = false
+  public voiceConnection!: VoiceConnection
+  public currentResource?: GolemTrackAudioResource
 
-  public readonly voiceConnection: VoiceConnection
-  public readonly audioPlayer: AudioPlayer
+  public readonly audioPlayer!: AudioPlayer
 
   get isPlaying(): boolean {
     return this.audioPlayer.state.status === AudioPlayerStatus.Playing
@@ -57,25 +63,22 @@ export class MusicPlayer {
     }
   }
 
-  public constructor(voiceConnection: VoiceConnection) {
+  public constructor(
+    private options: JoinVoiceChannelOptions & CreateVoiceConnectionOptions
+  ) {
     this.log = GolemLogger.child({ src: LogSources.MusicPlayer })
-    this.voiceConnection = voiceConnection
-    this.audioPlayer = createAudioPlayer()
     this.queue = new TrackQueue()
-
-    this.voiceConnection.on(
-      'stateChange',
-      this.voiceConnectionStateHandler.bind(this)
-    )
+    this.audioPlayer = createAudioPlayer()
 
     this.audioPlayer.on('stateChange', this.playerStateHandler.bind(this))
 
     this.audioPlayer.on('error', this.audioPlayErrorHandler.bind(this))
 
-    this.voiceConnection.subscribe(this.audioPlayer)
+    this.joinVoice()
   }
 
   public async enqueue(track: Track, enqueueAsNext = false): Promise<void> {
+    this.log.silly(`enqueue - VC Status = ${this.voiceConnection.state.status}`)
     this.log.info(`queueing ${track.name}`)
 
     if (enqueueAsNext) {
@@ -108,14 +111,15 @@ export class MusicPlayer {
   }
 
   public stop(): void {
-    this.log.info(`clearing queue`)
+    this.log.info(`stopping player`)
     this.currentResource?.metadata.track.onSkip()
     this.queueLock = true
     this.queue.clear()
     this.currentResource = undefined
-    this.log.info(`force stopping player`)
+    this.log.verbose(`force stopping player`)
     this.audioPlayer.stop(true)
     this.queueLock = false
+    // this.disconnect()
   }
 
   public async skip(): Promise<void> {
@@ -136,21 +140,109 @@ export class MusicPlayer {
   }
 
   public disconnect(): void {
-    this.voiceConnection.destroy()
+    if (
+      ![
+        VoiceConnectionStatus.Destroyed,
+        VoiceConnectionStatus.Disconnected,
+      ].includes(this.voiceConnection.state.status)
+    ) {
+      this.log.debug(`disconnecting voice connection for ${this.channelId}`)
+
+      this.queueLock = false
+      this.voiceConnection.disconnect()
+    }
   }
 
-  public destroy(): void {
-    this.currentResource?.metadata.track.onSkip()
-    Golem.removePlayer(this.voiceConnection.joinConfig.channelId || '')
-    this.voiceConnection.destroy()
+  public async destroy(): Promise<void> {
+    this.log.silly(
+      `attempt destroy voice connection for ${this.channelId} - state=${this.voiceConnection.state.status}`
+    )
+    if (
+      ![
+        VoiceConnectionStatus.Destroyed,
+        VoiceConnectionStatus.Disconnected,
+      ].includes(this.voiceConnection.state.status)
+    ) {
+      this.log.debug(`destroying voice connection for ${this.channelId}`)
+
+      this.queueLock = false
+      this.currentResource?.metadata.track.onSkip()
+      await Golem.removePlayer(this.channelId)
+      this.voiceConnection.destroy()
+    }
   }
 
   public get trackCount(): number {
     return this.queue.queuedTrackCount + (this.isPlaying ? 1 : 0)
   }
 
+  private get channelId(): string {
+    return this.options.channelId
+  }
+
+  public get isDisconnected(): boolean {
+    return (
+      this.voiceConnection.state.status === VoiceConnectionStatus.Disconnected
+    )
+  }
+
+  public get isDestroyed(): boolean {
+    return this.voiceConnection.state.status === VoiceConnectionStatus.Destroyed
+  }
+
+  private joinVoice(): void {
+    this.voiceConnection = joinVoiceChannel(this.options)
+
+    this.voiceConnection.on(
+      'stateChange',
+      this.voiceConnectionStateHandler.bind(this)
+    )
+
+    this.subscribe()
+  }
+
+  private subscribe(): void {
+    this.voiceConnection.subscribe(this.audioPlayer)
+  }
+
+  private async autoDisconnect(): Promise<void> {
+    this.log.info(
+      `auto disconnect triggered for ${
+        this.voiceConnection.joinConfig.channelId || ''
+      }`
+    )
+    await this.destroy()
+
+    this.clearTimer()
+  }
+
+  private startTimer(): void {
+    this.log.debug(`starting auto-dc timer for ${this.channelId}`)
+    this.leaveTimeout = setTimeout(
+      this.autoDisconnect.bind(this),
+      MusicPlayer.autoDCTime
+    )
+  }
+
+  private clearTimer(): void {
+    this.log.debug(`clearing auto-dc timer for ${this.channelId}`)
+    clearTimeout(this.leaveTimeout)
+  }
+
   private async processQueue(force = false): Promise<void> {
     this.log.verbose(`processing queue${force ? ' - forcing next' : ''}`)
+    this.log.silly(
+      `processing queue - VC Status = ${this.voiceConnection.state.status}`
+    )
+
+    if (this.isDestroyed) {
+      this.log.debug(
+        `player destroyed at process attempt for ${this.channelId} - running rejoin and subscribe`
+      )
+      this.joinVoice()
+      // this.subscribe()
+    }
+
     if (
       !force &&
       (this.queueLock ||
@@ -179,6 +271,7 @@ export class MusicPlayer {
 
     // Be careful in case the skip is forced and the last run
     if (nextTrack) {
+      this.log.silly(`process has next track, attempting play`)
       try {
         const next = await nextTrack.toAudioResource()
         this.log.debug(`audio resouce generated`)
@@ -194,6 +287,7 @@ export class MusicPlayer {
         this.skip()
       }
     } else {
+      this.log.silly(`process has no next track, stopping out of caution`)
       this.stop()
       Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
     }
@@ -205,17 +299,43 @@ export class MusicPlayer {
     oldState: AudioPlayerState,
     newState: AudioPlayerState
   ): Promise<void> {
+    this.log.verbose(
+      `player for ${this.channelId} state change ${oldState.status} => ${newState.status}`
+    )
     if (
       newState.status === AudioPlayerStatus.Idle &&
-      oldState.status !== AudioPlayerStatus.Idle
+      oldState.status !== AudioPlayerStatus.Idle &&
+      !this.isDisconnected &&
+      !this.isDestroyed
     ) {
       this.log.verbose(`entering Idle state - processing queue`)
+      // start timer
+      this.startTimer()
       void (await this.processQueue())
+    } else if (newState.status === AudioPlayerStatus.Playing) {
+      if (
+        [
+          AudioPlayerStatus.Idle,
+          AudioPlayerStatus.Paused,
+          AudioPlayerStatus.AutoPaused,
+        ].includes(oldState.status)
+      ) {
+        if (oldState.status === AudioPlayerStatus.Idle) {
+          Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
+        }
+
+        // clear
+        this.clearTimer()
+      }
     } else if (
-      newState.status === AudioPlayerStatus.Playing &&
-      oldState.status === AudioPlayerStatus.Idle
+      [
+        AudioPlayerStatus.Idle,
+        AudioPlayerStatus.Paused,
+        AudioPlayerStatus.AutoPaused,
+      ].includes(newState.status)
     ) {
-      Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
+      // start timer
+      this.startTimer()
     }
   }
 

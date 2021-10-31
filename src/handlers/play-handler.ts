@@ -108,10 +108,15 @@ export class PlayHandler {
       const args = parsedMessage.args
 
       const limit = args.limit ? parseInt(args.limit, 10) : undefined
+      const isShuffle = !!args.shuffle
       const userId = userFrom(interaction)
 
       PlayHandler.log.verbose(`getting playlist`)
-      const playlist = await Youtube.getPlaylist(parsedMessage.content, limit)
+      const playlist = await Youtube.getPlaylist(
+        parsedMessage.content,
+        limit,
+        isShuffle
+      )
 
       PlayHandler.log.verbose(`got playlist`)
 

@@ -5,10 +5,11 @@ import { Command, CommandHelp } from '../models/commands'
 import { CustomAlias } from '../models/custom-alias'
 import { CustomAliasData } from '../models/db/custom-alias'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { ParsedMessage } from '../utils/message-args'
 import { guildIdFrom, userFrom } from '../utils/message-utils'
 import { Replier } from '../utils/replies'
 
-const log = GolemLogger.child({ src: LogSources.GoPlay })
+const log = GolemLogger.child({ src: LogSources.GoAlias })
 
 const data = new SlashCommandBuilder()
   .setName(CommandNames.slash.alias)
@@ -47,15 +48,30 @@ const execute = async (
     return
   }
 
+  // if (aliasCommand.includes('--test')) {
+  //   const parsed = new ParsedMessage(aliasCommand)
+  //   const alias = await CustomAlias.getAliasFor(parsed.args.name, guildId)
+
+  //   if (alias) {
+  //     await interaction.reply(
+  //       `ALIAS=${alias.name}; UNEVAL=${alias.unevaluated}; EVAL=${alias.evaluated};`
+  //     )
+  //   } else {
+  //     await interaction.reply(`cannot find alias: ${parsed.args.name}`)
+  //   }
+
+  //   return
+  // }
+
   try {
     const alias = await CustomAlias.fromString(aliasCommand, guildId, userId)
     const record = new CustomAliasData(alias)
 
-    log.verbose(`saving new alias ${alias.name} -> ${alias.fullCommand}`)
+    log.verbose(`saving new alias ${alias.name} -> ${alias.unevaluated}`)
     await record.save()
 
     await interaction.reply(
-      `${Replier.affirmative}! $${alias.name} will now execute as ${alias.fullCommand}`
+      `${Replier.affirmative}! \`$${alias.name}\` will now execute as \`${alias.unevaluated}\``
     )
   } catch (error) {
     log.error(error)

@@ -1,6 +1,5 @@
 import fs from 'fs'
 import path from 'path'
-import { joinVoiceChannel } from '@discordjs/voice'
 import { Client, Intents, Interaction, Message, Snowflake } from 'discord.js'
 import winston from 'winston'
 import { establishConnection } from './db'
@@ -79,23 +78,21 @@ export class Golem {
     )
 
     if (!interaction.guild || !interaction.guildId) {
-      this.log.warn('no guild, cannot get player')
+      Golem.log.warn('no guild, cannot get player')
       return undefined
     }
 
     const guildId = interaction.guildId
 
     if (!Golem.players.has(guildId)) {
-      this.log.verbose(`no player for ${guildId} - creating new`)
+      Golem.log.verbose(`no player for ${guildId} - creating new`)
       Golem.players.set(
         guildId,
-        new MusicPlayer(
-          joinVoiceChannel({
-            channelId: voiceChannel?.id || '',
-            guildId: interaction.guildId || '',
-            adapterCreator: interaction.guild.voiceAdapterCreator,
-          })
-        )
+        new MusicPlayer({
+          channelId: voiceChannel?.id || '',
+          guildId: interaction.guildId || '',
+          adapterCreator: interaction.guild.voiceAdapterCreator,
+        })
       )
 
       Golem.triggerEvent('connection', voiceChannel?.id || '')
@@ -108,7 +105,7 @@ export class Golem {
     searchVal: string | Message | Interaction
   ): MusicPlayer | undefined {
     if (typeof searchVal === 'string') {
-      this.log.silly(`string get player for: "${searchVal}"`)
+      Golem.log.silly(`string get player for: "${searchVal}"`)
       return Golem.players.get(searchVal.trim())
     }
 
@@ -116,13 +113,14 @@ export class Golem {
       return undefined
     }
 
-    this.log.verbose(`interaction get player for: ${searchVal.guild.id}`)
+    Golem.log.verbose(`interaction get player for: ${searchVal.guild.id}`)
     return Golem.players.get(searchVal.guild.id)
   }
 
-  static removePlayer(channelId: string): void {
+  static async removePlayer(channelId: string): Promise<void> {
+    Golem.log.info(`Deleting player for ${channelId}`)
     Golem.players.delete(channelId)
-    Golem.triggerEvent('connection', channelId)
+    await Golem.triggerEvent('connection', channelId)
   }
 
   static async login(): Promise<void> {
@@ -130,7 +128,7 @@ export class Golem {
   }
 
   static disconnectAll(): void {
-    this.log.info('Disconnecting all players')
+    Golem.log.info('Disconnecting all players')
     Golem.players.forEach((player) => {
       player.disconnect()
     })

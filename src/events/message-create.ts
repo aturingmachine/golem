@@ -16,6 +16,7 @@ const messageCreate: EventHandler<'messageCreate'> = {
     log.silly(`received: ${message}`)
 
     if (message.content.startsWith('$go') || message.content.startsWith('$')) {
+      await message.channel.sendTyping()
       const alias = await CustomAlias.getAliasFor(
         message.content,
         guildIdFrom(message)

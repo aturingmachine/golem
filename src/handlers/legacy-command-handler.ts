@@ -1,7 +1,9 @@
 import { Message } from 'discord.js'
 import { RegisteredCommands } from '../commands'
 import { CommandNames } from '../constants'
+import { CustomAlias } from '../models/custom-alias'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { guildIdFrom } from '../utils/message-utils'
 
 export async function AliasedCommand(
   msg: Message,
@@ -82,7 +84,9 @@ export class LegacyCommandHandler {
   ): Promise<void> {
     switch (subcommand) {
       case CommandNames.help:
-        await msg.reply(LegacyCommandHandler.helpMessage())
+        await msg.reply(
+          await LegacyCommandHandler.helpMessage(guildIdFrom(msg))
+        )
         break
       case CommandNames.play:
         await RegisteredCommands.goPlay.execute(msg, args)
@@ -134,11 +138,33 @@ export class LegacyCommandHandler {
     }
   }
 
-  private static helpMessage(): string {
-    return Object.values(RegisteredCommands)
-      .reduce((prev, curr) => {
+  private static async helpMessage(guildId: string): Promise<string> {
+    let helpMsg = ''
+
+    const builtInCommandsHelp = Object.values(RegisteredCommands).reduce(
+      (prev, curr) => {
         return prev.concat(curr.toString())
-      }, '```')
-      .concat('```')
+      },
+      '```'
+    )
+
+    helpMsg = helpMsg.concat(builtInCommandsHelp)
+
+    const aliases = await CustomAlias.getAliases(guildId)
+
+    if (aliases.length > 0) {
+      console.log('Have aliases, creating alias help message')
+      const aliasHelp = aliases.reduce((prev, curr) => {
+        return `\t${curr.name}\n\t\t${
+          curr.description ? ' -' + curr.description : curr.unevaluated
+        }`
+      }, '\n--------------\n Custom Aliases \n--------------\n')
+
+      console.log('Created alias help message', aliasHelp)
+
+      helpMsg = helpMsg.concat(aliasHelp)
+    }
+
+    return helpMsg.concat('```')
   }
 }
