@@ -1,8 +1,7 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command, CommandHelp } from '../models/commands'
+import { Command2 } from '../models/commands'
 import { GolemModule } from '../models/config'
 import { Listing } from '../models/listing'
 import { LocalTrack } from '../models/track'
@@ -13,23 +12,23 @@ import { userFrom } from '../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoMix })
 
-const data = new SlashCommandBuilder()
-  .setName(CommandNames.slash.mix)
-  .setDescription(
-    'Add a short collection of songs; by similar artist or genre/mood'
-  )
-  .addStringOption((option) =>
-    option
-      .setName('mixtype')
-      .setDescription('(artist|genre|mood|track)')
-      .setRequired(false)
-  )
-  .addStringOption((option) =>
-    option
-      .setName('query')
-      .setDescription('what to mix off of')
-      .setRequired(false)
-  )
+// const data = new SlashCommandBuilder()
+//   .setName(CommandNames.slash.mix)
+//   .setDescription(
+//     'Add a short collection of songs; by similar artist or genre/mood'
+//   )
+//   .addStringOption((option) =>
+//     option
+//       .setName('mixtype')
+//       .setDescription('(artist|genre|mood|track)')
+//       .setRequired(false)
+//   )
+//   .addStringOption((option) =>
+//     option
+//       .setName('query')
+//       .setDescription('what to mix off of')
+//       .setRequired(false)
+//   )
 
 const execute = async (
   interaction: CommandInteraction | Message,
@@ -123,26 +122,55 @@ const execute = async (
   return
 }
 
-const helpInfo: CommandHelp = {
-  name: 'mix',
-  msg: 'Play tracks based off the current track or artist.',
-  args: [
-    {
-      name: 'mix-type',
-      type: 'string',
-      required: false,
-      description: 'Whether to mix by track or artist.',
-      default: 'artist',
-    },
-  ],
-}
+// const helpInfo: CommandHelp = {
+//   name: 'mix',
+//   msg: 'Play tracks based off the current track or artist.',
+//   args: [
+//     {
+//       name: 'mix-type',
+//       type: 'string',
+//       required: false,
+//       description: 'Whether to mix by track or artist.',
+//       default: 'artist',
+//     },
+//   ],
+// }
 
-const goMixCommand = new Command({
-  source: LogSources.GoMix,
-  data,
+// const goMixCommand = new Command({
+//   source: LogSources.GoMix,
+//   data,
+//   handler: execute,
+//   helpInfo,
+//   requiredModules: [GolemModule.LastFm],
+// })
+
+const gomix = new Command2({
+  logSource: LogSources.GoMix,
   handler: execute,
-  helpInfo,
-  requiredModules: [GolemModule.LastFm],
+  info: {
+    name: CommandNames.mix,
+    description: {
+      short: 'Add a short collection of songs; by similar artist or genre/mood',
+    },
+    args: [
+      {
+        type: 'string',
+        name: 'mixtype',
+        description: {
+          short: 'What property of the current track to mix off of.',
+        },
+        required: false,
+        choices: [
+          { name: 'Artist', value: 'artist' },
+          // { name: 'Queue Count', value: 'genre' },
+          // { name: 'Now Playing', value: 'mood' },
+          { name: 'Track', value: 'track' },
+        ],
+      },
+    ],
+    examples: ['$go mix artist'],
+    requiredModules: [GolemModule.LastFm],
+  },
 })
 
-export default goMixCommand
+export default gomix

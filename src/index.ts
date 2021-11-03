@@ -1,8 +1,13 @@
+import { registerCommands } from './commands'
 import { Golem } from './golem'
 import { GolemConf } from './utils/config'
 import { startApi } from './web/server'
 
 const main = async (): Promise<void> => {
+  GolemConf.init()
+
+  registerCommands()
+
   if (GolemConf.options.NoRun) {
     console.log('NoRun set - exiting')
     process.exit(0)
@@ -34,7 +39,5 @@ function shutdown() {
 }
 
 process.once('exit', shutdown)
-// process.once('SIGKILL', shutdown)
-// process.once('SIGINT', shutdown)
 
 main()

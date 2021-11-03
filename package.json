@@ -6,10 +6,12 @@
     "build": "tsc",
     "dev": "npm run build && node dist/index.js",
     "dev:debug": "npm run dev debug tty",
-    "lint": "eslint",
-    "lint:fix": "eslint --fix",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint --fix src/**/*.ts",
     "test": "jest",
-    "cmd:reg": "npm run build && node dist/deploy-commands.js -- noRun"
+    "cmd:reg": "npm run build && node dist/deploy-commands.js -- noRun",
+    "docs:dev": "npm run dev --prefix ./docs",
+    "docs:build": "npm run build --prefix ./docs"
   },
   "author": "",
   "license": "MIT",

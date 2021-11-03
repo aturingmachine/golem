@@ -1,27 +1,26 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { Analytics } from '../analytics'
 import { CommandAnalyticsInteraction } from '../analytics/models/interaction'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { PlayHandler } from '../handlers/play-handler'
-import { Command, CommandHelp } from '../models/commands'
+import { Command2 } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Youtube } from '../youtube/youtils'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
-const data = new SlashCommandBuilder()
-  .setName(CommandNames.slash.playNext)
-  .setDescription('Add a track to the front of the play queue.')
-  .addStringOption((option) =>
-    option
-      .setName('query')
-      .setDescription(
-        'The track to search for and play|A YouTube video/playlist URL to play.'
-      )
-      .setRequired(true)
-  )
+// const data = new SlashCommandBuilder()
+//   .setName(CommandNames.slash.playNext)
+//   .setDescription('Add a track to the front of the play queue.')
+//   .addStringOption((option) =>
+//     option
+//       .setName('query')
+//       .setDescription(
+//         'The track to search for and play|A YouTube video/playlist URL to play.'
+//       )
+//       .setRequired(true)
+//   )
 
 const execute = async (
   interaction: CommandInteraction | Message,
@@ -102,26 +101,56 @@ const execute = async (
   PlayHandler.playLocal(res.listing, interaction, player, true)
 }
 
-const helpInfo: CommandHelp = {
-  name: 'playnext',
-  msg: 'Play a track, queues at the front of the queue. (Behind other playnext tracks).',
-  args: [
-    {
-      name: 'query',
-      type: 'string',
-      required: true,
-      description:
-        'The track to search for and play|A YouTube video/playlist URL to play.',
-    },
-  ],
-  alias: '$playnext',
-}
+// const helpInfo: CommandHelp = {
+//   name: 'playnext',
+//   msg: 'Play a track, queues at the front of the queue. (Behind other playnext tracks).',
+//   args: [
+//     {
+//       name: 'query',
+//       type: 'string',
+//       required: true,
+//       description:
+//         'The track to search for and play|A YouTube video/playlist URL to play.',
+//     },
+//   ],
+//   alias: '$playnext',
+// }
 
-const goPlayNextCommand = new Command({
-  source: LogSources.GoPlayNext,
-  data,
+// const goPlayNextCommand = new Command({
+//   source: LogSources.GoPlayNext,
+//   data,
+//   handler: execute,
+//   helpInfo,
+// })
+
+const goplaynext = new Command2({
+  logSource: LogSources.GoPlayNext,
   handler: execute,
-  helpInfo,
+  info: {
+    name: CommandNames.playNext,
+    description: {
+      short:
+        'Play a track, queues at the front of the queue. (Behind other playnext tracks).',
+    },
+    args: [
+      {
+        type: 'string',
+        name: 'query',
+        description: {
+          short:
+            'The track to search for and play|A YouTube video/playlist URL to play.',
+        },
+        required: true,
+      },
+    ],
+    examples: [
+      '$go playnext twice tt',
+      '$go playnext <youtube url>',
+      '$go playnext <youtube playlist url>',
+    ],
+    requiredModules: [],
+    alias: '$playnext',
+  },
 })
 
-export default goPlayNextCommand
+export default goplaynext

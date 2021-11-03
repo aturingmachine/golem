@@ -1,13 +1,12 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command, CommandHelp } from '../models/commands'
+import { Command2 } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 
-const data = new SlashCommandBuilder()
-  .setName(CommandNames.slash.pause)
-  .setDescription('Pause playback')
+// const data = new SlashCommandBuilder()
+//   .setName(CommandNames.slash.pause)
+//   .setDescription('Pause playback')
 
 const execute = async (
   interaction: CommandInteraction | Message
@@ -25,18 +24,34 @@ const execute = async (
   player.pause()
 }
 
-const helpInfo: CommandHelp = {
-  name: 'pause',
-  msg: 'Pause the current playback.',
-  args: [],
-  alias: '$pause',
-}
+// const helpInfo: CommandHelp = {
+//   name: 'pause',
+//   msg: 'Pause the current playback.',
+//   args: [],
+//   alias: '$pause',
+// }
 
-const goPauseCommand = new Command({
-  source: LogSources.GoPause,
-  data,
+// const goPauseCommand = new Command({
+//   source: LogSources.GoPause,
+//   data,
+//   handler: execute,
+//   helpInfo,
+// })
+
+const gopause = new Command2({
+  logSource: LogSources.GoPause,
   handler: execute,
-  helpInfo,
+  info: {
+    name: CommandNames.pause,
+    description: {
+      long: 'Pause the current playback.',
+      short: 'Pause the current playback.',
+    },
+    args: [],
+    examples: ['$go pause'],
+    requiredModules: [],
+    alias: '$pause',
+  },
 })
 
-export default goPauseCommand
+export default gopause

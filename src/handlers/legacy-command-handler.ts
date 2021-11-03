@@ -1,7 +1,6 @@
 import { Message } from 'discord.js'
-import { RegisteredCommands } from '../commands'
+import { Commands, RegisteredCommands } from '../commands'
 import { CommandNames } from '../constants'
-import { CustomAlias } from '../models/custom-alias'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { guildIdFrom } from '../utils/message-utils'
 
@@ -14,23 +13,23 @@ export async function AliasedCommand(
 
   switch (command) {
     case '$play':
-      await RegisteredCommands.goPlay.execute(msg, args)
+      await RegisteredCommands.goplay.execute(msg, args)
       break
     case '$playnext':
-      await RegisteredCommands.goPlayNext.execute(msg, args)
+      await RegisteredCommands.goplaynext.execute(msg, args)
       break
     case '$np':
     case '$nowplaying':
-      await RegisteredCommands.goGet.execute(msg, 'np')
+      await RegisteredCommands.goget.execute(msg, 'np')
       break
     case '$stop':
-      await RegisteredCommands.goStop.execute(msg)
+      await RegisteredCommands.gostop.execute(msg)
       break
     case '$skip':
-      await RegisteredCommands.goSkip.execute(msg, parseInt(args, 10))
+      await RegisteredCommands.goskip.execute(msg, parseInt(args, 10))
       break
     case '$pause':
-      await RegisteredCommands.goPause.execute(msg)
+      await RegisteredCommands.gopause.execute(msg)
       break
     default:
       return false
@@ -42,15 +41,13 @@ export class LegacyCommandHandler {
   static async parseMessage(
     msg: Message,
     overrideContent?: string
-  ): Promise<void> {
-    // Early exit on an aliased command
-
+  ): Promise<boolean> {
     const content = overrideContent || msg.content
 
     if (!content.startsWith('$go ') && content.startsWith('$')) {
       const hasRun = await AliasedCommand(msg, content)
       if (hasRun) {
-        return
+        return true
       }
     }
 
@@ -58,7 +55,7 @@ export class LegacyCommandHandler {
     const subcommand = content.split(' ')[1]
 
     if (!subcommand) {
-      return
+      return false
     }
 
     const args = content.split(' ').slice(2).join(' ')
@@ -67,7 +64,7 @@ export class LegacyCommandHandler {
       src: LogSources.LegacyHandler,
     })
 
-    await LegacyCommandHandler.executeCommand(subcommand, args, msg)
+    return await LegacyCommandHandler.executeCommand(subcommand, args, msg)
   }
 
   static async executeCustomAlias(
@@ -81,7 +78,7 @@ export class LegacyCommandHandler {
     subcommand: string,
     args: string,
     msg: Message
-  ): Promise<void> {
+  ): Promise<boolean> {
     switch (subcommand) {
       case CommandNames.help:
         await msg.reply(
@@ -89,59 +86,60 @@ export class LegacyCommandHandler {
         )
         break
       case CommandNames.play:
-        await RegisteredCommands.goPlay.execute(msg, args)
+        await RegisteredCommands.goplay.execute(msg, args)
         break
       case CommandNames.get:
-        await RegisteredCommands.goGet.execute(msg, args)
+        await RegisteredCommands.goget.execute(msg, args)
         break
       case CommandNames.skip:
-        await RegisteredCommands.goSkip.execute(
+        await RegisteredCommands.goskip.execute(
           msg,
           args.length ? parseInt(args, 10) : undefined
         )
         break
       case CommandNames.stop:
-        await RegisteredCommands.goStop.execute(msg)
+        await RegisteredCommands.gostop.execute(msg)
         break
       case CommandNames.pause:
-        await RegisteredCommands.goPause.execute(msg)
+        await RegisteredCommands.gopause.execute(msg)
         break
       case CommandNames.search:
-        await RegisteredCommands.goSearch.execute(
+        await RegisteredCommands.gosearch.execute(
           msg,
           args.split('-c')[0],
           args.split('-c')[1] ? parseInt(args.split('-c')[1], 10) : undefined
         )
         break
       case CommandNames.peek:
-        await RegisteredCommands.goPeek.execute(msg)
+        await RegisteredCommands.gopeek.execute(msg)
         break
       case CommandNames.playlist:
       case 'playlists':
-        await RegisteredCommands.goPlaylist.execute(msg, args)
+        await RegisteredCommands.goplaylist.execute(msg, args)
         break
       case CommandNames.shuffle:
-        await RegisteredCommands.goShuffle.execute(msg)
+        await RegisteredCommands.goshuffle.execute(msg)
         break
       case CommandNames.mix:
-        await RegisteredCommands.goMix.execute(
+        await RegisteredCommands.gomix.execute(
           msg,
           args.split(' ').slice(0, 1).join(''),
           args.split(' ').slice(1).join(' ')
         )
         break
       case CommandNames.alias:
-        await RegisteredCommands.goAlias.execute(msg, args)
+        await RegisteredCommands.goalias.execute(msg, args)
         break
       default:
-        break
+        return false
     }
+    return true
   }
 
-  private static async helpMessage(guildId: string): Promise<string> {
+  private static async helpMessage(_guildId: string): Promise<string> {
     let helpMsg = ''
 
-    const builtInCommandsHelp = Object.values(RegisteredCommands).reduce(
+    const builtInCommandsHelp = Array.from(Commands.values()).reduce(
       (prev, curr) => {
         return prev.concat(curr.toString())
       },
@@ -150,20 +148,17 @@ export class LegacyCommandHandler {
 
     helpMsg = helpMsg.concat(builtInCommandsHelp)
 
-    const aliases = await CustomAlias.getAliases(guildId)
+    // const aliases = await CustomAlias.getAliases(guildId)
 
-    if (aliases.length > 0) {
-      console.log('Have aliases, creating alias help message')
-      const aliasHelp = aliases.reduce((prev, curr) => {
-        return `\t${curr.name}\n\t\t${
-          curr.description ? ' -' + curr.description : curr.unevaluated
-        }`
-      }, '\n--------------\n Custom Aliases \n--------------\n')
+    // if (aliases.length > 0) {
+    //   const aliasHelp = aliases.reduce((prev, curr) => {
+    //     return `\t${curr.name}\n\t\t${
+    //       curr.description ? ' -' + curr.description : curr.unevaluated
+    //     }`
+    //   }, '\n--------------\n Custom Aliases \n--------------\n')
 
-      console.log('Created alias help message', aliasHelp)
-
-      helpMsg = helpMsg.concat(aliasHelp)
-    }
+    //   helpMsg = helpMsg.concat(aliasHelp)
+    // }
 
     return helpMsg.concat('```')
   }

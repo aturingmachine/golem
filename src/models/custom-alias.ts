@@ -73,7 +73,6 @@ export class RandomAliasFunction extends AliasFunction {
       firstIndex,
       str.indexOf(RandomAliasFunction.endKey) + 1
     )
-    console.log('parseFn - ', str, ' - slice1', slice1)
 
     results.push(new RandomAliasFunction(slice1))
 
@@ -95,17 +94,9 @@ export class RandomIntFunction extends AliasFunction {
   constructor(evalString: string) {
     super(evalString)
 
-    console.log('RANDOM NUM FUNCTION evalString => ', evalString)
-
     const values = evalString
       .slice(evalString.indexOf('[') + 1, evalString.indexOf(']'))
       .split('-')
-
-    console.log(
-      'RANDOM NUM FUNCTION slice => ',
-      evalString.slice(evalString.indexOf('[') + 1, evalString.indexOf(']'))
-    )
-    console.log('RANDOM NUM FUNCTION values => ', values)
 
     if (values.length !== 2) {
       throw new Error(
@@ -130,23 +121,13 @@ export class RandomIntFunction extends AliasFunction {
     const firstIndex = str.indexOf(RandomIntFunction.startKey)
 
     if (firstIndex < 0) {
-      console.log('RANDOM NUMBER FUNCTION RETURNING', results)
       return results
     }
-
-    console.log(
-      `\n  RandomIntFunction SLICING USING firstIndex=${firstIndex}; str.charAt=${str.charAt(
-        firstIndex
-      )}\n`
-    )
 
     const slice1 = str.slice(
       firstIndex,
       str.indexOf(RandomIntFunction.endKey, firstIndex) + 1
     )
-    // console.log('parseFn - ', str, ' - slice1', slice1)
-
-    console.log('\n NEW RandomIntFunction USING', slice1, '\n')
     results.push(new RandomIntFunction(slice1))
 
     return this.parseMatches(str.replace(slice1, ''), results)
@@ -174,8 +155,13 @@ export class CustomAlias {
     await LegacyCommandHandler.executeCustomAlias(msg, this.evaluated)
   }
 
+  get helpString(): string {
+    return `\t${this.name}\n\t\t${
+      this.description ? ' -' + this.description : this.unevaluated
+    }`
+  }
+
   get evaluated(): string {
-    console.log(this.functions.map((f) => f.evalString))
     return this.functions.reduce((prev, curr) => {
       return prev.replace(curr.evalString, curr.run())
     }, this.unevaluated)
@@ -207,8 +193,6 @@ export class CustomAlias {
       throw new Error(`alias name ${aliasName} already registered`)
     }
 
-    console.log('>>>>>>>', parsed.args)
-
     return new CustomAlias(
       aliasName,
       command,
@@ -223,7 +207,17 @@ export class CustomAlias {
     CustomAlias.log.silly(`getting aliases for guild=${guildId}`)
     const aliases = await CustomAliasData.find({ guildId })
     CustomAlias.log.silly(`found ${aliases.length} custom aliases`)
-    return aliases
+    return aliases.map(
+      (match) =>
+        new CustomAlias(
+          match.name,
+          match.command,
+          match.args,
+          match.createdBy,
+          match.guildId,
+          match.description
+        )
+    )
   }
 
   static async getAliasFor(
@@ -258,8 +252,8 @@ export class CustomAlias {
     guildId: string
   ): Promise<boolean> {
     const builtInCommands = Object.values(RegisteredCommands)
-    const builtInNames = builtInCommands.map((cmd) => cmd.data.name)
-    const builtInAliases = builtInCommands.map((cmd) => cmd.helpInfo.alias)
+    const builtInNames = builtInCommands.map((cmd) => cmd.options.info.name)
+    const builtInAliases = builtInCommands.map((cmd) => cmd.options.info.alias)
     const customAliases = await CustomAlias.getAliases(guildId)
 
     return ![

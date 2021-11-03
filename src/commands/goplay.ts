@@ -1,11 +1,10 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { Analytics } from '../analytics'
 import { CommandAnalyticsInteraction } from '../analytics/models/interaction'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { PlayHandler } from '../handlers/play-handler'
-import { Command, CommandHelp } from '../models/commands'
+import { Command2 } from '../models/commands'
 import { ArtistConfirmReply } from '../models/messages/artist-confirm'
 import { WideSearch } from '../models/messages/wide-search'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -13,30 +12,30 @@ import { Youtube } from '../youtube/youtils'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
-const helpInfo: CommandHelp = {
-  name: 'play',
-  msg: 'Search for and play a track. Will search youtube if query returns no local results.',
-  args: [
-    {
-      name: 'query',
-      type: 'string',
-      required: true,
-      description:
-        'The track to search for and play|A YouTube video/playlist URL to play.',
-    },
-  ],
-  alias: '$play',
-}
+// const helpInfo: CommandHelp = {
+//   name: 'play',
+//   msg: 'Search for and play a track. Will search youtube if query returns no local results.',
+//   args: [
+//     {
+//       name: 'query',
+//       type: 'string',
+//       required: true,
+//       description:
+//         'The track to search for and play|A YouTube video/playlist URL to play.',
+//     },
+//   ],
+//   alias: '$play',
+// }
 
-const data = new SlashCommandBuilder()
-  .setName(CommandNames.slash.play)
-  .setDescription('Play Something')
-  .addStringOption((option) =>
-    option
-      .setName(helpInfo.args[0].name)
-      .setDescription(helpInfo.args[0].description)
-      .setRequired(helpInfo.args[0].required)
-  )
+// const data = new SlashCommandBuilder()
+//   .setName(CommandNames.slash.play)
+//   .setDescription('Play Something')
+//   .addStringOption((option) =>
+//     option
+//       .setName(helpInfo.args[0].name)
+//       .setDescription(helpInfo.args[0].description)
+//       .setRequired(helpInfo.args[0].required)
+//   )
 
 const execute = async (
   interaction: CommandInteraction | Message,
@@ -121,11 +120,41 @@ const execute = async (
   await PlayHandler.playLocal(res.listing, interaction, player)
 }
 
-const goPlayCommand = new Command({
-  source: LogSources.GoPlay,
-  data,
+// const goPlayCommand = new Command({
+//   source: LogSources.GoPlay,
+//   data,
+//   handler: execute,
+//   helpInfo,
+// })
+
+const goplay = new Command2({
+  logSource: LogSources.GoPlay,
   handler: execute,
-  helpInfo,
+  info: {
+    name: CommandNames.play,
+    description: {
+      short:
+        'Search for and play a track. Will search youtube if query returns no local results.',
+    },
+    args: [
+      {
+        type: 'string',
+        name: 'query',
+        description: {
+          short:
+            'The track to search for and play|A YouTube video/playlist URL to play.',
+        },
+        required: true,
+      },
+    ],
+    examples: [
+      '$go play twice tt',
+      '$go play <youtube url>',
+      '$go play <youtube playlist url>',
+    ],
+    requiredModules: [],
+    alias: 'play',
+  },
 })
 
-export default goPlayCommand
+export default goplay

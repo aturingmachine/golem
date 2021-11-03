@@ -1,0 +1,502 @@
+[
+  {
+    "options": {
+      "logSource": "go-stop",
+      "info": {
+        "name": "stop",
+        "description": {
+          "short": "Stops the current playback."
+        },
+        "args": [],
+        "examples": [
+          ""
+        ],
+        "requiredModules": [],
+        "alias": "$stop"
+      }
+    },
+    "slashCommand": {
+      "name": "gostop",
+      "description": "Stops the current playback.",
+      "options": []
+    }
+  },
+  {
+    "options": {
+      "logSource": "goget",
+      "info": {
+        "name": "get",
+        "description": {
+          "short": "Retrieve information about the current Golem instance."
+        },
+        "args": [
+          {
+            "type": "string",
+            "name": "value",
+            "description": {
+              "short": "The property to get information about."
+            },
+            "required": false,
+            "choices": [
+              {
+                "name": "Run Time",
+                "value": "time"
+              },
+              {
+                "name": "Queue Count",
+                "value": "count"
+              },
+              {
+                "name": "Now Playing",
+                "value": "nowplaying"
+              },
+              {
+                "name": "Track Count",
+                "value": "tcount"
+              },
+              {
+                "name": "Playlists",
+                "value": "playlists"
+              },
+              {
+                "name": "Info",
+                "value": "all-info"
+              }
+            ]
+          }
+        ],
+        "examples": [
+          "$go get",
+          "$go get nowplaying",
+          "$go get count"
+        ],
+        "requiredModules": []
+      }
+    },
+    "slashCommand": {
+      "name": "goget",
+      "description": "Retrieve information about the current Golem instance.",
+      "options": [
+        {
+          "type": 3,
+          "name": "value",
+          "description": "The property to get information about.",
+          "required": false,
+          "choices": [
+            {
+              "name": "Run Time",
+              "value": "time"
+            },
+            {
+              "name": "Queue Count",
+              "value": "count"
+            },
+            {
+              "name": "Now Playing",
+              "value": "nowplaying"
+            },
+            {
+              "name": "Track Count",
+              "value": "tcount"
+            },
+            {
+              "name": "Playlists",
+              "value": "playlists"
+            },
+            {
+              "name": "Info",
+              "value": "all-info"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "options": {
+      "logSource": "go-play",
+      "info": {
+        "name": "play",
+        "description": {
+          "short": "Search for and play a track. Will search youtube if query returns no local results."
+        },
+        "args": [
+          {
+            "type": "string",
+            "name": "query",
+            "description": {
+              "short": "The track to search for and play|A YouTube video/playlist URL to play."
+            },
+            "required": true
+          }
+        ],
+        "examples": [
+          "$go play twice tt",
+          "$go play <youtube url>",
+          "$go play <youtube playlist url>"
+        ],
+        "requiredModules": [],
+        "alias": "play"
+      }
+    },
+    "slashCommand": {
+      "name": "goplay",
+      "description": "Search for and play a track. Will search youtube if query returns no local results.",
+      "options": [
+        {
+          "type": 3,
+          "name": "query",
+          "description": "The track to search for and play|A YouTube video/playlist URL to play.",
+          "required": true
+        }
+      ]
+    }
+  },
+  {
+    "options": {
+      "logSource": "go-skip",
+      "info": {
+        "name": "skip",
+        "description": {
+          "short": "Skip queued tracks."
+        },
+        "args": [
+          {
+            "type": "integer",
+            "name": "skip-count",
+            "description": {
+              "short": "The number of tracks to skip."
+            },
+            "required": false
+          }
+        ],
+        "examples": [
+          ""
+        ],
+        "requiredModules": [],
+        "alias": "$skip"
+      }
+    },
+    "slashCommand": {
+      "name": "goskip",
+      "description": "Skip queued tracks.",
+      "options": [
+        {
+          "type": 4,
+          "name": "skip-count",
+          "description": "The number of tracks to skip.",
+          "required": false
+        }
+      ]
+    }
+  },
+  {
+    "options": {
+      "logSource": "go-pause",
+      "info": {
+        "name": "pause",
+        "description": {
+          "long": "Pause the current playback.",
+          "short": "Pause the current playback."
+        },
+        "args": [],
+        "examples": [
+          "$go pause"
+        ],
+        "requiredModules": [],
+        "alias": "$pause"
+      }
+    },
+    "slashCommand": {
+      "name": "gopause",
+      "description": "Pause the current playback.",
+      "options": []
+    }
+  },
+  {
+    "options": {
+      "logSource": "go-search",
+      "info": {
+        "name": "search",
+        "description": {
+          "short": "Search for a track and view the result set."
+        },
+        "args": [
+          {
+            "type": "string",
+            "name": "query",
+            "description": {
+              "short": "The track to query for."
+            },
+            "required": true
+          }
+        ],
+        "examples": [
+          "$go search twice tt"
+        ],
+        "requiredModules": []
+      }
+    },
+    "slashCommand": {
+      "name": "gosearch",
+      "description": "Search for a track and view the result set.",
+      "options": [
+        {
+          "type": 3,
+          "name": "query",
+          "description": "The track to query for.",
+          "required": true
+        }
+      ]
+    }
+  },
+  {
+    "options": {
+      "logSource": "go-peek",
+      "info": {
+        "name": "peek",
+        "description": {
+          "long": "See the next tracks in the queue.",
+          "short": "See the next tracks in the queue."
+        },
+        "args": [],
+        "examples": [
+          "$go peek"
+        ],
+        "requiredModules": []
+      }
+    },
+    "slashCommand": {
+      "name": "gopeek",
+      "description": "See the next tracks in the queue.",
+      "options": []
+    }
+  },
+  {
+    "options": {
+      "logSource": "go-playlist",
+      "info": {
+        "name": "playlist",
+        "description": {
+          "short": "Play a given playlist or choose one from a select menu."
+        },
+        "args": [
+          {
+            "type": "string",
+            "name": "playlist",
+            "description": {
+              "short": "The name of the playlist to queue."
+            },
+            "required": false
+          }
+        ],
+        "examples": [
+          "$go playlist my-playlist",
+          "$go playlist"
+        ],
+        "requiredModules": [
+          "Plex"
+        ]
+      }
+    },
+    "slashCommand": {
+      "name": "goplaylist",
+      "description": "Play a given playlist or choose one from a select menu.",
+      "options": [
+        {
+          "type": 3,
+          "name": "playlist",
+          "description": "The name of the playlist to queue.",
+          "required": false
+        }
+      ]
+    }
+  },
+  {
+    "options": {
+      "logSource": "go-play-next",
+      "info": {
+        "name": "playnext",
+        "description": {
+          "short": "Play a track, queues at the front of the queue. (Behind other playnext tracks)."
+        },
+        "args": [
+          {
+            "type": "string",
+            "name": "query",
+            "description": {
+              "short": "The track to search for and play|A YouTube video/playlist URL to play."
+            },
+            "required": true
+          }
+        ],
+        "examples": [
+          "$go playnext twice tt",
+          "$go playnext <youtube url>",
+          "$go playnext <youtube playlist url>"
+        ],
+        "requiredModules": [],
+        "alias": "$playnext"
+      }
+    },
+    "slashCommand": {
+      "name": "goplaynext",
+      "description": "Play a track, queues at the front of the queue. (Behind other playnext tracks).",
+      "options": [
+        {
+          "type": 3,
+          "name": "query",
+          "description": "The track to search for and play|A YouTube video/playlist URL to play.",
+          "required": true
+        }
+      ]
+    }
+  },
+  {
+    "options": {
+      "logSource": "go-shuffle",
+      "info": {
+        "name": "shuffle",
+        "description": {
+          "short": "Shuffle the current queue maintaining the playnext queue's position."
+        },
+        "args": [],
+        "examples": [
+          "$go shuffle"
+        ],
+        "requiredModules": []
+      }
+    },
+    "slashCommand": {
+      "name": "goshuffle",
+      "description": "Shuffle the current queue maintaining the playnext queue's position.",
+      "options": []
+    }
+  },
+  {
+    "options": {
+      "logSource": "go-mix",
+      "info": {
+        "name": "mix",
+        "description": {
+          "short": "Add a short collection of songs; by similar artist or genre/mood"
+        },
+        "args": [
+          {
+            "type": "string",
+            "name": "mixtype",
+            "description": {
+              "short": "What property of the current track to mix off of."
+            },
+            "required": false,
+            "choices": [
+              {
+                "name": "Artist",
+                "value": "artist"
+              },
+              {
+                "name": "Track",
+                "value": "track"
+              }
+            ]
+          }
+        ],
+        "examples": [
+          "$go mix artist"
+        ],
+        "requiredModules": [
+          "LastFm"
+        ]
+      }
+    },
+    "slashCommand": {
+      "name": "gomix",
+      "description": "Add a short collection of songs; by similar artist or genre/mood",
+      "options": [
+        {
+          "type": 3,
+          "name": "mixtype",
+          "description": "What property of the current track to mix off of.",
+          "required": false,
+          "choices": [
+            {
+              "name": "Artist",
+              "value": "artist"
+            },
+            {
+              "name": "Track",
+              "value": "track"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "options": {
+      "logSource": "go-alias",
+      "info": {
+        "name": "alias",
+        "description": {
+          "short": "Interact with the aliases registered for this server."
+        },
+        "subcommands": [
+          {
+            "name": "create",
+            "description": {
+              "long": "Create a new alias using GolemAlias format. <name of alias> => <full Golem command>. The alias will be made by removing white space within the \"name of alias\" section.",
+              "short": "Create a new alias."
+            },
+            "args": [
+              {
+                "type": "string",
+                "name": "aliascommand",
+                "description": {
+                  "short": "A valid GolemAlias string. \"aliasName => $go command\""
+                },
+                "required": true
+              }
+            ]
+          },
+          {
+            "name": "show",
+            "description": {
+              "short": "List aliases registered to this server."
+            },
+            "args": []
+          }
+        ],
+        "args": [],
+        "examples": [
+          "/goalias create hype => $go play darude sandstorm"
+        ],
+        "requiredModules": []
+      }
+    },
+    "slashCommand": {
+      "name": "goalias",
+      "description": "Interact with the aliases registered for this server.",
+      "options": [
+        {
+          "type": 1,
+          "name": "create",
+          "description": "Create a new alias.",
+          "options": [
+            {
+              "type": 3,
+              "name": "aliascommand",
+              "description": "A valid GolemAlias string. \"aliasName => $go command\"",
+              "required": true
+            }
+          ]
+        },
+        {
+          "type": 1,
+          "name": "show",
+          "description": "List aliases registered to this server.",
+          "options": []
+        }
+      ]
+    }
+  }
+]

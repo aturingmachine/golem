@@ -1,8 +1,7 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command, CommandHelp } from '../models/commands'
+import { Command2 } from '../models/commands'
 import { GolemModule } from '../models/config'
 import { LocalTrack } from '../models/track'
 import { Plex } from '../plex'
@@ -12,15 +11,15 @@ import { Replier } from '../utils/replies'
 
 const log = GolemLogger.child({ src: LogSources.GoPlayList })
 
-const data = new SlashCommandBuilder()
-  .setName(CommandNames.slash.playlist)
-  .setDescription('Enqueue a playlist')
-  .addStringOption((option) =>
-    option
-      .setName('playlist')
-      .setDescription('the playlist to play')
-      .setRequired(false)
-  )
+// const data = new SlashCommandBuilder()
+//   .setName(CommandNames.slash.playlist)
+//   .setDescription('Enqueue a playlist')
+//   .addStringOption((option) =>
+//     option
+//       .setName('playlist')
+//       .setDescription('the playlist to play')
+//       .setRequired(false)
+//   )
 
 const execute = async (
   interaction: CommandInteraction | Message,
@@ -69,26 +68,59 @@ const execute = async (
   }
 }
 
-const helpInfo: CommandHelp = {
-  name: 'playlist',
-  msg: 'Play a playlist sourced from a Plex server.',
-  args: [
-    {
-      name: 'playlist',
-      type: 'string',
-      required: false,
-      description: 'The playlist to play.',
-      default: 'Returns a select of all playlists.',
-    },
-  ],
-}
+// const helpInfo: CommandHelp = {
+//   name: 'playlist',
+//   msg: 'Play a playlist sourced from a Plex server.',
+//   args: [
+//     {
+//       name: 'playlist',
+//       type: 'string',
+//       required: false,
+//       description: 'The playlist to play.',
+//       default: 'Returns a select of all playlists.',
+//     },
+//   ],
+// }
 
-const goPlaylistCommand = new Command({
-  source: LogSources.GoPlayList,
-  data,
+// const goPlaylistCommand = new Command({
+//   source: LogSources.GoPlayList,
+//   data,
+//   handler: execute,
+//   helpInfo,
+//   requiredModules: [GolemModule.Plex],
+// })
+
+// const data = new SlashCommandBuilder()
+//   .setName(CommandNames.slash.playlist)
+//   .setDescription('Enqueue a playlist')
+//   .addStringOption((option) =>
+//     option
+//       .setName('playlist')
+//       .setDescription('the playlist to play')
+//       .setRequired(false)
+//   )
+
+const goplaylist = new Command2({
+  logSource: LogSources.GoPlayList,
   handler: execute,
-  helpInfo,
-  requiredModules: [GolemModule.Plex],
+  info: {
+    name: CommandNames.playlist,
+    description: {
+      short: 'Play a given playlist or choose one from a select menu.',
+    },
+    args: [
+      {
+        type: 'string',
+        name: 'playlist',
+        description: {
+          short: 'The name of the playlist to queue.',
+        },
+        required: false,
+      },
+    ],
+    examples: ['$go playlist my-playlist', '$go playlist'],
+    requiredModules: [GolemModule.Plex],
+  },
 })
 
-export default goPlaylistCommand
+export default goplaylist

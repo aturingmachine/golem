@@ -1,0 +1,15 @@
+{
+  "name": "golem-docs",
+  "version": "0.0.1",
+  "description": "Documentation for Golem Discord bot",
+  "main": "index.js",
+  "repository": "github.com/aturingmachine/discord-bot/golem-docs",
+  "scripts": {
+    "dev": "vuepress dev src",
+    "build": "vuepress build src"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "vuepress": "^1.5.3"
+  }
+}
