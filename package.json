@@ -10,8 +10,10 @@
     "lint:fix": "eslint --fix src/**/*.ts",
     "test": "jest",
     "cmd:reg": "npm run build && node dist/deploy-commands.js -- noRun",
-    "docs:dev": "npm run dev --prefix ./docs",
-    "docs:build": "npm run build --prefix ./docs"
+    "cmd:dmp": "node ./scripts/dump-commands.js",
+    "docs:dev": "npm run cmd:dmp && npm run dev:gen --prefix ./docs",
+    "docs:build": "npm run build --prefix ./docs",
+    "docs:deploy": "sh ./scripts/docs-deploy.sh"
   },
   "author": "",
   "license": "MIT",

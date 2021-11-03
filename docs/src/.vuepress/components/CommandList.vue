@@ -1,6 +1,6 @@
 <template>
   <div>
-    <command-info v-for="command in commands" :key="command.data.name" :command="command" />
+    <command-info v-for="command in commands" :key="command.options.logSource" :command-data="command" />
     <!-- <div v-for="command in commands" :key="command.data.name">
       <h2>{{ command.help.name }}</h2>
       <p>
@@ -52,6 +52,10 @@ import CommandInfo from './CommandInfo.vue'
 
 export default {
   name: 'CommandList',
+
+  components: {
+    CommandInfo,
+  },
 
   computed: {
     commands() {

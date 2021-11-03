@@ -96,7 +96,10 @@ export type CommandDescription = {
   name: CommandBase
   description: CommandInfo
   args: CommandArgs[]
-  examples: string[]
+  examples: {
+    legacy: string[]
+    slashCommand: string[]
+  }
   requiredModules: GolemModule[]
   alias?: string
   subcommands?: SubCommand[]
@@ -145,7 +148,7 @@ type ValidOptions =
   | SlashCommandStringOption
   | SlashCommandUserOption
 
-export class Command2 {
+export class Command {
   public readonly slashCommand: SlashCommandBuilder
   public readonly execute: CommandHandlerFn
 

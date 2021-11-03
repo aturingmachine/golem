@@ -1,7 +1,7 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { AliasHandler } from '../handlers/alias-handler'
-import { Command2 } from '../models/commands'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { guildIdFrom, userFrom } from '../utils/message-utils'
 
@@ -55,7 +55,7 @@ const execute = async (
   }
 }
 
-const goalias = new Command2({
+const goalias = new Command({
   logSource: LogSources.GoAlias,
   handler: execute,
   info: {
@@ -75,6 +75,7 @@ const goalias = new Command2({
             type: 'string',
             name: 'aliascommand',
             description: {
+              long: 'A GolemAlias string. Strings are formatted as "aliasName => $command". Everything to the left of the => delimiter will be stripped of whitespace to make the new alias name. When Golem recieves an alias it will execute the right side of the delimiter **as is**, and interperet it as if it is a new command.',
               short: 'A valid GolemAlias string. "aliasName => $go command"',
             },
             required: true,
@@ -90,7 +91,16 @@ const goalias = new Command2({
       },
     ],
     args: [],
-    examples: ['/goalias create hype => $go play darude sandstorm'],
+    examples: {
+      legacy: [
+        '$go alias create hype => $go play darude sandstorm',
+        '$go alias list',
+      ],
+      slashCommand: [
+        '/goalias create hype => $go play darude sandstorm',
+        '/goalias list',
+      ],
+    },
     requiredModules: [],
   },
 })

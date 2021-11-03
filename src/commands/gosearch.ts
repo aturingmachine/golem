@@ -1,29 +1,11 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command2 } from '../models/commands'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { getSearchReply } from '../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoSearch })
-
-// const data = new SlashCommandBuilder()
-//   .setName(CommandNames.slash.search)
-//   .setDescription('Search for tracks')
-//   .addStringOption((option) =>
-//     option
-//       .setName('query')
-//       .setDescription('query for a track')
-//       .setRequired(true)
-//   )
-//   .addIntegerOption((option) =>
-//     option
-//       .setName('count')
-//       .setDescription(
-//         'Max number of results to return, defaults to 5, max of 10.'
-//       )
-//       .setRequired(false)
-//   )
 
 const execute = async (
   interaction: CommandInteraction | Message,
@@ -64,45 +46,28 @@ const execute = async (
   }
 }
 
-// const helpInfo: CommandHelp = {
-//   name: 'search',
-//   msg: 'Search for tracks, uses the same algorithm as $play.',
-//   args: [
-//     {
-//       name: 'query',
-//       type: 'string',
-//       required: true,
-//       description: 'The track to search for and play.',
-//     },
-//   ],
-// }
-
-// const goSearchCommand = new Command({
-//   source: LogSources.GoSearch,
-//   data,
-//   handler: execute,
-//   helpInfo,
-// })
-
-const gosearch = new Command2({
+const gosearch = new Command({
   logSource: LogSources.GoSearch,
   handler: execute,
   info: {
     name: CommandNames.search,
     description: {
-      short: 'Search for a track and view the result set.',
+      short: 'Search for a local track and view the result set.',
     },
     args: [
       {
         type: 'string',
         name: 'query',
         description: {
-          short: 'The track to query for.',
+          short: 'The query to run against the Local Search Index.',
         },
         required: true,
       },
     ],
-    examples: ['$go search twice tt'],
+    examples: {
+      legacy: ['$go search twice tt'],
+      slashCommand: ['/gosearch twice tt'],
+    },
     requiredModules: [],
   },
 })

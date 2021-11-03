@@ -4,23 +4,11 @@ import { CommandAnalyticsInteraction } from '../analytics/models/interaction'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { PlayHandler } from '../handlers/play-handler'
-import { Command2 } from '../models/commands'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Youtube } from '../youtube/youtils'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
-
-// const data = new SlashCommandBuilder()
-//   .setName(CommandNames.slash.playNext)
-//   .setDescription('Add a track to the front of the play queue.')
-//   .addStringOption((option) =>
-//     option
-//       .setName('query')
-//       .setDescription(
-//         'The track to search for and play|A YouTube video/playlist URL to play.'
-//       )
-//       .setRequired(true)
-//   )
 
 const execute = async (
   interaction: CommandInteraction | Message,
@@ -101,34 +89,13 @@ const execute = async (
   PlayHandler.playLocal(res.listing, interaction, player, true)
 }
 
-// const helpInfo: CommandHelp = {
-//   name: 'playnext',
-//   msg: 'Play a track, queues at the front of the queue. (Behind other playnext tracks).',
-//   args: [
-//     {
-//       name: 'query',
-//       type: 'string',
-//       required: true,
-//       description:
-//         'The track to search for and play|A YouTube video/playlist URL to play.',
-//     },
-//   ],
-//   alias: '$playnext',
-// }
-
-// const goPlayNextCommand = new Command({
-//   source: LogSources.GoPlayNext,
-//   data,
-//   handler: execute,
-//   helpInfo,
-// })
-
-const goplaynext = new Command2({
+const goplaynext = new Command({
   logSource: LogSources.GoPlayNext,
   handler: execute,
   info: {
     name: CommandNames.playNext,
     description: {
+      long: 'Execute a Play command, queueing the track ahead of the passive queue, behind other tracks that have been Playnext-ed',
       short:
         'Play a track, queues at the front of the queue. (Behind other playnext tracks).',
     },
@@ -137,17 +104,25 @@ const goplaynext = new Command2({
         type: 'string',
         name: 'query',
         description: {
+          long: 'If a string is provided the argument is interpreted as a search query. First searching the Local Libraries, if no Local Track is found the query is then run against YouTube - taking the first result as the track to play.',
           short:
-            'The track to search for and play|A YouTube video/playlist URL to play.',
+            'The track to search for and play|A YouTube video URL to play.',
         },
         required: true,
       },
     ],
-    examples: [
-      '$go playnext twice tt',
-      '$go playnext <youtube url>',
-      '$go playnext <youtube playlist url>',
-    ],
+    examples: {
+      legacy: [
+        '$go playnext twice tt',
+        '$go playnext <youtube url>',
+        '$go playnext <youtube playlist url>',
+      ],
+      slashCommand: [
+        '/goplaynext twice tt',
+        '/goplaynext <youtube url>',
+        '/goplaynext <youtube playlist url>',
+      ],
+    },
     requiredModules: [],
     alias: '$playnext',
   },

@@ -1,7 +1,7 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command2 } from '../models/commands'
+import { Command } from '../models/commands'
 import { GolemModule } from '../models/config'
 import { LocalTrack } from '../models/track'
 import { Plex } from '../plex'
@@ -10,16 +10,6 @@ import { GetPlaylistEmbed } from '../utils/message-utils'
 import { Replier } from '../utils/replies'
 
 const log = GolemLogger.child({ src: LogSources.GoPlayList })
-
-// const data = new SlashCommandBuilder()
-//   .setName(CommandNames.slash.playlist)
-//   .setDescription('Enqueue a playlist')
-//   .addStringOption((option) =>
-//     option
-//       .setName('playlist')
-//       .setDescription('the playlist to play')
-//       .setRequired(false)
-//   )
 
 const execute = async (
   interaction: CommandInteraction | Message,
@@ -68,44 +58,13 @@ const execute = async (
   }
 }
 
-// const helpInfo: CommandHelp = {
-//   name: 'playlist',
-//   msg: 'Play a playlist sourced from a Plex server.',
-//   args: [
-//     {
-//       name: 'playlist',
-//       type: 'string',
-//       required: false,
-//       description: 'The playlist to play.',
-//       default: 'Returns a select of all playlists.',
-//     },
-//   ],
-// }
-
-// const goPlaylistCommand = new Command({
-//   source: LogSources.GoPlayList,
-//   data,
-//   handler: execute,
-//   helpInfo,
-//   requiredModules: [GolemModule.Plex],
-// })
-
-// const data = new SlashCommandBuilder()
-//   .setName(CommandNames.slash.playlist)
-//   .setDescription('Enqueue a playlist')
-//   .addStringOption((option) =>
-//     option
-//       .setName('playlist')
-//       .setDescription('the playlist to play')
-//       .setRequired(false)
-//   )
-
-const goplaylist = new Command2({
+const goplaylist = new Command({
   logSource: LogSources.GoPlayList,
   handler: execute,
   info: {
     name: CommandNames.playlist,
     description: {
+      long: 'Play a given playlist by name. Presents a select of all playlists if no playlist name is provided. Requires enabling the Plex module and a local Plex Media Server.',
       short: 'Play a given playlist or choose one from a select menu.',
     },
     args: [
@@ -118,7 +77,10 @@ const goplaylist = new Command2({
         required: false,
       },
     ],
-    examples: ['$go playlist my-playlist', '$go playlist'],
+    examples: {
+      legacy: ['$go playlist my-playlist', '$go playlist'],
+      slashCommand: ['/goplaylist my-playlist', '/goplaylist'],
+    },
     requiredModules: [GolemModule.Plex],
   },
 })

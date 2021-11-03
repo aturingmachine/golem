@@ -1,15 +1,11 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command2 } from '../models/commands'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPeekEmbed } from '../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoPeek })
-
-// const data = new SlashCommandBuilder()
-//   .setName(CommandNames.slash.peek)
-//   .setDescription('See the next tracks in the queue.')
 
 const execute = async (
   interaction: CommandInteraction | Message
@@ -28,20 +24,7 @@ const execute = async (
   await interaction.reply({ embeds: [embed] })
 }
 
-// const helpInfo: CommandHelp = {
-//   name: 'peek',
-//   msg: 'View the top of the play queue.',
-//   args: [],
-// }
-
-// const goPeekCommand = new Command({
-//   source: LogSources.GoPeek,
-//   data,
-//   handler: execute,
-//   helpInfo,
-// })
-
-const gopeek = new Command2({
+const gopeek = new Command({
   logSource: LogSources.GoPeek,
   handler: execute,
   info: {
@@ -51,7 +34,10 @@ const gopeek = new Command2({
       short: 'See the next tracks in the queue.',
     },
     args: [],
-    examples: ['$go peek'],
+    examples: {
+      legacy: ['$go peek'],
+      slashCommand: ['/gopeek'],
+    },
     requiredModules: [],
   },
 })

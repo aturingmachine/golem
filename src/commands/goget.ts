@@ -1,28 +1,8 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { GoGet } from '../handlers/go-get-handler'
-import { Command2 } from '../models/commands'
+import { Command } from '../models/commands'
 import { LogSources } from '../utils/logger'
-
-// const data = new SlashCommandBuilder()
-//   .setName(CommandNames.slash.get)
-//   .setDescription(
-//     'Get current queue time, queue count, now playing, or total track count.'
-//   )
-//   .addStringOption((option) =>
-//     option
-//       .setName('value')
-//       .addChoices([
-//         ['Run Time', 'time'],
-//         ['Queue Count', 'count'],
-//         ['Now Playing', 'nowplaying'],
-//         ['Track Count', 'tcount'],
-//         ['Playlists', 'playlists'],
-//         ['Info', 'all-info'],
-//       ])
-//       .setDescription('Retrieve information about the current Golem instance.')
-//       .setRequired(false)
-//   )
 
 const execute = async (
   interaction: CommandInteraction | Message,
@@ -47,30 +27,7 @@ const execute = async (
   }
 }
 
-// const helpInfo: CommandHelp = {
-//   name: 'get',
-//   msg: 'Get information about the current Golem instance.',
-//   args: [
-//     {
-//       name: 'resource',
-//       type: 'string',
-//       required: false,
-//       description:
-//         'time: estimated queue time\n\t\tcount: current queue count\n\t\tnp|nowplaying: current playing track\n\t\ttcount: library size\n\t\tplaylist[s]: list all playlists',
-//       default: 'Return a collection of all information.',
-//     },
-//   ],
-//   alias: '$np|$nowplaying',
-// }
-
-// const goGetCommand = new Command({
-//   source: 'go-get',
-//   data,
-//   handler: execute,
-//   helpInfo,
-// })
-
-const goget = new Command2({
+const goget = new Command({
   logSource: LogSources.GoGet,
   handler: execute,
   info: {
@@ -96,7 +53,10 @@ const goget = new Command2({
         ],
       },
     ],
-    examples: ['$go get', '$go get nowplaying', '$go get count'],
+    examples: {
+      legacy: ['$go get', '$go get nowplaying', '$go get count'],
+      slashCommand: ['/goget', '/goget nowplaying', '/goget count'],
+    },
     requiredModules: [],
   },
 })

@@ -1,59 +1,75 @@
 <template>
   <div>
-    <h2>{{ command.help.name }}</h2>
+    <h2>
+      {{ info.name }}
+      <badge 
+        v-for="module of info.requiredModules" 
+        :key="module"
+        :text="module"
+        :type="`${module.toLowerCase()}-badge`"
+      />
+    </h2>
+
     <p>
-      {{ command.help.msg }}
+      {{ info.description.long || info.description.short }}
     </p>
-    <section class="indent-1" v-if="command.help.args.length">
-      <h3> Arguments </h3>
-      <ul>
-        <li v-for="arg of command.help.args" :key="arg.name + arg.type">
-          {{ arg.name }} - <code>{{ arg.type }}</code>
-        </li>
-      </ul>
-    </section>
+
+    <examples v-if="isLongForm" :examples="info.examples" />
+
+    <!-- <h3> Legacy Command </h3>
+    <pre v-if="isLongForm" class="dc-chat-box">{{ info.examples.legacy.join('\n') }}</pre>
+
+    <h3> Slash Command </h3>
+    <pre v-if="isLongForm" class="dc-chat-box">{{ info.examples.slashCommand.join('\n') }}</pre> -->
+
+    <subcommands v-if="info.subcommands" :is-long-form="isLongForm" :subcommands="info.subcommands" />
+
+    <arguments-list 
+      v-if="info.args.length" 
+      :args="info.args" 
+      :is-long-form="isLongForm" 
+    />
   </div>
 </template>
 
 <script>
 import commands from '../data/commands.json'
-
-// {
-//   "help": {
-//     "name": "play",
-//     "msg": "Search for and play a track. Will search youtube if query returns no local results.",
-//     "args": [
-//       {
-//         "name": "query",
-//         "type": "string",
-//         "required": true,
-//         "description": "The track to search for and play|A YouTube video/playlist URL to play."
-//       }
-//     ],
-//     "alias": "$play"
-//   },
-//   "modules": [],
-//   "data": {
-//     "name": "goplay",
-//     "description": "Play Something",
-//     "options": [
-//       {
-//         "type": 3,
-//         "name": "query",
-//         "description": "The track to search for and play|A YouTube video/playlist URL to play.",
-//         "required": true
-//       }
-//     ]
-//   }
-// }
+import ArgumentsList from './ArgumentsList.vue'
+import Examples from './Examples.vue'
+import Subcommands from './SubCommands.vue'
 
 export default {
   name: 'CommandInfo',
 
+  components: {
+    ArgumentsList,
+    Examples,
+    Subcommands,
+  },
+
   props: {
-    command: {
+    commandData: {
       type: Object,
-      required: true
+      required: false
+    },
+    commandName: {
+      type: String,
+      required: false
+    },
+    isLongForm: {
+      type: Boolean,
+      default: false,
+      required: false,
+    }
+  },
+
+  computed: {
+    command() {
+      return this.commandData || commands.find(cmd => cmd.options.info.name === this.commandName)
+    },
+
+    info() {
+      return this.command.options.info
     }
   }
 }

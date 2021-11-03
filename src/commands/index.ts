@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { Collection } from 'discord.js'
-import { Command2 } from '../models/commands'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import goalias from './goalias'
 import goget from './goget'
@@ -15,14 +15,14 @@ import goshuffle from './goshuffle'
 import goskip from './goskip'
 import gostop from './gostop'
 
-export const Commands = new Collection<string, Command2>()
+export const Commands = new Collection<string, Command>()
 
 export const registerCommands = (): void => {
   fs.readdirSync(__dirname)
     .filter((file) => file.endsWith('.js') && !file.includes('index'))
     .forEach((file) => {
       /* eslint-disable-next-line @typescript-eslint/no-var-requires */
-      const command: Command2 = require(`./${file}`).default
+      const command: Command = require(`./${file}`).default
 
       if (command.missingRequiredModules.length > 0) {
         GolemLogger.verbose(

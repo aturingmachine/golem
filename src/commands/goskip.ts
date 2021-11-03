@@ -1,23 +1,11 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command2 } from '../models/commands'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoSkip })
-
-// const data = new SlashCommandBuilder()
-//   .setName(CommandNames.slash.skip)
-//   .setDescription(
-//     'Skip the current song in queue, stops player if last song in queue.'
-//   )
-//   .addIntegerOption((option) =>
-//     option
-//       .setName('skip-count')
-//       .setDescription('how many tracks to skip')
-//       .setRequired(false)
-//   )
 
 const execute = async (
   interaction: CommandInteraction | Message,
@@ -65,28 +53,7 @@ const execute = async (
   }
 }
 
-// const helpInfo: CommandHelp = {
-//   name: 'skip',
-//   msg: 'Skip a number of tracks.',
-//   args: [
-//     {
-//       name: 'count',
-//       type: 'number',
-//       required: false,
-//       description: 'The number of tracks to skip.',
-//       default: '1',
-//     },
-//   ],
-// }
-
-// const goSkipCommand = new Command({
-//   source: LogSources.GoSkip,
-//   data,
-//   handler: execute,
-//   helpInfo,
-// })
-
-const goskip = new Command2({
+const goskip = new Command({
   logSource: LogSources.GoSkip,
   handler: execute,
   info: {
@@ -104,7 +71,10 @@ const goskip = new Command2({
         required: false,
       },
     ],
-    examples: [''],
+    examples: {
+      legacy: ['$go skip', '$skip'],
+      slashCommand: ['/goskip'],
+    },
     requiredModules: [],
     alias: '$skip',
   },
