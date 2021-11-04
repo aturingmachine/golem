@@ -3,20 +3,20 @@
 # abort on errors
 set -e
 
-echo ">>> Dumping Commands"
 # Generate Command Data
+echo ">>> Dumping Commands"
 npm run cmd:dmp
 
-echo ">>> Generating Pages"
 # Generate Dynamic command pages
-npm run dev:gen --prefix ./docs
+echo ">>> Generating Pages"
+npm run gen --prefix ./docs
 
+# Build the Docs
 echo ">>> Building Docs"
-# build
 npm run docs:build
 
-# navigate into the build output directory
-cd docs/.vuepress/dist
+# Navigate into the build output directory
+cd ./docs/src/.vuepress/dist
 
 git init
 git add -A

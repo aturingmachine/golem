@@ -1,5 +1,30 @@
 ---
 title: Golem - search
+description: Documentation for Golem Bot's search command.
+tags:
+  - search
+  - command
 ---
 
-<command-info :is-long-form="true" :command-name="'search'" />
+# search
+
+Search for a local track and view the result set.
+
+## Examples
+
+### Legacy Command
+
+```
+$go search twice tt
+```
+
+### Slash Command
+
+```
+/gosearch twice tt
+```
+
+## Arguments
+- **query*** - `string`: The query to run against the Local Search Index.
+
+

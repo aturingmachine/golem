@@ -8,6 +8,54 @@ const commandTemplate = readFileSync(
   { encoding: 'utf-8' }
 )
 
+class DocCommand {
+  constructor(cmd) {
+    this.info = cmd.options.info
+    this.modules = cmd.requiredModules
+  }
+
+  get description() {
+    return this.info.description.long || this.info.description.short
+  }
+
+  argsString(args = this.info.args, level = 1) {
+    if (!args.length) {
+      return ''
+    }
+
+    const argStrings = args.map((arg) => {
+      // eslint-disable-next-line prettier/prettier
+      return `${level > 1 ? '\t' : ''}- **${arg.name}**${arg.required ? '\*' : ''} - \`${arg.type}\`: ${arg.description.long || arg.description.short}`
+    })
+
+    return `${level === 1 ? '##' : '\n\t###'} Arguments\n`.concat(
+      argStrings.join('\n')
+    )
+  }
+
+  get legacyExample() {
+    return this.info.examples.legacy.join('\n')
+  }
+
+  get slashExample() {
+    return this.info.examples.slashCommand.join('\n')
+  }
+
+  get subcommands() {
+    if (!this.info.subcommands) {
+      return ''
+    }
+
+    const subcommandMarkdown = this.info.subcommands.map((subcmd) => {
+      return `- **${subcmd.name}**: ${
+        subcmd.description.long || subcmd.description.short
+      }`.concat(subcmd.args ? this.argsString(subcmd.args, 2) : '')
+    })
+
+    return '## Subcommands\n'.concat(subcommandMarkdown)
+  }
+}
+
 commands.forEach((cmd) => {
   console.log(`[DOCGEN] Rending page for command ${cmd.options.info.name}`)
   const fp = path.resolve(
@@ -15,9 +63,15 @@ commands.forEach((cmd) => {
     `./src/commands/${cmd.options.info.name}.md`
   )
 
+  const command = new DocCommand(cmd)
+
   const content = commandTemplate
     .replaceAll('<%name>', cmd.options.info.name)
-    .replaceAll('<%command>', JSON.stringify(cmd))
+    .replaceAll('<%description>', command.description)
+    .replaceAll('<%legacy_command_example>', command.legacyExample)
+    .replaceAll('<%slash_command_example>', command.slashExample)
+    .replaceAll('<%arguments>', command.argsString())
+    .replaceAll('<%subcommands>', command.subcommands)
 
   writeFileSync(fp, content, { encoding: 'utf-8' })
   console.log(`[DOCGEN] Page rendered at ${fp}`)

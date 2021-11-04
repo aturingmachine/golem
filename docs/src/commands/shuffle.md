@@ -1,5 +1,29 @@
 ---
 title: Golem - shuffle
+description: Documentation for Golem Bot's shuffle command.
+tags:
+  - shuffle
+  - command
 ---
 
-<command-info :is-long-form="true" :command-name="'shuffle'" />
+# shuffle
+
+Shuffle the current queue maintaining the playnext queue's position.
+
+## Examples
+
+### Legacy Command
+
+```
+$go shuffle
+```
+
+### Slash Command
+
+```
+/goshuffle
+```
+
+
+
+

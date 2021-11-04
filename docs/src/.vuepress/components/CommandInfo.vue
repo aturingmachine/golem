@@ -15,13 +15,7 @@
     </p>
 
     <examples v-if="isLongForm" :examples="info.examples" />
-
-    <!-- <h3> Legacy Command </h3>
-    <pre v-if="isLongForm" class="dc-chat-box">{{ info.examples.legacy.join('\n') }}</pre>
-
-    <h3> Slash Command </h3>
-    <pre v-if="isLongForm" class="dc-chat-box">{{ info.examples.slashCommand.join('\n') }}</pre> -->
-
+    
     <subcommands v-if="info.subcommands" :is-long-form="isLongForm" :subcommands="info.subcommands" />
 
     <arguments-list 

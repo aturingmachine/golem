@@ -1,5 +1,29 @@
 ---
 title: Golem - pause
+description: Documentation for Golem Bot's pause command.
+tags:
+  - pause
+  - command
 ---
 
-<command-info :is-long-form="true" :command-name="'pause'" />
+# pause
+
+Pause the current playback.
+
+## Examples
+
+### Legacy Command
+
+```
+$go pause
+```
+
+### Slash Command
+
+```
+/gopause
+```
+
+
+
+

@@ -67,7 +67,7 @@ const goalias = new Command({
       {
         name: 'create',
         description: {
-          long: 'Create a new alias using GolemAlias format. <name of alias> => <full Golem command>. The alias will be made by removing white space within the "name of alias" section.',
+          long: 'Create a new alias using GolemAlias format. [name of alias] => [full Golem command]. The alias will be made by removing white space within the "name of alias" section.',
           short: 'Create a new alias.',
         },
         args: [
