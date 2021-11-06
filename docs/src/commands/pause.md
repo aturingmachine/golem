@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# pause
+# pause <badge text="Music*" type="music-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 Pause the current playback.
 

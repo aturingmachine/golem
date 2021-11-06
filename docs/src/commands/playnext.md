@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# playnext
+# playnext <badge text="Music*" type="music-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 Execute a Play command, queueing the track ahead of the passive queue, behind other tracks that have been Playnext-ed
 

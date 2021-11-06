@@ -69,7 +69,13 @@ export class GolemConf {
       process.exit(1)
     }
 
+    GolemConf.enabledModules.push(GolemModule.Core)
+
     // check all potential optional modules
+    if (!!GolemConf.values.library) {
+      GolemConf.enabledModules.push(GolemModule.Music)
+    }
+
     if (!!GolemConf.values.plex) {
       GolemConf.enabledModules.push(GolemModule.Plex)
     }
@@ -100,8 +106,10 @@ export class GolemConf {
 
   static get modules(): Record<GolemModule, boolean> {
     return {
-      Plex: GolemConf.enabledModules.includes(GolemModule.Plex),
+      Core: GolemConf.enabledModules.includes(GolemModule.Core),
       LastFm: GolemConf.enabledModules.includes(GolemModule.LastFm),
+      Music: GolemConf.enabledModules.includes(GolemModule.Music),
+      Plex: GolemConf.enabledModules.includes(GolemModule.Plex),
       Web: GolemConf.enabledModules.includes(GolemModule.Web),
       Youtube: GolemConf.enabledModules.includes(GolemModule.Youtube),
     }

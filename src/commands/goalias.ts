@@ -101,7 +101,6 @@ const goalias = new Command({
         '/goalias list',
       ],
     },
-    requiredModules: [],
   },
 })
 

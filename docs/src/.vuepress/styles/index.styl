@@ -10,16 +10,110 @@
 .indent-1
   margin-left 16px
 
-.plex-badge
-  color white!important
-  background-color rgb(183, 128, 10)!important
-
-.lastfm-badge
-  color black!important
-  background-color #b90000!important
-
 .dc-chat-box
   border-radius 10px
 
 .subcommand-arguments
   margin-bottom 16px
+
+/**
+  Custom Badges
+*/
+.badge
+  color white!important
+  border 1px solid
+
+.core-badge
+  background-color rgba(40, 113, 153, 0.3)!important
+  border-color rgb(40, 113, 153)!important
+
+.music-badge
+  background-color rgba(87, 186, 168, 0.5)!important
+  border-color rgb(87, 186, 168)
+
+.plex-badge
+  background-color rgba(153, 117, 40, 0.645)!important
+  border-color rgb(153, 117, 40)!important
+
+.lastfm-badge
+  background-color rgba(206, 66, 66, 0.645)!important
+  border-color rgb(206, 66, 66)
+
+.youtube-badge
+  background-color rgba(184, 0, 0, 0.5)!important
+  border-color rgb(184, 0, 0)
+
+.web-badge
+  background-color rgba(166, 87, 186, 0.5)!important
+  border-color rgb(166, 87, 186)
+
+.tooltip-root
+  position relative
+
+.tooltip-root::after {
+    position absolute
+    left 50%
+    top -6px
+    transform translateX(-5%) translateY(65%)
+    background rgba(255, 255, 255, 0.15)
+    text-align center
+    color #fff
+    padding 4px 2px
+    font-size 12px
+    min-width 175px
+    border-radius 5px
+    pointer-events none
+    opacity 0
+}
+
+.tooltip-root:hover::after,
+.tooltip-root:hover::before {
+   opacity 1
+}
+
+
+.optional-mod-badge.tooltip-root:after
+  content "At least one optional module is required"
+
+// /**
+//  *
+//  * TOOLTIP BASE
+//  *
+//  */
+// .tooltip-root
+//   margin 20px
+//   position relative
+
+// .tooltip-root::before {
+//     content  ""
+//     position  absolute
+//     top -6px
+//     left 50%
+//     transform  translateX(-50%)
+//     border-width  4px 6px 0 6px
+//     border-style  solid
+//     border-color  rgba(0,0,0,0.7) transparent transparent transparent
+//     z-index  100
+//     opacity 0
+// }
+
+// .tooltip-root::after {
+//     position absolute
+//     left 50%
+//     top -6px
+//     transform translateX(-5%) translateY(65%)
+//     background rgba(255, 255, 255, 0.15)
+//     text-align center
+//     color #fff
+//     padding 4px 2px
+//     font-size 12px
+//     min-width 175px
+//     border-radius 5px
+//     pointer-events none
+//     opacity 0
+// }
+
+// .tooltip-root:hover::after,
+// .tooltip-root:hover::before {
+//    opacity 1
+// }

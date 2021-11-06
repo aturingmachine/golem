@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# peek
+# peek <badge text="Music*" type="music-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 See the next tracks in the queue.
 

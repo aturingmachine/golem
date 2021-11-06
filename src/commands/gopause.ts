@@ -2,6 +2,7 @@ import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { Command } from '../models/commands'
+import { GolemModule } from '../models/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 
 const execute = async (
@@ -34,8 +35,10 @@ const gopause = new Command({
       legacy: ['$go pause'],
       slashCommand: ['/gopause'],
     },
-    requiredModules: [],
     alias: '$pause',
+    requiredModules: {
+      oneOf: [GolemModule.Music, GolemModule.Youtube],
+    },
   },
 })
 

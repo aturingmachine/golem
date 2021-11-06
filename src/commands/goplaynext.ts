@@ -5,6 +5,7 @@ import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { PlayHandler } from '../handlers/play-handler'
 import { Command } from '../models/commands'
+import { GolemModule } from '../models/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Youtube } from '../youtube/youtils'
 
@@ -123,8 +124,10 @@ const goplaynext = new Command({
         '/goplaynext <youtube playlist url>',
       ],
     },
-    requiredModules: [],
     alias: '$playnext',
+    requiredModules: {
+      oneOf: [GolemModule.Music, GolemModule.Youtube],
+    },
   },
 })
 

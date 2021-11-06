@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# mix
+# mix <badge text="LastFm" type="lastfm-badge" />
 
 Enqueue a selection of tracks mixed off the current playing track. Can mix by either like artist or like tracks, defaulting to artist if no argument is provided.
 

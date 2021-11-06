@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# alias
+# alias 
 
 Interact with the aliases registered for this server.
 

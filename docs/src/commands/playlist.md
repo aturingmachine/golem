@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# playlist
+# playlist <badge text="Plex" type="plex-badge" /> <badge text="Music" type="music-badge" />
 
 Play a given playlist by name. Presents a select of all playlists if no playlist name is provided. Requires enabling the Plex module and a local Plex Media Server.
 

@@ -2,12 +2,20 @@
   <div>
     <h2>
       {{ info.name }}
-      <badge 
-        v-for="module of info.requiredModules" 
-        :key="module"
-        :text="module"
-        :type="`${module.toLowerCase()}-badge`"
-      />
+      <template v-if="info.requiredModules" >
+        <badge 
+          v-for="module of info.requiredModules.all" 
+          :key="module"
+          :text="module"
+          :type="`${module.toLowerCase()}-badge`"
+        />
+        <badge 
+          v-for="module of info.requiredModules.oneOf" 
+          :key="module"
+          :text="`${module}*`"
+          :type="`${module.toLowerCase()}-badge  optional-mod-badge tooltip-root`"
+        />
+      </template>
     </h2>
 
     <p>

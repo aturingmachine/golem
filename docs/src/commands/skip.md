@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# skip
+# skip <badge text="Music*" type="music-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 Skip queued tracks.
 

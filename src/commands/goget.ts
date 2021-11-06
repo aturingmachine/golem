@@ -57,7 +57,6 @@ const goget = new Command({
       legacy: ['$go get', '$go get nowplaying', '$go get count'],
       slashCommand: ['/goget', '/goget nowplaying', '/goget count'],
     },
-    requiredModules: [],
   },
 })
 

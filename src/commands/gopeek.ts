@@ -2,6 +2,7 @@ import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { Command } from '../models/commands'
+import { GolemModule } from '../models/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPeekEmbed } from '../utils/message-utils'
 
@@ -38,7 +39,9 @@ const gopeek = new Command({
       legacy: ['$go peek'],
       slashCommand: ['/gopeek'],
     },
-    requiredModules: [],
+    requiredModules: {
+      oneOf: [GolemModule.Music, GolemModule.Youtube],
+    },
   },
 })
 

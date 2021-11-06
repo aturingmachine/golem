@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# get
+# get 
 
 Retrieve information about the current Golem instance.
 

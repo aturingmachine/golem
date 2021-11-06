@@ -100,7 +100,10 @@ export type CommandDescription = {
     legacy: string[]
     slashCommand: string[]
   }
-  requiredModules: GolemModule[]
+  requiredModules?: {
+    all?: GolemModule[]
+    oneOf?: GolemModule[]
+  }
   alias?: string
   subcommands?: SubCommand[]
 }
@@ -186,18 +189,45 @@ export class Command {
     }`
   }
 
-  get missingRequiredModules(): GolemModule[] {
-    return this.options.info.requiredModules.filter(
-      (mod) => !GolemConf.modules[mod]
-    )
+  get missingRequiredModules(): { all: GolemModule[]; oneOf: GolemModule[] } {
+    const missingAllMods =
+      this.options.info.requiredModules?.all?.filter((mod) => {
+        return !GolemConf.modules[mod]
+      }) || []
+
+    const missingOneOfMods =
+      this.options.info.requiredModules?.oneOf?.filter((mod) => {
+        return !GolemConf.modules[mod]
+      }) || []
+
+    const isMissingOneOfs =
+      this.options.info.requiredModules?.oneOf?.length ===
+      missingOneOfMods.length
+
+    return {
+      all: missingAllMods,
+      oneOf: isMissingOneOfs ? missingOneOfMods : [],
+    }
+  }
+
+  missingModulesToString(): string {
+    return `${this.missingRequiredModules.all.join(', ')}${
+      this.missingRequiredModules.oneOf.length
+        ? `; One of:${this.missingRequiredModules.oneOf.join(', ')}`
+        : ''
+    }`
   }
 
   private get missingModulesMsg(): string {
     return `cannot execute command \`${
       this.options.info.name
-    }\`. missing required modules: **${this.missingRequiredModules.join(
+    }\`. missing required modules: **All of: ${this.missingRequiredModules.all.join(
       ', '
-    )}**`
+    )}${
+      this.missingRequiredModules.oneOf.length
+        ? `; One of:${this.missingRequiredModules.oneOf.join(', ')}`
+        : ''
+    }**`
   }
 
   private addOptions(subcommand?: {
@@ -278,13 +308,22 @@ export class Command {
 
   private wrapHandler(): CommandHandlerFn {
     return async (interaction, ...args: any[]) => {
-      if (this.missingRequiredModules.length) {
+      if (
+        this.missingRequiredModules.all.length ||
+        this.missingRequiredModules.oneOf.length
+      ) {
         await interaction.reply(this.missingModulesMsg)
 
         GolemLogger.warn(
           `cannot execute command ${
             this.options.info.name
-          } due to missing modules: ${this.missingRequiredModules.join(', ')}`,
+          } due to missing modules: All of - ${this.missingRequiredModules.all.join(
+            ', '
+          )}${
+            this.missingRequiredModules.oneOf.length
+              ? `; One of - ${this.missingRequiredModules.oneOf.join(', ')}`
+              : ''
+          }`,
           { src: this.options.logSource }
         )
         return

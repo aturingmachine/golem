@@ -1,15 +1,15 @@
 ---
 home: true
-heroImage: https://v1.vuepress.vuejs.org/hero.png
-tagline: Documentation for Golem Discord bot
+heroImage: /golem-logo.png
+tagline: 
 actionText: Command Docs →
 actionLink: /commands/
 features:
-- title: Feature 1 Title
-  details: Feature 1 Description
-- title: Feature 2 Title
-  details: Feature 2 Description
-- title: Feature 3 Title
-  details: Feature 3 Description
-footer: Made by  with ❤️
+- title: Modular Design
+  details: Extend Golem's functionality by integrating more complex features
+- title: Media Player
+  details: Play local media or stream media to voice channels
+- title: Robust Command Aliases
+  details: Powerful templating language for creating robust commands
+footer: Made by aturingmachine with ❤️
 ---

@@ -11,7 +11,7 @@ const commandTemplate = readFileSync(
 class DocCommand {
   constructor(cmd) {
     this.info = cmd.options.info
-    this.modules = cmd.requiredModules
+    this.modules = this.info.requiredModules
   }
 
   get description() {
@@ -54,6 +54,24 @@ class DocCommand {
 
     return '## Subcommands\n'.concat(subcommandMarkdown)
   }
+
+  get badges() {
+    if (!this.modules) {
+      return ''
+    }
+
+    const all =
+      this.modules.all?.map(
+        (mod) => `<badge text="${mod}" type="${mod.toLowerCase()}-badge" />`
+      ) || []
+    const oneOfMods =
+      this.modules.oneOf?.map(
+        (mod) =>
+          `<badge text="${mod}*" type="${mod.toLowerCase()}-badge optional-mod-badge tooltip-root"/>`
+      ) || []
+
+    return all.join(' ').concat(oneOfMods.join(' '))
+  }
 }
 
 commands.forEach((cmd) => {
@@ -65,6 +83,9 @@ commands.forEach((cmd) => {
 
   const command = new DocCommand(cmd)
 
+  console.log('modules', command.modules)
+  console.log('badges', command.badges)
+
   const content = commandTemplate
     .replaceAll('<%name>', cmd.options.info.name)
     .replaceAll('<%description>', command.description)
@@ -72,6 +93,7 @@ commands.forEach((cmd) => {
     .replaceAll('<%slash_command_example>', command.slashExample)
     .replaceAll('<%arguments>', command.argsString())
     .replaceAll('<%subcommands>', command.subcommands)
+    .replaceAll('<%badge>', command.badges)
 
   writeFileSync(fp, content, { encoding: 'utf-8' })
   console.log(`[DOCGEN] Page rendered at ${fp}`)

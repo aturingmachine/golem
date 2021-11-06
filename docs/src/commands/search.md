@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# search
+# search <badge text="Music" type="music-badge" />
 
 Search for a local track and view the result set.
 

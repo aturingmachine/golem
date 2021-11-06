@@ -81,7 +81,9 @@ const goplaylist = new Command({
       legacy: ['$go playlist my-playlist', '$go playlist'],
       slashCommand: ['/goplaylist my-playlist', '/goplaylist'],
     },
-    requiredModules: [GolemModule.Plex],
+    requiredModules: {
+      all: [GolemModule.Plex, GolemModule.Music],
+    },
   },
 })
 

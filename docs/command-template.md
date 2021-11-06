@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# <%name>
+# <%name> <%badge>
 
 <%description>
 

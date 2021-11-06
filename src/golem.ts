@@ -170,10 +170,16 @@ export class Golem {
     }
   }
 
-  static setPresence(listing: TrackListingInfo): void {
+  static setPresenceListening(listing: TrackListingInfo): void {
     Golem.client.user?.setActivity({
       name: listing.title,
       type: 'LISTENING',
+    })
+  }
+
+  static setPresenceIdle(): void {
+    Golem.client.user?.setActivity({
+      name: 'Use $go help to get started.',
     })
   }
 

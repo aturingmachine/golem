@@ -2,6 +2,7 @@ import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { Command } from '../models/commands'
+import { GolemModule } from '../models/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { getSearchReply } from '../utils/message-utils'
 
@@ -68,7 +69,9 @@ const gosearch = new Command({
       legacy: ['$go search twice tt'],
       slashCommand: ['/gosearch twice tt'],
     },
-    requiredModules: [],
+    requiredModules: {
+      all: [GolemModule.Music],
+    },
   },
 })
 

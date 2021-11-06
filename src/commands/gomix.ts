@@ -134,7 +134,9 @@ const gomix = new Command({
       legacy: ['$go mix artist', '$go mix track'],
       slashCommand: ['/gomix artist', '/gomix track'],
     },
-    requiredModules: [GolemModule.LastFm],
+    requiredModules: {
+      all: [GolemModule.LastFm],
+    },
   },
 })
 

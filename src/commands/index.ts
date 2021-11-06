@@ -24,11 +24,14 @@ export const registerCommands = (): void => {
       /* eslint-disable-next-line @typescript-eslint/no-var-requires */
       const command: Command = require(`./${file}`).default
 
-      if (command.missingRequiredModules.length > 0) {
+      if (
+        command.missingRequiredModules.all.length > 0 ||
+        command.missingRequiredModules.oneOf.length > 0
+      ) {
         GolemLogger.verbose(
           `skipping registering command ${
             command.options.info.name
-          }; missing modules :${command.missingRequiredModules.join(', ')}`,
+          }; ${command.missingModulesToString()}`,
           {
             src: LogSources.CommandRegister,
           }
