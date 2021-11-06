@@ -44,7 +44,7 @@ export const Plex: Plex = {
   playlists: [],
 
   async init(trackFinder: TrackFinder): Promise<void> {
-    if (!GolemConf.modules.Plex) {
+    if (!GolemConf.modules.Plex || !GolemConf.modules.Music) {
       log.info('plex module not loaded')
       return
     }

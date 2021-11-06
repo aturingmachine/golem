@@ -21,7 +21,7 @@ export class PryQuery {
   get filter(): Record<string, string | number | boolean | RegExp> {
     return Object.fromEntries(
       this.getQueryPart('where')
-        .split(/ +(?=(?:(?:[^"]*"){2})*[^"]*$)/g)
+        .split(/(?<!"[A-z0-9]*[^ ])\s/)
         .slice(1)
         .map((q) => [q.split('=')[0], new RegExp(q.split('=')[1], 'i')])
     )

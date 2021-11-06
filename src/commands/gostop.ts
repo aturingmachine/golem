@@ -1,13 +1,9 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command, CommandHelp } from '../models/commands'
+import { Command } from '../models/commands'
+import { GolemModule } from '../models/config'
 import { GolemLogger, LogSources } from '../utils/logger'
-
-const data = new SlashCommandBuilder()
-  .setName(CommandNames.slash.stop)
-  .setDescription('Clear the entire queue and stop the current player.')
 
 const execute = async (
   interaction: CommandInteraction | Message
@@ -30,18 +26,24 @@ const execute = async (
   }
 }
 
-const helpInfo: CommandHelp = {
-  name: 'stop',
-  msg: 'Clears the current queue.',
-  args: [],
-  alias: '$stop',
-}
-
-const goStopCommand = new Command({
-  source: LogSources.GoStop,
-  data,
+const gostop = new Command({
+  logSource: LogSources.GoStop,
   handler: execute,
-  helpInfo,
+  info: {
+    name: CommandNames.stop,
+    description: {
+      short: 'Stops the current playback.',
+    },
+    args: [],
+    examples: {
+      legacy: ['$go stop', '$stop'],
+      slashCommand: ['/gostop'],
+    },
+    requiredModules: {
+      oneOf: [GolemModule.Music, GolemModule.Youtube],
+    },
+    alias: '$stop',
+  },
 })
 
-export default goStopCommand
+export default gostop

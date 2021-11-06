@@ -1,16 +1,12 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command, CommandHelp } from '../models/commands'
+import { Command } from '../models/commands'
+import { GolemModule } from '../models/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPeekEmbed } from '../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoPeek })
-
-const data = new SlashCommandBuilder()
-  .setName(CommandNames.slash.peek)
-  .setDescription('See the next tracks in the queue.')
 
 const execute = async (
   interaction: CommandInteraction | Message
@@ -29,17 +25,24 @@ const execute = async (
   await interaction.reply({ embeds: [embed] })
 }
 
-const helpInfo: CommandHelp = {
-  name: 'peek',
-  msg: 'View the top of the play queue.',
-  args: [],
-}
-
-const goPeekCommand = new Command({
-  source: LogSources.GoPeek,
-  data,
+const gopeek = new Command({
+  logSource: LogSources.GoPeek,
   handler: execute,
-  helpInfo,
+  info: {
+    name: CommandNames.peek,
+    description: {
+      long: 'See the next tracks in the queue.',
+      short: 'See the next tracks in the queue.',
+    },
+    args: [],
+    examples: {
+      legacy: ['$go peek'],
+      slashCommand: ['/gopeek'],
+    },
+    requiredModules: {
+      oneOf: [GolemModule.Music, GolemModule.Youtube],
+    },
+  },
 })
 
-export default goPeekCommand
+export default gopeek

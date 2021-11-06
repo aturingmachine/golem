@@ -8,20 +8,20 @@ export const Constants = {
   baseColor: '#f900d5' as ColorResolvable,
 }
 
-export const CommandBase = {
-  help: 'help',
-  get: 'get',
-  pause: 'pause',
-  peek: 'peek',
-  play: 'play',
-  playNext: 'playnext',
-  playlist: 'playlist',
-  search: 'search',
-  shuffle: 'shuffle',
-  skip: 'skip',
-  stop: 'stop',
-  mix: 'mix',
-  alias: 'alias',
+export enum CommandBase {
+  help = 'help',
+  get = 'get',
+  pause = 'pause',
+  peek = 'peek',
+  play = 'play',
+  playNext = 'playnext',
+  playlist = 'playlist',
+  search = 'search',
+  shuffle = 'shuffle',
+  skip = 'skip',
+  stop = 'stop',
+  mix = 'mix',
+  alias = 'alias',
 }
 
 const SlashCommands = {
@@ -43,5 +43,8 @@ export const CommandNames = {
   ...CommandBase,
   slash: {
     ...SlashCommands,
+  },
+  Slash(name: CommandBase): string {
+    return `go${name}`
   },
 }

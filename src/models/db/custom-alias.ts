@@ -7,6 +7,7 @@ const schema = new Schema<CustomAlias>({
   args: String,
   createdBy: String,
   guildId: String,
+  description: String,
 })
 
 export const CustomAliasData = mongoose.model<CustomAlias>(

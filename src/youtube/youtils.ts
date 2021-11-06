@@ -2,6 +2,7 @@ import ytpl from 'ytpl'
 import ytsr from 'ytsr'
 import { YoutubeListing, YoutubePlaylistListing } from '../models/youtube'
 import { GolemConf } from '../utils/config'
+import { shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 
 export class Youtube {
@@ -24,14 +25,19 @@ export class Youtube {
 
   static async getPlaylist(
     url: string,
-    limit = 20
+    limit = 20,
+    shuffle = false
   ): Promise<YoutubePlaylistListing> {
     Youtube.log.verbose(`getting playlist for ${url}`)
-    const result = await ytpl(url, { limit })
+    const videoLimit = shuffle ? limit * 5 : limit
+    const result = await ytpl(url, { limit: videoLimit })
+    const videosToMap = shuffle
+      ? shuffleArray([...result.items]).slice(0, limit)
+      : result.items
 
     return {
       title: result.title,
-      listings: result.items.map(YoutubeListing.fromPlaylistItem),
+      listings: videosToMap.map(YoutubeListing.fromPlaylistItem),
       thumbnail: result.bestThumbnail.url,
     }
   }

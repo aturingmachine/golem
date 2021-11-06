@@ -20,6 +20,11 @@ export class TrackLoader {
   }
 
   async load(): Promise<Listing[]> {
+    if (!GolemConf.modules.Music) {
+      log.verbose('music module disabled - not initializing track loading')
+      return []
+    }
+
     for (const lib of GolemConf.library.paths) {
       const name = lib.split('/').pop() || 'Library'
 

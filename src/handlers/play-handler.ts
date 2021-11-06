@@ -5,7 +5,7 @@ import { LocalTrack, YoutubeTrack } from '../models/track'
 import { MusicPlayer } from '../player/music-player'
 import { GolemConf } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { parseMessageArgs } from '../utils/message-args'
+import { ParsedMessage } from '../utils/message-args'
 import { GetEmbedFromListing, userFrom } from '../utils/message-utils'
 import { Youtube } from '../youtube/youtils'
 
@@ -104,12 +104,19 @@ export class PlayHandler {
     player: MusicPlayer
   ): Promise<void> {
     try {
-      const { base: cleanPlaylistUrl, args } = parseMessageArgs(playlistUrl)
+      const parsedMessage = new ParsedMessage(playlistUrl)
+      const args = parsedMessage.args
+
       const limit = args.limit ? parseInt(args.limit, 10) : undefined
+      const isShuffle = !!args.shuffle
       const userId = userFrom(interaction)
 
       PlayHandler.log.verbose(`getting playlist`)
-      const playlist = await Youtube.getPlaylist(cleanPlaylistUrl, limit)
+      const playlist = await Youtube.getPlaylist(
+        parsedMessage.content,
+        limit,
+        isShuffle
+      )
 
       PlayHandler.log.verbose(`got playlist`)
 

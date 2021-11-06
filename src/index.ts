@@ -1,9 +1,13 @@
-import mongoose from 'mongoose'
+import { registerCommands } from './commands'
 import { Golem } from './golem'
 import { GolemConf } from './utils/config'
 import { startApi } from './web/server'
 
 const main = async (): Promise<void> => {
+  GolemConf.init()
+
+  registerCommands()
+
   if (GolemConf.options.NoRun) {
     console.log('NoRun set - exiting')
     process.exit(0)
@@ -24,12 +28,16 @@ const main = async (): Promise<void> => {
   }
 }
 
-process.on('exit', () => {
-  mongoose.connection.close()
+function shutdown() {
+  // mongoose.connection.close()
 
   try {
     Golem.disconnectAll()
-  } catch (error) {}
-})
+  } catch (error) {
+    console.error('couldnt disconnect all golem connections', error)
+  }
+}
+
+process.once('exit', shutdown)
 
 main()
