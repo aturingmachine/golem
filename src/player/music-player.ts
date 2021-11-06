@@ -40,29 +40,6 @@ export class MusicPlayer {
 
   public readonly audioPlayer!: AudioPlayer
 
-  get isPlaying(): boolean {
-    return this.audioPlayer.state.status === AudioPlayerStatus.Playing
-  }
-
-  get nowPlaying(): TrackListingInfo | undefined {
-    return this.currentResource?.metadata.track.metadata
-  }
-
-  get currentTrackRemaining(): number {
-    return (
-      (this.currentResource?.metadata.duration || 0) -
-      (this.currentResource?.playbackDuration || 0) / 1000
-    )
-  }
-
-  get stats(): { count: number; time: number; hTime: string } {
-    return {
-      count: this.queue.queuedTrackCount + (this.isPlaying ? 1 : 0),
-      time: this.queue.runTime + this.currentTrackRemaining,
-      hTime: humanReadableTime(this.queue.runTime + this.currentTrackRemaining),
-    }
-  }
-
   public constructor(
     private options: JoinVoiceChannelOptions & CreateVoiceConnectionOptions
   ) {
@@ -75,6 +52,47 @@ export class MusicPlayer {
     this.audioPlayer.on('error', this.audioPlayErrorHandler.bind(this))
 
     this.joinVoice()
+  }
+
+  public get isPlaying(): boolean {
+    return this.audioPlayer.state.status === AudioPlayerStatus.Playing
+  }
+
+  public get nowPlaying(): TrackListingInfo | undefined {
+    return this.currentResource?.metadata.track.metadata
+  }
+
+  public get currentTrackRemaining(): number {
+    return (
+      (this.currentResource?.metadata.duration || 0) -
+      (this.currentResource?.playbackDuration || 0) / 1000
+    )
+  }
+
+  public get stats(): { count: number; time: number; hTime: string } {
+    return {
+      count: this.queue.queuedTrackCount + (this.isPlaying ? 1 : 0),
+      time: this.queue.runTime + this.currentTrackRemaining,
+      hTime: humanReadableTime(this.queue.runTime + this.currentTrackRemaining),
+    }
+  }
+
+  public get trackCount(): number {
+    return this.queue.queuedTrackCount + (this.isPlaying ? 1 : 0)
+  }
+
+  public get isDisconnected(): boolean {
+    return (
+      this.voiceConnection.state.status === VoiceConnectionStatus.Disconnected
+    )
+  }
+
+  public get isDestroyed(): boolean {
+    return this.voiceConnection.state.status === VoiceConnectionStatus.Destroyed
+  }
+
+  private get channelId(): string {
+    return this.options.channelId
   }
 
   public async enqueue(track: Track, enqueueAsNext = false): Promise<void> {
@@ -100,6 +118,33 @@ export class MusicPlayer {
     void (await this.processQueue())
   }
 
+  public async skip(): Promise<void> {
+    this.log.info(`skipping ${this.currentResource?.metadata.title}`)
+    this.currentResource?.metadata.track.onSkip()
+
+    await this.processQueue(true)
+  }
+
+  public async destroy(): Promise<void> {
+    this.log.silly(
+      `attempt destroy voice connection for ${this.channelId} - state=${this.voiceConnection.state.status}`
+    )
+    if (
+      ![
+        VoiceConnectionStatus.Destroyed,
+        VoiceConnectionStatus.Disconnected,
+      ].includes(this.voiceConnection.state.status)
+    ) {
+      this.log.debug(`destroying voice connection for ${this.channelId}`)
+
+      this.queueLock = false
+      this.currentResource?.metadata.track.onSkip()
+      await Golem.removePlayer(this.channelId)
+      this.voiceConnection.destroy()
+      Golem.setPresenceIdle()
+    }
+  }
+
   public pause(): void {
     this.log.info(`pausing`)
     this.audioPlayer.pause(true)
@@ -121,13 +166,6 @@ export class MusicPlayer {
     this.queueLock = false
     Golem.setPresenceIdle()
     // this.disconnect()
-  }
-
-  public async skip(): Promise<void> {
-    this.log.info(`skipping ${this.currentResource?.metadata.title}`)
-    this.currentResource?.metadata.track.onSkip()
-
-    await this.processQueue(true)
   }
 
   public shuffle(): void {
@@ -153,44 +191,6 @@ export class MusicPlayer {
       this.voiceConnection.disconnect()
       Golem.setPresenceIdle()
     }
-  }
-
-  public async destroy(): Promise<void> {
-    this.log.silly(
-      `attempt destroy voice connection for ${this.channelId} - state=${this.voiceConnection.state.status}`
-    )
-    if (
-      ![
-        VoiceConnectionStatus.Destroyed,
-        VoiceConnectionStatus.Disconnected,
-      ].includes(this.voiceConnection.state.status)
-    ) {
-      this.log.debug(`destroying voice connection for ${this.channelId}`)
-
-      this.queueLock = false
-      this.currentResource?.metadata.track.onSkip()
-      await Golem.removePlayer(this.channelId)
-      this.voiceConnection.destroy()
-      Golem.setPresenceIdle()
-    }
-  }
-
-  public get trackCount(): number {
-    return this.queue.queuedTrackCount + (this.isPlaying ? 1 : 0)
-  }
-
-  private get channelId(): string {
-    return this.options.channelId
-  }
-
-  public get isDisconnected(): boolean {
-    return (
-      this.voiceConnection.state.status === VoiceConnectionStatus.Disconnected
-    )
-  }
-
-  public get isDestroyed(): boolean {
-    return this.voiceConnection.state.status === VoiceConnectionStatus.Destroyed
   }
 
   private joinVoice(): void {

@@ -32,8 +32,6 @@ export class Golem {
   }
 
   static async initialize(): Promise<void> {
-    // GolemConf.init()
-
     Golem.players = new Map()
 
     Golem.log = GolemLogger.child({ src: LogSources.App })
@@ -59,7 +57,9 @@ export class Golem {
 
     Golem.log.verbose(`Loaded ${Golem.loader.listings.length} listings`)
 
-    Golem.trackFinder = new TrackFinder(Golem.loader.listings)
+    if (GolemConf.modules.Music) {
+      Golem.trackFinder = new TrackFinder(Golem.loader.listings)
+    }
 
     await Golem.connectToPlex()
 

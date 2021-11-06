@@ -6,6 +6,7 @@ import { Golem } from '../golem'
 import { PlayHandler } from '../handlers/play-handler'
 import { Command } from '../models/commands'
 import { GolemModule } from '../models/config'
+import { GolemConf } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Youtube } from '../youtube/youtils'
 
@@ -34,7 +35,7 @@ const execute = async (
   if (interaction.member) {
     Analytics.push(
       new CommandAnalyticsInteraction(interaction, {
-        command: 'GoPlay',
+        command: 'GoPlayNext',
         content: commandQuery,
       })
     )
@@ -48,6 +49,16 @@ const execute = async (
 
   if (PlayHandler.isYoutubeQuery(commandQuery)) {
     await PlayHandler.ytPlay(commandQuery, interaction, player)
+
+    return
+  }
+
+  if (!GolemConf.modules.Music) {
+    log.warn(`cannot execute for local track - missing Music module`)
+
+    await interaction.reply(
+      `Cannot play local track - missing required module - Music`
+    )
 
     return
   }

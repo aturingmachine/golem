@@ -148,18 +148,6 @@ export class LegacyCommandHandler {
 
     helpMsg = helpMsg.concat(builtInCommandsHelp)
 
-    // const aliases = await CustomAlias.getAliases(guildId)
-
-    // if (aliases.length > 0) {
-    //   const aliasHelp = aliases.reduce((prev, curr) => {
-    //     return `\t${curr.name}\n\t\t${
-    //       curr.description ? ' -' + curr.description : curr.unevaluated
-    //     }`
-    //   }, '\n--------------\n Custom Aliases \n--------------\n')
-
-    //   helpMsg = helpMsg.concat(aliasHelp)
-    // }
-
     return helpMsg.concat('```')
   }
 }

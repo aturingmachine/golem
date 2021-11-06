@@ -219,11 +219,13 @@ export class Command {
   }
 
   private get missingModulesMsg(): string {
-    return `cannot execute command \`${
-      this.options.info.name
-    }\`. missing required modules: **All of: ${this.missingRequiredModules.all.join(
-      ', '
-    )}${
+    return `cannot execute command \`${this.options.info.name}\`. ${
+      this.missingRequiredModules.all.length
+        ? `missing required modules: **All of: ${this.missingRequiredModules.all.join(
+            ', '
+          )}`
+        : ''
+    }${
       this.missingRequiredModules.oneOf.length
         ? `; One of:${this.missingRequiredModules.oneOf.join(', ')}`
         : ''

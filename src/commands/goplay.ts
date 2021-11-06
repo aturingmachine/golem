@@ -8,6 +8,7 @@ import { Command } from '../models/commands'
 import { GolemModule } from '../models/config'
 import { ArtistConfirmReply } from '../models/messages/artist-confirm'
 import { WideSearch } from '../models/messages/wide-search'
+import { GolemConf } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Youtube } from '../youtube/youtils'
 
@@ -55,10 +56,19 @@ const execute = async (
     return
   }
 
+  if (!GolemConf.modules.Music) {
+    log.warn(`cannot execute for local track - missing Music module`)
+
+    await interaction.reply(
+      `Cannot play local track - missing required module - Music`
+    )
+
+    return
+  }
+
   const res = Golem.trackFinder.search(commandQuery)
 
   if (!res) {
-    // here we want to search for yt
     log.verbose(`No local ResultSet for ${commandQuery}`)
 
     const url = await Youtube.search(commandQuery)
