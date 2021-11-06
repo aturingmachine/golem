@@ -11,7 +11,9 @@ const rest = new REST({ version: '9' }).setToken(GolemConf.discord.token)
 ;(async () => {
   try {
     for (const guildId of GolemConf.discord.serverIds) {
-      const cmdJson = Array.from(Commands.values()).map((x) => x.data.toJSON())
+      const cmdJson = Array.from(Commands.values()).map((x) =>
+        x.slashCommand.toJSON()
+      )
       const resp = await rest.put(
         Routes.applicationGuildCommands(GolemConf.discord.clientId, guildId),
         {

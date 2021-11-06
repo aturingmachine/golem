@@ -1,0 +1,21 @@
+{
+  "name": "golem-docs",
+  "version": "0.0.1",
+  "description": "Documentation for Golem Discord bot",
+  "main": "index.js",
+  "repository": "github.com/aturingmachine/discord-bot/golem-docs",
+  "scripts": {
+    "gen": "node ./render-pages.js",
+    "dev:gen": "npm run gen && npm run dev",
+    "dev": "vuepress dev src",
+    "build": "vuepress build src"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "vuepress": "^1.5.3"
+  },
+  "dependencies": {
+    "vuepress-theme-default-prefers-color-scheme": "^2.0.0",
+    "vuepress-theme-yuu": "^3.1.1"
+  }
+}

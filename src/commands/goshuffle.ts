@@ -1,14 +1,10 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
-import { Command, CommandHelp } from '../models/commands'
+import { Command } from '../models/commands'
+import { GolemModule } from '../models/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPeekEmbed } from '../utils/message-utils'
-
-const data = new SlashCommandBuilder()
-  .setName(CommandNames.slash.shuffle)
-  .setDescription('shuffle the current queue')
 
 const execute = async (
   interaction: CommandInteraction | Message
@@ -31,17 +27,24 @@ const execute = async (
   }
 }
 
-const helpInfo: CommandHelp = {
-  name: 'shuffle',
-  msg: 'Shuffle the queue. Keeps playnext-ed tracks in front of the main queue.',
-  args: [],
-}
-
-const goShuffleCommand = new Command({
-  source: LogSources.GoShuffle,
-  data,
+const goshuffle = new Command({
+  logSource: LogSources.GoShuffle,
   handler: execute,
-  helpInfo,
+  info: {
+    name: CommandNames.shuffle,
+    description: {
+      short:
+        "Shuffle the current queue maintaining the playnext queue's position.",
+    },
+    args: [],
+    examples: {
+      legacy: ['$go shuffle'],
+      slashCommand: ['/goshuffle'],
+    },
+    requiredModules: {
+      oneOf: [GolemModule.Music, GolemModule.Youtube],
+    },
+  },
 })
 
-export default goShuffleCommand
+export default goshuffle

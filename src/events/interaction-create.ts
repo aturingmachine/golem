@@ -8,13 +8,15 @@ const log = GolemLogger.child({ src: LogSources.InteractionCreate })
 const interactionCreate: EventHandler<'interactionCreate'> = {
   on: 'interactionCreate',
   async execute(interaction) {
-    log.verbose(`Received interaction ${interaction}`)
+    log.silly(`Received interaction ${JSON.stringify(interaction.toJSON())}`)
 
     if (interaction.isCommand()) {
+      log.debug('Interaction is command')
       await commandHandler(interaction)
     }
 
     if (interaction.isMessageComponent()) {
+      log.debug('Interaction is message component interaction')
       await buttonHandler(interaction)
     }
   },

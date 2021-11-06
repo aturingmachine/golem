@@ -50,6 +50,8 @@ export type JSONConfig = {
 }
 
 export enum GolemModule {
+  Core = 'Core',
+  Music = 'Music',
   Plex = 'Plex',
   LastFm = 'LastFm',
   Web = 'Web',

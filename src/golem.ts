@@ -32,7 +32,7 @@ export class Golem {
   }
 
   static async initialize(): Promise<void> {
-    GolemConf.init()
+    // GolemConf.init()
 
     Golem.players = new Map()
 
@@ -71,14 +71,19 @@ export class Golem {
   ): MusicPlayer | undefined {
     const guild = interaction.client.guilds.cache.get(interaction.guildId || '')
     const member = guild?.members.cache.get(interaction.member?.user.id || '')
-    const voiceChannel = member?.voice.channel
+    const voiceChannel = member?.voice?.channel
 
     Golem.log.debug(
-      `getting player guild=${guild?.name}; member=${member?.user.username}; voiceChannel=${voiceChannel?.id}`
+      `getting player for: guild=${guild?.name}; member=${member?.user.username}; voiceChannel=${voiceChannel?.id}`
     )
 
     if (!interaction.guild || !interaction.guildId) {
       Golem.log.warn('no guild, cannot get player')
+      return undefined
+    }
+
+    if (!voiceChannel) {
+      Golem.log.warn('not in valid voice channel')
       return undefined
     }
 
@@ -165,10 +170,16 @@ export class Golem {
     }
   }
 
-  static setPresence(listing: TrackListingInfo): void {
+  static setPresenceListening(listing: TrackListingInfo): void {
     Golem.client.user?.setActivity({
       name: listing.title,
       type: 'LISTENING',
+    })
+  }
+
+  static setPresenceIdle(): void {
+    Golem.client.user?.setActivity({
+      name: 'Use $go help to get started.',
     })
   }
 

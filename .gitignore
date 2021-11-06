@@ -3,6 +3,7 @@ node_modules/
 
 .env
 config.js
+!docs/**/config.js
 
 dist/
 
@@ -16,3 +17,5 @@ logs/
 *.jpg
 
 todo
+
+commands.json

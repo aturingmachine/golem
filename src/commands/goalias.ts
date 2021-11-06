@@ -1,40 +1,30 @@
-import { SlashCommandBuilder } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
-import { Command, CommandHelp } from '../models/commands'
-import { CustomAlias } from '../models/custom-alias'
-import { CustomAliasData } from '../models/db/custom-alias'
+import { AliasHandler } from '../handlers/alias-handler'
+import { Command } from '../models/commands'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { ParsedMessage } from '../utils/message-args'
 import { guildIdFrom, userFrom } from '../utils/message-utils'
-import { Replier } from '../utils/replies'
 
 const log = GolemLogger.child({ src: LogSources.GoAlias })
-
-const data = new SlashCommandBuilder()
-  .setName(CommandNames.slash.alias)
-  .setDescription('Register an alias for a command with arguments.')
-  .addStringOption((option) =>
-    option
-      .setName('aliascommand')
-      .setDescription(
-        'Formatted as `<alias> => $<command>` anything after the ";" will be executed as a command.'
-      )
-      .setRequired(true)
-  )
 
 const execute = async (
   interaction: CommandInteraction | Message,
   aliasContent?: string
 ): Promise<void> => {
-  let aliasCommand = aliasContent
+  let subcommand = aliasContent?.split(' ').slice(0, 1).join('')
+  let aliasCommand = aliasContent?.split(' ').slice(1).join('')
 
   if (interaction instanceof CommandInteraction) {
+    subcommand = interaction.options.getSubcommand()
     aliasCommand = interaction.options.getString('aliascommand') || ''
+
+    log.debug(
+      `invoked as command with subcommand=${subcommand}; aliasCommand=${aliasCommand};`
+    )
   }
 
-  if (!aliasCommand) {
-    await interaction.reply('Command requires a valid alias string')
+  if (!subcommand) {
+    await interaction.reply(`Please provide a valid subcommand`)
 
     return
   }
@@ -48,60 +38,70 @@ const execute = async (
     return
   }
 
-  // if (aliasCommand.includes('--test')) {
-  //   const parsed = new ParsedMessage(aliasCommand)
-  //   const alias = await CustomAlias.getAliasFor(parsed.args.name, guildId)
+  if (subcommand === 'create') {
+    if (!aliasCommand) {
+      await interaction.reply('Command requires a valid alias string')
 
-  //   if (alias) {
-  //     await interaction.reply(
-  //       `ALIAS=${alias.name}; UNEVAL=${alias.unevaluated}; EVAL=${alias.evaluated};`
-  //     )
-  //   } else {
-  //     await interaction.reply(`cannot find alias: ${parsed.args.name}`)
-  //   }
+      return
+    }
 
-  //   return
-  // }
+    await AliasHandler.createAlias(interaction, aliasCommand, guildId, userId)
+    return
+  }
 
-  try {
-    const alias = await CustomAlias.fromString(aliasCommand, guildId, userId)
-    const record = new CustomAliasData(alias)
-
-    log.verbose(`saving new alias ${alias.name} -> ${alias.unevaluated}`)
-    await record.save()
-
-    await interaction.reply(
-      `${Replier.affirmative}! \`$${alias.name}\` will now execute as \`${alias.unevaluated}\``
-    )
-  } catch (error) {
-    log.error(error)
-    await interaction.reply(
-      `${Replier.negative}, I couldn't make that alias. ${
-        (error as Error).message
-      }`
-    )
+  if (subcommand === 'list') {
+    await AliasHandler.listAliases(interaction, guildId)
+    return
   }
 }
 
-const helpInfo: CommandHelp = {
-  name: 'alias',
-  msg: 'Register an aliased command to execute an existing command',
-  args: [
-    {
-      name: 'aliasCommand',
-      type: 'string',
-      required: true,
-      description:
-        'Formatted as `<alias> => $<command>`; anything before the => will have whitespace removed to form the alias name. Example: "$go alias my alias => $play twice tt" will bind "$myalias" to equal "$play twice tt."',
-    },
-  ],
-}
-
-const goAliasCommand = new Command({
-  source: LogSources.GoAlias,
-  data,
+const goalias = new Command({
+  logSource: LogSources.GoAlias,
   handler: execute,
-  helpInfo,
+  info: {
+    name: CommandNames.alias,
+    description: {
+      short: 'Interact with the aliases registered for this server.',
+    },
+    subcommands: [
+      {
+        name: 'create',
+        description: {
+          long: 'Create a new alias using GolemAlias format. [name of alias] => [full Golem command]. The alias will be made by removing white space within the "name of alias" section.',
+          short: 'Create a new alias.',
+        },
+        args: [
+          {
+            type: 'string',
+            name: 'aliascommand',
+            description: {
+              long: 'A GolemAlias string. Strings are formatted as "aliasName => $command". Everything to the left of the => delimiter will be stripped of whitespace to make the new alias name. When Golem recieves an alias it will execute the right side of the delimiter **as is**, and interperet it as if it is a new command.',
+              short: 'A valid GolemAlias string. "aliasName => $go command"',
+            },
+            required: true,
+          },
+        ],
+      },
+      {
+        name: 'list',
+        description: {
+          short: 'List aliases registered to this server.',
+        },
+        args: [],
+      },
+    ],
+    args: [],
+    examples: {
+      legacy: [
+        '$go alias create hype => $go play darude sandstorm',
+        '$go alias list',
+      ],
+      slashCommand: [
+        '/goalias create hype => $go play darude sandstorm',
+        '/goalias list',
+      ],
+    },
+  },
 })
 
-export default goAliasCommand
+export default goalias

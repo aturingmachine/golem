@@ -119,6 +119,7 @@ export class MusicPlayer {
     this.log.verbose(`force stopping player`)
     this.audioPlayer.stop(true)
     this.queueLock = false
+    Golem.setPresenceIdle()
     // this.disconnect()
   }
 
@@ -150,6 +151,7 @@ export class MusicPlayer {
 
       this.queueLock = false
       this.voiceConnection.disconnect()
+      Golem.setPresenceIdle()
     }
   }
 
@@ -169,6 +171,7 @@ export class MusicPlayer {
       this.currentResource?.metadata.track.onSkip()
       await Golem.removePlayer(this.channelId)
       this.voiceConnection.destroy()
+      Golem.setPresenceIdle()
     }
   }
 
@@ -278,7 +281,7 @@ export class MusicPlayer {
         this.currentResource = next
         this.currentResource.volume?.setVolume(0.35)
         this.audioPlayer.play(this.currentResource)
-        Golem.setPresence(nextTrack.metadata)
+        Golem.setPresenceListening(nextTrack.metadata)
 
         Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
       } catch (error) {
@@ -302,6 +305,11 @@ export class MusicPlayer {
     this.log.verbose(
       `player for ${this.channelId} state change ${oldState.status} => ${newState.status}`
     )
+
+    if (newState.status === AudioPlayerStatus.Idle) {
+      Golem.setPresenceIdle()
+    }
+
     if (
       newState.status === AudioPlayerStatus.Idle &&
       oldState.status !== AudioPlayerStatus.Idle &&
@@ -320,6 +328,8 @@ export class MusicPlayer {
           AudioPlayerStatus.AutoPaused,
         ].includes(oldState.status)
       ) {
+        this.log.debug(`player ${this.channelId} entering Playing status`)
+
         if (oldState.status === AudioPlayerStatus.Idle) {
           Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
         }
@@ -336,6 +346,11 @@ export class MusicPlayer {
     ) {
       // start timer
       this.startTimer()
+    } else if (newState.status === AudioPlayerStatus.Buffering) {
+      this.log.debug(`player ${this.channelId} entering Buffering status`)
+
+      // clear the timer when we start buffering just for safety?
+      this.clearTimer()
     }
   }
 
