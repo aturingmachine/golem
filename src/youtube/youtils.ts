@@ -31,6 +31,7 @@ export class Youtube {
     Youtube.log.verbose(`getting playlist for ${url}`)
     const videoLimit = shuffle ? limit * 5 : limit
     const result = await ytpl(url, { limit: videoLimit })
+    Youtube.log.debug(`playlist ${url} fetched`)
     const videosToMap = shuffle
       ? shuffleArray([...result.items]).slice(0, limit)
       : result.items

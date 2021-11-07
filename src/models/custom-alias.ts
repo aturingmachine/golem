@@ -1,8 +1,9 @@
 import { Message } from 'discord.js'
 import { RegisteredCommands } from '../commands'
 import { LegacyCommandHandler } from '../handlers/legacy-command-handler'
+import { formatForLog } from '../utils/debug-utils'
 import { shuffleArray } from '../utils/list-utils'
-import { GolemLogger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { ParsedMessage } from '../utils/message-args'
 import { CustomAliasData } from './db/custom-alias'
 
@@ -135,7 +136,7 @@ export class RandomIntFunction extends AliasFunction {
 }
 
 export class CustomAlias {
-  private static log = GolemLogger.child({ src: 'cutsom-alias' })
+  private static log = GolemLogger.child({ src: LogSources.CustomAlias })
 
   public functions: AliasFunction[] = []
 
@@ -148,6 +149,10 @@ export class CustomAlias {
     public description?: string
   ) {
     this.functions = AliasFunction.fromString(this.unevaluated)
+  }
+
+  toString(): string {
+    return `name=${this.name}; command=${this.command}; args=${this.args}`
   }
 
   // TODO get this to take in args as well or some shit idk
@@ -183,11 +188,31 @@ export class CustomAlias {
     const aliasName = parts[0].replaceAll(' ', '')
 
     const fullCommand = parts[1].trim()
-    const commandSplitIndex = fullCommand.startsWith('$go')
-      ? fullCommand.indexOf(' ', fullCommand.indexOf(' '))
+    const isGoCommand = fullCommand.startsWith('$go')
+    const commandSplitIndex = isGoCommand
+      ? fullCommand.indexOf(' ', fullCommand.indexOf(' ') + 1)
       : fullCommand.indexOf(' ')
     const command = fullCommand.slice(0, commandSplitIndex)
     const args = fullCommand.slice(commandSplitIndex).trim()
+
+    CustomAlias.log.silly(
+      `splitting args - ${formatForLog({
+        fullCommand,
+        isGoCmd: isGoCommand,
+        commandSplitIndex,
+      })}`
+    )
+
+    CustomAlias.log.silly(
+      `fromString - create using ${formatForLog({
+        aliasName,
+        command,
+        args,
+        userId,
+        guildId,
+        description: parsed.args.desc,
+      })}`
+    )
 
     if (!(await CustomAlias.isValidName(aliasName, guildId))) {
       throw new Error(`alias name ${aliasName} already registered`)

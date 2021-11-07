@@ -17,6 +17,7 @@ export class GoGet {
     GolemLogger.verbose(`Go Getting With ${opts.value} ${opts.guildId}`, {
       src: LogSources.GoGetHandler,
     })
+
     switch (opts.value?.toLowerCase()) {
       case 'time':
         return {
@@ -75,11 +76,36 @@ export class GoGet {
   }
 
   static async stats(player?: MusicPlayer): Promise<MessageOptions> {
+    const fields = [
+      {
+        name: 'Available Tracks',
+        value: Golem.trackFinder.trackCount.toString(),
+        inline: true,
+      },
+    ]
+
+    if (player) {
+      fields.push(
+        { name: 'Est. Queue Time', value: player.stats.hTime, inline: true },
+        {
+          name: 'Queued Tracks',
+          value: player.stats.count.toString(),
+          inline: true,
+        }
+      )
+    }
+
     const np = await GoGet.npResponse(player)
+    // const statsEmbed = new MessageEmbed()
+    //   .setTitle(`Golem`)
+    //   .setDescription(`Stats`)
+    //   .setFields(...fields)
+
+    np.embeds?.[0].fields?.push(...fields)
+
+    // np.embeds?.unshift(statsEmbed)
+
     return {
-      content: GoGet.timeResponse(player)
-        .concat(GoGet.qCountResponse(player))
-        .concat(GoGet.tCountResponse),
       embeds: np.embeds || [],
       files: np.files || [],
     }

@@ -16,7 +16,7 @@ const execute = async (
   interaction: CommandInteraction | Message,
   query?: string
 ): Promise<void> => {
-  const player = Golem.getOrCreatePlayer(interaction)
+  const player = Golem.players.getOrCreate(interaction)
 
   if (!player) {
     await interaction.reply('Not in a valid voice channel.')
@@ -48,7 +48,7 @@ const execute = async (
   }
 
   if (PlayHandler.isYoutubeQuery(commandQuery)) {
-    await PlayHandler.ytPlay(commandQuery, interaction, player)
+    await PlayHandler.ytPlay(commandQuery, interaction, player, true)
 
     return
   }
@@ -96,8 +96,8 @@ const execute = async (
 
     return
   }
-  // Handle Catch-All queries
 
+  // Handle Catch-All queries
   PlayHandler.playLocal(res.listing, interaction, player, true)
 }
 

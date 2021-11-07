@@ -1,15 +1,18 @@
-import { Interaction, Message } from 'discord.js'
+import { Message } from 'discord.js'
+import { formatForLog } from './debug-utils'
+import { GolemLogger, LogSources } from './logger'
 
-const argSeparatorRegexGlobal = / -- /g
-const argSeparatorRegex = / -- /
+const log = GolemLogger.child({ src: LogSources.ParsedMessage })
 
-function getSpliceIndex(message: string): number {
+const argSeparatorRegexGlobal = / --/g
+
+function getSliceIndex(message: string): number {
   const isAliasCommand = message.includes(' => ')
   const matches = message.match(argSeparatorRegexGlobal) || []
 
   if (isAliasCommand) {
     return matches.length > 1
-      ? message.indexOf(' -- ', message.indexOf(' -- ') + 4)
+      ? message.indexOf(' --', message.indexOf(' -- ') + 1)
       : message.indexOf(' -- ')
   } else {
     return message.indexOf(' -- ')
@@ -20,7 +23,7 @@ export function parseMessageArgs(message: string): {
   base: string
   args: Record<string, string>
 } {
-  const spliceIndex = getSpliceIndex(message)
+  const spliceIndex = getSliceIndex(message)
   const args = Object.fromEntries(
     message
       .slice(spliceIndex)
@@ -45,7 +48,9 @@ export class ParsedMessage {
   constructor(message: Message | string) {
     const rawContent = typeof message === 'string' ? message : message.content
 
-    const sliceIndex = getSpliceIndex(rawContent)
+    const sliceIndex = getSliceIndex(rawContent)
+
+    log.silly(`parsing raw ${formatForLog({ rawContent, sliceIndex })}`)
 
     this.content = sliceIndex > 0 ? rawContent.slice(0, sliceIndex) : rawContent
 
@@ -55,5 +60,7 @@ export class ParsedMessage {
         .split(/(?<!"[A-z0-9 ]*[^ ])\s/g)
         .map((argPair) => argPair.split('='))
     )
+
+    log.silly(`new - ${formatForLog(this)}`)
   }
 }

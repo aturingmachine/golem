@@ -123,11 +123,15 @@ enum LogSources {
   YoutubeListing = 'youtube-listing',
   YoutubeTrack = 'yt-track',
   AliasHandler = 'alias-handler',
+  CustomAlias = 'custom-alias',
+  PlayerCache = 'palyer-cache',
+  ParsedMessage = 'parsed-message',
 }
 
 const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'artist-button': chalk.magentaBright,
   'button-handler': chalk.blue,
+  'custom-alias': chalk.blueBright,
   'cmd-deploy': chalk.green,
   'cmd-register': chalk.yellow,
   'db-con': chalk.cyan,
@@ -160,6 +164,9 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'cmd-handler': chalk.blue,
   'yt-track': chalk.cyanBright,
   'alias-handler': chalk.cyan,
+  'custom-alias': chalk.cyan,
+  'palyer-cache': chalk.magentaBright,
+  'parsed-message': chalk.yellow,
   analytics: chalk.cyanBright,
   app: chalk.blue,
   client: chalk.magenta,

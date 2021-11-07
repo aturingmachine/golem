@@ -11,10 +11,15 @@ const log = GolemLogger.child({ src: LogSources.ArtistButton })
 export const artistPlayButtonHandler = async (
   interaction: MessageComponentInteraction
 ): Promise<void> => {
-  const player = Golem.getOrCreatePlayer(interaction)
+  const player = Golem.players.getOrCreate(interaction)
 
   if (!player) {
-    await interaction.reply('Not in a valid voice channel.')
+    await interaction.update({
+      content: 'Not in a valid voice channel.',
+      components: [],
+      embeds: [],
+      files: [],
+    })
     return
   }
 
@@ -32,6 +37,8 @@ export const artistPlayButtonHandler = async (
     await interaction.update({
       content: `${Replier.affirmative}, I'll play the artist **${artist}**`,
       components: [],
+      embeds: [],
+      files: [],
     })
 
     const artistTracks = Golem.trackFinder
@@ -43,6 +50,7 @@ export const artistPlayButtonHandler = async (
       LocalTrack.fromListings(artistTracks, userId)
     )
   }
+
   // Shuffle
   else if (interaction.customId.includes(ButtonIdPrefixes.shuffleArtistPlay)) {
     log.info(`Button Confirmed Shuffle ${interaction.customId}`)
@@ -50,6 +58,8 @@ export const artistPlayButtonHandler = async (
     await interaction.update({
       content: `${Replier.affirmative}, I'll shuffle **${artist}**`,
       components: [],
+      embeds: [],
+      files: [],
     })
 
     const artistTracks = Golem.trackFinder
@@ -61,6 +71,7 @@ export const artistPlayButtonHandler = async (
       LocalTrack.fromListings(shuffleArray(artistTracks), userId)
     )
   }
+
   // Cancel
   else if (interaction.customId.includes(ButtonIdPrefixes.abortArtistPlay)) {
     log.info(`Aborting Artist Play for ${artist}`)
@@ -68,6 +79,8 @@ export const artistPlayButtonHandler = async (
     await interaction.update({
       content: `${Replier.neutral}, I won't queue the artist **${artist}**`,
       components: [],
+      embeds: [],
+      files: [],
     })
   }
 }

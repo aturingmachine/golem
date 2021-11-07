@@ -15,10 +15,10 @@ export const AliasHandler = {
   ): Promise<void> {
     try {
       const alias = await CustomAlias.fromString(aliasCommand, guildId, userId)
-      const record = new CustomAliasData(alias)
-
       this.log.verbose(`saving new alias ${alias.name} -> ${alias.unevaluated}`)
-      await record.save()
+      this.log.debug(alias.toString())
+
+      await new CustomAliasData(alias).save()
 
       await interaction.reply(
         `${Replier.affirmative}! \`$${alias.name}\` will now execute as \`${alias.unevaluated}\``

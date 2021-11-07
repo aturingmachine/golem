@@ -17,7 +17,7 @@ const execute = async (
   mixtype?: string,
   _query?: string
 ): Promise<void> => {
-  const player = Golem.getOrCreatePlayer(interaction)
+  const player = Golem.players.getOrCreate(interaction)
 
   if (!player) {
     await interaction.reply('Not in a valid voice channel.')

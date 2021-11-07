@@ -2,6 +2,7 @@ import { CommandInteraction, Message } from 'discord.js'
 import { CommandNames } from '../constants'
 import { AliasHandler } from '../handlers/alias-handler'
 import { Command } from '../models/commands'
+import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { guildIdFrom, userFrom } from '../utils/message-utils'
 
@@ -12,7 +13,8 @@ const execute = async (
   aliasContent?: string
 ): Promise<void> => {
   let subcommand = aliasContent?.split(' ').slice(0, 1).join('')
-  let aliasCommand = aliasContent?.split(' ').slice(1).join('')
+  let aliasCommand = aliasContent?.split(' ').slice(1).join(' ')
+  log.silly(formatForLog({ subcommand, aliasCommand }))
 
   if (interaction instanceof CommandInteraction) {
     subcommand = interaction.options.getSubcommand()

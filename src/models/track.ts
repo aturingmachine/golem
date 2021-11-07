@@ -230,7 +230,7 @@ export class YoutubeTrack extends Track {
   }
 
   /**
-   * Create a Track from aready processed YouTube data in the form
+   * Create a Track from already processed YouTube data in the form
    * of a YouTubeListing
    *
    * @param userId

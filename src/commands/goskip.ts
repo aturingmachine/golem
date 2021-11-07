@@ -20,38 +20,39 @@ const execute = async (
   }
 
   log.info('executing')
-  let skipCount = count || 1
+  let skipCount = count || 0
 
   if (interaction instanceof CommandInteraction) {
-    skipCount = interaction.options.getInteger('skip-count') || 1
+    skipCount = interaction.options.getInteger('skip-count') || 0
   }
 
   // TODO dont skip one at a time, its costly on youtube tracks
-  for (let i = 0; i < skipCount; i++) {
-    log.verbose('Attempting to skip')
-    if (player.nowPlaying && player.currentResource) {
-      await player.skip()
-      if (player.currentResource) {
-        const assets = await GetEmbedFromListing(
-          player.nowPlaying,
-          player,
-          'playing'
-        )
+  // for (let i = 0; i < skipCount; i++) {
+  log.verbose(`Attempting to skip ${skipCount} tracks`)
 
-        await interaction.reply({
-          content: 'Skipped!',
-          embeds: [assets.embed],
-          files: assets.image ? [assets.image] : [],
-        })
-      } else {
-        await interaction.reply({
-          content: 'Skipped! Queue empty.',
-        })
-      }
+  if (player.nowPlaying && player.currentResource) {
+    await player.skip(skipCount)
+    if (player.currentResource) {
+      const assets = await GetEmbedFromListing(
+        player.nowPlaying,
+        player,
+        'playing'
+      )
+
+      await interaction.reply({
+        content: 'Skipped!',
+        embeds: [assets.embed],
+        files: assets.image ? [assets.image] : [],
+      })
     } else {
-      await interaction.reply('No track to skip')
+      await interaction.reply({
+        content: 'Skipped! Queue empty.',
+      })
     }
+  } else {
+    await interaction.reply('No track to skip')
   }
+  // }
 }
 
 const goskip = new Command({

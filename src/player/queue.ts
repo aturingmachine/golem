@@ -50,13 +50,21 @@ export class TrackQueue {
     )
   }
 
-  skip(): void {
-    // log.verbose(`Skipping ${this.queue[0]?.track.listing.name}`)
+  skip(count = 0): void {
+    log.verbose(`Skipping ${count} queued tracks`)
+    let amount = count
 
     if (this.explicitQueue.length > 0) {
-      this.explicitQueue.shift()
-    } else {
-      this.passiveQueue.shift()
+      amount = count - this.explicitQueue.length
+      if (amount > 0) {
+        this.explicitQueue = []
+      } else {
+        this.explicitQueue = this.explicitQueue.slice(count)
+      }
+    }
+
+    if (amount > 0) {
+      this.passiveQueue = this.passiveQueue.slice(amount)
     }
   }
 
@@ -110,7 +118,7 @@ export class TrackQueue {
       return prev + curr.track.metadata.duration
     }, 0)
 
-    log.verbose(`Estimated Runtime ${estRunTime}`)
+    log.silly(`Estimated Runtime ${estRunTime}`)
 
     return estRunTime
   }

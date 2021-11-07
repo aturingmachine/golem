@@ -12,10 +12,15 @@ const log = GolemLogger.child({ src: LogSources.PlaylistMenu })
 export const playlistMenuHandler = async (
   interaction: SelectMenuInteraction
 ): Promise<void> => {
-  const player = Golem.getOrCreatePlayer(interaction)
+  const player = Golem.players.getOrCreate(interaction)
 
   if (!player) {
-    await interaction.reply('Not in a valid voice channel.')
+    await interaction.update({
+      content: 'Not in a valid voice channel.',
+      components: [],
+      embeds: [],
+      files: [],
+    })
     return
   }
 
@@ -31,7 +36,7 @@ export const playlistMenuHandler = async (
       `Playlist Menu Handler: sending select more with offset ${newOffset}`
     )
 
-    await interaction.reply(GetPlaylistEmbed(newOffset))
+    await interaction.update(GetPlaylistEmbed(newOffset))
   }
   // Play playlist
   else {
@@ -48,12 +53,12 @@ export const playlistMenuHandler = async (
         LocalTrack.fromListings(listings, userFrom(interaction))
       )
 
-      await interaction.reply({
+      await interaction.update({
         content: `${Replier.affirmative}, I'll queue up the playlist **${listName}**`,
         components: [],
       })
     } else {
-      await interaction.reply({
+      await interaction.update({
         content: `Unable to find playlist ${listName}`,
         components: [],
       })

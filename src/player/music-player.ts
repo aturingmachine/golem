@@ -118,9 +118,11 @@ export class MusicPlayer {
     void (await this.processQueue())
   }
 
-  public async skip(): Promise<void> {
+  public async skip(count = 0): Promise<void> {
     this.log.info(`skipping ${this.currentResource?.metadata.title}`)
     this.currentResource?.metadata.track.onSkip()
+
+    this.queue.skip(count)
 
     await this.processQueue(true)
   }

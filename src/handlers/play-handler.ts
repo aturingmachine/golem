@@ -112,6 +112,7 @@ export class PlayHandler {
       const userId = userFrom(interaction)
 
       PlayHandler.log.verbose(`getting playlist`)
+      interaction.reply(`Processing playlist \`${parsedMessage.content}\`...`)
       const playlist = await Youtube.getPlaylist(
         parsedMessage.content,
         limit,
@@ -130,7 +131,8 @@ export class PlayHandler {
 
       const embed = await YoutubePlaylistEmbed.from(
         playlist.title,
-        playlist.thumbnail
+        playlist.thumbnail,
+        tracks
       )
 
       await interaction.reply(embed.options)

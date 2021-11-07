@@ -64,16 +64,16 @@ export class Listing {
    * An attempt at a consistent unique id made by md5 hashing
    * some info of the listing
    */
-  trackId!: string
-  artist!: string
-  album!: string
-  title!: string
-  duration!: number
+  trackId: string
+  artist: string
+  album: string
+  title: string
+  duration: number
   hasDefaultDuration!: boolean
-  path!: string
-  genres!: string[]
-  key!: string
-  moods!: string[]
+  path: string
+  genres: string[]
+  key: string
+  moods: string[]
   mb: MusicBrainzData
   addedAt: number
   bpm?: number

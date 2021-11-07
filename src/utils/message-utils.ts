@@ -1,5 +1,6 @@
 import {
   EmbedFieldData,
+  GuildMember,
   Interaction,
   Message,
   MessageActionRow,
@@ -29,6 +30,10 @@ export const averageColor = (img?: Buffer | string): any =>
   getAverageColor(img || PlexLogo, {
     algorithm: GolemConf.image.avgColorAlgorithm,
   })
+
+export const memberFrom = (
+  interaction: Message | Interaction
+): GuildMember | null => interaction.member as GuildMember
 
 export const userFrom = (interaction: Message | Interaction): string =>
   interaction.member?.user.id || ''
@@ -61,22 +66,28 @@ export const GetEmbedFromListing = async (
     image = GetMessageAttachement(listing.albumArt)
   }
 
-  const title = isQueue
-    ? player.isPlaying
-      ? 'Added to Queue'
-      : 'Now Playing'
-    : 'Now Playing'
+  let title: string
+  let description: string
 
-  const description = isQueue
-    ? player.isPlaying
+  if (isQueue) {
+    title = player.isPlaying ? 'Added to Queue' : 'Now Playing'
+    description = player.isPlaying
       ? `Starts In: ${player.stats.hTime}`
       : 'Starting Now'
-    : player.currentResource
-    ? `\`[${getDurationBar(
+  } else {
+    title = 'Now Playing'
+    const timeRemaining = humanReadableTime(player.currentTrackRemaining)
+
+    if (player.currentResource) {
+      const durationBar = getDurationBar(
         player.currentTrackRemaining,
         player.currentResource.metadata.duration
-      )}] - ${humanReadableTime(player.currentTrackRemaining)}\``
-    : `Remaining: ${humanReadableTime(player.currentTrackRemaining)}`
+      )
+      description = `\`[${durationBar}] - ${timeRemaining}\``
+    } else {
+      description = `Remaining: ${timeRemaining}`
+    }
+  }
 
   const isLocalListing = listing instanceof Listing
   const duration = isLocalListing
