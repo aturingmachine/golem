@@ -12,7 +12,7 @@ const log = GolemLogger.child({ src: LogSources.PlaylistMenu })
 export const playlistMenuHandler = async (
   interaction: SelectMenuInteraction
 ): Promise<void> => {
-  const player = Golem.players.getOrCreate(interaction)
+  const player = Golem.playerCache.getOrCreate(interaction)
 
   if (!player) {
     await interaction.update({

@@ -3,10 +3,12 @@ import { Interaction, Message } from 'discord.js'
 import { MessageInfo } from '../models/messages/message-info'
 import { MusicPlayer } from '../player/music-player'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { guildIdFrom, memberFrom, userFrom } from '../utils/message-utils'
+import { GolemEvent } from './event-emitter'
+import { Golem } from '.'
 
 export class PlayerCache {
   private log = GolemLogger.child({ src: LogSources.PlayerCache })
+
   private data: Map<Snowflake, MusicPlayer>
 
   constructor() {
@@ -15,7 +17,7 @@ export class PlayerCache {
 
   get(searchVal: string | Message | Interaction): MusicPlayer | undefined {
     if (typeof searchVal === 'string') {
-      // Golem.log.silly(`string get player for: "${searchVal}"`)
+      this.log.silly(`string get player for: "${searchVal}"`)
       return this.data.get(searchVal.trim())
     }
 
@@ -23,7 +25,7 @@ export class PlayerCache {
       return undefined
     }
 
-    // Golem.log.verbose(`interaction get player for: ${searchVal.guild.id}`)
+    this.log.debug(`interaction get player for: ${searchVal.guild.id}`)
     return this.data.get(searchVal.guild.id)
   }
 
@@ -60,9 +62,24 @@ export class PlayerCache {
 
   delete(key: Snowflake): void {
     this.data.delete(key)
+    Golem.events.trigger(GolemEvent.Connection, key)
   }
 
   disconnectAll(): void {
-    this.data.forEach((player) => player.disconnect())
+    this.data.forEach((player) => {
+      Golem.events.trigger(
+        GolemEvent.Connection,
+        player.voiceConnection.joinConfig.guildId
+      )
+      player.disconnect()
+    })
+  }
+
+  keys(): IterableIterator<string> {
+    return this.data.keys()
+  }
+
+  entries(): IterableIterator<[string, MusicPlayer]> {
+    return this.data.entries()
   }
 }

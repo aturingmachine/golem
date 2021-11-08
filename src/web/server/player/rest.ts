@@ -10,7 +10,7 @@ const router = express.Router()
  */
 router.get('/connections', (req, res) => {
   const serverIds: { id: Snowflake; isPlaying: boolean }[] = []
-  const it = Golem.players.entries()
+  const it = Golem.playerCache.entries()
 
   let next = it.next()
   while (!next.done) {

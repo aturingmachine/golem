@@ -39,7 +39,7 @@ export class VoiceConnectionsWebSocket {
 
   private updateConnections(): void {
     const serverIds: { id: Snowflake; isPlaying: boolean; name: string }[] = []
-    const it = Golem.players.entries()
+    const it = Golem.playerCache.entries()
 
     let next = it.next()
     while (!next.done) {

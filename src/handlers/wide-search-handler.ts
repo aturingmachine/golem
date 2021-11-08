@@ -10,7 +10,7 @@ export const wideSearchHandler = async (
   interaction: SelectMenuInteraction
 ): Promise<void> => {
   log.info('executing')
-  const player = Golem.players.getOrCreate(interaction)
+  const player = Golem.playerCache.getOrCreate(interaction)
 
   if (!player) {
     await interaction.update({

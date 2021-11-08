@@ -44,7 +44,7 @@ function shutdown(): void {
   })
 
   try {
-    Golem.disconnectAll()
+    Golem.playerCache.disconnectAll()
   } catch (error) {
     console.error('couldnt disconnect all golem connections', error)
   }

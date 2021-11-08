@@ -11,7 +11,7 @@ const log = GolemLogger.child({ src: LogSources.ArtistButton })
 export const artistPlayButtonHandler = async (
   interaction: MessageComponentInteraction
 ): Promise<void> => {
-  const player = Golem.players.getOrCreate(interaction)
+  const player = Golem.playerCache.getOrCreate(interaction)
 
   if (!player) {
     await interaction.update({

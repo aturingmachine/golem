@@ -124,7 +124,7 @@ enum LogSources {
   YoutubeTrack = 'yt-track',
   AliasHandler = 'alias-handler',
   CustomAlias = 'custom-alias',
-  PlayerCache = 'palyer-cache',
+  PlayerCache = 'player-cache',
   ParsedMessage = 'parsed-message',
 }
 
@@ -164,8 +164,7 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'cmd-handler': chalk.blue,
   'yt-track': chalk.cyanBright,
   'alias-handler': chalk.cyan,
-  'custom-alias': chalk.cyan,
-  'palyer-cache': chalk.magentaBright,
+  'player-cache': chalk.magentaBright,
   'parsed-message': chalk.yellow,
   analytics: chalk.cyanBright,
   app: chalk.blue,

@@ -103,7 +103,8 @@ export class Debugger {
         console.log(result)
         break
       case DebugCommands.Stats:
-        const id = cmd.split(' ')[1] || Golem.players.keys().next().value || ''
+        const id =
+          cmd.split(' ')[1] || Golem.playerCache.keys().next().value || ''
 
         console.log(
           GoGet.it({
@@ -125,7 +126,7 @@ export class Debugger {
         break
       case DebugCommands.Connections:
         let conns = ''
-        const it = Golem.players.entries()
+        const it = Golem.playerCache.entries()
         let next = it.next()
 
         while (!next.done) {

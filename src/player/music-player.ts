@@ -16,6 +16,7 @@ import {
 } from '@discordjs/voice'
 import winston from 'winston'
 import { Golem } from '../golem'
+import { GolemEvent } from '../golem/event-emitter'
 import { TrackListingInfo } from '../models/listing'
 import { Track, TrackAudioResourceMetadata } from '../models/track'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -285,7 +286,10 @@ export class MusicPlayer {
         this.audioPlayer.play(this.currentResource)
         Golem.setPresenceListening(nextTrack.metadata)
 
-        Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
+        Golem.events.trigger(
+          GolemEvent.Queue,
+          this.voiceConnection.joinConfig.guildId
+        )
       } catch (error) {
         console.error(error)
         this.log.error(`error processing queue ${error}`)
@@ -294,7 +298,10 @@ export class MusicPlayer {
     } else {
       this.log.silly(`process has no next track, stopping out of caution`)
       this.stop()
-      Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
+      Golem.events.trigger(
+        GolemEvent.Queue,
+        this.voiceConnection.joinConfig.guildId
+      )
     }
 
     this.queueLock = false
@@ -305,54 +312,49 @@ export class MusicPlayer {
     newState: AudioPlayerState
   ): Promise<void> {
     this.log.verbose(
-      `player for ${this.channelId} state change ${oldState.status} => ${newState.status}`
+      `state change - player: ${this.channelId}; ${oldState.status} => ${newState.status}`
     )
 
-    if (newState.status === AudioPlayerStatus.Idle) {
-      Golem.setPresenceIdle()
-    }
-
-    if (
-      newState.status === AudioPlayerStatus.Idle &&
-      oldState.status !== AudioPlayerStatus.Idle &&
-      !this.isDisconnected &&
-      !this.isDestroyed
-    ) {
-      this.log.verbose(`entering Idle state - processing queue`)
-      // start timer
-      this.startTimer()
-      void (await this.processQueue())
-    } else if (newState.status === AudioPlayerStatus.Playing) {
-      if (
-        [
-          AudioPlayerStatus.Idle,
-          AudioPlayerStatus.Paused,
-          AudioPlayerStatus.AutoPaused,
-        ].includes(oldState.status)
-      ) {
-        this.log.debug(`player ${this.channelId} entering Playing status`)
-
-        if (oldState.status === AudioPlayerStatus.Idle) {
-          Golem.triggerEvent('queue', this.voiceConnection.joinConfig.guildId)
-        }
-
-        // clear
+    switch (newState.status) {
+      case AudioPlayerStatus.AutoPaused:
+        // start timer
+        this.startTimer()
+        break
+      case AudioPlayerStatus.Buffering:
         this.clearTimer()
-      }
-    } else if (
-      [
-        AudioPlayerStatus.Idle,
-        AudioPlayerStatus.Paused,
-        AudioPlayerStatus.AutoPaused,
-      ].includes(newState.status)
-    ) {
-      // start timer
-      this.startTimer()
-    } else if (newState.status === AudioPlayerStatus.Buffering) {
-      this.log.debug(`player ${this.channelId} entering Buffering status`)
+        break
+      case AudioPlayerStatus.Idle:
+        Golem.setPresenceIdle()
+        // start timer
+        this.startTimer()
 
-      // clear the timer when we start buffering just for safety?
-      this.clearTimer()
+        if (
+          oldState.status !== AudioPlayerStatus.Idle &&
+          !this.isDisconnected &&
+          !this.isDestroyed
+        ) {
+          // process queue
+          await this.processQueue()
+        }
+        break
+      case AudioPlayerStatus.Paused:
+        // start timer
+        this.startTimer()
+        break
+      case AudioPlayerStatus.Playing:
+        if (isNotActive(oldState.status)) {
+          // clear timer
+          this.clearTimer()
+
+          // if idle trigger queue event
+          if (oldState.status === AudioPlayerStatus.Idle) {
+            Golem.events.trigger(
+              GolemEvent.Queue,
+              this.voiceConnection.joinConfig.guildId
+            )
+          }
+        }
+        break
     }
   }
 
@@ -426,4 +428,10 @@ export class MusicPlayer {
     this.skip()
     this.log.error(`audio player error occurred ${error.message}`)
   }
+}
+
+function isNotActive(status: AudioPlayerStatus): boolean {
+  return ![AudioPlayerStatus.Buffering, AudioPlayerStatus.Playing].includes(
+    status
+  )
 }
