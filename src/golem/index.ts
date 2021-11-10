@@ -28,12 +28,11 @@ export class Golem {
   public static events: GolemEventEmitter
 
   static async initialize(): Promise<void> {
+    Golem.log = GolemLogger.child({ src: LogSources.App })
+
     Golem.playerCache = new PlayerCache()
     Golem.events = new GolemEventEmitter()
-
-    Golem.log = GolemLogger.child({ src: LogSources.App })
     Golem.debugger = new Debugger()
-
     Golem.loader = new TrackLoader()
 
     Golem.client = new Client({
@@ -104,7 +103,7 @@ export class Golem {
 
   private static loadEventHandlers(): void {
     const eventFiles = fs
-      .readdirSync(path.resolve(__dirname, './events'))
+      .readdirSync(path.resolve(__dirname, '../events'))
       .filter((file) => file.endsWith('.js'))
 
     EzProgressBar.start(eventFiles.length)
@@ -112,7 +111,7 @@ export class Golem {
     for (const file of eventFiles) {
       Golem.log.debug(`Attempting to load Event Handler: ${file}`)
       /* eslint-disable-next-line @typescript-eslint/no-var-requires */
-      const event: EventHandler<any> = require(`./events/${file}`).default
+      const event: EventHandler<any> = require(`../events/${file}`).default
       Golem.log.debug(`Event Handler Loaded: ${event.on}`)
       if (event.once) {
         Golem.client.once(

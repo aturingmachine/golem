@@ -23,22 +23,25 @@ const main = async (): Promise<void> => {
     startApi()
   }
 
+  Golem.debugger.start()
+
   if (GolemConf.options.TTY) {
-    Golem.debugger.start()
     Golem.debugger.setPrompt()
     Golem.debugger.listen()
   }
 }
 
 function shutdown(): void {
+  console.log(Golem.playerCache)
   GolemLogger?.info('running shutdown handler', { src: 'main' }) ||
     console.log('running shutdown handler')
+
   mongoose.connection.close((error) => {
     if (error) {
-      console.error(`could not close connection gracefull`, error)
+      console.error(`could not close connection gracefully`, error)
 
       mongoose.connection.close(true, () => {
-        console.log('for closing connection')
+        console.log('force closing connection')
       })
     }
   })

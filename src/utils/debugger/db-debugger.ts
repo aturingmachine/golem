@@ -88,8 +88,6 @@ export async function pryDatabase(cmd: string): Promise<void> {
       return
     }
 
-    console.log(query.filter)
-
     const resultSet = await targetModel.find(query.filter)
 
     const results = query.fields.length

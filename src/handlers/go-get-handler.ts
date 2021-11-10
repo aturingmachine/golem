@@ -1,4 +1,4 @@
-import { MessageOptions } from 'discord.js'
+import { MessageEmbed, MessageOptions } from 'discord.js'
 import { Golem } from '../golem'
 import { MusicPlayer } from '../player/music-player'
 import { Plex } from '../plex'
@@ -63,10 +63,13 @@ export class GoGet {
         files: assets.image ? [assets.image] : [],
       }
     } else {
+      const embed = new MessageEmbed()
+        .setTitle('Now Playing')
+        .setDescription(
+          'No Track is currently playing... Use `$play` to play a track!'
+        )
       return {
-        content: `\n**Now Playing**: ${
-          player?.nowPlaying || 'No track currently playing.'
-        }`,
+        embeds: [embed],
       }
     }
   }
@@ -96,14 +99,8 @@ export class GoGet {
     }
 
     const np = await GoGet.npResponse(player)
-    // const statsEmbed = new MessageEmbed()
-    //   .setTitle(`Golem`)
-    //   .setDescription(`Stats`)
-    //   .setFields(...fields)
 
     np.embeds?.[0].fields?.push(...fields)
-
-    // np.embeds?.unshift(statsEmbed)
 
     return {
       embeds: np.embeds || [],

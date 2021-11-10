@@ -6,6 +6,7 @@ import { Youtube } from '../../youtube/youtils'
 import { GolemConf } from '../config'
 import { GolemLogger, LogSources } from '../logger'
 import { pryDatabase } from './db-debugger'
+import { GolemRepl } from './golem-repl'
 import { MixDebugger } from './mix-debugger'
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const rl = require('serverline')
@@ -21,6 +22,7 @@ enum DebugCommands {
   Exec = 'exec',
   Similar = 'sim',
   Youtube = 'yt',
+  Search = 'search',
 }
 
 const debuggerCompletions = [
@@ -40,25 +42,24 @@ const debuggerCompletions = [
   'sim artist',
   'sim t',
   'sim track',
+  'search',
 ]
-
-// const debugLogSearchResult = (result: SearchResult) => {
-//   return `${result.listing.longName}\nisArtistQuery=${result.isArtistQuery}\nisWide=${result.isWideMatch}`
-// }
 
 export class Debugger {
   log: winston.Logger
   state: 'open' | 'closed'
+  repl: GolemRepl
 
   constructor() {
     this.log = GolemLogger.child({ src: LogSources.Debugger })
     this.state = 'closed'
+    this.repl = new GolemRepl()
   }
 
   start(): void {
-    rl.init()
-    rl.setCompletion(debuggerCompletions)
-    this.state = 'open'
+    rl.init({ forceTerminalContext: true })
+    rl.setPrompt('')
+    rl.setCompletion([...debuggerCompletions, ...GolemRepl.completions])
   }
 
   setPrompt(): void {
@@ -70,16 +71,39 @@ export class Debugger {
     rl.on('line', async (msg: string) => {
       await this.handleDebugCommand(msg)
     })
+
+    rl.on('completer', (arg: any) => {
+      const root = arg.hits.sort(
+        (a: string, b: string) => a.length - b.length
+      )[0]
+
+      if (
+        root?.length &&
+        arg.hits.every((hit: string) => hit.startsWith(root))
+      ) {
+        rl.getRL().cursor = 0
+        rl.getRL().line = '\x1B[0K'
+        rl.getRL().cursor = root.length
+        rl.getRL().line = root
+      }
+    })
+  }
+
+  resume(): void {
+    this.state = 'open'
   }
 
   closePrompt(): void {
-    rl.setPrompt(' ')
-    rl.pause()
+    rl.setPrompt('')
     this.state = 'closed'
   }
 
   async handleDebugCommand(cmd: string): Promise<void> {
     if (this.state === 'closed') {
+      if (cmd === 'pry') {
+        this.resume()
+        return
+      }
       return
     }
 
@@ -137,16 +161,19 @@ export class Debugger {
         console.log(conns)
         break
       case DebugCommands.Exec:
-        eval(cmd.split(' ').slice(1).join(' '))
+        // eval(cmd.split(' ').slice(1).join(' '))
         break
       case DebugCommands.Similar:
         MixDebugger.debug(cmd)
         break
-      default:
+      case DebugCommands.Search:
         const res = Golem.trackFinder.search(cmd)
         if (res) {
           console.log({ ...res.listing, albumArt: undefined })
         }
+        break
+      default:
+        await this.repl.execute(cmd)
     }
   }
 }

@@ -1,6 +1,6 @@
 import { Snowflake } from 'discord-api-types'
 
-type GolemEventHandler = (guildId: string) => Promise<void>
+type GolemEventHandler = (guildId: string) => Promise<void> | void
 
 export enum GolemEvent {
   Connection = 'connection',

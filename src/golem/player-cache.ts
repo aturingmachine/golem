@@ -3,8 +3,8 @@ import { Interaction, Message } from 'discord.js'
 import { MessageInfo } from '../models/messages/message-info'
 import { MusicPlayer } from '../player/music-player'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { GolemEvent } from './event-emitter'
-import { Golem } from '.'
+// import { GolemEvent } from './event-emitter'
+// import { Golem } from '.'
 
 export class PlayerCache {
   private log = GolemLogger.child({ src: LogSources.PlayerCache })
@@ -62,15 +62,15 @@ export class PlayerCache {
 
   delete(key: Snowflake): void {
     this.data.delete(key)
-    Golem.events.trigger(GolemEvent.Connection, key)
+    // Golem.events.trigger(GolemEvent.Connection, key)
   }
 
   disconnectAll(): void {
     this.data.forEach((player) => {
-      Golem.events.trigger(
-        GolemEvent.Connection,
-        player.voiceConnection.joinConfig.guildId
-      )
+      // Golem.events.trigger(
+      //   GolemEvent.Connection,
+      //   player.voiceConnection.joinConfig.guildId
+      // )
       player.disconnect()
     })
   }

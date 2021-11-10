@@ -3,9 +3,10 @@ import { Socket } from 'net'
 import { Snowflake } from 'discord-api-types'
 import ws from 'ws'
 import { Golem } from '../../../golem'
+import { GolemEvent } from '../../../golem/event-emitter'
 import { Listing } from '../../../models/listing'
 import { MusicPlayer } from '../../../player/music-player'
-import { resize } from '../../../utils/image-utils'
+// import { resize } from '../../../utils/image-utils'
 import { GolemLogger } from '../../../utils/logger'
 
 export class VoiceConnectionsWebSocket {
@@ -18,7 +19,11 @@ export class VoiceConnectionsWebSocket {
     this.wsServer = new ws.Server({ noServer: true })
     this.wsServer.on('connection', this.onConnection.bind(this))
 
-    Golem.on('connection', 'connection-ws', this.updateConnections.bind(this))
+    Golem.events.on(
+      GolemEvent.Connection,
+      'connection-ws',
+      this.updateConnections.bind(this)
+    )
   }
 
   handleUpgrade(request: any, socket: Socket, head: any): void {
@@ -157,7 +162,11 @@ export class QueueWebSocket {
   private onConnection(socket: ws, _request: IncomingMessage): void {
     this.socket = socket
 
-    Golem.on('queue', `${this.guildId}-queue-ws`, this.updateQueue.bind(this))
+    Golem.events.on(
+      GolemEvent.Queue,
+      `${this.guildId}-queue-ws`,
+      this.updateQueue.bind(this)
+    )
 
     this.updateQueue()
   }
