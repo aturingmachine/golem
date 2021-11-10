@@ -1,7 +1,6 @@
 import { MessageEmbed, MessageOptions } from 'discord.js'
 import { Golem } from '../golem'
 import { MusicPlayer } from '../player/music-player'
-import { Plex } from '../plex'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
 
@@ -140,7 +139,7 @@ export class GoGet {
   // }
 
   static get playlists(): string {
-    return Plex.playlists.reduce((prev, curr) => {
+    return Golem.plex.playlists.reduce((prev, curr) => {
       return prev.concat(`\n${curr.name} - _${curr.count} tracks_`)
     }, '**Playlists:**')
   }

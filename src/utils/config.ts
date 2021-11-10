@@ -97,13 +97,6 @@ export class GolemConf {
     return GolemConf.cliOptions.options
   }
 
-  static get logLevel(): LogLevel {
-    GolemConf.init()
-    return GolemConf.options.Debug || GolemConf.options.Verbose
-      ? LogLevel.Debug
-      : LogLevel.Info
-  }
-
   static get modules(): Record<GolemModule, boolean> {
     return {
       Core: GolemConf.enabledModules.includes(GolemModule.Core),
@@ -179,5 +172,38 @@ export class GolemConf {
     return {
       apiPort: GolemConf.values.web?.apiPort || 3000,
     }
+  }
+
+  static get logLevel(): LogLevel {
+    let level = LogLevel.Info
+
+    const debugLevelArgs = ['debug', '-D']
+    const verboseArgs = ['verbose', '-V']
+    const sillyArgs = ['silly']
+    const args = process.argv.slice(2)
+
+    let isDebug = false
+    let isVerbose = false
+    let isSilly = false
+
+    args.forEach((arg) => {
+      isDebug ||= debugLevelArgs.includes(arg)
+      isVerbose ||= verboseArgs.includes(arg)
+      isSilly ||= sillyArgs.includes(arg)
+    })
+
+    if (isDebug) {
+      level = LogLevel.Debug
+    }
+
+    if (isVerbose) {
+      level = LogLevel.Verbose
+    }
+
+    if (isSilly) {
+      level = LogLevel.Silly
+    }
+
+    return level
   }
 }

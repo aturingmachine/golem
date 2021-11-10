@@ -30,18 +30,11 @@ const PlexHeaders: Record<string, string> = {
   Accept: 'application/json',
 }
 
-type Plex = {
-  token: string
-  init: (trackFinder: TrackFinder) => Promise<void>
-  instance?: AxiosInstance
-  getPlaylists: () => Promise<PlaylistRecord[]>
-  getPlaylistById: (id: string) => Promise<PlaylistDetailsContainer | undefined>
-  playlists: Playlist[]
-}
+export class PlexConnection {
+  private token!: string
+  private instance!: AxiosInstance
 
-export const Plex: Plex = {
-  token: '',
-  playlists: [],
+  public playlists: Playlist[] = []
 
   async init(trackFinder: TrackFinder): Promise<void> {
     if (!GolemConf.modules.Plex || !GolemConf.modules.Music) {
@@ -68,6 +61,7 @@ export const Plex: Plex = {
       baseURL: GolemConf.plex.uri,
       headers: PlexHeaders,
     })
+
     log.info('Plex Connection Initialized')
 
     const playlistRecords = await this.getPlaylists()
@@ -91,7 +85,7 @@ export const Plex: Plex = {
     EzProgressBar.stop()
 
     log.info('Playlists Mapped')
-  },
+  }
 
   async getPlaylists(): Promise<PlaylistRecord[]> {
     const records: PlaylistRecord[] = []
@@ -126,7 +120,7 @@ export const Plex: Plex = {
     }
 
     return records
-  },
+  }
 
   async getPlaylistById(
     id: string
@@ -136,5 +130,5 @@ export const Plex: Plex = {
     )
 
     return response?.data
-  },
+  }
 }

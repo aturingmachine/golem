@@ -4,7 +4,6 @@ import { Golem } from '../golem'
 import { Command } from '../models/commands'
 import { GolemModule } from '../models/config'
 import { LocalTrack } from '../models/track'
-import { Plex } from '../plex'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPlaylistEmbed } from '../utils/message-utils'
 import { Replier } from '../utils/replies'
@@ -34,7 +33,7 @@ const execute = async (
 
   if (listName.length) {
     log.verbose(`Attempting to find playlist`)
-    const list = Plex.playlists.find((list) =>
+    const list = Golem.plex.playlists.find((list) =>
       list.name.toLowerCase().includes(listName.toLowerCase())
     )
 

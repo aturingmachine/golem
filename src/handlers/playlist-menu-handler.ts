@@ -1,7 +1,6 @@
 import { SelectMenuInteraction } from 'discord.js'
 import { Golem } from '../golem'
 import { LocalTrack } from '../models/track'
-import { Plex } from '../plex'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetPlaylistEmbed, userFrom } from '../utils/message-utils'
 import { Replier } from '../utils/replies'
@@ -41,7 +40,9 @@ export const playlistMenuHandler = async (
   // Play playlist
   else {
     const listName = choice.replace(ButtonIdPrefixes.playlistLoadMore, '')
-    const playlist = Plex.playlists.find((list) => list.name.includes(listName))
+    const playlist = Golem.plex.playlists.find((list) =>
+      list.name.includes(listName)
+    )
 
     if (playlist) {
       const listings = Golem.trackFinder.findListingsByIds(playlist?.listings)

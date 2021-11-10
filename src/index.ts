@@ -5,34 +5,7 @@ import { GolemConf } from './utils/config'
 import { GolemLogger } from './utils/logger'
 import { startApi } from './web/server'
 
-const main = async (): Promise<void> => {
-  GolemConf.init()
-
-  registerCommands()
-
-  if (GolemConf.options.NoRun) {
-    console.log('NoRun set - exiting')
-    process.exit(0)
-  }
-
-  await Golem.initialize()
-
-  await Golem.login()
-
-  if (GolemConf.modules.Web) {
-    startApi()
-  }
-
-  Golem.debugger.start()
-
-  if (GolemConf.options.TTY) {
-    Golem.debugger.setPrompt()
-    Golem.debugger.listen()
-  }
-}
-
-function shutdown(): void {
-  console.log(Golem.playerCache)
+function shutdownHandler(): void {
   GolemLogger?.info('running shutdown handler', { src: 'main' }) ||
     console.log('running shutdown handler')
 
@@ -59,7 +32,33 @@ function shutdown(): void {
   return
 }
 
-process.once('exit', shutdown)
+const main = async (): Promise<void> => {
+  GolemConf.init()
+
+  registerCommands()
+
+  if (GolemConf.options.NoRun) {
+    console.log('NoRun set - exiting')
+    process.exit(0)
+  }
+
+  await Golem.initialize()
+
+  await Golem.login()
+
+  if (GolemConf.modules.Web) {
+    startApi()
+  }
+
+  Golem.debugger.start()
+
+  if (GolemConf.options.TTY) {
+    Golem.debugger.setPrompt()
+    Golem.debugger.listen()
+  }
+}
+
+process.once('exit', shutdownHandler)
 process.once('SIGINT', () => process.exit(1))
 
 main()

@@ -13,10 +13,10 @@ import {
 } from 'discord.js'
 import { getAverageColor } from 'fast-average-color-node'
 import { Constants, PlexLogo } from '../constants'
+import { Golem } from '../golem'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
 import { Listing, TrackListingInfo } from '../models/listing'
 import { MusicPlayer } from '../player/music-player'
-import { Plex } from '../plex'
 import { GolemConf } from './config'
 import { humanReadableDuration, humanReadableTime } from './time-utils'
 
@@ -250,14 +250,14 @@ export const GetWideSearchEmbed = (
 }
 
 export const GetPlaylistEmbed = (offset = 25): MessageOptions => {
-  const options: MessageSelectOptionData[] = Plex.playlists
+  const options: MessageSelectOptionData[] = Golem.plex.playlists
     .slice(0, offset)
     .map((playlist) => ({
       label: `${playlist.name} - ${playlist.count} Tracks`,
       value: playlist.name,
     }))
 
-  if (Plex.playlists.length > 25) {
+  if (Golem.plex.playlists.length > 25) {
     options.pop()
     options.push({
       label: 'Load More...',
@@ -273,7 +273,7 @@ export const GetPlaylistEmbed = (offset = 25): MessageOptions => {
   )
 
   return {
-    content: `Found **${Plex.playlists.length}** Playlists`,
+    content: `Found **${Golem.plex.playlists.length}** Playlists`,
     components: [row],
   }
 }
