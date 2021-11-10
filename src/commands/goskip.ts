@@ -26,8 +26,6 @@ const execute = async (
     skipCount = interaction.options.getInteger('skip-count') || 0
   }
 
-  // TODO dont skip one at a time, its costly on youtube tracks
-  // for (let i = 0; i < skipCount; i++) {
   log.verbose(`Attempting to skip ${skipCount} tracks`)
 
   if (player.nowPlaying && player.currentResource) {
@@ -52,7 +50,6 @@ const execute = async (
   } else {
     await interaction.reply('No track to skip')
   }
-  // }
 }
 
 const goskip = new Command({
