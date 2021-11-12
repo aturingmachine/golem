@@ -6,6 +6,7 @@ import {
   StageChannel,
   VoiceChannel,
 } from 'discord.js'
+import { UserPermission } from '../../permissions/permission'
 
 export class MessageInfo {
   public member: GuildMember | null
@@ -26,5 +27,9 @@ export class MessageInfo {
 
   get voiceChannel(): VoiceChannel | StageChannel | null | undefined {
     return this.member?.voice.channel
+  }
+
+  get permissions(): Promise<UserPermission> {
+    return UserPermission.get(this.userId, this.guildId)
   }
 }

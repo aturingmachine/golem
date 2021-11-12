@@ -6,6 +6,7 @@ import { establishConnection } from '../db'
 import { LastFm } from '../lastfm'
 import { EventHandler } from '../models/event-handler'
 import { TrackListingInfo } from '../models/listing'
+import { UserPermissionCache } from '../permissions/permission'
 import { MusicPlayer } from '../player/music-player'
 import { TrackFinder } from '../player/track-finder'
 import { TrackLoader } from '../player/track-loaders'
@@ -21,6 +22,7 @@ class GolemBot {
   private hasInitialized = false
   private log!: winston.Logger
 
+  public permissions!: UserPermissionCache
   public playerCache!: PlayerCache
   public debugger!: Debugger
   public client!: Client
@@ -30,26 +32,27 @@ class GolemBot {
   public plex!: PlexConnection
 
   async initialize(): Promise<void> {
-    this.log = GolemLogger.child({ src: LogSources.App })
-
-    this.playerCache = new PlayerCache()
-    this.events = new GolemEventEmitter()
-    this.debugger = new Debugger()
-    this.loader = new TrackLoader()
-
-    this.client = new Client({
-      intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_VOICE_STATES,
-        Intents.FLAGS.GUILD_MESSAGES,
-      ],
-    })
-
-    this.log.info('Loading event handlers')
-    this.loadEventHandlers()
-    this.log.info('Event Handlers loaded')
-
     if (!this.hasInitialized) {
+      this.log = GolemLogger.child({ src: LogSources.App })
+
+      this.permissions = new UserPermissionCache()
+      this.playerCache = new PlayerCache()
+      this.events = new GolemEventEmitter()
+      this.debugger = new Debugger()
+      this.loader = new TrackLoader()
+
+      this.client = new Client({
+        intents: [
+          Intents.FLAGS.GUILDS,
+          Intents.FLAGS.GUILD_VOICE_STATES,
+          Intents.FLAGS.GUILD_MESSAGES,
+        ],
+      })
+
+      this.log.info('Loading event handlers')
+      this.loadEventHandlers()
+      this.log.info('Event Handlers loaded')
+
       await this.connectToMongo()
 
       await this.loader.load()

@@ -13,15 +13,18 @@ const execute = async (
   aliasContent?: string
 ): Promise<void> => {
   let subcommand = aliasContent?.split(' ').slice(0, 1).join('')
-  let aliasCommand = aliasContent?.split(' ').slice(1).join(' ')
-  log.silly(formatForLog({ subcommand, aliasCommand }))
+  let commandParam = aliasContent?.split(' ').slice(1).join(' ')
+  log.silly(formatForLog({ subcommand, commandParam }))
 
   if (interaction instanceof CommandInteraction) {
     subcommand = interaction.options.getSubcommand()
-    aliasCommand = interaction.options.getString('aliascommand') || ''
+    commandParam =
+      interaction.options.getString('aliascommand') ||
+      interaction.options.getString('aliasname') ||
+      ''
 
     log.debug(
-      `invoked as command with subcommand=${subcommand}; aliasCommand=${aliasCommand};`
+      `invoked as command with subcommand=${subcommand}; commandParam=${commandParam};`
     )
   }
 
@@ -40,20 +43,30 @@ const execute = async (
     return
   }
 
-  if (subcommand === 'create') {
-    if (!aliasCommand) {
-      await interaction.reply('Command requires a valid alias string')
+  switch (subcommand) {
+    case 'create':
+      if (!commandParam) {
+        await interaction.reply('Command requires a valid alias string')
 
+        return
+      }
+
+      await AliasHandler.createAlias(interaction, commandParam, guildId, userId)
       return
-    }
 
-    await AliasHandler.createAlias(interaction, aliasCommand, guildId, userId)
-    return
-  }
+    case 'list':
+    default:
+      await AliasHandler.listAliases(interaction, guildId)
+      return
 
-  if (subcommand === 'list') {
-    await AliasHandler.listAliases(interaction, guildId)
-    return
+    case 'delete':
+      if (!commandParam) {
+        await interaction.reply('Command requires a valid alias string')
+
+        return
+      }
+
+      await AliasHandler.deleteAlias(interaction, commandParam)
   }
 }
 
@@ -85,6 +98,24 @@ const goalias = new Command({
         ],
       },
       {
+        name: 'delete',
+        description: {
+          long: 'Delete an alias by name. Requires the target alias to be created by the same user requesting the deletion or the requesting user to have elevated privileges.',
+          short: 'Delete an alias by name.',
+        },
+        args: [
+          {
+            type: 'string',
+            name: 'aliasname',
+            description: {
+              long: 'The name of the alias to delete. The name is equivalent to what one runs for the command without the prefixed $.',
+              short: 'The name of the alias to delete.',
+            },
+            required: true,
+          },
+        ],
+      },
+      {
         name: 'list',
         description: {
           short: 'List aliases registered to this server.',
@@ -97,10 +128,12 @@ const goalias = new Command({
       legacy: [
         '$go alias create hype => $go play darude sandstorm',
         '$go alias list',
+        '$go alias delete hype',
       ],
       slashCommand: [
         '/goalias create hype => $go play darude sandstorm',
         '/goalias list',
+        '/goalias delete hype',
       ],
     },
   },
