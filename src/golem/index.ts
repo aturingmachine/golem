@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { Client, Intents, Interaction, Message } from 'discord.js'
 import winston from 'winston'
-import { establishConnection } from '../db'
+import { GolemMongoConnection } from '../db'
 import { LastFm } from '../lastfm'
 import { EventHandler } from '../models/event-handler'
 import { TrackListingInfo } from '../models/listing'
@@ -30,6 +30,7 @@ class GolemBot {
   public events!: GolemEventEmitter
   public trackFinder!: TrackFinder
   public plex!: PlexConnection
+  public db!: GolemMongoConnection
 
   async initialize(): Promise<void> {
     if (!this.hasInitialized) {
@@ -49,11 +50,8 @@ class GolemBot {
         ],
       })
 
-      this.log.info('Loading event handlers')
       this.loadEventHandlers()
-      this.log.info('Event Handlers loaded')
-
-      await this.connectToMongo()
+      this.connectToMongo()
 
       await this.loader.load()
 
@@ -111,6 +109,7 @@ class GolemBot {
   }
 
   private loadEventHandlers(): void {
+    this.log.info('Loading event handlers')
     const eventFiles = fs
       .readdirSync(path.resolve(__dirname, '../events'))
       .filter((file) => file.endsWith('.js'))
@@ -140,12 +139,13 @@ class GolemBot {
 
     EzProgressBar.add(1 / eventFiles.length)
     EzProgressBar.stop()
+    this.log.info('Event Handlers loaded')
   }
 
-  private async connectToMongo(): Promise<void> {
+  private connectToMongo(): void {
     this.log.info('connecting to database')
     try {
-      await establishConnection()
+      this.db = new GolemMongoConnection()
       this.log.info('connected to database')
     } catch (error) {
       this.log.error(`could not connect to database ${error}`)

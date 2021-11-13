@@ -144,6 +144,7 @@ export class GolemConf {
   static get mongo(): MongoConfig {
     return {
       uri: GolemConf.values.mongo?.uri || '',
+      dbName: GolemConf.values.mongo?.dbName || 'golem',
     }
   }
 

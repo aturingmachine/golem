@@ -19,6 +19,7 @@ export type LibraryConfig = {
 
 export type MongoConfig = {
   uri: string
+  dbName: string
 }
 
 export type PlexConfig = {

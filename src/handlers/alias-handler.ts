@@ -29,7 +29,7 @@ export const AliasHandler = {
       this.log.verbose(`saving new alias ${alias.name} -> ${alias.unevaluated}`)
       this.log.debug(alias.toString())
 
-      await new CustomAlias(alias).save()
+      await new CustomAliasData(alias).save()
 
       await interaction.reply(
         `${Replier.affirmative}! \`$${alias.name}\` will now execute as \`${alias.unevaluated}\``

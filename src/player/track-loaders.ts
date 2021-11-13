@@ -1,7 +1,6 @@
 import fs from 'fs'
 import * as mm from 'music-metadata'
 import { LibIndexData } from '../models/db/lib-index'
-import { ListingData } from '../models/db/listing'
 import { Listing } from '../models/listing'
 import { GolemConf } from '../utils/config'
 import { getAllFiles } from '../utils/filesystem'

@@ -1,6 +1,8 @@
 import md5 from 'md5'
+import { Filter, FindOptions } from 'mongodb'
 import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
+import { Golem } from '../golem'
 import { GolemConf } from '../utils/config'
 
 /**
@@ -44,6 +46,7 @@ export type ListingInfo = {
   addedAt: number
   bpm?: number
   albumArt?: Buffer
+  id?: string
 }
 
 /**
@@ -56,6 +59,8 @@ export type ListingInfo = {
  * Listing should just be for reading from file and db.
  */
 export class Listing {
+  static collectionName = 'listings'
+
   /**
    * The MongoId, is actually an ObjectId instance
    */
@@ -96,6 +101,8 @@ export class Listing {
 
     if (id) {
       this._id = id
+    } else if (info.id) {
+      this._id = info.id
     }
   }
 
@@ -119,20 +126,8 @@ export class Listing {
     }
   }
 
-  get name(): string {
-    return this.toString()
-  }
-
-  get pipedName(): string {
-    return `${this.artist} | ${this.album} | ${this.title}`
-  }
-
   toString(): string {
     return `${this.artist} - ${this.album} - ${this.title}`
-  }
-
-  get markup(): string {
-    return `**${this.artist}**: _${this.album}_ - ${this.title}`
   }
 
   get cleanDuration(): string {
@@ -216,5 +211,19 @@ export class Listing {
             .toBuffer()
         : undefined,
     })
+  }
+
+  static async find(
+    filter: Filter<Listing>,
+    options: FindOptions
+  ): Promise<Listing[]> {
+    return Golem.db.find(Listing, filter, options)
+  }
+
+  async findOne(
+    filter: Filter<Listing>,
+    options: FindOptions
+  ): Promise<Listing | undefined> {
+    return Golem.db.findOne(Listing, filter, options)
   }
 }
