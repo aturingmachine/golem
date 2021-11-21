@@ -1,6 +1,6 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { MessageInfo } from '../messages/message-info'
-import { Permissions, UserPermission } from '../permissions/permission'
+import { Permissions } from '../permissions/permission'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Replier } from '../utils/replies'
@@ -11,11 +11,11 @@ export const AliasHandler = {
 
   async createAlias(
     interaction: CommandInteraction | Message,
-    aliasCommand: string,
-    guildId: string,
-    userId: string
+    aliasCommand: string
   ): Promise<void> {
-    if (!(await UserPermission.check(interaction, Permissions.Alias.Create))) {
+    const info = new MessageInfo(interaction)
+
+    if (!(await info.can(Permissions.Alias.Create))) {
       await interaction.reply({
         ephemeral: true,
         content: 'Missing Permission alias.create',
@@ -24,7 +24,11 @@ export const AliasHandler = {
     }
 
     try {
-      const alias = await CustomAlias.fromString(aliasCommand, guildId, userId)
+      const alias = await CustomAlias.fromString(
+        aliasCommand,
+        info.guildId,
+        info.userId
+      )
       this.log.verbose(`saving new alias ${alias.name} -> ${alias.unevaluated}`)
       this.log.debug(alias.toString())
 

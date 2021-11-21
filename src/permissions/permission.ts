@@ -119,7 +119,6 @@ export class UserPermission {
     UserPermission.log.debug('creating new permission record')
     // create new record, insert to db, set into cache
     const newRecord = new UserPermission(userId, guildId)
-    console.log(newRecord)
     Golem.permissions.set(newRecord)
     await newRecord.save()
 

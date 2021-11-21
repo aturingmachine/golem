@@ -2,145 +2,36 @@ import { ObjectId } from 'bson'
 import { Message } from 'discord.js'
 import { Collection, DeleteResult, Filter, FindOptions } from 'mongodb'
 import { RegisteredCommands } from '../commands/register-commands'
+import { DatabaseRecord } from '../db'
 import { Golem } from '../golem'
 import { Handlers } from '../handlers'
 import { formatForLog } from '../utils/debug-utils'
-import { shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { ParsedMessage } from '../utils/message-args'
+import { AAliasFunction } from './functions'
+import { RandomAliasFunction } from './functions/random'
+import { RandomIntFunction } from './functions/random-number'
 
-export enum AliasFunctionType {
-  Random = ':random',
-  RandomNumber = ':randomNum',
-}
+type CustomAliasRecord = DatabaseRecord<CustomAlias>
 
-export abstract class AliasFunction {
-  public abstract type: AliasFunctionType
+function parseAliasFunctions(raw: string): AAliasFunction[] {
+  const fns: AAliasFunction[] = []
 
-  constructor(public evalString: string) {}
-
-  abstract run(): string
-
-  static fromString(raw: string): AliasFunction[] {
-    const fns: AliasFunction[] = []
-
-    if (!!raw.match(RandomAliasFunction.signature)) {
-      fns.push(...RandomAliasFunction.parseMatches(raw, []))
-    }
-
-    if (!!raw.match(RandomIntFunction.signature)) {
-      fns.push(...RandomIntFunction.parseMatches(raw, []))
-    }
-
-    return fns
-  }
-}
-
-export class RandomAliasFunction extends AliasFunction {
-  private options: string[]
-
-  private static startKey = ':random['
-  private static endKey = ']'
-
-  public static signature = /:random\[.+\]/
-
-  public type: AliasFunctionType = AliasFunctionType.Random
-
-  constructor(evalString: string) {
-    super(evalString)
-
-    this.options = evalString
-      .slice(evalString.indexOf('[') + 1, evalString.indexOf(']'))
-      .split(';')
-
-    if (this.options.length === 0) {
-      throw new Error('Cannot use :random with no options')
-    }
+  if (!!raw.match(RandomAliasFunction.signature)) {
+    fns.push(...RandomAliasFunction.parseMatches(raw, []))
   }
 
-  run(): string {
-    return shuffleArray(this.options).pop() || ''
+  if (!!raw.match(RandomIntFunction.signature)) {
+    fns.push(...RandomIntFunction.parseMatches(raw, []))
   }
 
-  static parseMatches(
-    str: string,
-    results: RandomAliasFunction[]
-  ): RandomAliasFunction[] {
-    const firstIndex = str.indexOf(RandomAliasFunction.startKey)
-
-    if (firstIndex < 0) {
-      return results
-    }
-
-    const slice1 = str.slice(
-      firstIndex,
-      str.indexOf(RandomAliasFunction.endKey) + 1
-    )
-
-    results.push(new RandomAliasFunction(slice1))
-
-    return this.parseMatches(str.replace(slice1, ''), results)
-  }
-}
-
-export class RandomIntFunction extends AliasFunction {
-  private min: number
-  private max: number
-
-  private static startKey = ':randomNum['
-  private static endKey = ']'
-
-  public static signature = /:randomNum\[(?:\d+-{0,1})+\]+/
-
-  public type: AliasFunctionType = AliasFunctionType.RandomNumber
-
-  constructor(evalString: string) {
-    super(evalString)
-
-    const values = evalString
-      .slice(evalString.indexOf('[') + 1, evalString.indexOf(']'))
-      .split('-')
-
-    if (values.length !== 2) {
-      throw new Error(
-        'Cannot use :randomNum with no provided numbers formatted start-end'
-      )
-    }
-
-    this.min = parseInt(values[0], 10)
-    this.max = parseInt(values[1], 10)
-  }
-
-  run(): string {
-    return Math.floor(
-      Math.random() * (this.max - this.min + 1) + this.min
-    ).toString()
-  }
-
-  static parseMatches(
-    str: string,
-    results: RandomIntFunction[]
-  ): RandomIntFunction[] {
-    const firstIndex = str.indexOf(RandomIntFunction.startKey)
-
-    if (firstIndex < 0) {
-      return results
-    }
-
-    const slice1 = str.slice(
-      firstIndex,
-      str.indexOf(RandomIntFunction.endKey, firstIndex) + 1
-    )
-    results.push(new RandomIntFunction(slice1))
-
-    return this.parseMatches(str.replace(slice1, ''), results)
-  }
+  return fns
 }
 
 export class CustomAlias {
   private static log = GolemLogger.child({ src: LogSources.CustomAlias })
 
-  public functions: AliasFunction[] = []
+  public functions: AAliasFunction[] = []
 
   public _id!: ObjectId
 
@@ -152,7 +43,7 @@ export class CustomAlias {
     public guildId: string,
     public description?: string
   ) {
-    this.functions = AliasFunction.fromString(this.unevaluated)
+    this.functions = parseAliasFunctions(this.unevaluated)
   }
 
   toString(): string {
@@ -290,37 +181,30 @@ export class CustomAlias {
     return CustomAlias.Collection.deleteOne({ _id: this._id })
   }
 
-  static find(
-    filter: Filter<CustomAlias>,
+  static async find(
+    filter: Filter<CustomAliasRecord>,
     options?: FindOptions
   ): Promise<CustomAlias[]> {
-    return CustomAlias.Collection.find(filter, options).toArray()
+    const records = await CustomAlias.Collection.find(filter, options).toArray()
+
+    return records.map(CustomAlias.fromRecord)
   }
 
   static async findOne(
-    filter: Filter<CustomAlias>,
+    filter: Filter<CustomAliasRecord>,
     options?: FindOptions
   ): Promise<CustomAlias | null> {
     const record = await CustomAlias.Collection.findOne(filter, options)
 
-    return record
-      ? new CustomAlias(
-          record.name,
-          record.command,
-          record.args,
-          record.createdBy,
-          record.guildId,
-          record.description
-        )
-      : null
+    return record ? CustomAlias.fromRecord(record) : null
   }
 
-  static deleteMany(filter: Filter<CustomAlias>): Promise<DeleteResult> {
+  static deleteMany(filter: Filter<CustomAliasRecord>): Promise<DeleteResult> {
     return CustomAlias.Collection.deleteMany(filter)
   }
 
-  private static get Collection(): Collection<CustomAlias> {
-    return Golem.db.collection<CustomAlias>('CustomAliases')
+  private static get Collection(): Collection<CustomAliasRecord> {
+    return Golem.db.collection<CustomAliasRecord>('customaliases')
   }
 
   private static async isValidName(
@@ -337,5 +221,20 @@ export class CustomAlias {
       ...builtInAliases,
       ...customAliases.map((alias) => alias.name),
     ].some((cmd) => cmd === name)
+  }
+
+  private static fromRecord(record: CustomAliasRecord): CustomAlias {
+    const alias = new CustomAlias(
+      record.name,
+      record.command,
+      record.args,
+      record.createdBy,
+      record.guildId,
+      record.description
+    )
+
+    alias._id = record._id
+
+    return alias
   }
 }

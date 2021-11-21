@@ -174,16 +174,14 @@ export class GolemCommand {
   toString(): string {
     return `
   ${this.info.name})${this.info.alias ? ' - ' + this.info.alias + '' : ''}
-    ${this.info.description.long || this.info.description.short}
+    ${this.info.description.short}
     Arguments:
     ${
       this.info.args.length
         ? this.info.args.map((arg) => {
             const argWrappers = arg.required ? ['<', '>'] : ['[', ']']
 
-            return `${argWrappers[0]}${arg.name}${argWrappers[1]}\n\t\t${
-              arg.description.long || arg.description.short
-            }\n`
+            return `${argWrappers[0]}${arg.name}${argWrappers[1]}\n\t\t${arg.description.short}\n`
           })
         : ''
     }`

@@ -1,13 +1,9 @@
 import { ObjectId } from 'bson'
 import { Collection, DeleteResult, Filter, FindOptions } from 'mongodb'
+import { DatabaseRecord } from '../../db'
 import { Golem } from '../../golem'
 
-export interface PlayRecord {
-  trackId: string
-  interactionType?: 'play' | 'skip' | 'queue'
-  timestamp: number
-  userId: string
-}
+type DBPlayRecord = DatabaseRecord<PlayRecord>
 
 export class PlayRecord {
   public _id!: ObjectId
@@ -30,18 +26,31 @@ export class PlayRecord {
     return this
   }
 
-  static find(
-    filter: Filter<PlayRecord>,
+  static async find(
+    filter: Filter<DBPlayRecord>,
     options: FindOptions
   ): Promise<PlayRecord[]> {
-    return PlayRecord.Collection.find(filter, options).toArray()
+    const records = await PlayRecord.Collection.find(filter, options).toArray()
+
+    return records.map((record) => {
+      const playRecord = new PlayRecord(
+        record.trackId,
+        record.timestamp,
+        record.userId,
+        record.interactionType
+      )
+
+      playRecord._id = record._id
+
+      return playRecord
+    })
   }
 
-  static deleteMany(filter: Filter<PlayRecord>): Promise<DeleteResult> {
+  static deleteMany(filter: Filter<DBPlayRecord>): Promise<DeleteResult> {
     return PlayRecord.Collection.deleteMany(filter)
   }
 
-  private static get Collection(): Collection<PlayRecord> {
-    return Golem.db.collection<PlayRecord>('playrecords')
+  private static get Collection(): Collection<DBPlayRecord> {
+    return Golem.db.collection<DBPlayRecord>('playrecords')
   }
 }

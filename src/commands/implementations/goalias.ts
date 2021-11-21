@@ -1,7 +1,7 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { GolemCommand } from '..'
-import { AliasHandler } from '../../aliases/alias-handler'
 import { CommandNames } from '../../constants'
+import { Handlers } from '../../handlers'
 import { formatForLog } from '../../utils/debug-utils'
 import { GolemLogger, LogSources } from '../../utils/logger'
 import { guildIdFrom, userFrom } from '../../utils/message-utils'
@@ -51,12 +51,12 @@ const execute = async (
         return
       }
 
-      await AliasHandler.createAlias(interaction, commandParam, guildId, userId)
+      await Handlers.Alias.createAlias(interaction, commandParam)
       return
 
     case 'list':
     default:
-      await AliasHandler.listAliases(interaction, guildId)
+      await Handlers.Alias.listAliases(interaction, guildId)
       return
 
     case 'delete':
@@ -66,7 +66,7 @@ const execute = async (
         return
       }
 
-      await AliasHandler.deleteAlias(interaction, commandParam)
+      await Handlers.Alias.deleteAlias(interaction, commandParam)
   }
 }
 

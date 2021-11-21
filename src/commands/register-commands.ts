@@ -16,14 +16,17 @@ import goskip from './implementations/goskip'
 import gostop from './implementations/gostop'
 import { GolemCommand } from '.'
 
+const implementationPath = path.resolve(__dirname, './implementations')
+
 export const Commands = new Collection<string, GolemCommand>()
 
 export const registerCommands = (): void => {
-  fs.readdirSync(path.resolve(__dirname, './implementations'))
+  fs.readdirSync(implementationPath)
     .filter((file) => file.endsWith('.js') && !file.includes('index'))
     .forEach((file) => {
-      /* eslint-disable-next-line @typescript-eslint/no-var-requires */
-      const command: GolemCommand = require(`./${file}`).default
+      const command: GolemCommand =
+        /* eslint-disable-next-line @typescript-eslint/no-var-requires */
+        require(`${implementationPath}/${file}`).default
 
       if (
         command.missingRequiredModules.all.length > 0 ||

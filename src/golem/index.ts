@@ -119,7 +119,6 @@ class GolemBot {
     const eventFiles = fs
       .readdirSync(path.resolve(__dirname, '../events'))
       .filter((file) => file.endsWith('.js') && file !== 'index.js')
-    console.log(eventFiles)
 
     EzProgressBar.start(eventFiles.length)
 
@@ -150,7 +149,7 @@ class GolemBot {
   }
 
   private async connectToMongo(): Promise<void> {
-    this.log.info('connecting to database')
+    this.log.info('connecting to database ' + GolemConf.mongo.dbName)
     try {
       await this.mongo.connect()
       this.db = this.mongo.db(GolemConf.mongo.dbName)

@@ -6,11 +6,11 @@ import { YoutubeTrack } from '../integrations/youtube/youtube-track'
 import { LocalListing } from '../listing/listing'
 import { ArtistConfirmReply } from '../messages/replies/artist-confirm'
 import { WideSearch } from '../messages/replies/wide-search'
-import { MusicPlayer } from '../player/music-player'
 import { LocalTrack } from '../tracks/track'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { ParsedMessage } from '../utils/message-args'
 import { GetEmbedFromListing, userFrom } from '../utils/message-utils'
+import { MusicPlayer } from './music-player'
 
 export class PlayHandler {
   private log = GolemLogger.child({ src: LogSources.PlayHandler })
