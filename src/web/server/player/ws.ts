@@ -4,7 +4,7 @@ import { Snowflake } from 'discord-api-types'
 import ws from 'ws'
 import { Golem } from '../../../golem'
 import { GolemEvent } from '../../../golem/event-emitter'
-import { Listing } from '../../../listing/listing'
+import { LocalListing } from '../../../listing/listing'
 import { MusicPlayer } from '../../../player/music-player'
 // import { resize } from '../../../utils/image-utils'
 import { GolemLogger } from '../../../utils/logger'
@@ -71,7 +71,7 @@ export class PlayerWebSocket {
   private socket!: ws
   private timer!: NodeJS.Timer
   private player?: MusicPlayer
-  private nowPlaying?: Listing
+  private nowPlaying?: LocalListing
   private b64Art?: string
 
   constructor(private guildId: string) {

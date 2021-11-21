@@ -1,10 +1,10 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { GolemModule } from '../config/models'
-import { CommandNames } from '../constants'
-import { Golem } from '../golem'
-import { Command } from '../models/commands'
-import { GolemLogger, LogSources } from '../utils/logger'
-import { GetPeekEmbed } from '../utils/message-utils'
+import { GolemCommand } from '..'
+import { GolemModule } from '../../config/models'
+import { CommandNames } from '../../constants'
+import { Golem } from '../../golem'
+import { GolemLogger, LogSources } from '../../utils/logger'
+import { GetPeekEmbed } from '../../utils/message-utils'
 
 const execute = async (
   interaction: CommandInteraction | Message
@@ -27,7 +27,7 @@ const execute = async (
   }
 }
 
-const goshuffle = new Command({
+const goshuffle = new GolemCommand({
   logSource: LogSources.GoShuffle,
   handler: execute,
   info: {

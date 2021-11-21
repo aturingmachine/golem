@@ -1,8 +1,8 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { CommandNames } from '../constants'
-import { GoGet } from '../handlers/go-get-handler'
-import { Command } from '../models/commands'
-import { LogSources } from '../utils/logger'
+import { GolemCommand } from '..'
+import { CommandNames } from '../../constants'
+import { Handlers } from '../../handlers'
+import { LogSources } from '../../utils/logger'
 
 const execute = async (
   interaction: CommandInteraction | Message,
@@ -14,7 +14,10 @@ const execute = async (
     value = interaction.options.getString('value', false) || ''
   }
 
-  const response = await GoGet.it({ value, guildId: interaction.guildId })
+  const response = await Handlers.GoGet.it({
+    value,
+    guildId: interaction.guildId,
+  })
 
   if (value === 'catalog') {
     // const snippet = new MessageAttachment(
@@ -27,7 +30,7 @@ const execute = async (
   }
 }
 
-const goget = new Command({
+const goget = new GolemCommand({
   logSource: LogSources.GoGet,
   handler: execute,
   info: {

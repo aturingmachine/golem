@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from 'axios'
 import { GolemConf } from '../../config'
-import { Listing } from '../../listing/listing'
+import { LocalListing } from '../../listing/listing'
 import { GolemLogger, LogSources } from '../../utils/logger'
 import {
   SimilarArtistMatch,
@@ -31,7 +31,7 @@ export class LastFm {
   }
 
   static async getSimilarArtists(
-    listing: Listing
+    listing: LocalListing
   ): Promise<SimilarArtistMatch[]> {
     LastFm.log.info(
       `fetching similar tracks for ${listing.artist} - ${listing.title} by ARTIST`
@@ -51,7 +51,7 @@ export class LastFm {
   }
 
   static async getSimilarTracks(
-    listing: Listing
+    listing: LocalListing
   ): Promise<SimilarTrackMatch[]> {
     LastFm.log.info(
       `fetching similar tracks for ${listing.artist} - ${listing.title} by TRACK`

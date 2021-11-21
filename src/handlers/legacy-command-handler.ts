@@ -1,5 +1,5 @@
 import { Message } from 'discord.js'
-import { Commands, RegisteredCommands } from '../commands'
+import { Commands, RegisteredCommands } from '../commands/register-commands'
 import { CommandNames } from '../constants'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { guildIdFrom } from '../utils/message-utils'
@@ -38,10 +38,7 @@ export async function AliasedCommand(
 }
 
 export class LegacyCommandHandler {
-  static async parseMessage(
-    msg: Message,
-    overrideContent?: string
-  ): Promise<boolean> {
+  async parseMessage(msg: Message, overrideContent?: string): Promise<boolean> {
     const content = overrideContent || msg.content
 
     if (!content.startsWith('$go ') && content.startsWith('$')) {
@@ -64,26 +61,21 @@ export class LegacyCommandHandler {
       src: LogSources.LegacyHandler,
     })
 
-    return await LegacyCommandHandler.executeCommand(subcommand, args, msg)
+    return await this.executeCommand(subcommand, args, msg)
   }
 
-  static async executeCustomAlias(
-    msg: Message,
-    fullCommand: string
-  ): Promise<void> {
-    await LegacyCommandHandler.parseMessage(msg, fullCommand)
+  async executeCustomAlias(msg: Message, fullCommand: string): Promise<void> {
+    await this.parseMessage(msg, fullCommand)
   }
 
-  static async executeCommand(
+  async executeCommand(
     subcommand: string,
     args: string,
     msg: Message
   ): Promise<boolean> {
     switch (subcommand) {
       case CommandNames.help:
-        await msg.reply(
-          await LegacyCommandHandler.helpMessage(guildIdFrom(msg))
-        )
+        await msg.reply(await this.helpMessage(guildIdFrom(msg)))
         break
       case CommandNames.play:
         await RegisteredCommands.goplay.execute(msg, args)
@@ -136,7 +128,7 @@ export class LegacyCommandHandler {
     return true
   }
 
-  private static async helpMessage(_guildId: string): Promise<string> {
+  private async helpMessage(_guildId: string): Promise<string> {
     let helpMsg = ''
 
     const builtInCommandsHelp = Array.from(Commands.values()).reduce(

@@ -3,7 +3,7 @@ import {
   SimilarArtistMatch,
   SimilarTrackMatch,
 } from '../integrations/lastfm/models'
-import { Listing } from '../listing/listing'
+import { LocalListing } from '../listing/listing'
 import { isDefined, shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { SearchSchemes } from './search-schemes'
@@ -17,12 +17,12 @@ export enum ResultType {
 }
 
 export interface SearchResult {
-  listing: Listing
+  listing: LocalListing
   type: ResultType
 }
 
 export class SearchResult {
-  constructor(public listing: Listing, public type: ResultType) {}
+  constructor(public listing: LocalListing, public type: ResultType) {}
 
   get isArtistQuery(): boolean {
     return this.type === ResultType.Artist
@@ -34,11 +34,11 @@ export class SearchResult {
 }
 
 export class ListingFinder {
-  public readonly listings: Listing[]
+  public readonly listings: LocalListing[]
 
   private _artistNames!: string[]
 
-  constructor(listings: Listing[]) {
+  constructor(listings: LocalListing[]) {
     log.info('instantiating track finder', listings)
     this.listings = listings
   }
@@ -83,7 +83,7 @@ export class ListingFinder {
     return undefined
   }
 
-  searchMany(query: string): Listing[] {
+  searchMany(query: string): LocalListing[] {
     const result = SearchSchemes.cascading(query, this.listings)
 
     return result.map((r) => r.original)
@@ -93,7 +93,7 @@ export class ListingFinder {
     similarMatches: SimilarArtistMatch[],
     takeArtists = 10,
     takeTracks = 5
-  ): Listing[] {
+  ): LocalListing[] {
     log.info('get similar artists')
     const artistNames = similarMatches.map((m) => m.name.toLowerCase())
 
@@ -111,23 +111,23 @@ export class ListingFinder {
             .filter((r) => artistNames.includes(r.artist.toLowerCase()))
             .slice(0, takeTracks)
         )
-      }, [] as Listing[])
+      }, [] as LocalListing[])
   }
 
   getSimilarTracks(
     similarMatches: SimilarTrackMatch[],
     takeTracks = 30
-  ): Listing[] {
+  ): LocalListing[] {
     log.info('get similar tracks')
     return shuffleArray(
       similarMatches.reduce((prev, curr) => {
         const res = SearchSchemes.byTitle(curr.name, this.listings)
         return res[0] ? prev.concat(res[0].original) : prev
-      }, [] as Listing[])
+      }, [] as LocalListing[])
     ).slice(0, takeTracks)
   }
 
-  artistSample(artist: string, count = 1): Listing[] {
+  artistSample(artist: string, count = 1): LocalListing[] {
     const res = []
     let listings = this.listings.filter(
       (l) => l.artist.toLowerCase() === artist.toLowerCase() && l.albumArt
@@ -157,7 +157,7 @@ export class ListingFinder {
     }
   }
 
-  findListingsByIds(params: { id: string; [key: string]: any }[]): Listing[] {
+  findListingsByIds<Q extends { id: string }>(params: Q[]): LocalListing[] {
     return params
       .map((param) => this.listings.find((l) => l.id === param.id))
       .filter(isDefined)
@@ -169,7 +169,7 @@ export class ListingFinder {
 
   private isArtistQuery(
     query: string,
-    res: fuzzy.FilterResult<Listing>[]
+    res: fuzzy.FilterResult<LocalListing>[]
   ): boolean {
     return [res[0], res[1], res[2], res[3]].filter(Boolean).some((r) => {
       const artist = r.original.artist.toLowerCase().trim()
@@ -178,7 +178,7 @@ export class ListingFinder {
     })
   }
 
-  private isWideMatch(result: fuzzy.FilterResult<Listing>[]): boolean {
+  private isWideMatch(result: fuzzy.FilterResult<LocalListing>[]): boolean {
     return (
       result.length > 5 &&
       result.slice(1, 5).some((r) => result[0].score - r.score < 5)
@@ -189,8 +189,8 @@ export class ListingFinder {
   // it ourselves. Going to "add weight" to base tracks (non inst, live, jp version)
   // since those can be accessed by more exact queries, whereas we cannot work backwards.
   private weightResult(
-    resultSet: fuzzy.FilterResult<Listing>[]
-  ): fuzzy.FilterResult<Listing> {
+    resultSet: fuzzy.FilterResult<LocalListing>[]
+  ): fuzzy.FilterResult<LocalListing> {
     log.verbose(
       `\n${resultSet
         .slice(0, 15)
@@ -215,7 +215,7 @@ export class ListingFinder {
     return pref
   }
 
-  private isLiveOrInst(result: fuzzy.FilterResult<Listing>): boolean {
+  private isLiveOrInst(result: fuzzy.FilterResult<LocalListing>): boolean {
     log.verbose(
       `Checking force weighting for ${result.original.title.toLowerCase()}`
     )

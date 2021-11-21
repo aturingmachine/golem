@@ -1,10 +1,10 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { GolemModule } from '../config/models'
-import { CommandNames } from '../constants'
-import { Golem } from '../golem'
-import { Command } from '../models/commands'
-import { GolemLogger, LogSources } from '../utils/logger'
-import { GetPeekEmbed } from '../utils/message-utils'
+import { GolemCommand } from '..'
+import { GolemModule } from '../../config/models'
+import { CommandNames } from '../../constants'
+import { Golem } from '../../golem'
+import { GolemLogger, LogSources } from '../../utils/logger'
+import { GetPeekEmbed } from '../../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoPeek })
 
@@ -25,7 +25,7 @@ const execute = async (
   await interaction.reply({ embeds: [embed] })
 }
 
-const gopeek = new Command({
+const gopeek = new GolemCommand({
   logSource: LogSources.GoPeek,
   handler: execute,
   info: {

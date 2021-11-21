@@ -1,4 +1,4 @@
-import { registerCommands } from './commands'
+import { registerCommands } from './commands/register-commands'
 import { GolemConf } from './config'
 import { Golem } from './golem'
 import { GolemLogger } from './utils/logger'

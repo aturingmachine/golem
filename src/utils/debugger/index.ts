@@ -2,7 +2,7 @@ import chalk from 'chalk'
 import winston from 'winston'
 import { GolemConf } from '../../config'
 import { Golem } from '../../golem'
-import { GoGet } from '../../handlers/go-get-handler'
+import { Handlers } from '../../handlers'
 import { Youtube } from '../../integrations/youtube/youtils'
 import { GolemLogger, LogSources } from '../logger'
 import { GolemRepl } from './golem-repl'
@@ -121,7 +121,7 @@ export class Debugger {
           cmd.split(' ')[1] || Golem.playerCache.keys().next().value || ''
 
         console.log(
-          GoGet.it({
+          Handlers.GoGet.it({
             value: cmd
               .split(' ')
               .filter((x) => !/^[0-9]*$/.test(x))

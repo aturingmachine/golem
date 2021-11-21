@@ -1,12 +1,12 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { GolemModule } from '../config/models'
-import { CommandNames } from '../constants'
-import { Golem } from '../golem'
-import { Command } from '../models/commands'
-import { LocalTrack } from '../tracks/track'
-import { GolemLogger, LogSources } from '../utils/logger'
-import { GetPlaylistEmbed } from '../utils/message-utils'
-import { Replier } from '../utils/replies'
+import { GolemCommand } from '..'
+import { GolemModule } from '../../config/models'
+import { CommandNames } from '../../constants'
+import { Golem } from '../../golem'
+import { LocalTrack } from '../../tracks/track'
+import { GolemLogger, LogSources } from '../../utils/logger'
+import { GetPlaylistEmbed } from '../../utils/message-utils'
+import { Replier } from '../../utils/replies'
 
 const log = GolemLogger.child({ src: LogSources.GoPlayList })
 
@@ -57,7 +57,7 @@ const execute = async (
   }
 }
 
-const goplaylist = new Command({
+const goplaylist = new GolemCommand({
   logSource: LogSources.GoPlayList,
   handler: execute,
   info: {

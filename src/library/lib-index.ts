@@ -7,7 +7,7 @@ import {
 } from 'mongodb'
 import { DatabaseRecord } from '../db'
 import { Golem } from '../golem'
-import { Listing } from '../listing/listing'
+import { LocalListing } from '../listing/listing'
 
 type LibIndexRecord = DatabaseRecord<LibIndex>
 
@@ -17,7 +17,7 @@ export class LibIndex {
   constructor(
     public name: string,
     public count: number,
-    public listings: Listing[]
+    public listings: LocalListing[]
   ) {}
 
   async save(): Promise<this> {

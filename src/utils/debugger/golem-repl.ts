@@ -1,7 +1,7 @@
 import REPL from 'programmatic-repl'
 import { PlayRecord } from '../../analytics/models/play-record'
 import { Golem } from '../../golem'
-import { Listing } from '../../listing/listing'
+import { LocalListing } from '../../listing/listing'
 
 export class GolemRepl {
   static completions = [
@@ -38,7 +38,7 @@ export class GolemRepl {
         },
         db: {
           root: Golem.db,
-          listings: Listing,
+          listings: LocalListing,
           // analytics: BotInteractionData,
           plays: PlayRecord,
         },

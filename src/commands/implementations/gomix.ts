@@ -1,14 +1,14 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { GolemModule } from '../config/models'
-import { CommandNames } from '../constants'
-import { Golem } from '../golem'
-import { Listing } from '../listing/listing'
-import { Command } from '../models/commands'
-import { MixMatcher } from '../player/mixing/mix-matcher'
-import { LocalTrack } from '../tracks/track'
-import { shuffleArray } from '../utils/list-utils'
-import { GolemLogger, LogSources } from '../utils/logger'
-import { userFrom } from '../utils/message-utils'
+import { GolemCommand } from '..'
+import { GolemModule } from '../../config/models'
+import { CommandNames } from '../../constants'
+import { Golem } from '../../golem'
+import { LocalListing } from '../../listing/listing'
+import { MixMatcher } from '../../player/mixing/mix-matcher'
+import { LocalTrack } from '../../tracks/track'
+import { shuffleArray } from '../../utils/list-utils'
+import { GolemLogger, LogSources } from '../../utils/logger'
+import { userFrom } from '../../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoMix })
 
@@ -53,7 +53,7 @@ const execute = async (
       return
     }
 
-    let result: Listing[] = []
+    let result: LocalListing[] = []
 
     switch (mixBy.toLowerCase()) {
       case 'artist':
@@ -104,7 +104,7 @@ const execute = async (
   return
 }
 
-const gomix = new Command({
+const gomix = new GolemCommand({
   logSource: LogSources.GoMix,
   handler: execute,
   info: {

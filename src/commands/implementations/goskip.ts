@@ -1,10 +1,10 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { GolemModule } from '../config/models'
-import { CommandNames } from '../constants'
-import { Golem } from '../golem'
-import { Command } from '../models/commands'
-import { GolemLogger, LogSources } from '../utils/logger'
-import { GetEmbedFromListing } from '../utils/message-utils'
+import { GolemCommand } from '..'
+import { GolemModule } from '../../config/models'
+import { CommandNames } from '../../constants'
+import { Golem } from '../../golem'
+import { GolemLogger, LogSources } from '../../utils/logger'
+import { GetEmbedFromListing } from '../../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoSkip })
 
@@ -52,7 +52,7 @@ const execute = async (
   }
 }
 
-const goskip = new Command({
+const goskip = new GolemCommand({
   logSource: LogSources.GoSkip,
   handler: execute,
   info: {

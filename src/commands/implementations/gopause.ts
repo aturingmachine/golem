@@ -1,9 +1,9 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { GolemModule } from '../config/models'
-import { CommandNames } from '../constants'
-import { Golem } from '../golem'
-import { Command } from '../models/commands'
-import { GolemLogger, LogSources } from '../utils/logger'
+import { GolemCommand } from '..'
+import { GolemModule } from '../../config/models'
+import { CommandNames } from '../../constants'
+import { Golem } from '../../golem'
+import { GolemLogger, LogSources } from '../../utils/logger'
 
 const execute = async (
   interaction: CommandInteraction | Message
@@ -21,7 +21,7 @@ const execute = async (
   player.pause()
 }
 
-const gopause = new Command({
+const gopause = new GolemCommand({
   logSource: LogSources.GoPause,
   handler: execute,
   info: {

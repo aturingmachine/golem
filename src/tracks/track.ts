@@ -1,7 +1,7 @@
 import { AudioResource, createAudioResource } from '@discordjs/voice'
 import winston from 'winston'
 import { Analytics } from '../analytics'
-import { Listing, TrackListingInfo } from '../listing/listing'
+import { LocalListing, TrackListingInfo } from '../listing/listing'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Track, TrackAudioResourceMetadata } from '.'
 
@@ -16,7 +16,7 @@ export class LocalTrack extends Track {
     src: LogSources.LocalTrack,
   })
 
-  constructor(public readonly listing: Listing, userId: string) {
+  constructor(public readonly listing: LocalListing, userId: string) {
     super(userId)
 
     this.userId = userId
@@ -65,11 +65,11 @@ export class LocalTrack extends Track {
     Analytics.createPlayRecord(this.listing.trackId, this.userId, 'skip')
   }
 
-  static fromListing(listing: Listing, userId: string): LocalTrack {
+  static fromListing(listing: LocalListing, userId: string): LocalTrack {
     return new LocalTrack(listing, userId)
   }
 
-  static fromListings(listings: Listing[], userId: string): LocalTrack[] {
+  static fromListings(listings: LocalListing[], userId: string): LocalTrack[] {
     return listings.map((listing) => LocalTrack.fromListing(listing, userId))
   }
 }

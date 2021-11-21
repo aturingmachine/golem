@@ -12,7 +12,17 @@ import { GolemConf } from '../config'
 import { DatabaseRecord } from '../db'
 import { Golem } from '../golem'
 
-type ListingRecord = DatabaseRecord<Listing>
+export abstract class AListing {
+  constructor(
+    public title: string,
+    public duration: number,
+    public artist: string,
+    public album: string,
+    public albumArt?: Buffer | string
+  ) {}
+}
+
+type ListingRecord = DatabaseRecord<LocalListing>
 
 /**
  * Core Data for a track.
@@ -67,7 +77,7 @@ export type ListingInfo = {
  *
  * Listing should just be for reading from file and db.
  */
-export class Listing {
+export class LocalListing extends AListing {
   static collectionName = 'listings'
 
   /**
@@ -79,10 +89,6 @@ export class Listing {
    * some info of the listing
    */
   trackId: string
-  artist: string
-  album: string
-  title: string
-  duration: number
   hasDefaultDuration!: boolean
   path: string
   genres: string[]
@@ -94,11 +100,9 @@ export class Listing {
   albumArt?: Buffer
 
   constructor(info: ListingInfo) {
+    super(info.title, info.duration, info.artist, info.album, info.albumArt)
+
     this.trackId = info.trackId
-    this.artist = info.artist
-    this.album = info.album
-    this.title = info.title
-    this.duration = info.duration
     this.path = info.path
     this.genres = info.genres
     this.key = info.key
@@ -165,7 +169,7 @@ export class Listing {
     meta: IAudioMetadata,
     path: string,
     birthTime: number
-  ): Promise<Listing> {
+  ): Promise<LocalListing> {
     const targetConfig = GolemConf.library.paths.find((p) => path.includes(p))
 
     const split = path.replace(targetConfig || 'NO PATH FOUND', '').split('/')
@@ -188,7 +192,7 @@ export class Listing {
     const artistMBId = meta.common.musicbrainz_artistid?.[0] || ''
     const trackMbId = meta.common.musicbrainz_trackid || ''
 
-    return new Listing({
+    return new LocalListing({
       trackId: id,
       artist,
       album,
@@ -216,9 +220,9 @@ export class Listing {
 
   async save(): Promise<this> {
     if (this._id) {
-      await Listing.Collection.replaceOne({ _id: { $eq: this._id } }, this)
+      await LocalListing.Collection.replaceOne({ _id: { $eq: this._id } }, this)
     } else {
-      const result = await Listing.Collection.insertOne(this)
+      const result = await LocalListing.Collection.insertOne(this)
       this._id = result.insertedId
     }
 
@@ -228,11 +232,14 @@ export class Listing {
   static async find(
     filter: Filter<ListingRecord>,
     options: FindOptions
-  ): Promise<Listing[]> {
-    const records = await Listing.Collection.find(filter, options).toArray()
+  ): Promise<LocalListing[]> {
+    const records = await LocalListing.Collection.find(
+      filter,
+      options
+    ).toArray()
 
     return records.map((record) => {
-      const listing = new Listing(record)
+      const listing = new LocalListing(record)
       listing._id = record._id
 
       return listing
@@ -242,21 +249,21 @@ export class Listing {
   static async findOne(
     filter: Filter<ListingRecord>,
     options: FindOptions
-  ): Promise<Listing | null> {
-    const record = await Listing.Collection.findOne(filter, options)
+  ): Promise<LocalListing | null> {
+    const record = await LocalListing.Collection.findOne(filter, options)
 
     if (!record) {
       return null
     }
 
-    const listing = new Listing(record)
+    const listing = new LocalListing(record)
     listing._id = record._id
 
     return listing
   }
 
   static deleteMany(filter: Filter<ListingRecord>): Promise<DeleteResult> {
-    return Listing.Collection.deleteMany(filter)
+    return LocalListing.Collection.deleteMany(filter)
   }
 
   private static get Collection(): Collection<ListingRecord> {

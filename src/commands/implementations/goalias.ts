@@ -1,10 +1,10 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { AliasHandler } from '../aliases/alias-handler'
-import { CommandNames } from '../constants'
-import { Command } from '../models/commands'
-import { formatForLog } from '../utils/debug-utils'
-import { GolemLogger, LogSources } from '../utils/logger'
-import { guildIdFrom, userFrom } from '../utils/message-utils'
+import { GolemCommand } from '..'
+import { AliasHandler } from '../../aliases/alias-handler'
+import { CommandNames } from '../../constants'
+import { formatForLog } from '../../utils/debug-utils'
+import { GolemLogger, LogSources } from '../../utils/logger'
+import { guildIdFrom, userFrom } from '../../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoAlias })
 
@@ -70,7 +70,7 @@ const execute = async (
   }
 }
 
-const goalias = new Command({
+const goalias = new GolemCommand({
   logSource: LogSources.GoAlias,
   handler: execute,
   info: {

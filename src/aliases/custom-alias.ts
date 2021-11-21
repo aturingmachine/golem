@@ -1,9 +1,9 @@
 import { ObjectId } from 'bson'
 import { Message } from 'discord.js'
 import { Collection, DeleteResult, Filter, FindOptions } from 'mongodb'
-import { RegisteredCommands } from '../commands'
+import { RegisteredCommands } from '../commands/register-commands'
 import { Golem } from '../golem'
-import { LegacyCommandHandler } from '../handlers/legacy-command-handler'
+import { Handlers } from '../handlers'
 import { formatForLog } from '../utils/debug-utils'
 import { shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -161,7 +161,7 @@ export class CustomAlias {
 
   // TODO get this to take in args as well or some shit idk
   async run(msg: Message): Promise<void> {
-    await LegacyCommandHandler.executeCustomAlias(msg, this.evaluated)
+    await Handlers.Legacy.executeCustomAlias(msg, this.evaluated)
   }
 
   get helpString(): string {

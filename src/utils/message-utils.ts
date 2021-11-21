@@ -16,7 +16,7 @@ import { GolemConf } from '../config'
 import { Constants, PlexLogo } from '../constants'
 import { Golem } from '../golem'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
-import { Listing, TrackListingInfo } from '../listing/listing'
+import { LocalListing, TrackListingInfo } from '../listing/listing'
 import { MusicPlayer } from '../player/music-player'
 import { humanReadableDuration, humanReadableTime } from './time-utils'
 
@@ -89,7 +89,7 @@ export const GetEmbedFromListing = async (
     }
   }
 
-  const isLocalListing = listing instanceof Listing
+  const isLocalListing = listing instanceof LocalListing
   const duration = isLocalListing
     ? `${
         listing.hasDefaultDuration
@@ -166,37 +166,13 @@ export const ArtistConfirmButton = (artist: string): MessageActionRow => {
   )
 }
 
-export const ArtistConfirmReply = async (
-  artist: string,
-  albumArt?: Buffer
-): Promise<MessageOptions> => {
-  const image = GetMessageAttachement(albumArt)
-  const color = await averageColor(albumArt)
-
-  const row = ArtistConfirmButton(artist)
-
-  const embed = new MessageEmbed()
-    .setTitle(`Play ${artist}?`)
-    .setDescription(
-      `Looks like you might be looking for the artist: **${artist}**.\nShould I queue their discography?`
-    )
-    .setColor(color.hex)
-    .setImage('attachment://cover.png')
-
-  return {
-    embeds: [embed],
-    components: [row],
-    files: image ? [image] : [],
-  }
-}
-
 export const centerString = (longest: number, str: string): string => {
   return str.padStart((longest - str.length) / 2 + str.length).padEnd(longest)
 }
 
 export const getSearchReply = (
   query: string,
-  results: Listing[],
+  results: LocalListing[],
   totalCount: number
 ): MessageOptions => {
   const fields: EmbedFieldData[] = results
@@ -227,7 +203,7 @@ export const getSearchReply = (
 
 export const GetWideSearchEmbed = (
   query: string,
-  results: Listing[]
+  results: LocalListing[]
 ): MessageOptions => {
   const options: MessageSelectOptionData[] = results.slice(0, 25).map((r) => {
     return {

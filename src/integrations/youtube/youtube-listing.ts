@@ -1,16 +1,21 @@
 import ytpl from 'ytpl'
+import { AListing } from '../../listing/listing'
 import { GolemLogger, LogSources } from '../../utils/logger'
 
-export class YoutubeListing {
+export class YoutubeListing extends AListing {
   private static log = GolemLogger.child({ src: LogSources.YoutubeListing })
 
+  declare albumArt: string
+
   constructor(
-    public author: string,
-    public title: string,
     public url: string,
-    public duration: number,
-    public artworkUrl?: string
-  ) {}
+    author: string,
+    title: string,
+    duration: number,
+    artworkUrl?: string
+  ) {
+    super(title, duration, author, '', artworkUrl)
+  }
 
   static fromPlaylistItem(item: ytpl.Item): YoutubeListing {
     YoutubeListing.log
@@ -30,9 +35,9 @@ export class YoutubeListing {
       .join('')}`
 
     return new YoutubeListing(
+      cleanUrl,
       item.author.name,
       item.title,
-      cleanUrl,
       item.durationSec || 0,
       item.bestThumbnail.url || undefined
     )

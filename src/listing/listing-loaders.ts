@@ -5,20 +5,20 @@ import { LibIndex } from '../library/lib-index'
 import { getAllFiles } from '../utils/filesystem'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { EzProgressBar } from '../utils/progress-bar'
-import { Listing } from './listing'
+import { LocalListing } from './listing'
 
 const log = GolemLogger.child({ src: LogSources.Loader })
 
 const reg = /.*\.(png|html|pdf|db|jpg|jpeg|xml|js|css|ini)$/
 
 export class ListingLoader {
-  public readonly listings: Listing[]
+  public readonly listings: LocalListing[]
 
   constructor() {
     this.listings = []
   }
 
-  async load(): Promise<Listing[]> {
+  async load(): Promise<LocalListing[]> {
     if (!GolemConf.modules.Music) {
       log.verbose('music module disabled - not initializing track loading')
       return []
@@ -47,7 +47,7 @@ export class ListingLoader {
     log.verbose(`Found ${paths.length} paths.`)
 
     let errorCount = 0
-    const listings: Listing[] = []
+    const listings: LocalListing[] = []
 
     EzProgressBar.start(paths.length)
 
@@ -55,7 +55,7 @@ export class ListingLoader {
       try {
         const birthTime = fs.statSync(trackPath).birthtimeMs
         const meta = await mm.parseFile(trackPath)
-        const listing = await Listing.fromMeta(meta, trackPath, birthTime)
+        const listing = await LocalListing.fromMeta(meta, trackPath, birthTime)
 
         log.silly(`attempting to save ${listing.names.short.dashed}`)
         await listing.save()
@@ -99,7 +99,7 @@ export class ListingLoader {
         const data = dbRead.listings
 
         for (const datum of data) {
-          this.listings.push(new Listing(datum))
+          this.listings.push(new LocalListing(datum))
         }
       } catch (error) {
         log.warn(`unable to parse backup for library ${name}`)
@@ -116,7 +116,7 @@ export class ListingLoader {
     const index = await LibIndex.findOne({ name: libName })
     if (index) {
       log.info(`Deleting stale cache for ${libName}`)
-      await Listing.deleteMany({
+      await LocalListing.deleteMany({
         _id: { $in: index?.listings.map((l) => l._id) || [] },
       })
       await index?.delete()
@@ -126,7 +126,10 @@ export class ListingLoader {
     }
   }
 
-  private async save(name: string, listings: Listing[]): Promise<Listing[]> {
+  private async save(
+    name: string,
+    listings: LocalListing[]
+  ): Promise<LocalListing[]> {
     const record = new LibIndex(name, listings.length, listings)
 
     await record.save()
