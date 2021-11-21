@@ -1,4 +1,4 @@
-import { shuffleArray } from './list-utils'
+import { ArrayUtils } from './list-utils'
 
 const affirmative = [
   'Hell Yeah',
@@ -14,14 +14,14 @@ const negative = ['Oops...', 'Well shit', 'Oh boy...']
 
 export class Replier {
   static get affirmative(): string {
-    return shuffleArray(affirmative).pop() || ''
+    return ArrayUtils.shuffleArray(affirmative).pop() || ''
   }
 
   static get neutral(): string {
-    return shuffleArray(neutral).pop() || ''
+    return ArrayUtils.shuffleArray(neutral).pop() || ''
   }
 
   static get negative(): string {
-    return shuffleArray(negative).pop() || ''
+    return ArrayUtils.shuffleArray(negative).pop() || ''
   }
 }

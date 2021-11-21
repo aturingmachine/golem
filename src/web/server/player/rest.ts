@@ -1,7 +1,7 @@
 import { Snowflake } from 'discord-api-types'
 import express from 'express'
 import { Golem } from '../../../golem'
-import { resize } from '../../../utils/image-utils'
+// import { resize } from '../../../utils/image-utils'
 
 const router = express.Router()
 

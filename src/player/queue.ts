@@ -1,5 +1,5 @@
 import { Track } from '../tracks'
-import { shuffleArray } from '../utils/list-utils'
+import { ArrayUtils } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 
 const log = GolemLogger.child({ src: LogSources.Queue })
@@ -101,8 +101,8 @@ export class TrackQueue {
     const passiveTemp = [...this.passiveQueue]
     const explicitTemp = [...this.explicitQueue]
 
-    this.passiveQueue = shuffleArray(passiveTemp)
-    this.explicitQueue = shuffleArray(explicitTemp)
+    this.passiveQueue = ArrayUtils.shuffleArray(passiveTemp)
+    this.explicitQueue = ArrayUtils.shuffleArray(explicitTemp)
     log.info('shuffled')
   }
 

@@ -1,8 +1,9 @@
 import { SelectMenuInteraction } from 'discord.js'
 import { Golem } from '../golem'
+import { MessageInfo } from '../messages/message-info'
 import { LocalTrack } from '../tracks/track'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { GetPlaylistEmbed, userFrom } from '../utils/message-utils'
+import { GetPlaylistEmbed } from '../utils/message-utils'
 import { Replier } from '../utils/replies'
 import { ButtonIdPrefixes } from './button-handler'
 
@@ -22,6 +23,8 @@ export const playlistMenuHandler = async (
     })
     return
   }
+
+  const info = new MessageInfo(interaction)
 
   const choice = interaction.values[0]
 
@@ -50,8 +53,8 @@ export const playlistMenuHandler = async (
       log.verbose('Playlist Menu Handler: starting Player.')
 
       await player.enqueueMany(
-        userFrom(interaction),
-        LocalTrack.fromListings(listings, userFrom(interaction))
+        info.userId,
+        LocalTrack.fromListings(listings, info.userId)
       )
 
       await interaction.update({

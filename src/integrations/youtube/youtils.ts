@@ -1,7 +1,7 @@
 import ytpl from 'ytpl'
 import ytsr from 'ytsr'
 import { GolemConf } from '../../config'
-import { shuffleArray } from '../../utils/list-utils'
+import { ArrayUtils } from '../../utils/list-utils'
 import { GolemLogger, LogSources } from '../../utils/logger'
 import { YoutubeListing } from './youtube-listing'
 import { YoutubePlaylistListing } from './youtube-playlist'
@@ -34,7 +34,7 @@ export class Youtube {
     const result = await ytpl(url, { limit: videoLimit })
     Youtube.log.debug(`playlist ${url} fetched`)
     const videosToMap = shuffle
-      ? shuffleArray([...result.items]).slice(0, limit)
+      ? ArrayUtils.shuffleArray([...result.items]).slice(0, limit)
       : result.items
 
     return new YoutubePlaylistListing(

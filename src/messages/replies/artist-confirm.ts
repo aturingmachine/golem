@@ -1,7 +1,7 @@
 import { MessageEmbed, MessageOptions } from 'discord.js'
 import { Golem } from '../../golem'
 import { LocalListing } from '../../listing/listing'
-import { fourSquare } from '../../utils/image-utils'
+import { ImageUtils } from '../../utils/image-utils'
 import {
   GetMessageAttachement,
   averageColor,
@@ -11,7 +11,7 @@ import {
 export class ArtistConfirmReply {
   static async from(listing: LocalListing): Promise<MessageOptions> {
     const srcs = Golem.trackFinder.artistSample(listing.artist, 4)
-    const albumArt = await fourSquare({
+    const albumArt = await ImageUtils.fourSquare({
       images: {
         img1: srcs[0].albumArt,
         img2: srcs[1].albumArt,

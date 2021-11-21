@@ -7,7 +7,40 @@ import {
   VoiceChannel,
 } from 'discord.js'
 import { Permission, UserPermission } from '../permissions/permission'
-import { ParsedMessage } from '../utils/message-args'
+import { formatForLog } from '../utils/debug-utils'
+import { GolemLogger, LogSources } from '../utils/logger'
+
+const log = GolemLogger.child({ src: LogSources.ParsedMessage })
+
+/**
+ * Parses legacy string commands into content and arguments
+ * for easy consumption.
+ */
+export class ParsedMessage {
+  public static argSeparatorRegexGlobal = / --/g
+
+  public args: Record<string, string>
+  public content: string
+
+  constructor(message: Message | string) {
+    const rawContent = typeof message === 'string' ? message : message.content
+
+    const sliceIndex = getSliceIndex(rawContent)
+
+    log.silly(`parsing raw ${formatForLog({ rawContent, sliceIndex })}`)
+
+    this.content = sliceIndex > 0 ? rawContent.slice(0, sliceIndex) : rawContent
+
+    this.args = Object.fromEntries(
+      rawContent
+        .slice(sliceIndex)
+        .split(/(?<!"[A-z0-9 ]*[^ ])\s/g)
+        .map((argPair) => argPair.split('='))
+    )
+
+    log.silly(`new - ${formatForLog(this)}`)
+  }
+}
 
 export class MessageInfo {
   public member: GuildMember | null
@@ -17,15 +50,13 @@ export class MessageInfo {
    * Extended message information. Only applicable if the
    * source interaction is a Message
    */
-  public parsed?: ParsedMessage
+  public parsed: ParsedMessage
 
   constructor(public interaction: Message | Interaction) {
     this.member = this.interaction.member as GuildMember
     this.guild = this.interaction.guild
 
-    if (this.interaction instanceof Message) {
-      this.parsed = new ParsedMessage(this.interaction)
-    }
+    this.parsed = new ParsedMessage('' + this.interaction.toString())
   }
 
   get userId(): string {
@@ -54,5 +85,18 @@ export class MessageInfo {
    */
   async can(perms: Permission[]): Promise<boolean> {
     return (await this.permissions).can(perms)
+  }
+}
+
+function getSliceIndex(message: string): number {
+  const isAliasCommand = message.includes(' => ')
+  const matches = message.match(ParsedMessage.argSeparatorRegexGlobal) || []
+
+  if (isAliasCommand) {
+    return matches.length > 1
+      ? message.indexOf(' --', message.indexOf(' -- ') + 1)
+      : message.indexOf(' -- ')
+  } else {
+    return message.indexOf(' -- ')
   }
 }

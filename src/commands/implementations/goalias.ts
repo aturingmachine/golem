@@ -2,9 +2,9 @@ import { CommandInteraction, Message } from 'discord.js'
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { Handlers } from '../../handlers'
+import { MessageInfo } from '../../messages/message-info'
 import { formatForLog } from '../../utils/debug-utils'
 import { GolemLogger, LogSources } from '../../utils/logger'
-import { guildIdFrom, userFrom } from '../../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoAlias })
 
@@ -34,11 +34,12 @@ const execute = async (
     return
   }
 
-  const guildId = guildIdFrom(interaction)
-  const userId = userFrom(interaction)
+  const info = new MessageInfo(interaction)
 
-  if (!guildId || !userId) {
-    log.error(`Missing required values: guildId=${guildId}; userId=${userId};`)
+  if (!info.guildId || !info.userId) {
+    log.error(
+      `Missing required values: guildId=${info.guildId}; userId=${info.userId};`
+    )
 
     return
   }
@@ -56,7 +57,7 @@ const execute = async (
 
     case 'list':
     default:
-      await Handlers.Alias.listAliases(interaction, guildId)
+      await Handlers.Alias.listAliases(interaction, info.guildId)
       return
 
     case 'delete':

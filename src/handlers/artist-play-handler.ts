@@ -1,7 +1,7 @@
 import { MessageComponentInteraction } from 'discord.js'
 import { Golem } from '../golem'
 import { LocalTrack } from '../tracks/track'
-import { shuffleArray } from '../utils/list-utils'
+import { ArrayUtils } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Replier } from '../utils/replies'
 import { ButtonIdPrefixes } from './button-handler'
@@ -68,7 +68,7 @@ export const artistPlayButtonHandler = async (
 
     await player.enqueueMany(
       userId,
-      LocalTrack.fromListings(shuffleArray(artistTracks), userId)
+      LocalTrack.fromListings(ArrayUtils.shuffleArray(artistTracks), userId)
     )
   }
 

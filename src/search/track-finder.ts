@@ -4,7 +4,7 @@ import {
   SimilarTrackMatch,
 } from '../integrations/lastfm/models'
 import { LocalListing } from '../listing/listing'
-import { isDefined, shuffleArray } from '../utils/list-utils'
+import { ArrayUtils } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { SearchSchemes } from './search-schemes'
 
@@ -101,7 +101,7 @@ export class ListingFinder {
       this.artistNames.includes(similar.name.toLowerCase())
     )
 
-    return shuffleArray(availableSimilarArtists)
+    return ArrayUtils.shuffleArray(availableSimilarArtists)
       .slice(0, takeArtists)
       .reduce((prev, curr) => {
         const res = SearchSchemes.byArtistWithMb(curr.name, this.listings)
@@ -119,7 +119,7 @@ export class ListingFinder {
     takeTracks = 30
   ): LocalListing[] {
     log.info('get similar tracks')
-    return shuffleArray(
+    return ArrayUtils.shuffleArray(
       similarMatches.reduce((prev, curr) => {
         const res = SearchSchemes.byTitle(curr.name, this.listings)
         return res[0] ? prev.concat(res[0].original) : prev
@@ -160,7 +160,7 @@ export class ListingFinder {
   findListingsByIds<Q extends { id: string }>(params: Q[]): LocalListing[] {
     return params
       .map((param) => this.listings.find((l) => l.id === param.id))
-      .filter(isDefined)
+      .filter(ArrayUtils.isDefined)
   }
 
   get trackCount(): number {

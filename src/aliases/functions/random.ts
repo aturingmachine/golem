@@ -1,4 +1,4 @@
-import { shuffleArray } from '../../utils/list-utils'
+import { ArrayUtils } from '../../utils/list-utils'
 import { AAliasFunction, AliasFunctionType } from '.'
 
 export class RandomAliasFunction extends AAliasFunction {
@@ -24,7 +24,7 @@ export class RandomAliasFunction extends AAliasFunction {
   }
 
   run(): string {
-    return shuffleArray(this.options).pop() || ''
+    return ArrayUtils.shuffleArray(this.options).pop() || ''
   }
 
   static parseMatches(

@@ -4,11 +4,11 @@ import { GolemModule } from '../../config/models'
 import { CommandNames } from '../../constants'
 import { Golem } from '../../golem'
 import { LocalListing } from '../../listing/listing'
+import { MessageInfo } from '../../messages/message-info'
 import { MixMatcher } from '../../player/mixing/mix-matcher'
 import { LocalTrack } from '../../tracks/track'
-import { shuffleArray } from '../../utils/list-utils'
+import { ArrayUtils } from '../../utils/list-utils'
 import { GolemLogger, LogSources } from '../../utils/logger'
-import { userFrom } from '../../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoMix })
 
@@ -32,6 +32,8 @@ const execute = async (
   if (isSlashCommand) {
     mixBy = interaction.options.getString('mixtype') || ''
   }
+
+  const info = new MessageInfo(interaction)
 
   log.info(`executing with mixtype: ${mixBy || 'blank'}`)
 
@@ -92,8 +94,8 @@ const execute = async (
       )
 
       await player.enqueueMany(
-        userFrom(interaction),
-        LocalTrack.fromListings(shuffleArray(result), userFrom(interaction))
+        info.userId,
+        LocalTrack.fromListings(ArrayUtils.shuffleArray(result), info.userId)
       )
     } else {
       // we have no current to work off of...

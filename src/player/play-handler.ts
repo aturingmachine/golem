@@ -4,12 +4,12 @@ import { Golem } from '../golem'
 import { Youtube } from '../integrations/youtube/youtils'
 import { YoutubeTrack } from '../integrations/youtube/youtube-track'
 import { LocalListing } from '../listing/listing'
+import { MessageInfo } from '../messages/message-info'
 import { ArtistConfirmReply } from '../messages/replies/artist-confirm'
 import { WideSearch } from '../messages/replies/wide-search'
 import { LocalTrack } from '../tracks/track'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { ParsedMessage } from '../utils/message-args'
-import { GetEmbedFromListing, userFrom } from '../utils/message-utils'
+import { GetEmbedFromListing } from '../utils/message-utils'
 import { MusicPlayer } from './music-player'
 
 export class PlayHandler {
@@ -140,9 +140,10 @@ export class PlayHandler {
 
     this.log.info(`Playing youtube resource ${url}`)
 
-    if (url.includes('list=')) {
+    // TODO this logic can be improved
+    if (url.includes('list=') && !url.includes('index=')) {
       this.log.verbose('Playing youtube playlist')
-      await this.playYtPlaylist(url, interaction, player)
+      await this.playYtPlaylist(interaction, player)
     } else {
       this.log.verbose('Playing youtube track')
       await this.playYtTrack(url, interaction, player, playNext)
@@ -209,29 +210,27 @@ export class PlayHandler {
    * @param player
    */
   private async playYtPlaylist(
-    playlistUrl: string,
     interaction: CommandInteraction | Message,
     player: MusicPlayer
   ): Promise<void> {
     try {
-      const parsedMessage = new ParsedMessage(playlistUrl)
-      const args = parsedMessage.args
+      const info = new MessageInfo(interaction)
+      const args = info.parsed.args
 
       const limit = args.limit ? parseInt(args.limit, 10) : undefined
       const isShuffle = !!args.shuffle
-      const userId = userFrom(interaction)
 
       this.log.verbose(`getting playlist`)
-      interaction.reply(`Processing playlist \`${parsedMessage.content}\`...`)
+      interaction.reply(`Processing playlist \`${info.parsed?.content}\`...`)
       const playlist = await Youtube.getPlaylist(
-        parsedMessage.content,
+        info.parsed?.content,
         limit,
         isShuffle
       )
 
       this.log.info(`enqueing youtube playlist ${playlist.title}`)
 
-      await playlist.play(userId, player)
+      await playlist.play(info.userId, player)
 
       await interaction.reply((await playlist.embed).options)
     } catch (error) {
