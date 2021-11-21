@@ -1,4 +1,5 @@
 import fs from 'fs'
+import path from 'path'
 import { Collection } from 'discord.js'
 import { GolemLogger, LogSources } from '../utils/logger'
 import goalias from './implementations/goalias'
@@ -18,7 +19,7 @@ import { GolemCommand } from '.'
 export const Commands = new Collection<string, GolemCommand>()
 
 export const registerCommands = (): void => {
-  fs.readdirSync(__dirname)
+  fs.readdirSync(path.resolve(__dirname, './implementations'))
     .filter((file) => file.endsWith('.js') && !file.includes('index'))
     .forEach((file) => {
       /* eslint-disable-next-line @typescript-eslint/no-var-requires */
