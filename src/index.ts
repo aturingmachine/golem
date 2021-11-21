@@ -33,7 +33,7 @@ const main = async (): Promise<void> => {
 
   await Golem.initialize()
 
-  // await Golem.login()
+  await Golem.login()
 
   // if (GolemConf.modules.Web) {
   //   startApi()
