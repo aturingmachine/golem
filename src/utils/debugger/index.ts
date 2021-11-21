@@ -5,7 +5,6 @@ import { GoGet } from '../../handlers/go-get-handler'
 import { Youtube } from '../../youtube/youtils'
 import { GolemConf } from '../config'
 import { GolemLogger, LogSources } from '../logger'
-import { pryDatabase } from './db-debugger'
 import { GolemRepl } from './golem-repl'
 import { MixDebugger } from './mix-debugger'
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
@@ -15,7 +14,6 @@ enum DebugCommands {
   Exit = 'exit',
   Kill = 'kill',
   Inspect = 'inspect',
-  DB = 'db',
   Pry = 'pry',
   Connections = 'conns',
   Stats = 'stats',
@@ -30,11 +28,6 @@ const debuggerCompletions = [
   'kill',
   'inspect',
   'pry',
-  'db',
-  'db listings',
-  'db libindex',
-  'db analytics',
-  'db plays',
   'conns',
   'exec',
   'sim',
@@ -108,9 +101,6 @@ export class Debugger {
     }
 
     switch (cmd.toLowerCase().split(' ')[0]) {
-      case DebugCommands.DB:
-        await pryDatabase(cmd)
-        break
       case DebugCommands.Kill:
         this.log.verbose('removing an aleph')
         process.exit(2)

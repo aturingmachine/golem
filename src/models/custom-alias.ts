@@ -1,11 +1,13 @@
+import { ObjectId } from 'bson'
 import { Message } from 'discord.js'
+import { Collection, DeleteResult, Filter, FindOptions } from 'mongodb'
 import { RegisteredCommands } from '../commands'
+import { Golem } from '../golem'
 import { LegacyCommandHandler } from '../handlers/legacy-command-handler'
 import { formatForLog } from '../utils/debug-utils'
 import { shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { ParsedMessage } from '../utils/message-args'
-import { CustomAliasData } from './db/custom-alias'
 
 export enum AliasFunctionType {
   Random = ':random',
@@ -140,6 +142,8 @@ export class CustomAlias {
 
   public functions: AliasFunction[] = []
 
+  public _id!: ObjectId
+
   constructor(
     public name: string,
     public command: string,
@@ -230,7 +234,7 @@ export class CustomAlias {
 
   static async getAliases(guildId: string): Promise<CustomAlias[]> {
     CustomAlias.log.silly(`getting aliases for guild=${guildId}`)
-    const aliases = await CustomAliasData.find({ guildId })
+    const aliases = await CustomAlias.find({ guildId })
     CustomAlias.log.silly(`found ${aliases.length} custom aliases`)
     return aliases.map(
       (match) =>
@@ -270,6 +274,53 @@ export class CustomAlias {
           match.description
         )
       : undefined
+  }
+
+  async save(): Promise<this> {
+    if (this._id) {
+      await CustomAlias.Collection.replaceOne({ _id: { $eq: this._id } }, this)
+    } else {
+      await CustomAlias.Collection.insertOne(this)
+    }
+
+    return this
+  }
+
+  delete(): Promise<DeleteResult> {
+    return CustomAlias.Collection.deleteOne({ _id: this._id })
+  }
+
+  static find(
+    filter: Filter<CustomAlias>,
+    options?: FindOptions
+  ): Promise<CustomAlias[]> {
+    return CustomAlias.Collection.find(filter, options).toArray()
+  }
+
+  static async findOne(
+    filter: Filter<CustomAlias>,
+    options?: FindOptions
+  ): Promise<CustomAlias | null> {
+    const record = await CustomAlias.Collection.findOne(filter, options)
+
+    return record
+      ? new CustomAlias(
+          record.name,
+          record.command,
+          record.args,
+          record.createdBy,
+          record.guildId,
+          record.description
+        )
+      : null
+  }
+
+  static deleteMany(filter: Filter<CustomAlias>): Promise<DeleteResult> {
+    return CustomAlias.Collection.deleteMany(filter)
+  }
+
+  private static get Collection(): Collection<CustomAlias> {
+    return Golem.db.collection<CustomAlias>('CustomAliases')
   }
 
   private static async isValidName(

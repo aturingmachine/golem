@@ -1,9 +1,7 @@
 import REPL from 'programmatic-repl'
-import { BotInteractionData } from '../../analytics/models/interaction'
-import { PlayRecordData } from '../../analytics/models/play-record'
+import { PlayRecord } from '../../analytics/models/play-record'
 import { Golem } from '../../golem'
-import { LibIndexData } from '../../models/db/lib-index'
-import { ListingData } from '../../models/db/listing'
+import { Listing } from '../../models/listing'
 
 export class GolemRepl {
   static completions = [
@@ -39,10 +37,10 @@ export class GolemRepl {
           search: Golem.trackFinder,
         },
         db: {
-          listings: ListingData,
-          libs: LibIndexData,
-          analytics: BotInteractionData,
-          plays: PlayRecordData,
+          root: Golem.db,
+          listings: Listing,
+          // analytics: BotInteractionData,
+          plays: PlayRecord,
         },
       }
     )

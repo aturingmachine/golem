@@ -1,6 +1,6 @@
 import fs from 'fs'
 import * as mm from 'music-metadata'
-import { LibIndexData } from '../models/db/lib-index'
+import { LibIndex } from '../models/db/lib-index'
 import { Listing } from '../models/listing'
 import { GolemConf } from '../utils/config'
 import { getAllFiles } from '../utils/filesystem'
@@ -57,6 +57,10 @@ export class TrackLoader {
         const meta = await mm.parseFile(trackPath)
         const listing = await Listing.fromMeta(meta, trackPath, birthTime)
 
+        log.silly(`attempting to save ${listing.names.short.dashed}`)
+        await listing.save()
+        log.silly(`saved ${listing.names.short.dashed}`)
+
         listings.push(listing)
       } catch (error) {
         log.error(`${trackPath} encountered error.`)
@@ -76,7 +80,7 @@ export class TrackLoader {
     log.warn(`Encountered ${errorCount} errors while loading library.`)
 
     log.info('Attempting backup save')
-    this.save(name, listings)
+    await this.save(name, listings)
     this.listings.push(...listings)
     log.info('Backup saved to database')
   }
@@ -84,62 +88,46 @@ export class TrackLoader {
   private async loadTracksFromDB(path: string, name: string): Promise<void> {
     log.info('Reading library from Database')
 
-    const dbRead = await LibIndexData.findOne({ name })
-      .sort({ created_at: -1 })
-      .populate('listings')
-      .exec()
+    const dbRead = await LibIndex.findOne(
+      { name },
+      { sort: { created_at: -1 } }
+    )
 
     if (dbRead) {
-      log.info('DB Record found')
+      log.info(`DB Record found for library ${name}`)
       try {
         const data = dbRead.listings
 
         for (const datum of data) {
-          this.listings.push(new Listing(datum, datum.id))
+          this.listings.push(new Listing(datum))
         }
       } catch (error) {
-        log.warn('unable to parse backup')
-        LibIndexData.deleteOne({ _id: { $eq: dbRead._id } })
+        log.warn(`unable to parse backup for library ${name}`)
+        await dbRead.delete()
         await this.loadFromDisk(path, name)
       }
     } else {
-      log.warn('No backup, creating library from filesystem')
+      log.warn(`No backup for ${name}, creating library from filesystem`)
       await this.loadFromDisk(path, name)
     }
   }
 
   private async wipeData(libName: string): Promise<void> {
-    const index = await LibIndexData.findOne({ name: libName }).exec()
+    const index = await LibIndex.findOne({ name: libName })
     if (index) {
-      log.info('Deleting stale cache')
-      await ListingData.deleteMany({
-        id: { $in: index?.listings.map((l) => l._id) || [] },
-      }).exec()
+      log.info(`Deleting stale cache for ${libName}`)
+      await Listing.deleteMany({
+        _id: { $in: index?.listings.map((l) => l._id) || [] },
+      })
       await index?.delete()
-      log.info('Stale cache deleted')
+      log.info(`Stale ${libName} cache deleted`)
     } else {
       log.info(`no stale cache found for ${libName}`)
     }
   }
 
   private async save(name: string, listings: Listing[]): Promise<Listing[]> {
-    const listingIds: string[] = []
-
-    for (const listing of listings) {
-      const listingRecord = new ListingData(listing)
-
-      await listingRecord.save()
-
-      listing._id = listingRecord._id.toString()
-
-      listingIds.push(listingRecord._id)
-    }
-
-    const record = new LibIndexData({
-      name,
-      listings: listingIds,
-      count: listings.length,
-    })
+    const record = new LibIndex(name, listings.length, listings)
 
     await record.save()
 

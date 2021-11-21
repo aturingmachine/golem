@@ -1,6 +1,4 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { Analytics } from '../analytics'
-import { CommandAnalyticsInteraction } from '../analytics/models/interaction'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { PlayHandler } from '../handlers/play-handler'
@@ -32,14 +30,15 @@ const execute = async (
     commandQuery = interaction.options.getString('query') || ''
   }
 
-  if (interaction.member) {
-    Analytics.push(
-      new CommandAnalyticsInteraction(interaction, {
-        command: 'GoPlayNext',
-        content: commandQuery,
-      })
-    )
-  }
+  // TODO Analytics
+  // if (interaction.member) {
+  //   Analytics.push(
+  //     new CommandAnalyticsInteraction(interaction, {
+  //       command: 'GoPlayNext',
+  //       content: commandQuery,
+  //     })
+  //   )
+  // }
 
   if (!commandQuery) {
     await interaction.reply('No track query provided, cannot play next.')

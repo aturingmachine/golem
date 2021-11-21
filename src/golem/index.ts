@@ -1,8 +1,8 @@
 import fs from 'fs'
 import path from 'path'
 import { Client, Intents, Interaction, Message } from 'discord.js'
+import { Db, MongoClient } from 'mongodb'
 import winston from 'winston'
-import { GolemMongoConnection } from '../db'
 import { LastFm } from '../lastfm'
 import { EventHandler } from '../models/event-handler'
 import { TrackListingInfo } from '../models/listing'
@@ -30,11 +30,18 @@ class GolemBot {
   public events!: GolemEventEmitter
   public trackFinder!: TrackFinder
   public plex!: PlexConnection
-  public db!: GolemMongoConnection
+  public db!: Db
+  public mongo!: MongoClient
 
   async initialize(): Promise<void> {
     if (!this.hasInitialized) {
       this.log = GolemLogger.child({ src: LogSources.App })
+
+      this.mongo = new MongoClient(GolemConf.mongo.uri, {
+        connectTimeoutMS: 5000,
+      })
+
+      await this.connectToMongo()
 
       this.permissions = new UserPermissionCache()
       this.playerCache = new PlayerCache()
@@ -51,7 +58,6 @@ class GolemBot {
       })
 
       this.loadEventHandlers()
-      this.connectToMongo()
 
       await this.loader.load()
 
@@ -142,10 +148,11 @@ class GolemBot {
     this.log.info('Event Handlers loaded')
   }
 
-  private connectToMongo(): void {
+  private async connectToMongo(): Promise<void> {
     this.log.info('connecting to database')
     try {
-      this.db = new GolemMongoConnection()
+      await this.mongo.connect()
+      this.db = this.mongo.db(GolemConf.mongo.dbName)
       this.log.info('connected to database')
     } catch (error) {
       this.log.error(`could not connect to database ${error}`)

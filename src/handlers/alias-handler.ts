@@ -1,6 +1,5 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { CustomAlias } from '../models/custom-alias'
-import { CustomAliasData } from '../models/db/custom-alias'
 import { MessageInfo } from '../models/messages/message-info'
 import { Permissions, UserPermission } from '../permissions/permission'
 import { formatForLog } from '../utils/debug-utils'
@@ -29,7 +28,7 @@ export const AliasHandler = {
       this.log.verbose(`saving new alias ${alias.name} -> ${alias.unevaluated}`)
       this.log.debug(alias.toString())
 
-      await new CustomAliasData(alias).save()
+      await alias.save()
 
       await interaction.reply(
         `${Replier.affirmative}! \`$${alias.name}\` will now execute as \`${alias.unevaluated}\``
@@ -73,10 +72,10 @@ export const AliasHandler = {
     name: string
   ): Promise<void> {
     const info = new MessageInfo(interaction)
-    const record = await CustomAliasData.findOne({
+    const record = await CustomAlias.findOne({
       guildId: info.guildId,
       name,
-    }).exec()
+    })
 
     if (!record) {
       this.log.warn(`could not find alias for ${name} on ${info.guildId}`)
@@ -87,13 +86,12 @@ export const AliasHandler = {
       return
     }
 
-    this.log.debug(`found record to delete ${formatForLog(record?.toObject())}`)
+    this.log.debug(`found record to delete ${formatForLog(record)}`)
 
     const isOwn = record.createdBy === info.userId
 
     if (!isOwn) {
-      const permissions = await info.permissions
-      if (!permissions.can(Permissions.Alias.Delete.Any)) {
+      if (!(await info.can(Permissions.Alias.Delete.Any))) {
         // user cannot delete someone elses alias
         interaction.reply({
           ephemeral: true,

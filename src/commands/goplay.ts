@@ -1,6 +1,4 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { Analytics } from '../analytics'
-import { CommandAnalyticsInteraction } from '../analytics/models/interaction'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { PlayHandler } from '../handlers/play-handler'
@@ -34,14 +32,15 @@ const execute = async (
     commandQuery = interaction.options.getString('query') || ''
   }
 
-  if (interaction.member) {
-    Analytics.push(
-      new CommandAnalyticsInteraction(interaction, {
-        command: 'GoPlay',
-        content: commandQuery,
-      })
-    )
-  }
+  // TODO Analytics
+  // if (interaction.member) {
+  //   Analytics.push(
+  //     new CommandAnalyticsInteraction(interaction, {
+  //       command: 'GoPlay',
+  //       content: commandQuery,
+  //     })
+  //   )
+  // }
 
   // if there is no query assume we should unpause
   if (!commandQuery) {

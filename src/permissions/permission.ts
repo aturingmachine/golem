@@ -1,9 +1,12 @@
 import { CommandInteraction, Message } from 'discord.js'
-import mongoose, { Schema } from 'mongoose'
+import { Collection, Filter, FindOptions, ObjectId } from 'mongodb'
 import { Golem } from '../golem'
+import { DatabaseRecord } from '../models/db'
 import { MessageInfo } from '../models/messages/message-info'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger } from '../utils/logger'
+
+type UserPermissionRecord = DatabaseRecord<UserPermission>
 
 export enum Permission {
   Admin = 'admin',
@@ -34,6 +37,7 @@ const BasePermissions = [
  */
 export class UserPermission {
   private static log = GolemLogger.child({ src: 'perms' })
+  public _id!: ObjectId
   public permissions: Set<Permission>
 
   constructor(
@@ -51,6 +55,42 @@ export class UserPermission {
     )
   }
 
+  async save(): Promise<this> {
+    if (this._id) {
+      await UserPermission.Collection.replaceOne(
+        { _id: { $eq: this._id } },
+        { ...this, permissions: Array.from(this.permissions) }
+      )
+    } else {
+      const result = await UserPermission.Collection.insertOne({
+        ...this,
+        permissions: Array.from(this.permissions),
+      })
+      this._id = result.insertedId
+    }
+
+    return this
+  }
+
+  static async findOne(
+    filter: Filter<UserPermissionRecord>,
+    options?: FindOptions
+  ): Promise<UserPermission | null> {
+    const record = await UserPermission.Collection.findOne(filter, options)
+
+    if (record) {
+      const permissions = new UserPermission(record.userId, record.guildId, [
+        ...record.permissions,
+      ])
+
+      permissions._id = record._id
+
+      return permissions
+    } else {
+      return null
+    }
+  }
+
   static async get(userId: string, guildId: string): Promise<UserPermission> {
     // check cache
     const cacheRecord = Golem.permissions.get(userId, guildId)
@@ -62,10 +102,10 @@ export class UserPermission {
     UserPermission.log.silly('permission cache miss')
 
     // check db, insert to cache
-    const dbRecord = await UserPermissionData.findOne({
+    const dbRecord = await UserPermission.findOne({
       userId: userId,
       guildId: guildId,
-    }).exec()
+    })
 
     if (dbRecord) {
       UserPermission.log.debug('permission record pulled from db')
@@ -81,10 +121,7 @@ export class UserPermission {
     const newRecord = new UserPermission(userId, guildId)
     console.log(newRecord)
     Golem.permissions.set(newRecord)
-    await new UserPermissionData({
-      ...newRecord,
-      permissions: Array.from(newRecord.permissions),
-    }).save()
+    await newRecord.save()
 
     return newRecord
   }
@@ -107,6 +144,10 @@ export class UserPermission {
     return UserPermission.checkPermissions(rec, perms)
   }
 
+  static fromData(data: UserPermission): UserPermission {
+    return new UserPermission(data.userId, data.guildId, [...data.permissions])
+  }
+
   private static checkPermissions(
     userPerm: UserPermission,
     perms: Permission[]
@@ -114,21 +155,10 @@ export class UserPermission {
     return perms.some((perm) => userPerm.permissions.has(perm))
   }
 
-  static fromData(data: UserPermission): UserPermission {
-    return new UserPermission(data.userId, data.guildId, [...data.permissions])
+  private static get Collection(): Collection<UserPermissionRecord> {
+    return Golem.db.collection<UserPermissionRecord>('permissions')
   }
 }
-
-const schema = new Schema<UserPermission>({
-  userId: String,
-  guildId: String,
-  permissions: [String],
-})
-
-export const UserPermissionData = mongoose.model<UserPermission>(
-  'userPermission',
-  schema
-)
 
 export class UserPermissionCache {
   private cache: Map<string, Record<string, UserPermission>>

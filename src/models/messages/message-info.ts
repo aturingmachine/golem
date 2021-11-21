@@ -6,7 +6,7 @@ import {
   StageChannel,
   VoiceChannel,
 } from 'discord.js'
-import { UserPermission } from '../../permissions/permission'
+import { Permission, UserPermission } from '../../permissions/permission'
 
 export class MessageInfo {
   public member: GuildMember | null
@@ -29,7 +29,19 @@ export class MessageInfo {
     return this.member?.voice.channel
   }
 
+  /**
+   * Get the Permissions record for this user in this guild
+   */
   get permissions(): Promise<UserPermission> {
     return UserPermission.get(this.userId, this.guildId)
+  }
+
+  /**
+   * Check if this user can do some action in this guild
+   * @param perms
+   * @returns
+   */
+  async can(perms: Permission[]): Promise<boolean> {
+    return (await this.permissions).can(perms)
   }
 }

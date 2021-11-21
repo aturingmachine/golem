@@ -1,9 +1,18 @@
 import md5 from 'md5'
-import { Filter, FindOptions } from 'mongodb'
+import {
+  Collection,
+  DeleteResult,
+  Filter,
+  FindOptions,
+  ObjectId,
+} from 'mongodb'
 import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
 import { Golem } from '../golem'
 import { GolemConf } from '../utils/config'
+import { DatabaseRecord } from './db'
+
+type ListingRecord = DatabaseRecord<Listing>
 
 /**
  * Core Data for a track.
@@ -64,7 +73,7 @@ export class Listing {
   /**
    * The MongoId, is actually an ObjectId instance
    */
-  _id!: string
+  _id!: ObjectId
   /**
    * An attempt at a consistent unique id made by md5 hashing
    * some info of the listing
@@ -84,7 +93,7 @@ export class Listing {
   bpm?: number
   albumArt?: Buffer
 
-  constructor(info: ListingInfo, id?: string) {
+  constructor(info: ListingInfo) {
     this.trackId = info.trackId
     this.artist = info.artist
     this.album = info.album
@@ -98,12 +107,6 @@ export class Listing {
     this.addedAt = info.addedAt
     this.mb = info.mb
     this.albumArt = info.albumArt
-
-    if (id) {
-      this._id = id
-    } else if (info.id) {
-      this._id = info.id
-    }
   }
 
   /**
@@ -185,11 +188,6 @@ export class Listing {
     const artistMBId = meta.common.musicbrainz_artistid?.[0] || ''
     const trackMbId = meta.common.musicbrainz_trackid || ''
 
-    const mb: MusicBrainzData = {
-      artistId: artistMBId,
-      trackId: trackMbId,
-    }
-
     return new Listing({
       trackId: id,
       artist,
@@ -203,7 +201,10 @@ export class Listing {
       moods: moods,
       bpm: bpm ? parseInt(bpm, 10) : undefined,
       addedAt: birthTime,
-      mb,
+      mb: {
+        artistId: artistMBId,
+        trackId: trackMbId,
+      },
       albumArt: meta.common.picture
         ? await sharp(meta.common.picture[0].data)
             .resize(200, 200)
@@ -213,17 +214,52 @@ export class Listing {
     })
   }
 
-  static async find(
-    filter: Filter<Listing>,
-    options: FindOptions
-  ): Promise<Listing[]> {
-    return Golem.db.find(Listing, filter, options)
+  async save(): Promise<this> {
+    if (this._id) {
+      await Listing.Collection.replaceOne({ _id: { $eq: this._id } }, this)
+    } else {
+      const result = await Listing.Collection.insertOne(this)
+      this._id = result.insertedId
+    }
+
+    return this
   }
 
-  async findOne(
-    filter: Filter<Listing>,
+  static async find(
+    filter: Filter<ListingRecord>,
     options: FindOptions
-  ): Promise<Listing | undefined> {
-    return Golem.db.findOne(Listing, filter, options)
+  ): Promise<Listing[]> {
+    const records = await Listing.Collection.find(filter, options).toArray()
+
+    return records.map((record) => {
+      const listing = new Listing(record)
+      listing._id = record._id
+
+      return listing
+    })
+  }
+
+  static async findOne(
+    filter: Filter<ListingRecord>,
+    options: FindOptions
+  ): Promise<Listing | null> {
+    const record = await Listing.Collection.findOne(filter, options)
+
+    if (!record) {
+      return null
+    }
+
+    const listing = new Listing(record)
+    listing._id = record._id
+
+    return listing
+  }
+
+  static deleteMany(filter: Filter<ListingRecord>): Promise<DeleteResult> {
+    return Listing.Collection.deleteMany(filter)
+  }
+
+  private static get Collection(): Collection<ListingRecord> {
+    return Golem.db.collection<ListingRecord>('listings')
   }
 }
