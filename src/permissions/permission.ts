@@ -1,8 +1,8 @@
 import { CommandInteraction, Message } from 'discord.js'
 import { Collection, Filter, FindOptions, ObjectId } from 'mongodb'
+import { DatabaseRecord } from '../db'
 import { Golem } from '../golem'
-import { DatabaseRecord } from '../models/db'
-import { MessageInfo } from '../models/messages/message-info'
+import { MessageInfo } from '../messages/message-info'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger } from '../utils/logger'
 

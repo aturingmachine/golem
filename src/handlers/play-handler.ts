@@ -1,13 +1,13 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { Listing } from '../models/listing'
-import { YoutubePlaylistEmbed } from '../models/messages/yt-playlist'
-import { LocalTrack, YoutubeTrack } from '../models/track'
+import { GolemConf } from '../config'
+import { Youtube } from '../integrations/youtube/youtils'
+import { YoutubeTrack } from '../integrations/youtube/youtube-track'
+import { Listing } from '../listing/listing'
 import { MusicPlayer } from '../player/music-player'
-import { GolemConf } from '../utils/config'
+import { LocalTrack } from '../tracks/track'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { ParsedMessage } from '../utils/message-args'
 import { GetEmbedFromListing, userFrom } from '../utils/message-utils'
-import { Youtube } from '../youtube/youtils'
 
 export class PlayHandler {
   private static log = GolemLogger.child({ src: LogSources.PlayHandler })
@@ -119,23 +119,11 @@ export class PlayHandler {
         isShuffle
       )
 
-      PlayHandler.log.verbose(`got playlist`)
-
       PlayHandler.log.info(`enqueing youtube playlist ${playlist.title}`)
 
-      const tracks = playlist.listings.map((listing) =>
-        YoutubeTrack.fromYoutubeListing(userId, listing)
-      )
+      await playlist.play(userId, player)
 
-      await player.enqueueMany(userId, tracks)
-
-      const embed = await YoutubePlaylistEmbed.from(
-        playlist.title,
-        playlist.thumbnail,
-        tracks
-      )
-
-      await interaction.reply(embed.options)
+      await interaction.reply((await playlist.embed).options)
     } catch (error) {
       console.error(error)
       PlayHandler.log.error(`error queueing youtube playlist ${error}`)

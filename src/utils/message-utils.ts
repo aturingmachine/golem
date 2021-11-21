@@ -12,12 +12,12 @@ import {
   MessageSelectOptionData,
 } from 'discord.js'
 import { getAverageColor } from 'fast-average-color-node'
+import { GolemConf } from '../config'
 import { Constants, PlexLogo } from '../constants'
 import { Golem } from '../golem'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
-import { Listing, TrackListingInfo } from '../models/listing'
+import { Listing, TrackListingInfo } from '../listing/listing'
 import { MusicPlayer } from '../player/music-player'
-import { GolemConf } from './config'
 import { humanReadableDuration, humanReadableTime } from './time-utils'
 
 const embedFieldSpacer = {

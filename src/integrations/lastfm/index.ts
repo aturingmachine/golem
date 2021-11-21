@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from 'axios'
-import { Listing } from '../models/listing'
-import { GolemConf } from '../utils/config'
-import { GolemLogger, LogSources } from '../utils/logger'
+import { GolemConf } from '../../config'
+import { Listing } from '../../listing/listing'
+import { GolemLogger, LogSources } from '../../utils/logger'
 import {
   SimilarArtistMatch,
   SimilarArtistMatchRecord,

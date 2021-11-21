@@ -5,9 +5,9 @@ import {
   Collection,
   ObjectId,
 } from 'mongodb'
-import { Golem } from '../../golem'
-import { Listing } from '../listing'
-import { DatabaseRecord } from '.'
+import { DatabaseRecord } from '../db'
+import { Golem } from '../golem'
+import { Listing } from '../listing/listing'
 
 type LibIndexRecord = DatabaseRecord<LibIndex>
 

@@ -1,7 +1,7 @@
 import chalk from 'chalk'
 import { v4 as uuidv4 } from 'uuid'
 import winston from 'winston'
-import { GolemConf } from './config'
+import { GolemConf } from '../config'
 
 export enum LogLevel {
   Debug = 'debug',

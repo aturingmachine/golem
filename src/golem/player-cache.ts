@@ -1,6 +1,6 @@
 import { Snowflake } from 'discord-api-types'
 import { Interaction, Message } from 'discord.js'
-import { MessageInfo } from '../models/messages/message-info'
+import { MessageInfo } from '../messages/message-info'
 import { MusicPlayer } from '../player/music-player'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GolemEvent } from './event-emitter'

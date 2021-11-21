@@ -1,8 +1,8 @@
 import { CommandInteraction, Message } from 'discord.js'
+import { GolemModule } from '../config/models'
 import { CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { Command } from '../models/commands'
-import { GolemModule } from '../models/config'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { getSearchReply } from '../utils/message-utils'
 

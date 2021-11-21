@@ -8,9 +8,9 @@ import {
 } from 'mongodb'
 import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
+import { GolemConf } from '../config'
+import { DatabaseRecord } from '../db'
 import { Golem } from '../golem'
-import { GolemConf } from '../utils/config'
-import { DatabaseRecord } from './db'
 
 type ListingRecord = DatabaseRecord<Listing>
 

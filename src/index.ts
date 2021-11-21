@@ -1,6 +1,6 @@
 import { registerCommands } from './commands'
+import { GolemConf } from './config'
 import { Golem } from './golem'
-import { GolemConf } from './utils/config'
 import { GolemLogger } from './utils/logger'
 // import { startApi } from './web/server'
 

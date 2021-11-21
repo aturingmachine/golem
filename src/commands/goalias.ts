@@ -1,6 +1,6 @@
 import { CommandInteraction, Message } from 'discord.js'
+import { AliasHandler } from '../aliases/alias-handler'
 import { CommandNames } from '../constants'
-import { AliasHandler } from '../handlers/alias-handler'
 import { Command } from '../models/commands'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger, LogSources } from '../utils/logger'

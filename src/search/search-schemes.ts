@@ -1,6 +1,6 @@
 import fuzzy from 'fuzzy'
-import { Listing } from '../models/listing'
-import { GolemConf } from '../utils/config'
+import { GolemConf } from '../config'
+import { Listing } from '../listing/listing'
 import { GolemLogger, LogSources } from '../utils/logger'
 
 const extractors = {

@@ -1,6 +1,6 @@
 import { SelectMenuInteraction } from 'discord.js'
 import { Golem } from '../golem'
-import { LocalTrack } from '../models/track'
+import { LocalTrack } from '../tracks/track'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
 

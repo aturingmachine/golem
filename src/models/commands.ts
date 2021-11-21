@@ -11,10 +11,10 @@ import {
   SlashCommandUserOption,
 } from '@discordjs/builders'
 import { CommandInteraction, Message } from 'discord.js'
+import { GolemConf } from '../config'
+import { GolemModule } from '../config/models'
 import { CommandBase, CommandNames } from '../constants'
-import { GolemConf } from '../utils/config'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { GolemModule } from './config'
 
 export type CommandHandlerFn = (
   interaction: Message | CommandInteraction,

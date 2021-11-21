@@ -1,7 +1,7 @@
 import REPL from 'programmatic-repl'
 import { PlayRecord } from '../../analytics/models/play-record'
 import { Golem } from '../../golem'
-import { Listing } from '../../models/listing'
+import { Listing } from '../../listing/listing'
 
 export class GolemRepl {
   static completions = [

@@ -3,15 +3,15 @@ import path from 'path'
 import { Client, Intents, Interaction, Message } from 'discord.js'
 import { Db, MongoClient } from 'mongodb'
 import winston from 'winston'
-import { LastFm } from '../lastfm'
-import { EventHandler } from '../models/event-handler'
-import { TrackListingInfo } from '../models/listing'
+import { GolemConf } from '../config'
+import { EventHandler } from '../events'
+import { LastFm } from '../integrations/lastfm'
+import { PlexConnection } from '../integrations/plex'
+import { TrackListingInfo } from '../listing/listing'
+import { ListingLoader } from '../listing/listing-loaders'
 import { UserPermissionCache } from '../permissions/permission'
 import { MusicPlayer } from '../player/music-player'
-import { TrackFinder } from '../player/track-finder'
-import { TrackLoader } from '../player/track-loaders'
-import { PlexConnection } from '../plex'
-import { GolemConf } from '../utils/config'
+import { ListingFinder } from '../search/track-finder'
 import { Debugger } from '../utils/debugger'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { EzProgressBar } from '../utils/progress-bar'
@@ -26,9 +26,9 @@ class GolemBot {
   public playerCache!: PlayerCache
   public debugger!: Debugger
   public client!: Client
-  public loader!: TrackLoader
+  public loader!: ListingLoader
   public events!: GolemEventEmitter
-  public trackFinder!: TrackFinder
+  public trackFinder!: ListingFinder
   public plex!: PlexConnection
   public db!: Db
   public mongo!: MongoClient
@@ -47,7 +47,7 @@ class GolemBot {
       this.playerCache = new PlayerCache()
       this.events = new GolemEventEmitter()
       this.debugger = new Debugger()
-      this.loader = new TrackLoader()
+      this.loader = new ListingLoader()
 
       this.client = new Client({
         intents: [
@@ -64,7 +64,7 @@ class GolemBot {
       this.log.verbose(`Loaded ${this.loader.listings.length} listings`)
 
       if (GolemConf.modules.Music) {
-        this.trackFinder = new TrackFinder(this.loader.listings)
+        this.trackFinder = new ListingFinder(this.loader.listings)
       }
 
       await this.connectToPlex()
@@ -118,7 +118,8 @@ class GolemBot {
     this.log.info('Loading event handlers')
     const eventFiles = fs
       .readdirSync(path.resolve(__dirname, '../events'))
-      .filter((file) => file.endsWith('.js'))
+      .filter((file) => file.endsWith('.js') && file !== 'index.js')
+    console.log(eventFiles)
 
     EzProgressBar.start(eventFiles.length)
 

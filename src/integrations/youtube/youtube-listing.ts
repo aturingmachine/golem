@@ -1,11 +1,5 @@
 import ytpl from 'ytpl'
-import { GolemLogger, LogSources } from '../utils/logger'
-
-export interface YoutubePlaylistListing {
-  title: string
-  listings: YoutubeListing[]
-  thumbnail: string | null
-}
+import { GolemLogger, LogSources } from '../../utils/logger'
 
 export class YoutubeListing {
   private static log = GolemLogger.child({ src: LogSources.YoutubeListing })

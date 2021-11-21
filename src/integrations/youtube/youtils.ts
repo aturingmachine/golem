@@ -1,9 +1,10 @@
 import ytpl from 'ytpl'
 import ytsr from 'ytsr'
-import { YoutubeListing, YoutubePlaylistListing } from '../models/youtube'
-import { GolemConf } from '../utils/config'
-import { shuffleArray } from '../utils/list-utils'
-import { GolemLogger, LogSources } from '../utils/logger'
+import { GolemConf } from '../../config'
+import { shuffleArray } from '../../utils/list-utils'
+import { GolemLogger, LogSources } from '../../utils/logger'
+import { YoutubeListing } from './youtube-listing'
+import { YoutubePlaylistListing } from './youtube-playlist'
 
 export class Youtube {
   private static log = GolemLogger.child({ src: LogSources.Youtils })
@@ -36,10 +37,10 @@ export class Youtube {
       ? shuffleArray([...result.items]).slice(0, limit)
       : result.items
 
-    return {
-      title: result.title,
-      listings: videosToMap.map(YoutubeListing.fromPlaylistItem),
-      thumbnail: result.bestThumbnail.url,
-    }
+    return new YoutubePlaylistListing(
+      result.title,
+      videosToMap.map(YoutubeListing.fromPlaylistItem),
+      result.bestThumbnail.url
+    )
   }
 }

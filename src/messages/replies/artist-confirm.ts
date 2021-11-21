@@ -1,12 +1,12 @@
 import { MessageEmbed, MessageOptions } from 'discord.js'
 import { Golem } from '../../golem'
+import { Listing } from '../../listing/listing'
 import { fourSquare } from '../../utils/image-utils'
 import {
   GetMessageAttachement,
   averageColor,
   ArtistConfirmButton,
 } from '../../utils/message-utils'
-import { Listing } from '../listing'
 
 export class ArtistConfirmReply {
   static async from(listing: Listing): Promise<MessageOptions> {

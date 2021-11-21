@@ -13,7 +13,7 @@ export type PlaylistRecord = {
 /**
  * Media.Part.file is the thing we give a fuck about
  */
-export type PlaylistTrack = {
+export type PlexPlaylistTrack = {
   ratingKey: string
   key: string
   parentRatingKey: string
@@ -85,7 +85,7 @@ export type PlaylistDetailsContainer = {
     ratingKey: string
     smart: boolean
     title: string
-    Metadata: PlaylistTrack[]
+    Metadata: PlexPlaylistTrack[]
   }
 }
 

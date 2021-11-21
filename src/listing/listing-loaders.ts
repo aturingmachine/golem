@@ -1,17 +1,17 @@
 import fs from 'fs'
 import * as mm from 'music-metadata'
-import { LibIndex } from '../models/db/lib-index'
-import { Listing } from '../models/listing'
-import { GolemConf } from '../utils/config'
+import { GolemConf } from '../config'
+import { LibIndex } from '../library/lib-index'
 import { getAllFiles } from '../utils/filesystem'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { EzProgressBar } from '../utils/progress-bar'
+import { Listing } from './listing'
 
 const log = GolemLogger.child({ src: LogSources.Loader })
 
 const reg = /.*\.(png|html|pdf|db|jpg|jpeg|xml|js|css|ini)$/
 
-export class TrackLoader {
+export class ListingLoader {
   public readonly listings: Listing[]
 
   constructor() {

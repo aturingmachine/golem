@@ -1,9 +1,9 @@
 import { Message } from 'discord.js'
+import { CustomAlias } from '../aliases/custom-alias'
 import { LegacyCommandHandler } from '../handlers/legacy-command-handler'
-import { CustomAlias } from '../models/custom-alias'
-import { EventHandler } from '../models/event-handler'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { guildIdFrom } from '../utils/message-utils'
+import { EventHandler } from '.'
 
 const log = GolemLogger.child({ src: LogSources.MessageCreate })
 

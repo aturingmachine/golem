@@ -1,4 +1,4 @@
-import { Track } from '../models/track'
+import { Track } from '../tracks'
 import { shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 

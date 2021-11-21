@@ -1,6 +1,14 @@
 import { EmbedFieldData, MessageEmbed, MessageOptions } from 'discord.js'
+import { MusicPlayer } from '../../player/music-player'
 import { averageColor } from '../../utils/message-utils'
-import { YoutubeTrack } from '../track'
+import { YoutubeListing } from './youtube-listing'
+import { YoutubeTrack } from './youtube-track'
+
+export interface YoutubePlaylistListing {
+  title: string
+  listings: YoutubeListing[]
+  thumbnail: string | null
+}
 
 export class YoutubePlaylistEmbed {
   static trackListCount = 5
@@ -37,5 +45,32 @@ export class YoutubePlaylistEmbed {
     }
 
     return new YoutubePlaylistEmbed({ embeds: [embed] })
+  }
+}
+
+export class YoutubePlaylistListing {
+  public userId!: string
+
+  constructor(
+    public title: string,
+    public listings: YoutubeListing[],
+    public thumbnail: string | null
+  ) {}
+
+  get tracks(): YoutubeTrack[] {
+    return this.listings.map((listing) =>
+      YoutubeTrack.fromYoutubeListing(this.userId, listing)
+    )
+  }
+
+  get embed(): Promise<YoutubePlaylistEmbed> {
+    return YoutubePlaylistEmbed.from(this.title, this.thumbnail, this.tracks)
+  }
+
+  play(userId: string, player: MusicPlayer): Promise<void> {
+    // TODO we should make this easier to work with, setting userId on the
+    // instance feels really fuckin bad
+    this.userId = userId
+    return player.enqueueMany(userId, this.tracks)
   }
 }

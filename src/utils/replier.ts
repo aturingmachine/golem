@@ -5,7 +5,7 @@ import {
   CommandInteraction,
 } from 'discord.js'
 import { Logger } from 'winston'
-import { GolemConf } from './config'
+import { GolemConf } from '../config'
 
 type ReplyErrorOptions = {
   interaction: Message | CommandInteraction

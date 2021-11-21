@@ -1,5 +1,6 @@
 import path from 'path'
 import { config } from 'dotenv'
+import { LogLevel } from '../utils/logger'
 import {
   JSONConfig,
   CliOption,
@@ -12,8 +13,7 @@ import {
   PlexConfig,
   WebConfig,
   SearchConfig,
-} from '../models/config'
-import { LogLevel } from './logger'
+} from './models'
 config({ path: path.resolve(__dirname, '../../.env') })
 
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */

@@ -1,6 +1,6 @@
 import { MessageComponentInteraction } from 'discord.js'
 import { Golem } from '../golem'
-import { LocalTrack } from '../models/track'
+import { LocalTrack } from '../tracks/track'
 import { shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Replier } from '../utils/replies'

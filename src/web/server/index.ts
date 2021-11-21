@@ -1,6 +1,6 @@
 import { Socket } from 'net'
 import express from 'express'
-import { GolemConf } from '../../utils/config'
+import { GolemConf } from '../../config'
 import { GolemLogger, LogSources } from '../../utils/logger'
 import { cors } from './middleware/cors'
 import { playerRouter } from './player/rest'

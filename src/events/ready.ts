@@ -1,6 +1,6 @@
 import { Client } from 'discord.js'
-import { EventHandler } from '../models/event-handler'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { EventHandler } from '.'
 
 const ready: EventHandler<'ready'> = {
   on: 'ready',

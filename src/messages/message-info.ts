@@ -6,15 +6,26 @@ import {
   StageChannel,
   VoiceChannel,
 } from 'discord.js'
-import { Permission, UserPermission } from '../../permissions/permission'
+import { Permission, UserPermission } from '../permissions/permission'
+import { ParsedMessage } from '../utils/message-args'
 
 export class MessageInfo {
   public member: GuildMember | null
   public guild: Guild | null
 
-  constructor(interaction: Message | Interaction) {
-    this.member = interaction.member as GuildMember
-    this.guild = interaction.guild
+  /**
+   * Extended message information. Only applicable if the
+   * source interaction is a Message
+   */
+  public parsed?: ParsedMessage
+
+  constructor(public interaction: Message | Interaction) {
+    this.member = this.interaction.member as GuildMember
+    this.guild = this.interaction.guild
+
+    if (this.interaction instanceof Message) {
+      this.parsed = new ParsedMessage(this.interaction)
+    }
   }
 
   get userId(): string {

@@ -1,6 +1,6 @@
 import { Golem } from '../../golem'
-import { Listing } from '../../models/listing'
-import { MixMatcher } from '../../player/mix-matcher'
+import { Listing } from '../../listing/listing'
+import { MixMatcher } from '../../player/mixing/mix-matcher'
 
 export class MixDebugger {
   static async debug(cmd: string): Promise<void> {

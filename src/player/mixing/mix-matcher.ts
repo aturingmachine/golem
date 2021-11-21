@@ -1,7 +1,7 @@
-import { Golem } from '../golem'
-import { LastFm } from '../lastfm'
-import { Listing } from '../models/listing'
-import { GolemLogger, LogSources } from '../utils/logger'
+import { Golem } from '../../golem'
+import { LastFm } from '../../integrations/lastfm'
+import { Listing } from '../../listing/listing'
+import { GolemLogger, LogSources } from '../../utils/logger'
 
 export class MixMatcher {
   private static log = GolemLogger.child({ src: LogSources.Mixer })

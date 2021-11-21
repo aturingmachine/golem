@@ -1,8 +1,8 @@
 import axios, { AxiosInstance } from 'axios'
-import { TrackFinder } from '../player/track-finder'
-import { GolemConf } from '../utils/config'
-import { GolemLogger, LogSources } from '../utils/logger'
-import { EzProgressBar } from '../utils/progress-bar'
+import { GolemConf } from '../../config'
+import { ListingFinder } from '../../search/track-finder'
+import { GolemLogger, LogSources } from '../../utils/logger'
+import { EzProgressBar } from '../../utils/progress-bar'
 import {
   PlaylistRecord,
   PlaylistDetailsContainer,
@@ -36,7 +36,7 @@ export class PlexConnection {
 
   public playlists: Playlist[] = []
 
-  async init(trackFinder: TrackFinder): Promise<void> {
+  async init(trackFinder: ListingFinder): Promise<void> {
     if (!GolemConf.modules.Plex || !GolemConf.modules.Music) {
       log.info('plex module not loaded')
       return
@@ -67,14 +67,17 @@ export class PlexConnection {
     const playlistRecords = await this.getPlaylists()
 
     playlistRecords.forEach((record) => {
+      log.silly(`processing playlist ${record.name}`)
+      EzProgressBar.add(1 / playlistRecords.length, record.name)
+
       this.playlists.push({
         name: record.name,
         count: record.count,
         listings: record.filePaths.map((path) => {
-          EzProgressBar.add(
-            1 / record.filePaths.length / playlistRecords.length,
-            path.split('/').pop()
-          )
+          // EzProgressBar.add(
+          //   1 / record.filePaths.length / playlistRecords.length,
+          //   path.split('/').pop()
+          // )
 
           const res = trackFinder.findIdByPath(path)
 

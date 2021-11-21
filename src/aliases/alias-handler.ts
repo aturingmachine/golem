@@ -1,10 +1,10 @@
 import { CommandInteraction, Message } from 'discord.js'
-import { CustomAlias } from '../models/custom-alias'
-import { MessageInfo } from '../models/messages/message-info'
+import { MessageInfo } from '../messages/message-info'
 import { Permissions, UserPermission } from '../permissions/permission'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Replier } from '../utils/replies'
+import { CustomAlias } from './custom-alias'
 
 export const AliasHandler = {
   log: GolemLogger.child({ src: LogSources.AliasHandler }),

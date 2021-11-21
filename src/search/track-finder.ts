@@ -1,6 +1,9 @@
 import fuzzy from 'fuzzy'
-import { SimilarArtistMatch, SimilarTrackMatch } from '../lastfm/models'
-import { Listing } from '../models/listing'
+import {
+  SimilarArtistMatch,
+  SimilarTrackMatch,
+} from '../integrations/lastfm/models'
+import { Listing } from '../listing/listing'
 import { isDefined, shuffleArray } from '../utils/list-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { SearchSchemes } from './search-schemes'
@@ -30,7 +33,7 @@ export class SearchResult {
   }
 }
 
-export class TrackFinder {
+export class ListingFinder {
   public readonly listings: Listing[]
 
   private _artistNames!: string[]
@@ -69,7 +72,7 @@ export class TrackFinder {
 
       return new SearchResult(
         final,
-        TrackFinder.getResultType(
+        ListingFinder.getResultType(
           isArtistQuery,
           isWideMatch && !hasBeenWeighted
         )
