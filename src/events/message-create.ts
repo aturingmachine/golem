@@ -1,15 +1,15 @@
 import { Message } from 'discord.js'
-import { LegacyCommandHandler } from '../handlers/legacy-command-handler'
-import { CustomAlias } from '../models/custom-alias'
-import { EventHandler } from '../models/event-handler'
+import { CustomAlias } from '../aliases/custom-alias'
+import { Handlers } from '../handlers'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { guildIdFrom } from '../utils/message-utils'
+import { EventHandler } from '.'
 
 const log = GolemLogger.child({ src: LogSources.MessageCreate })
 
 async function handleLegacy(message: Message): Promise<boolean> {
   try {
-    const legacyResponse = await LegacyCommandHandler.parseMessage(message)
+    const legacyResponse = await Handlers.Legacy.parseMessage(message)
 
     if (legacyResponse) {
       return true

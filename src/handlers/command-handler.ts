@@ -1,5 +1,5 @@
 import { CommandInteraction } from 'discord.js'
-import { Commands } from '../commands'
+import { Commands } from '../commands/register-commands'
 import { GolemLogger, LogSources } from '../utils/logger'
 
 const log = GolemLogger.child({ src: LogSources.CommandInteractionHandler })

@@ -1,7 +1,25 @@
-import { registerCommands } from './commands'
+import { registerCommands } from './commands/register-commands'
+import { GolemConf } from './config'
 import { Golem } from './golem'
-import { GolemConf } from './utils/config'
-import { startApi } from './web/server'
+import { GolemLogger } from './utils/logger'
+// import { startApi } from './web/server'
+
+function shutdownHandler(): void {
+  GolemLogger?.info('running shutdown handler', { src: 'main' }) ||
+    console.log('running shutdown handler')
+
+  try {
+    Golem.playerCache.disconnectAll()
+  } catch (error) {
+    console.error('couldnt disconnect all golem connections', error)
+  }
+
+  GolemLogger?.info('logging out', { src: 'main' }) ||
+    console.log('logging client out')
+
+  Golem.client.destroy()
+  return
+}
 
 const main = async (): Promise<void> => {
   GolemConf.init()
@@ -17,27 +35,19 @@ const main = async (): Promise<void> => {
 
   await Golem.login()
 
-  if (GolemConf.modules.Web) {
-    startApi()
-  }
+  // if (GolemConf.modules.Web) {
+  //   startApi()
+  // }
+
+  Golem.debugger.start()
 
   if (GolemConf.options.TTY) {
-    Golem.debugger.start()
     Golem.debugger.setPrompt()
     Golem.debugger.listen()
   }
 }
 
-function shutdown() {
-  // mongoose.connection.close()
-
-  try {
-    Golem.disconnectAll()
-  } catch (error) {
-    console.error('couldnt disconnect all golem connections', error)
-  }
-}
-
-process.once('exit', shutdown)
+process.once('exit', shutdownHandler)
+process.once('SIGINT', () => process.exit(1))
 
 main()

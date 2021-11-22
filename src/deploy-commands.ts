@@ -1,7 +1,7 @@
 import { REST } from '@discordjs/rest'
 import { Routes } from 'discord-api-types/v9'
-import { Commands, registerCommands } from './commands'
-import { GolemConf } from './utils/config'
+import { Commands, registerCommands } from './commands/register-commands'
+import { GolemConf } from './config'
 import { GolemLogger, LogSources } from './utils/logger'
 
 registerCommands()

@@ -1,6 +1,6 @@
 import { Golem } from '../../golem'
-import { Listing } from '../../models/listing'
-import { MixMatcher } from '../../player/mix-matcher'
+import { LocalListing } from '../../listing/listing'
+import { MixMatcher } from '../../player/mixing/mix-matcher'
 
 export class MixDebugger {
   static async debug(cmd: string): Promise<void> {
@@ -31,7 +31,7 @@ export class MixDebugger {
     }
   }
 
-  private static async artist(listing: Listing): Promise<void> {
+  private static async artist(listing: LocalListing): Promise<void> {
     try {
       const similar = await MixMatcher.similarArtists(listing)
       similar.map((s) => s.shortName)
@@ -40,7 +40,7 @@ export class MixDebugger {
     }
   }
 
-  private static async track(listing: Listing): Promise<void> {
+  private static async track(listing: LocalListing): Promise<void> {
     try {
       const similar = await MixMatcher.similarTracks(listing)
       similar.map((s) => s.shortName)

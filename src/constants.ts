@@ -1,6 +1,6 @@
 import fs from 'fs'
 import { ColorResolvable } from 'discord.js'
-import { GolemConf } from './utils/config'
+import { GolemConf } from './config'
 
 export const PlexLogo = fs.readFileSync(GolemConf.image.fallbackPath)
 

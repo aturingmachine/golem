@@ -1,7 +1,7 @@
 import { buttonHandler } from '../handlers/button-handler'
 import { commandHandler } from '../handlers/command-handler'
-import { EventHandler } from '../models/event-handler'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { EventHandler } from '.'
 
 const log = GolemLogger.child({ src: LogSources.InteractionCreate })
 

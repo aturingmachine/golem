@@ -1,7 +1,7 @@
 import { Snowflake } from 'discord-api-types'
 import express from 'express'
 import { Golem } from '../../../golem'
-import { resize } from '../../../utils/image-utils'
+// import { resize } from '../../../utils/image-utils'
 
 const router = express.Router()
 
@@ -10,7 +10,7 @@ const router = express.Router()
  */
 router.get('/connections', (req, res) => {
   const serverIds: { id: Snowflake; isPlaying: boolean }[] = []
-  const it = Golem.players.entries()
+  const it = Golem.playerCache.entries()
 
   let next = it.next()
   while (!next.done) {

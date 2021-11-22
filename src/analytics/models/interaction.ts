@@ -1,5 +1,4 @@
 import { CommandInteraction, Message } from 'discord.js'
-import mongoose, { Schema } from 'mongoose'
 
 export enum BotInteractionTypes {
   SlashCommand = 'SlashCommand',
@@ -17,21 +16,6 @@ export interface GolemBotInteraction {
   timestamp: number
   payload?: AnalyticsPayload
 }
-
-const schema = new Schema<GolemBotInteraction>({
-  type: String,
-  userId: String,
-  userName: String,
-  timestamp: Number,
-  payload: {
-    type: Map,
-  },
-})
-
-export const BotInteractionData = mongoose.model<GolemBotInteraction>(
-  'BotInteraction',
-  schema
-)
 
 export class CommandAnalyticsInteraction implements GolemBotInteraction {
   type: BotInteractionTypes

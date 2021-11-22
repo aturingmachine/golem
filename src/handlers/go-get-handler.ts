@@ -1,7 +1,6 @@
-import { MessageOptions } from 'discord.js'
+import { MessageEmbed, MessageOptions } from 'discord.js'
 import { Golem } from '../golem'
 import { MusicPlayer } from '../player/music-player'
-import { Plex } from '../plex'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
 
@@ -13,43 +12,44 @@ export interface GetOptions {
 const noPlayerMsg = 'Unable to find player.'
 
 export class GoGet {
-  static async it(opts: Partial<GetOptions>): Promise<MessageOptions> {
+  async it(opts: Partial<GetOptions>): Promise<MessageOptions> {
     GolemLogger.verbose(`Go Getting With ${opts.value} ${opts.guildId}`, {
       src: LogSources.GoGetHandler,
     })
+
     switch (opts.value?.toLowerCase()) {
       case 'time':
         return {
-          content: GoGet.timeResponse(Golem.getPlayer(opts.guildId || '')),
+          content: this.timeResponse(Golem.getPlayer(opts.guildId || '')),
         }
       case 'count':
         return {
-          content: GoGet.qCountResponse(Golem.getPlayer(opts.guildId || '')),
+          content: this.qCountResponse(Golem.getPlayer(opts.guildId || '')),
         }
       case 'np':
       case 'nowplaying':
-        return await GoGet.npResponse(Golem.getPlayer(opts.guildId || ''))
+        return await this.npResponse(Golem.getPlayer(opts.guildId || ''))
       case 'tcount':
-        return { content: GoGet.tCountResponse }
+        return { content: this.tCountResponse }
       // case 'catalog':
-      //   return GoGet.catalog
+      //   return this.catalog
       case 'playlist':
       case 'playlists':
-        return { content: GoGet.playlists }
+        return { content: this.playlists }
       default:
-        return await GoGet.stats(Golem.getPlayer(opts.guildId || ''))
+        return await this.stats(Golem.getPlayer(opts.guildId || ''))
     }
   }
 
-  static timeResponse(player?: MusicPlayer): string {
+  timeResponse(player?: MusicPlayer): string {
     return `\n**Est. Queue Time**: ${player?.stats.hTime || noPlayerMsg}`
   }
 
-  static qCountResponse(player?: MusicPlayer): string {
+  qCountResponse(player?: MusicPlayer): string {
     return `\n**Queued Tracks**: ${player?.stats.count || noPlayerMsg}`
   }
 
-  static async npResponse(player?: MusicPlayer): Promise<MessageOptions> {
+  async npResponse(player?: MusicPlayer): Promise<MessageOptions> {
     if (player && player.currentResource && player.nowPlaying) {
       const assets = await GetEmbedFromListing(
         player.nowPlaying,
@@ -62,30 +62,52 @@ export class GoGet {
         files: assets.image ? [assets.image] : [],
       }
     } else {
+      const embed = new MessageEmbed()
+        .setTitle('Now Playing')
+        .setDescription(
+          'No Track is currently playing... Use `$play` to play a track!'
+        )
       return {
-        content: `\n**Now Playing**: ${
-          player?.nowPlaying || 'No track currently playing.'
-        }`,
+        embeds: [embed],
       }
     }
   }
 
-  static get tCountResponse(): string {
+  get tCountResponse(): string {
     return `\n**Available Tracks**: ${Golem.trackFinder.trackCount}`
   }
 
-  static async stats(player?: MusicPlayer): Promise<MessageOptions> {
-    const np = await GoGet.npResponse(player)
+  async stats(player?: MusicPlayer): Promise<MessageOptions> {
+    const fields = [
+      {
+        name: 'Available Tracks',
+        value: Golem.trackFinder.trackCount.toString(),
+        inline: true,
+      },
+    ]
+
+    if (player) {
+      fields.push(
+        { name: 'Est. Queue Time', value: player.stats.hTime, inline: true },
+        {
+          name: 'Queued Tracks',
+          value: player.stats.count.toString(),
+          inline: true,
+        }
+      )
+    }
+
+    const np = await this.npResponse(player)
+
+    np.embeds?.[0].fields?.push(...fields)
+
     return {
-      content: GoGet.timeResponse(player)
-        .concat(GoGet.qCountResponse(player))
-        .concat(GoGet.tCountResponse),
       embeds: np.embeds || [],
       files: np.files || [],
     }
   }
 
-  // static get catalog(): string {
+  // get catalog(): string {
   //   let longest = 0
   //   const artistCounts = TrackFinder.listings
   //     .map((listing) =>
@@ -116,8 +138,8 @@ export class GoGet {
   //   return catalog
   // }
 
-  static get playlists(): string {
-    return Plex.playlists.reduce((prev, curr) => {
+  get playlists(): string {
+    return Golem.plex.playlists.reduce((prev, curr) => {
       return prev.concat(`\n${curr.name} - _${curr.count} tracks_`)
     }, '**Playlists:**')
   }

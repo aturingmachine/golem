@@ -1,5 +1,6 @@
 import {
   EmbedFieldData,
+  GuildMember,
   Interaction,
   Message,
   MessageActionRow,
@@ -11,12 +12,12 @@ import {
   MessageSelectOptionData,
 } from 'discord.js'
 import { getAverageColor } from 'fast-average-color-node'
+import { GolemConf } from '../config'
 import { Constants, PlexLogo } from '../constants'
+import { Golem } from '../golem'
 import { ButtonIdPrefixes } from '../handlers/button-handler'
-import { Listing, TrackListingInfo } from '../models/listing'
+import { LocalListing, TrackListingInfo } from '../listing/listing'
 import { MusicPlayer } from '../player/music-player'
-import { Plex } from '../plex'
-import { GolemConf } from './config'
 import { humanReadableDuration, humanReadableTime } from './time-utils'
 
 const embedFieldSpacer = {
@@ -29,6 +30,10 @@ export const averageColor = (img?: Buffer | string): any =>
   getAverageColor(img || PlexLogo, {
     algorithm: GolemConf.image.avgColorAlgorithm,
   })
+
+export const memberFrom = (
+  interaction: Message | Interaction
+): GuildMember | null => interaction.member as GuildMember
 
 export const userFrom = (interaction: Message | Interaction): string =>
   interaction.member?.user.id || ''
@@ -61,24 +66,30 @@ export const GetEmbedFromListing = async (
     image = GetMessageAttachement(listing.albumArt)
   }
 
-  const title = isQueue
-    ? player.isPlaying
-      ? 'Added to Queue'
-      : 'Now Playing'
-    : 'Now Playing'
+  let title: string
+  let description: string
 
-  const description = isQueue
-    ? player.isPlaying
+  if (isQueue) {
+    title = player.isPlaying ? 'Added to Queue' : 'Now Playing'
+    description = player.isPlaying
       ? `Starts In: ${player.stats.hTime}`
       : 'Starting Now'
-    : player.currentResource
-    ? `\`[${getDurationBar(
+  } else {
+    title = 'Now Playing'
+    const timeRemaining = humanReadableTime(player.currentTrackRemaining)
+
+    if (player.currentResource) {
+      const durationBar = getDurationBar(
         player.currentTrackRemaining,
         player.currentResource.metadata.duration
-      )}] - ${humanReadableTime(player.currentTrackRemaining)}\``
-    : `Remaining: ${humanReadableTime(player.currentTrackRemaining)}`
+      )
+      description = `\`[${durationBar}] - ${timeRemaining}\``
+    } else {
+      description = `Remaining: ${timeRemaining}`
+    }
+  }
 
-  const isLocalListing = listing instanceof Listing
+  const isLocalListing = listing instanceof LocalListing
   const duration = isLocalListing
     ? `${
         listing.hasDefaultDuration
@@ -155,37 +166,13 @@ export const ArtistConfirmButton = (artist: string): MessageActionRow => {
   )
 }
 
-export const ArtistConfirmReply = async (
-  artist: string,
-  albumArt?: Buffer
-): Promise<MessageOptions> => {
-  const image = GetMessageAttachement(albumArt)
-  const color = await averageColor(albumArt)
-
-  const row = ArtistConfirmButton(artist)
-
-  const embed = new MessageEmbed()
-    .setTitle(`Play ${artist}?`)
-    .setDescription(
-      `Looks like you might be looking for the artist: **${artist}**.\nShould I queue their discography?`
-    )
-    .setColor(color.hex)
-    .setImage('attachment://cover.png')
-
-  return {
-    embeds: [embed],
-    components: [row],
-    files: image ? [image] : [],
-  }
-}
-
 export const centerString = (longest: number, str: string): string => {
   return str.padStart((longest - str.length) / 2 + str.length).padEnd(longest)
 }
 
 export const getSearchReply = (
   query: string,
-  results: Listing[],
+  results: LocalListing[],
   totalCount: number
 ): MessageOptions => {
   const fields: EmbedFieldData[] = results
@@ -216,7 +203,7 @@ export const getSearchReply = (
 
 export const GetWideSearchEmbed = (
   query: string,
-  results: Listing[]
+  results: LocalListing[]
 ): MessageOptions => {
   const options: MessageSelectOptionData[] = results.slice(0, 25).map((r) => {
     return {
@@ -239,14 +226,14 @@ export const GetWideSearchEmbed = (
 }
 
 export const GetPlaylistEmbed = (offset = 25): MessageOptions => {
-  const options: MessageSelectOptionData[] = Plex.playlists
+  const options: MessageSelectOptionData[] = Golem.plex.playlists
     .slice(0, offset)
     .map((playlist) => ({
       label: `${playlist.name} - ${playlist.count} Tracks`,
       value: playlist.name,
     }))
 
-  if (Plex.playlists.length > 25) {
+  if (Golem.plex.playlists.length > 25) {
     options.pop()
     options.push({
       label: 'Load More...',
@@ -262,7 +249,7 @@ export const GetPlaylistEmbed = (offset = 25): MessageOptions => {
   )
 
   return {
-    content: `Found **${Plex.playlists.length}** Playlists`,
+    content: `Found **${Golem.plex.playlists.length}** Playlists`,
     components: [row],
   }
 }

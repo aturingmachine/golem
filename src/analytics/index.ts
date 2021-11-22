@@ -1,23 +1,15 @@
-import { BotInteractionData, GolemBotInteraction } from './models/interaction'
-import { PlayRecordData } from './models/play-record'
+import { PlayRecord } from './models/play-record'
 
 export class Analytics {
-  static push(event: GolemBotInteraction): void {
-    const model = new BotInteractionData(event)
-
-    model.save()
-  }
-
   static async createPlayRecord(
     trackId: string,
     userId: string,
     interactionType: 'play' | 'skip' | 'queue'
-  ): Promise<void> {
-    new PlayRecordData({
-      trackId,
-      userId,
-      timestamp: Date.now(),
-      interactionType,
-    }).save()
+  ): Promise<PlayRecord> {
+    const record = new PlayRecord(trackId, Date.now(), userId, interactionType)
+
+    await record.save()
+
+    return record
   }
 }

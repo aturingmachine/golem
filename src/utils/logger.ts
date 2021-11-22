@@ -1,6 +1,7 @@
 import chalk from 'chalk'
 import { v4 as uuidv4 } from 'uuid'
 import winston from 'winston'
+import { GolemConf } from '../config'
 
 export enum LogLevel {
   Debug = 'debug',
@@ -9,49 +10,15 @@ export enum LogLevel {
   Silly = 'silly',
 }
 
-// TODO Probably a better way to do this but its ok for now
-function determineLogLevel(): LogLevel {
-  let level = LogLevel.Info
-
-  const debugLevelArgs = ['debug', '-D']
-  const verboseArgs = ['verbose', '-V']
-  const sillyArgs = ['silly']
-  const args = process.argv.slice(2)
-
-  let isDebug = false
-  let isVerbose = false
-  let isSilly = false
-
-  args.forEach((arg) => {
-    isDebug ||= debugLevelArgs.includes(arg)
-    isVerbose ||= verboseArgs.includes(arg)
-    isSilly ||= sillyArgs.includes(arg)
-  })
-
-  if (isDebug) {
-    level = LogLevel.Debug
-  }
-
-  if (isVerbose) {
-    level = LogLevel.Verbose
-  }
-
-  if (isSilly) {
-    level = LogLevel.Silly
-  }
-
-  return level
-}
-
 const { combine, timestamp, colorize, printf, json, splat } = winston.format
 
 const consoleLogFormat = printf(({ level, message, timestamp, src }) => {
   const d = new Date(timestamp)
+  const hours = d.getHours().toString().padStart(2, '0')
+  const minutes = d.getMinutes().toString().padStart(2, '0')
+  const seconds = d.getSeconds().toString().padStart(2, '0')
 
-  const timeString = `${d.getHours()}:${d.getMinutes()}:${d
-    .getSeconds()
-    .toString()
-    .padStart(2, '0')}`
+  const timeString = `${hours}:${minutes}:${seconds}`
 
   const srcColor = LogSourceColors[src as LogSources] || chalk.white
 
@@ -65,7 +32,7 @@ const id = winston.format((info) => {
 })
 
 const logger = winston.createLogger({
-  level: determineLogLevel(),
+  level: GolemConf.logLevel,
   format: combine(splat(), timestamp(), id(), json()),
   transports: [
     new winston.transports.File({
@@ -123,11 +90,15 @@ enum LogSources {
   YoutubeListing = 'youtube-listing',
   YoutubeTrack = 'yt-track',
   AliasHandler = 'alias-handler',
+  CustomAlias = 'custom-alias',
+  PlayerCache = 'player-cache',
+  ParsedMessage = 'parsed-message',
 }
 
 const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'artist-button': chalk.magentaBright,
   'button-handler': chalk.blue,
+  'custom-alias': chalk.blueBright,
   'cmd-deploy': chalk.green,
   'cmd-register': chalk.yellow,
   'db-con': chalk.cyan,
@@ -160,6 +131,8 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'cmd-handler': chalk.blue,
   'yt-track': chalk.cyanBright,
   'alias-handler': chalk.cyan,
+  'player-cache': chalk.magentaBright,
+  'parsed-message': chalk.yellow,
   analytics: chalk.cyanBright,
   app: chalk.blue,
   client: chalk.magenta,

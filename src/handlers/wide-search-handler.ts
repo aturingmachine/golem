@@ -1,6 +1,6 @@
 import { SelectMenuInteraction } from 'discord.js'
 import { Golem } from '../golem'
-import { LocalTrack } from '../models/track'
+import { LocalTrack } from '../tracks/track'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GetEmbedFromListing } from '../utils/message-utils'
 
@@ -10,10 +10,13 @@ export const wideSearchHandler = async (
   interaction: SelectMenuInteraction
 ): Promise<void> => {
   log.info('executing')
-  const player = Golem.getOrCreatePlayer(interaction)
+  const player = Golem.playerCache.getOrCreate(interaction)
 
   if (!player) {
-    await interaction.reply('Not in a valid voice channel.')
+    await interaction.update({
+      content: 'Not in a valid voice channel.',
+      components: [],
+    })
     return
   }
 
@@ -25,7 +28,7 @@ export const wideSearchHandler = async (
 
   const { image, embed } = await GetEmbedFromListing(listing, player, 'queue')
 
-  await interaction.reply({
+  await interaction.update({
     embeds: [embed],
     files: image ? [image] : [],
     components: [],

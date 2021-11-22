@@ -43,9 +43,11 @@ module.exports = {
    * Configuration for the MongoDB Connection
    *
    * uri - the uri for the mongo instance.
+   * dbName - the name of the db to use in Mongo. Defaults to 'golem'
    */
   mongo: {
     uri: '',
+    dbName: '',
   },
 
   /**

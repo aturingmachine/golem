@@ -3,9 +3,10 @@ import { Socket } from 'net'
 import { Snowflake } from 'discord-api-types'
 import ws from 'ws'
 import { Golem } from '../../../golem'
-import { Listing } from '../../../models/listing'
+import { GolemEvent } from '../../../golem/event-emitter'
+import { LocalListing } from '../../../listing/listing'
 import { MusicPlayer } from '../../../player/music-player'
-import { resize } from '../../../utils/image-utils'
+// import { resize } from '../../../utils/image-utils'
 import { GolemLogger } from '../../../utils/logger'
 
 export class VoiceConnectionsWebSocket {
@@ -18,7 +19,11 @@ export class VoiceConnectionsWebSocket {
     this.wsServer = new ws.Server({ noServer: true })
     this.wsServer.on('connection', this.onConnection.bind(this))
 
-    Golem.on('connection', 'connection-ws', this.updateConnections.bind(this))
+    Golem.events.on(
+      GolemEvent.Connection,
+      'connection-ws',
+      this.updateConnections.bind(this)
+    )
   }
 
   handleUpgrade(request: any, socket: Socket, head: any): void {
@@ -39,7 +44,7 @@ export class VoiceConnectionsWebSocket {
 
   private updateConnections(): void {
     const serverIds: { id: Snowflake; isPlaying: boolean; name: string }[] = []
-    const it = Golem.players.entries()
+    const it = Golem.playerCache.entries()
 
     let next = it.next()
     while (!next.done) {
@@ -66,7 +71,7 @@ export class PlayerWebSocket {
   private socket!: ws
   private timer!: NodeJS.Timer
   private player?: MusicPlayer
-  private nowPlaying?: Listing
+  private nowPlaying?: LocalListing
   private b64Art?: string
 
   constructor(private guildId: string) {
@@ -157,7 +162,11 @@ export class QueueWebSocket {
   private onConnection(socket: ws, _request: IncomingMessage): void {
     this.socket = socket
 
-    Golem.on('queue', `${this.guildId}-queue-ws`, this.updateQueue.bind(this))
+    Golem.events.on(
+      GolemEvent.Queue,
+      `${this.guildId}-queue-ws`,
+      this.updateQueue.bind(this)
+    )
 
     this.updateQueue()
   }
