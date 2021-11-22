@@ -19,9 +19,9 @@ const execute = async (
   GolemLogger.info('invoked', { src: LogSources.GoShuffle })
 
   if (player.stats.count > 0) {
-    const embed = GetPeekEmbed(player)
     player.shuffle()
-    await interaction.reply({ content: 'Shuffling the queue', embeds: [embed] })
+    const embed = GetPeekEmbed(player)
+    await interaction.reply({ content: 'Queue shuffled!', embeds: [embed] })
   } else {
     await interaction.reply('No queue to shuffle.')
   }

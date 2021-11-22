@@ -96,11 +96,11 @@ export class ListingLoader {
     if (dbRead) {
       log.info(`DB Record found for library ${name}`)
       try {
-        const data = dbRead.listings
+        const listingRecords = await LocalListing.find({
+          _id: { $in: dbRead.listingIds },
+        })
 
-        for (const datum of data) {
-          this.listings.push(new LocalListing(datum))
-        }
+        this.listings.push(...listingRecords)
       } catch (error) {
         log.warn(`unable to parse backup for library ${name}`)
         await dbRead.delete()
@@ -117,7 +117,7 @@ export class ListingLoader {
     if (index) {
       log.info(`Deleting stale cache for ${libName}`)
       await LocalListing.deleteMany({
-        _id: { $in: index?.listings.map((l) => l._id) || [] },
+        _id: { $in: index?.listingIds || [] },
       })
       await index?.delete()
       log.info(`Stale ${libName} cache deleted`)
@@ -130,7 +130,11 @@ export class ListingLoader {
     name: string,
     listings: LocalListing[]
   ): Promise<LocalListing[]> {
-    const record = new LibIndex(name, listings.length, listings)
+    const record = new LibIndex(
+      name,
+      listings.length,
+      listings.map((listing) => listing._id)
+    )
 
     await record.save()
 

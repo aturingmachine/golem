@@ -1,5 +1,6 @@
 import md5 from 'md5'
 import {
+  Binary,
   Collection,
   DeleteResult,
   Filter,
@@ -22,7 +23,9 @@ export abstract class AListing {
   ) {}
 }
 
-type ListingRecord = DatabaseRecord<LocalListing>
+type ListingRecord = DatabaseRecord<Omit<LocalListing, 'albumArt'>> & {
+  albumArt: Binary
+}
 
 /**
  * Core Data for a track.
@@ -220,9 +223,18 @@ export class LocalListing extends AListing {
 
   async save(): Promise<this> {
     if (this._id) {
-      await LocalListing.Collection.replaceOne({ _id: { $eq: this._id } }, this)
+      await LocalListing.Collection.replaceOne(
+        { _id: { $eq: this._id } },
+        {
+          ...this,
+          albumArt: new Binary(this.albumArt),
+        }
+      )
     } else {
-      const result = await LocalListing.Collection.insertOne(this)
+      const result = await LocalListing.Collection.insertOne({
+        ...this,
+        albumArt: new Binary(this.albumArt),
+      })
       this._id = result.insertedId
     }
 
@@ -231,7 +243,7 @@ export class LocalListing extends AListing {
 
   static async find(
     filter: Filter<ListingRecord>,
-    options: FindOptions
+    options?: FindOptions
   ): Promise<LocalListing[]> {
     const records = await LocalListing.Collection.find(
       filter,
@@ -239,7 +251,10 @@ export class LocalListing extends AListing {
     ).toArray()
 
     return records.map((record) => {
-      const listing = new LocalListing(record)
+      const listing = new LocalListing({
+        ...record,
+        albumArt: record.albumArt.buffer,
+      })
       listing._id = record._id
 
       return listing
@@ -248,7 +263,7 @@ export class LocalListing extends AListing {
 
   static async findOne(
     filter: Filter<ListingRecord>,
-    options: FindOptions
+    options?: FindOptions
   ): Promise<LocalListing | null> {
     const record = await LocalListing.Collection.findOne(filter, options)
 
@@ -256,7 +271,10 @@ export class LocalListing extends AListing {
       return null
     }
 
-    const listing = new LocalListing(record)
+    const listing = new LocalListing({
+      ...record,
+      albumArt: record.albumArt.buffer,
+    })
     listing._id = record._id
 
     return listing

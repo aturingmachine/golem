@@ -46,6 +46,6 @@ export const ImageUtils = {
         .toBuffer()
     }, base)
 
-    return await f
+    return f
   },
 }

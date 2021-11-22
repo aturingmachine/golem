@@ -53,7 +53,7 @@ export class ListingFinder {
 
   search(query: string): SearchResult | undefined {
     log.info(`searching for ${query}`)
-    log.verbose(`using titleSearch`)
+    log.verbose(`using titleSearch over ${this.listings.length} listings`)
 
     const result = SearchSchemes.cascading(query, this.listings)
 

@@ -52,7 +52,7 @@ class DocCommand {
       }`.concat(subcmd.args ? this.argsString(subcmd.args, 2) : '')
     })
 
-    return '## Subcommands\n'.concat(subcommandMarkdown)
+    return '## Subcommands\n'.concat(subcommandMarkdown.join('\n\n'))
   }
 
   get badges() {

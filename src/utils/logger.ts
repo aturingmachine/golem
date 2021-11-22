@@ -14,11 +14,11 @@ const { combine, timestamp, colorize, printf, json, splat } = winston.format
 
 const consoleLogFormat = printf(({ level, message, timestamp, src }) => {
   const d = new Date(timestamp)
+  const hours = d.getHours().toString().padStart(2, '0')
+  const minutes = d.getMinutes().toString().padStart(2, '0')
+  const seconds = d.getSeconds().toString().padStart(2, '0')
 
-  const timeString = `${d.getHours()}:${d.getMinutes()}:${d
-    .getSeconds()
-    .toString()
-    .padStart(2, '0')}`
+  const timeString = `${hours}:${minutes}:${seconds}`
 
   const srcColor = LogSourceColors[src as LogSources] || chalk.white
 

@@ -19,6 +19,7 @@ export const artistPlayButtonHandler = async (
       components: [],
       embeds: [],
       files: [],
+      attachments: [],
     })
     return
   }
@@ -39,6 +40,7 @@ export const artistPlayButtonHandler = async (
       components: [],
       embeds: [],
       files: [],
+      attachments: [],
     })
 
     const artistTracks = Golem.trackFinder
@@ -60,6 +62,7 @@ export const artistPlayButtonHandler = async (
       components: [],
       embeds: [],
       files: [],
+      attachments: [],
     })
 
     const artistTracks = Golem.trackFinder
@@ -81,6 +84,7 @@ export const artistPlayButtonHandler = async (
       components: [],
       embeds: [],
       files: [],
+      attachments: [],
     })
   }
 }

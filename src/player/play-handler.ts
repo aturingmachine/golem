@@ -4,7 +4,7 @@ import { Golem } from '../golem'
 import { Youtube } from '../integrations/youtube/youtils'
 import { YoutubeTrack } from '../integrations/youtube/youtube-track'
 import { LocalListing } from '../listing/listing'
-import { MessageInfo } from '../messages/message-info'
+import { MessageInfo, ParsedMessage } from '../messages/message-info'
 import { ArtistConfirmReply } from '../messages/replies/artist-confirm'
 import { WideSearch } from '../messages/replies/wide-search'
 import { LocalTrack } from '../tracks/track'
@@ -18,7 +18,7 @@ export class PlayHandler {
   async process(
     interaction: CommandInteraction | Message,
     options: {
-      playNext: boolean
+      playNext?: boolean
       query?: string
     }
   ): Promise<void> {
@@ -54,6 +54,7 @@ export class PlayHandler {
         player.unpause()
         return
       }
+      this.log.silly(`playing using query string ${commandQuery}`)
 
       // handle youtube plays
       if (this.isYoutubeQuery(commandQuery)) {
@@ -143,7 +144,7 @@ export class PlayHandler {
     // TODO this logic can be improved
     if (url.includes('list=') && !url.includes('index=')) {
       this.log.verbose('Playing youtube playlist')
-      await this.playYtPlaylist(interaction, player)
+      await this.playYtPlaylist(url, interaction, player)
     } else {
       this.log.verbose('Playing youtube track')
       await this.playYtTrack(url, interaction, player, playNext)
@@ -210,20 +211,23 @@ export class PlayHandler {
    * @param player
    */
   private async playYtPlaylist(
+    raw: string,
     interaction: CommandInteraction | Message,
     player: MusicPlayer
   ): Promise<void> {
     try {
       const info = new MessageInfo(interaction)
-      const args = info.parsed.args
+      const parsed = new ParsedMessage(raw)
+      console.log(info)
+      const args = parsed.args
 
       const limit = args.limit ? parseInt(args.limit, 10) : undefined
       const isShuffle = !!args.shuffle
 
       this.log.verbose(`getting playlist`)
-      interaction.reply(`Processing playlist \`${info.parsed?.content}\`...`)
+      interaction.reply(`Processing playlist \`${parsed.content}\`...`)
       const playlist = await Youtube.getPlaylist(
-        info.parsed?.content,
+        parsed.content,
         limit,
         isShuffle
       )

@@ -33,6 +33,7 @@ module.exports = {
   },
   mongo: {
     uri: 'mongodb:xxxxx',
+    dbName: 'golem',
   },
   plex: {
     uri: 'http://xxxxx',
@@ -82,6 +83,7 @@ Omitting this field or setting it to a falsy value will disable the [LastFM Modu
 ### Mongo
 
 - uri - `string`: The URI of your Mongo instance. Mongo is used to store [Custom Aliases](../reference/alias-string.md), Track Play Records, and Library Caches.
+- dbName - `string`: The name of this Database in Mongo. Defaults to `'golem'`
 
 ### Plex <badge text="Plex" type="plex-badge" />
 

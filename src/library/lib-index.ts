@@ -7,7 +7,6 @@ import {
 } from 'mongodb'
 import { DatabaseRecord } from '../db'
 import { Golem } from '../golem'
-import { LocalListing } from '../listing/listing'
 
 type LibIndexRecord = DatabaseRecord<LibIndex>
 
@@ -17,20 +16,14 @@ export class LibIndex {
   constructor(
     public name: string,
     public count: number,
-    public listings: LocalListing[]
+    public listingIds: ObjectId[]
   ) {}
 
   async save(): Promise<this> {
     if (this._id) {
-      await LibIndex.Collection.replaceOne(
-        { _id: { $eq: this._id } },
-        { ...this, listings: this.listings.map((listing) => listing._id) }
-      )
+      await LibIndex.Collection.replaceOne({ _id: { $eq: this._id } }, this)
     } else {
-      await LibIndex.Collection.insertOne({
-        ...this,
-        listings: this.listings.map((listing) => listing._id),
-      })
+      await LibIndex.Collection.insertOne(this)
     }
 
     return this
@@ -56,7 +49,7 @@ export class LibIndex {
     const record = await LibIndex.Collection.findOne(filter, options)
 
     return record
-      ? new LibIndex(record.name, record.count, record.listings)
+      ? new LibIndex(record.name, record.count, record.listingIds)
       : null
   }
 
@@ -69,7 +62,7 @@ export class LibIndex {
   }
 
   private static fromRecord(record: LibIndexRecord): LibIndex {
-    const libIndex = new LibIndex(record.name, record.count, record.listings)
+    const libIndex = new LibIndex(record.name, record.count, record.listingIds)
 
     libIndex._id = record._id
 
