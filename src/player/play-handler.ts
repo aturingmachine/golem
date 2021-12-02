@@ -1,10 +1,10 @@
-import { CommandInteraction, Message } from 'discord.js'
 import { GolemConf } from '../config'
 import { Golem } from '../golem'
 import { Youtube } from '../integrations/youtube/youtils'
 import { YoutubeTrack } from '../integrations/youtube/youtube-track'
 import { LocalListing } from '../listing/listing'
 import { MessageInfo, ParsedMessage } from '../messages/message-info'
+import { GolemMessage } from '../messages/message-wrapper'
 import { ArtistConfirmReply } from '../messages/replies/artist-confirm'
 import { WideSearch } from '../messages/replies/wide-search'
 import { LocalTrack } from '../tracks/track'
@@ -16,28 +16,19 @@ export class PlayHandler {
   private log = GolemLogger.child({ src: LogSources.PlayHandler })
 
   async process(
-    interaction: CommandInteraction | Message,
+    interaction: GolemMessage,
     options: {
       playNext?: boolean
-      query?: string
     }
   ): Promise<void> {
     {
-      const player = Golem.playerCache.getOrCreate(interaction)
-
-      if (!player) {
+      if (!interaction.player) {
         await interaction.reply('Not in a valid voice channel.')
         this.log.info(`no channel to join, exiting early`)
         return
       }
 
-      let commandQuery = options.query
-
-      const isSlashCommand = interaction instanceof CommandInteraction
-
-      if (isSlashCommand) {
-        commandQuery = interaction.options.getString('query') || ''
-      }
+      const commandQuery = interaction.parsed.getString('query')
 
       // TODO Analytics
       // if (interaction.member) {
@@ -51,14 +42,21 @@ export class PlayHandler {
 
       // if there is no query assume we should unpause
       if (!commandQuery) {
-        player.unpause()
+        interaction.player.unpause()
+        interaction.reply('Unpausing!')
         return
       }
+
       this.log.silly(`playing using query string ${commandQuery}`)
 
       // handle youtube plays
       if (this.isYoutubeQuery(commandQuery)) {
-        await this.ytPlay(commandQuery, interaction, player, options.playNext)
+        await this.ytPlay(
+          commandQuery,
+          interaction,
+          interaction.player,
+          options.playNext
+        )
 
         return
       }
@@ -81,12 +79,12 @@ export class PlayHandler {
         const url = await Youtube.search(commandQuery)
 
         if (url) {
-          this.ytPlay(url, interaction, player, options.playNext)
+          this.ytPlay(url, interaction, interaction.player, options.playNext)
 
           return
         }
 
-        await interaction.reply(`No Results for **${options.query}**`)
+        await interaction.reply(`No Results for **${commandQuery}**`)
         return
       }
 
@@ -100,9 +98,10 @@ export class PlayHandler {
           )
           return
         }
-        const confirmation = await ArtistConfirmReply.from(res.listing)
+        const confirmation = new ArtistConfirmReply(interaction, res.listing)
 
-        await interaction.reply(confirmation)
+        await confirmation.send()
+        await confirmation.collectResponse()
 
         return
       }
@@ -114,20 +113,27 @@ export class PlayHandler {
           return
         }
 
-        const embed = new WideSearch(commandQuery)
+        const wide = new WideSearch(interaction)
 
-        await interaction.reply(embed.options)
+        await wide.send()
+        await wide.collectResponse()
+
         return
       }
 
       // Handle Catch-All queries
-      await this.playLocal(res.listing, interaction, player, options.playNext)
+      await this.playLocal(
+        res.listing,
+        interaction,
+        interaction.player,
+        options.playNext
+      )
     }
   }
 
   private async ytPlay(
     url: string,
-    interaction: CommandInteraction | Message,
+    interaction: GolemMessage,
     player: MusicPlayer,
     playNext = false
   ): Promise<void> {
@@ -153,7 +159,7 @@ export class PlayHandler {
 
   private async playLocal(
     listing: LocalListing,
-    interaction: CommandInteraction | Message,
+    interaction: GolemMessage,
     player: MusicPlayer,
     playNext = false
   ): Promise<void> {
@@ -166,7 +172,7 @@ export class PlayHandler {
 
     this.log.verbose('enqueing local track')
 
-    const track = new LocalTrack(listing, interaction.member?.user.id || '')
+    const track = new LocalTrack(listing, interaction.info.userId)
 
     await player.enqueue(track, playNext)
   }
@@ -184,14 +190,11 @@ export class PlayHandler {
    */
   private async playYtTrack(
     url: string,
-    interaction: CommandInteraction | Message,
+    interaction: GolemMessage,
     player: MusicPlayer,
     playNext = false
   ): Promise<void> {
-    const track = await YoutubeTrack.fromUrl(
-      interaction.member?.user.id || '',
-      url
-    )
+    const track = await YoutubeTrack.fromUrl(interaction.info.userId, url)
 
     this.log.verbose('enqueing youtube track')
 
@@ -212,13 +215,12 @@ export class PlayHandler {
    */
   private async playYtPlaylist(
     raw: string,
-    interaction: CommandInteraction | Message,
+    interaction: GolemMessage,
     player: MusicPlayer
   ): Promise<void> {
     try {
-      const info = new MessageInfo(interaction)
       const parsed = new ParsedMessage(raw)
-      console.log(info)
+      console.log(interaction.info)
       const args = parsed.args
 
       const limit = args.limit ? parseInt(args.limit, 10) : undefined
@@ -234,7 +236,7 @@ export class PlayHandler {
 
       this.log.info(`enqueing youtube playlist ${playlist.title}`)
 
-      await playlist.play(info.userId, player)
+      await playlist.play(interaction.info.userId, player)
 
       await interaction.reply((await playlist.embed).options)
     } catch (error) {

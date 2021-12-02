@@ -1,25 +1,22 @@
-import { CommandInteraction, Message } from 'discord.js'
 import { GolemCommand } from '..'
 import { GolemModule } from '../../config/models'
 import { CommandNames } from '../../constants'
 import { Handlers } from '../../handlers'
+import { GolemMessage } from '../../messages/message-wrapper'
 import { GolemLogger, LogSources } from '../../utils/logger'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
-const execute = async (
-  interaction: CommandInteraction | Message,
-  query?: string
-): Promise<void> => {
+const execute = async (interaction: GolemMessage): Promise<void> => {
   log.debug(`executing`)
-  await Handlers.Play.process(interaction, { playNext: true, query })
+  await Handlers.Play.process(interaction, { playNext: true })
 }
 
 const goplaynext = new GolemCommand({
   logSource: LogSources.GoPlayNext,
   handler: execute,
   info: {
-    name: CommandNames.playNext,
+    name: CommandNames.Base.playNext,
     description: {
       long: 'Execute a Play command, queueing the track ahead of the passive queue, behind other tracks that have been Playnext-ed',
       short:

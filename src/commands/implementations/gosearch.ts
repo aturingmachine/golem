@@ -1,35 +1,25 @@
-import { CommandInteraction, Message } from 'discord.js'
 import { GolemCommand } from '..'
 import { GolemModule } from '../../config/models'
 import { CommandNames } from '../../constants'
 import { Golem } from '../../golem'
+import { GolemMessage } from '../../messages/message-wrapper'
 import { GolemLogger, LogSources } from '../../utils/logger'
 import { getSearchReply } from '../../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoSearch })
 
-const execute = async (
-  interaction: CommandInteraction | Message,
-  query?: string,
-  count?: number
-): Promise<void> => {
-  let searchQuery = query
-  let searchCount = count || 5
-
-  if (interaction instanceof CommandInteraction) {
-    searchQuery = interaction.options.getString('query') || ''
-    searchCount = interaction.options.getInteger('count') || 5
-  }
+const execute = async (interaction: GolemMessage): Promise<void> => {
+  const searchQuery = interaction.parsed.getDefault('query', '').trim()
+  let searchCount = interaction.parsed.getDefault('count', 5)
 
   log.verbose(`executing Query=${searchQuery}; Count=${searchCount}`)
 
   searchCount = searchCount > 10 ? 10 : searchCount
 
   if (!searchQuery) {
-    log.warn(`No query provided by ${interaction.member?.user.username}`)
+    log.warn(`No query provided by ${interaction.info.member?.user.username}`)
     await interaction.reply('No search string provided.')
   } else {
-    searchQuery = searchQuery.trim()
     const results = Golem.trackFinder.searchMany(searchQuery)
 
     if (results.length === 0) {
@@ -51,7 +41,7 @@ const gosearch = new GolemCommand({
   logSource: LogSources.GoSearch,
   handler: execute,
   info: {
-    name: CommandNames.search,
+    name: CommandNames.Base.search,
     description: {
       short: 'Search for a local track and view the result set.',
     },

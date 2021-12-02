@@ -1,5 +1,4 @@
-import { CommandInteraction, Message } from 'discord.js'
-import { MessageInfo } from '../messages/message-info'
+import { GolemMessage } from '../messages/message-wrapper'
 import { Permissions } from '../permissions/permission'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -10,12 +9,10 @@ export const AliasHandler = {
   log: GolemLogger.child({ src: LogSources.AliasHandler }),
 
   async createAlias(
-    interaction: CommandInteraction | Message,
+    interaction: GolemMessage,
     aliasCommand: string
   ): Promise<void> {
-    const info = new MessageInfo(interaction)
-
-    if (!(await info.can(Permissions.Alias.Create))) {
+    if (!(await interaction.info.can(Permissions.Alias.Create))) {
       await interaction.reply({
         ephemeral: true,
         content: 'Missing Permission alias.create',
@@ -26,8 +23,8 @@ export const AliasHandler = {
     try {
       const alias = await CustomAlias.fromString(
         aliasCommand,
-        info.guildId,
-        info.userId
+        interaction.info.guildId,
+        interaction.info.userId
       )
       this.log.verbose(`saving new alias ${alias.name} -> ${alias.unevaluated}`)
       this.log.debug(alias.toString())
@@ -47,17 +44,14 @@ export const AliasHandler = {
     }
   },
 
-  async listAliases(
-    interaction: CommandInteraction | Message,
-    guildId: string
-  ): Promise<void> {
+  async listAliases(interaction: GolemMessage, guildId: string): Promise<void> {
     try {
       const aliases = await CustomAlias.getAliases(guildId)
 
       const response = aliases
         .reduce((prev, curr) => {
           return prev.concat(`${curr.helpString}\n\n`)
-        }, `\`\`\`\nAliases For ${interaction.guild?.name}\n`)
+        }, `\`\`\`\nAliases For ${interaction.source.guild?.name}\n`)
         .concat('```')
 
       await interaction.reply(response)
@@ -71,18 +65,16 @@ export const AliasHandler = {
     }
   },
 
-  async deleteAlias(
-    interaction: CommandInteraction | Message,
-    name: string
-  ): Promise<void> {
-    const info = new MessageInfo(interaction)
+  async deleteAlias(interaction: GolemMessage, name: string): Promise<void> {
     const record = await CustomAlias.findOne({
-      guildId: info.guildId,
+      guildId: interaction.info.guildId,
       name,
     })
 
     if (!record) {
-      this.log.warn(`could not find alias for ${name} on ${info.guildId}`)
+      this.log.warn(
+        `could not find alias for ${name} on ${interaction.info.guildId}`
+      )
       interaction.reply({
         ephemeral: true,
         content: `no alias of name ${name} found.`,
@@ -92,11 +84,11 @@ export const AliasHandler = {
 
     this.log.debug(`found record to delete ${formatForLog(record)}`)
 
-    const isOwn = record.createdBy === info.userId
+    const isOwn = record.createdBy === interaction.info.userId
 
     if (!isOwn) {
-      if (!(await info.can(Permissions.Alias.Delete.Any))) {
-        // user cannot delete someone elses alias
+      if (!(await interaction.info.can(Permissions.Alias.Delete))) {
+        // user cannot delete someone else's alias
         interaction.reply({
           ephemeral: true,
           content: 'cannot delete alias created by another user',
@@ -105,7 +97,7 @@ export const AliasHandler = {
       }
     }
 
-    record.delete()
+    await record.delete()
     interaction.reply({
       content: `${Replier.affirmative}. Alias ${name} has been deleted.`,
     })

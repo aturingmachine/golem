@@ -1,35 +1,33 @@
-import { CommandInteraction, Message } from 'discord.js'
 import { Collection, Filter, FindOptions, ObjectId } from 'mongodb'
 import { DatabaseRecord } from '../db'
 import { Golem } from '../golem'
-import { MessageInfo } from '../messages/message-info'
+import { GolemMessage } from '../messages/message-wrapper'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger } from '../utils/logger'
 
 type UserPermissionRecord = DatabaseRecord<UserPermission>
 
 export enum Permission {
+  // Super User
   Admin = 'admin',
   AliasCreate = 'alias.create',
-  AliasDeleteAny = 'alias.delete.any',
-  AliasDeleteOwn = 'alias.delete.own',
-  AliasEditAny = 'alias.edit.any',
-  AliasEditOwn = 'alias.edit.own',
+  AliasDelete = 'alias.delete',
+  AliasEdit = 'alias.edit',
+  // All privileges of Admin - cannot make new Moderators
+  Moderator = 'moderator',
   PlaylistCreate = 'playlist.create',
-  PlaylistDeleteAny = 'playlist.delete.any',
-  PlaylistDeleteOwn = 'playlist.delete.own',
-  PlaylistEditAny = 'playlist.edit.any',
-  PlaylistEditOwn = 'playlist.edit.own',
+  PlaylistDelete = 'playlist.delete',
+  PlaylistEdit = 'playlist.edit',
 }
 
-const BasePermissions = [
-  Permission.AliasCreate,
-  Permission.AliasDeleteOwn,
-  Permission.AliasEditOwn,
-  Permission.PlaylistCreate,
-  Permission.PlaylistDeleteOwn,
-  Permission.PlaylistEditOwn,
-]
+export function toPermission(str: string): Permission | undefined {
+  console.log(Object.values(Permission))
+  return Object.values(Permission)
+    .filter((perm) => perm === str)
+    .pop()
+}
+
+const BasePermissions = [Permission.AliasCreate, Permission.PlaylistCreate]
 
 /**
  * @todo need to figure out an efficient way to check things.
@@ -48,11 +46,36 @@ export class UserPermission {
     this.permissions = new Set(permissions || BasePermissions)
   }
 
-  can(perms: Permission[]): boolean {
-    return (
-      this.permissions.has(Permission.Admin) ||
-      perms.some((perm) => this.permissions.has(perm))
-    )
+  get permArray(): Permission[] {
+    return [...this.permissions]
+  }
+
+  get isAdmin(): boolean {
+    return this.permissions.has(Permission.Admin)
+  }
+
+  can(perm: Permission): boolean {
+    return this.permissions.has(Permission.Admin) || this.permissions.has(perm)
+  }
+
+  add(...newPermissions: Permission[]): Permission[] {
+    return newPermissions
+      .filter((newPerm) => !this.permissions.has(newPerm))
+      .map((newPerm) => {
+        this.permissions.add(newPerm)
+
+        return newPerm
+      })
+  }
+
+  remove(...permsToRemove: Permission[]): Permission[] {
+    return permsToRemove
+      .filter((newPerm) => this.permissions.has(newPerm))
+      .map((perm) => {
+        this.permissions.delete(perm)
+
+        return perm
+      })
   }
 
   async save(): Promise<this> {
@@ -126,19 +149,21 @@ export class UserPermission {
   }
 
   static async check(
-    interaction: CommandInteraction | Message,
+    interaction: GolemMessage,
     perms: Permission[]
   ): Promise<boolean> {
-    const info = new MessageInfo(interaction)
     UserPermission.log.debug(
       `checking permission: ${formatForLog({
-        userId: info.userId,
-        guildId: info.guildId,
+        userId: interaction.info.userId,
+        guildId: interaction.info.guildId,
         perms,
       })}`
     )
 
-    const rec = await UserPermission.get(info.userId, info.guildId)
+    const rec = await UserPermission.get(
+      interaction.info.userId,
+      interaction.info.guildId
+    )
 
     return UserPermission.checkPermissions(rec, perms)
   }
@@ -182,27 +207,34 @@ export class UserPermissionCache {
   }
 }
 
+/**
+ * Permissions required for certain actions
+ */
 export const Permissions = {
+  Admin: Permission.Admin,
   Alias: {
-    Create: [Permission.AliasCreate],
-    Delete: {
-      Own: [Permission.AliasDeleteOwn, Permission.AliasDeleteAny],
-      Any: [Permission.AliasDeleteOwn],
-    },
-    Edit: {
-      Own: [Permission.AliasEditOwn, Permission.AliasEditAny],
-      Any: [Permission.AliasEditOwn],
-    },
+    Create: Permission.AliasCreate,
+    Delete: Permission.AliasDelete,
+    Edit: Permission.AliasEdit,
   },
   Playlist: {
-    Create: [Permission.PlaylistCreate],
-    Delete: {
-      Own: [Permission.PlaylistDeleteOwn, Permission.PlaylistDeleteAny],
-      Any: [Permission.PlaylistDeleteAny],
-    },
-    Edit: {
-      Own: [Permission.PlaylistEditOwn, Permission.PlaylistEditAny],
-      Any: [Permission.PlaylistEditAny],
-    },
+    Create: Permission.PlaylistCreate,
+    Delete: Permission.PlaylistDelete,
+    Edit: Permission.PlaylistEdit,
   },
+}
+
+/**
+ * Objects to aid in Permission Descriptions
+ */
+export const PermissionDescriptions: Record<Permission, string> = {
+  [Permission.Admin]: 'Grants all permissions',
+  [Permission.AliasCreate]: 'Can create Aliased Commands',
+  [Permission.AliasDelete]: 'Can delete other users aliased commands',
+  [Permission.AliasEdit]: 'Can edit other users aliased commands',
+  [Permission.Moderator]:
+    'Grants all permission - cannot make new Admins or Moderators',
+  [Permission.PlaylistCreate]: 'Can create playlists',
+  [Permission.PlaylistDelete]: 'Can delete other users playlists',
+  [Permission.PlaylistEdit]: 'Can edit other users playlists',
 }

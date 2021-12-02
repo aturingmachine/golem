@@ -53,6 +53,7 @@ const getDurationBar = (current: number, total: number): string => {
     .padEnd(barWidth, '-')}`
 }
 
+// TODO this needs work its fucking gross
 export const GetEmbedFromListing = async (
   listing: TrackListingInfo,
   player: MusicPlayer,
@@ -152,15 +153,15 @@ export const GetEmbedFromListing = async (
 export const ArtistConfirmButton = (artist: string): MessageActionRow => {
   return new MessageActionRow().addComponents(
     new MessageButton()
-      .setCustomId(`${ButtonIdPrefixes.confirmArtistPlay}${artist}`)
+      .setCustomId(`${ButtonIdPrefixes.ArtistPlay}${artist}`)
       .setLabel('Yes')
       .setStyle('SUCCESS'),
     new MessageButton()
-      .setCustomId(`${ButtonIdPrefixes.shuffleArtistPlay}${artist}`)
+      .setCustomId(`${ButtonIdPrefixes.ArtistPlay}${artist}`)
       .setLabel('Shuffle')
       .setStyle('PRIMARY'),
     new MessageButton()
-      .setCustomId(`${ButtonIdPrefixes.abortArtistPlay}${artist}`)
+      .setCustomId(`${ButtonIdPrefixes.ArtistPlay}${artist}`)
       .setLabel('No')
       .setStyle('DANGER')
   )

@@ -1,4 +1,5 @@
 import { MessageEmbed, MessageOptions } from 'discord.js'
+import { Commands } from '../commands/register-commands'
 import { Golem } from '../golem'
 import { MusicPlayer } from '../player/music-player'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -36,6 +37,8 @@ export class GoGet {
       case 'playlist':
       case 'playlists':
         return { content: this.playlists }
+      case 'help':
+        return { content: this.helpMessage }
       default:
         return await this.stats(Golem.getPlayer(opts.guildId || ''))
     }
@@ -142,6 +145,21 @@ export class GoGet {
     return Golem.plex.playlists.reduce((prev, curr) => {
       return prev.concat(`\n${curr.name} - _${curr.count} tracks_`)
     }, '**Playlists:**')
+  }
+
+  private get helpMessage(): string {
+    let helpMsg = ''
+
+    const builtInCommandsHelp = Array.from(Commands.values()).reduce(
+      (prev, curr) => {
+        return prev.concat(curr.toString())
+      },
+      '```'
+    )
+
+    helpMsg = helpMsg.concat(builtInCommandsHelp)
+
+    return helpMsg.concat('```')
   }
 }
 

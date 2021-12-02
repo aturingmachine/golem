@@ -20,12 +20,17 @@ export class LibIndex {
   ) {}
 
   async save(): Promise<this> {
+    console.log(`Saving Lib Index ${this.name} - ${this._id}`)
     if (this._id) {
+      console.log(`calling replace one ${this.name} - ${this._id}`)
       await LibIndex.Collection.replaceOne({ _id: { $eq: this._id } }, this)
     } else {
-      await LibIndex.Collection.insertOne(this)
+      console.log(`Saving Lib Index - INsert one ${this.name}`)
+      const res = await LibIndex.Collection.insertOne(this)
+      this._id = res.insertedId
     }
 
+    console.log(`Saved ${this.name} - ${this._id}`)
     return this
   }
 
@@ -48,9 +53,11 @@ export class LibIndex {
   ): Promise<LibIndex | null> {
     const record = await LibIndex.Collection.findOne(filter, options)
 
-    return record
-      ? new LibIndex(record.name, record.count, record.listingIds)
-      : null
+    if (!record) {
+      return null
+    }
+
+    return this.fromRecord(record)
   }
 
   static deleteMany(filter: Filter<LibIndexRecord>): Promise<DeleteResult> {

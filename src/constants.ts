@@ -9,40 +9,40 @@ export const Constants = {
 }
 
 export enum CommandBase {
-  help = 'help',
+  admin = 'admin',
+  alias = 'alias',
   get = 'get',
+  help = 'help',
+  mix = 'mix',
   pause = 'pause',
   peek = 'peek',
+  perms = 'perms',
   play = 'play',
-  playNext = 'playnext',
   playlist = 'playlist',
+  playNext = 'playnext',
   search = 'search',
   shuffle = 'shuffle',
   skip = 'skip',
   stop = 'stop',
-  mix = 'mix',
-  alias = 'alias',
 }
 
-const SlashCommands = {
-  get: `go${CommandBase.get}`,
-  pause: `go${CommandBase.pause}`,
-  peek: `go${CommandBase.peek}`,
-  play: `go${CommandBase.play}`,
-  playNext: `go${CommandBase.playNext}`,
-  playlist: `go${CommandBase.playlist}`,
-  search: `go${CommandBase.search}`,
-  shuffle: `go${CommandBase.shuffle}`,
-  skip: `go${CommandBase.skip}`,
-  stop: `go${CommandBase.stop}`,
-  mix: `go${CommandBase.mix}`,
-  alias: `go${CommandBase.alias}`,
+export enum BuiltInAlias {
+  Play = 'play',
+  PlayNext = 'playnext',
+  NP = 'np',
+  NowPlaying = 'nowplaying',
+  Stop = 'stop',
+  Skip = 'skip',
+  Pause = 'pause',
+  Help = 'help',
 }
 
 export const CommandNames = {
-  ...CommandBase,
-  slash: {
-    ...SlashCommands,
+  Base: {
+    ...CommandBase,
+  },
+  Aliases: {
+    ...BuiltInAlias,
   },
   Slash(name: CommandBase): string {
     return `go${name}`

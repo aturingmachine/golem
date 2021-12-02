@@ -1,25 +1,22 @@
-import { CommandInteraction, Message } from 'discord.js'
 import { GolemCommand } from '..'
 import { GolemModule } from '../../config/models'
 import { CommandNames } from '../../constants'
 import { Handlers } from '../../handlers'
+import { GolemMessage } from '../../messages/message-wrapper'
 import { GolemLogger, LogSources } from '../../utils/logger'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
-const execute = async (
-  interaction: CommandInteraction | Message,
-  query?: string
-): Promise<void> => {
+const execute = async (interaction: GolemMessage): Promise<void> => {
   log.debug(`executing`)
-  await Handlers.Play.process(interaction, { playNext: false, query })
+  await Handlers.Play.process(interaction, { playNext: false })
 }
 
 const goplay = new GolemCommand({
   logSource: LogSources.GoPlay,
   handler: execute,
   info: {
-    name: CommandNames.play,
+    name: CommandNames.Base.play,
     description: {
       long: 'Play a Local Track retrieved via searching for the provided query, a YouTube track retrievied via YouTube search if the Local Track search misses; A YouTube Track from a provided absolute url; A YouTube playlist from a provided absolute YouTube Playlist URL.',
       short:

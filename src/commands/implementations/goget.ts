@@ -1,22 +1,15 @@
-import { CommandInteraction, Message } from 'discord.js'
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { Handlers } from '../../handlers'
+import { GolemMessage } from '../../messages/message-wrapper'
 import { LogSources } from '../../utils/logger'
 
-const execute = async (
-  interaction: CommandInteraction | Message,
-  arg?: string
-): Promise<void> => {
-  let value = arg || ''
-
-  if (interaction instanceof CommandInteraction) {
-    value = interaction.options.getString('value', false) || ''
-  }
+const execute = async (interaction: GolemMessage): Promise<void> => {
+  const value = interaction.parsed.getString('value') || ''
 
   const response = await Handlers.GoGet.it({
     value,
-    guildId: interaction.guildId,
+    guildId: interaction.info.guildId,
   })
 
   if (value === 'catalog') {
@@ -34,7 +27,7 @@ const goget = new GolemCommand({
   logSource: LogSources.GoGet,
   handler: execute,
   info: {
-    name: CommandNames.get,
+    name: CommandNames.Base.get,
     description: {
       short: 'Retrieve information about the current Golem instance.',
     },

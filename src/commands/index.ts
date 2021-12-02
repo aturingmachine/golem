@@ -10,20 +10,46 @@ import {
   SlashCommandSubcommandBuilder,
   SlashCommandUserOption,
 } from '@discordjs/builders'
-import { CommandInteraction, Message } from 'discord.js'
 import { GolemConf } from '../config'
 import { GolemModule } from '../config/models'
-import { CommandBase, CommandNames } from '../constants'
+import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
+import { GolemMessage } from '../messages/message-wrapper'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { StringUtils } from '../utils/string-utils'
+
+export function expandBuiltInAlias(raw: string): string | undefined {
+  const parsed = raw.replace(/^\$/, '')
+  const aliasName = StringUtils.wordAt(parsed, 0) as BuiltInAlias
+
+  switch (aliasName) {
+    case CommandNames.Aliases.Play:
+      return `play ${StringUtils.dropWords(parsed, 1)}`
+    case CommandNames.Aliases.PlayNext:
+      return `playnext ${StringUtils.dropWords(parsed, 1)}`
+    case CommandNames.Aliases.NP:
+    case CommandNames.Aliases.NowPlaying:
+      return `go get np`
+    case CommandNames.Aliases.Stop:
+      return `stop`
+    case CommandNames.Aliases.Skip:
+      return `skip ${StringUtils.dropWords(parsed, 1)}`
+    case CommandNames.Aliases.Pause:
+      return `pause`
+    default:
+      return
+  }
+}
 
 export type CommandHandlerFn = (
-  interaction: Message | CommandInteraction,
+  // interaction: Message | CommandInteraction,
+  message: GolemMessage,
   ...args: any[]
 ) => Promise<any>
 
 export type CommandErrorHandlerFn = (
   error: Error,
-  interaction: Message | CommandInteraction,
+  // interaction: Message | CommandInteraction,
+  message: GolemMessage,
   ...args: any[]
 ) => Promise<any>
 
@@ -60,23 +86,27 @@ type OptionType = 'boolean' | 'user' | 'channel' | 'role' | 'mentionable'
 
 type ArgChoice<T = string | number> = { name: string; value: T }
 
-export interface CommandArg_ {
+export interface ICommandArg {
   name: string
   description: CommandInfo
   required: boolean
   requiredModules?: GolemModule[]
+  /**
+   * If true, interperet the remainder of the message as the argument
+   */
+  rest?: boolean
 }
 
-export interface BaseCommandArg extends CommandArg_ {
+export interface BaseCommandArg extends ICommandArg {
   type: OptionType
 }
 
-export interface StringCommandArgWithChoices extends CommandArg_ {
+export interface StringCommandArgWithChoices extends ICommandArg {
   type: 'string'
   choices?: ArgChoice<string>[]
 }
 
-export interface IntegerCommandArgWithChoices extends CommandArg_ {
+export interface IntegerCommandArgWithChoices extends ICommandArg {
   type: 'integer'
   choices?: ArgChoice<number>[]
 }
@@ -108,7 +138,7 @@ export type CommandDescription = {
   subcommands?: SubCommand[]
 }
 
-type Command2Options = {
+type CommandOptions = {
   logSource: LogSources | string
   handler: CommandHandlerFn
   info: CommandDescription
@@ -155,7 +185,7 @@ export class GolemCommand {
   public readonly slashCommand: SlashCommandBuilder
   public readonly execute: CommandHandlerFn
 
-  constructor(public options: Command2Options) {
+  constructor(public options: CommandOptions) {
     this.slashCommand = new SlashCommandBuilder()
     this.slashCommand
       .setName(CommandNames.Slash(this.options.info.name))
@@ -350,7 +380,7 @@ export class GolemCommand {
 async function baseErrorHandler(
   source: LogSources | string,
   error: Error,
-  interaction: Message | CommandInteraction,
+  interaction: GolemMessage,
   ...args: any[]
 ): Promise<void> {
   GolemLogger.error(

@@ -1,7 +1,9 @@
 import REPL from 'programmatic-repl'
+import { CustomAlias } from '../../aliases/custom-alias'
 import { PlayRecord } from '../../analytics/models/play-record'
 import { Golem } from '../../golem'
 import { LocalListing } from '../../listing/listing'
+import { StringUtils } from '../string-utils'
 
 export class GolemRepl {
   static completions = [
@@ -41,7 +43,9 @@ export class GolemRepl {
           listings: LocalListing,
           // analytics: BotInteractionData,
           plays: PlayRecord,
+          alias: CustomAlias,
         },
+        StringUtils: StringUtils,
       }
     )
   }
