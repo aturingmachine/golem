@@ -1,5 +1,4 @@
 import { CommandRunner } from '../commands/runner'
-import { buttonHandler } from '../handlers/button-handler'
 import { GolemMessage } from '../messages/message-wrapper'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { EventHandler } from '.'
@@ -15,11 +14,6 @@ const interactionCreate: EventHandler<'interactionCreate'> = {
       log.debug('Interaction is command')
       await CommandRunner(new GolemMessage(interaction))
     }
-
-    // if (interaction.isMessageComponent()) {
-    //   log.debug('Interaction is message component interaction')
-    //   await buttonHandler(interaction)
-    // }
   },
 }
 

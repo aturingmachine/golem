@@ -1,23 +1,21 @@
-import { MessageEmbed, MessageOptions } from 'discord.js'
+import { MessageOptions } from 'discord.js'
 import { Commands } from '../commands/register-commands'
 import { Golem } from '../golem'
+import { GolemMessage } from '../messages/message-wrapper'
+import { ListingEmbed } from '../messages/replies/listing-embed'
 import { MusicPlayer } from '../player/music-player'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { GetEmbedFromListing } from '../utils/message-utils'
 
 export interface GetOptions {
   value: string | null
   guildId: string | null
+  message: GolemMessage
 }
 
 const noPlayerMsg = 'Unable to find player.'
 
-/**
- * @todo this whole class needs to be reworked to use the new message
- * wrapper. it is still using the old string manipulation everywhere...
- */
 export class GoGet {
-  async it(opts: Partial<GetOptions>): Promise<MessageOptions> {
+  async it(opts: GetOptions): Promise<MessageOptions> {
     GolemLogger.verbose(`Go Getting With ${opts.value} ${opts.guildId}`, {
       src: LogSources.GoGetHandler,
     })
@@ -33,7 +31,7 @@ export class GoGet {
         }
       case 'np':
       case 'nowplaying':
-        return await this.npResponse(Golem.getPlayer(opts.guildId || ''))
+        return await this.npResponse(opts.message)
       case 'tcount':
         return { content: this.tCountResponse }
       // case 'catalog':
@@ -44,7 +42,7 @@ export class GoGet {
       case 'help':
         return { content: this.helpMessage }
       default:
-        return await this.stats(Golem.getPlayer(opts.guildId || ''))
+        return await this.stats(opts.message)
     }
   }
 
@@ -56,35 +54,17 @@ export class GoGet {
     return `\n**Queued Tracks**: ${player?.stats.count || noPlayerMsg}`
   }
 
-  async npResponse(player?: MusicPlayer): Promise<MessageOptions> {
-    if (player && player.currentResource && player.nowPlaying) {
-      const assets = await GetEmbedFromListing(
-        player.nowPlaying,
-        player,
-        'playing'
-      )
-
-      return {
-        embeds: [assets.embed],
-        files: assets.image ? [assets.image] : [],
-      }
-    } else {
-      const embed = new MessageEmbed()
-        .setTitle('Now Playing')
-        .setDescription(
-          'No Track is currently playing... Use `$play` to play a track!'
-        )
-      return {
-        embeds: [embed],
-      }
-    }
+  async npResponse(message: GolemMessage): Promise<MessageOptions> {
+    const listingEmbed = new ListingEmbed(message)
+    return listingEmbed.messageOptions('play')
   }
 
   get tCountResponse(): string {
     return `\n**Available Tracks**: ${Golem.trackFinder.trackCount}`
   }
 
-  async stats(player?: MusicPlayer): Promise<MessageOptions> {
+  async stats(message: GolemMessage): Promise<MessageOptions> {
+    const player = message.player
     const fields = [
       {
         name: 'Available Tracks',
@@ -104,7 +84,7 @@ export class GoGet {
       )
     }
 
-    const np = await this.npResponse(player)
+    const np = await this.npResponse(message)
 
     np.embeds?.[0].fields?.push(...fields)
 
@@ -113,37 +93,6 @@ export class GoGet {
       files: np.files || [],
     }
   }
-
-  // get catalog(): string {
-  //   let longest = 0
-  //   const artistCounts = TrackFinder.listings
-  //     .map((listing) =>
-  //       listing.artist.length < 20
-  //         ? listing.artist
-  //         : listing.artist.concat('...')
-  //     )
-  //     .reduce((prev, curr) => {
-  //       longest = curr?.length > longest ? curr?.length : longest
-  //       if (prev[curr] !== undefined) {
-  //         prev[curr] = prev[curr] + 1
-  //       } else {
-  //         prev[curr] = 1
-  //       }
-
-  //       return prev
-  //     }, {} as Record<string, number>)
-
-  //   const catalog = Object.entries(artistCounts).reduce((prev, curr, index) => {
-  //     const label = curr.join(': ')
-  //     if (index % 3) {
-  //       return prev.concat(`\n\r${centerString(longest, label)}`)
-  //     } else {
-  //       return prev.concat(`${centerString(longest, label)}`)
-  //     }
-  //   }, '')
-
-  //   return catalog
-  // }
 
   get playlists(): string {
     return Golem.plex.playlists.reduce((prev, curr) => {
@@ -166,7 +115,3 @@ export class GoGet {
     return helpMsg.concat('```')
   }
 }
-
-// longest => 10
-// 'hello' => 5
-// padStart((longest - str.length) / 2 + str.length)

@@ -10,9 +10,8 @@ import {
 import { getAverageColor } from 'fast-average-color-node'
 import { GolemConf } from '../config'
 import { Constants, PlexLogo } from '../constants'
-import { LocalListing, TrackListingInfo } from '../listing/listing'
+import { LocalListing } from '../listing/listing'
 import { MusicPlayer } from '../player/music-player'
-import { humanReadableDuration, humanReadableTime } from './time-utils'
 
 export const embedFieldSpacer = {
   name: '\u200B',
@@ -45,103 +44,6 @@ export const getDurationBar = (current: number, total: number): string => {
   return `${''
     .padEnd(Math.round(barWidth * ratio), '\u2588')
     .padEnd(barWidth, '-')}`
-}
-
-// TODO this needs work its fucking gross
-export const GetEmbedFromListing = async (
-  listing: TrackListingInfo,
-  player: MusicPlayer,
-  context: 'queue' | 'playing'
-): Promise<{ embed: MessageEmbed; image?: MessageAttachment }> => {
-  const isQueue = context === 'queue'
-  const color = await averageColor(listing.albumArt)
-
-  let image: MessageAttachment | undefined
-  if (typeof listing.albumArt !== 'string') {
-    image = GetMessageAttachement(listing.albumArt)
-  }
-
-  let title: string
-  let description: string
-
-  if (isQueue) {
-    title = player.isPlaying ? 'Added to Queue' : 'Now Playing'
-    description = player.isPlaying
-      ? `Starts In: ${player.stats.hTime}`
-      : 'Starting Now'
-  } else {
-    title = 'Now Playing'
-    const timeRemaining = humanReadableTime(player.currentTrackRemaining)
-
-    if (player.currentResource) {
-      const durationBar = getDurationBar(
-        player.currentTrackRemaining,
-        player.currentResource.metadata.listing.duration
-      )
-      description = `\`[${durationBar}] - ${timeRemaining}\``
-    } else {
-      description = `Remaining: ${timeRemaining}`
-    }
-  }
-
-  const isLocalListing = listing instanceof LocalListing
-  const duration = isLocalListing
-    ? `${
-        listing.hasDefaultDuration
-          ? '-'
-          : humanReadableDuration(listing.duration)
-      }`
-    : humanReadableDuration(listing.duration)
-
-  const fields: EmbedFieldData[] = [
-    {
-      name: 'Artist',
-      value: listing.artist,
-    },
-    {
-      name: 'Album',
-      value: listing.album,
-      inline: true,
-    },
-    embedFieldSpacer,
-    {
-      name: 'Duration',
-      value: duration,
-      inline: true,
-    },
-    {
-      name: 'Track',
-      value: listing.title,
-      inline: true,
-    },
-    embedFieldSpacer,
-  ]
-
-  if (isLocalListing) {
-    fields.push({
-      name: 'Genres',
-      value: listing.genres.length
-        ? listing.genres.slice(0, 3).join(', ')
-        : 'N/A',
-      inline: true,
-    })
-  }
-
-  const embed = new MessageEmbed()
-    .setTitle(title)
-    .setDescription(description)
-    .setColor(color.hex)
-    .setThumbnail(
-      typeof listing.albumArt !== 'string'
-        ? `attachment://cover.png`
-        : listing.albumArt || ''
-    )
-    .setFields(...fields)
-
-  return {
-    embed,
-    image,
-  }
 }
 
 export const centerString = (longest: number, str: string): string => {

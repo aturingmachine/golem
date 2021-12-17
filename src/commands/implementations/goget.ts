@@ -10,6 +10,7 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
   const response = await Handlers.GoGet.it({
     value,
     guildId: interaction.info.guildId,
+    message: interaction,
   })
 
   if (value === 'catalog') {
