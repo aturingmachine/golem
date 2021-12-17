@@ -14,45 +14,41 @@ Golem is configured via a `config.js` file. This file control everything from be
 
 This is an example configuration file, with specifics blocked out. A detailed explanation of these fields can be found below.
 
-```javascript
-module.exports = {
-  discord: {
-    token: 'xxxxx',
-    clientId: 'xxxxxx',
-    serverIds: ['xxxxx'],
-  },
-  image: {
-    fallbackPath: './plex-logo.png',
-    avgColorAlgorithm: 'sqrt',
-  },
-  lastfm: {
-    apiKey: '********',
-  },
-  library: {
-    paths: ['/path/to/library1', '/path/to/library2'],
-  },
-  mongo: {
-    uri: 'mongodb:xxxxx',
-    dbName: 'golem',
-  },
-  plex: {
-    uri: 'http://xxxxx',
-    appId: 'xxxxxx',
-    username: '*******',
-    password: '********',
-  },
-  search: {
-    forceWeightTerms: [
-      'instrumental',
-      'inst.',
-      'remix',
-    ],
-  },
-  web: {
-    apiPort: 3000,
-  },
-  youtube: true,
-}
+```yaml
+---
+discord:
+  token: xxxx
+  clientId: xxxx
+  serverIds:
+  - xxxx
+  adminId: xxxx
+image:
+  fallbackPath: "/path/to/default/logo"
+  avgColorAlgorithm: sqrt
+lastfm:
+  apiKey: xxxx
+library:
+  paths:
+  - "/path/to/library-1"
+  - "/path/to/library-2"
+mongo:
+  uri: mongodb://mongo-db-location
+  dbName: golem-dev
+plex:
+  uri: http://xxxx
+  appId: xxxx
+  username: xxxx
+  password: xxxx
+search:
+  forceWeightTerms:
+  - instrumental
+  - inst.
+  - remix
+web:
+  apiPort: 3828
+youtube:
+  ytdlpPath: "/path/to/ytdlp"
+
 ```
 
 ## Configuration Breakdown
@@ -102,4 +98,4 @@ Omitting this field or setting it to a falsy value will disable the [LastFM Modu
 
 ### YouTube <badge text="Youtube" type="youtube-badge" />
 
-At this time there is no configuration for the YouTube module outside of enabling/disabling it.
+- ytdlpPath - `string`: The path to your ytdlp that will be used to access YouTube videos.
