@@ -34,8 +34,6 @@ export class GoGet {
         return await this.npResponse(opts.message)
       case 'tcount':
         return { content: this.tCountResponse }
-      // case 'catalog':
-      //   return this.catalog
       case 'playlist':
       case 'playlists':
         return { content: this.playlists }
