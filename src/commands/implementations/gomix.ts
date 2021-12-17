@@ -46,7 +46,7 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
     switch (mixBy.toLowerCase()) {
       case 'artist':
         log.info(
-          `mixing by artist using "${interaction.player.currentResource.metadata.artist}"`
+          `mixing by artist using "${interaction.player.currentResource.metadata.listing.artist}"`
         )
         result = await MixMatcher.similarArtists(
           interaction.player.currentResource.metadata.track.listing
@@ -54,7 +54,7 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
         break
       case 'track':
         log.info(
-          `mixing by track using "${interaction.player.currentResource.metadata.title}"`
+          `mixing by track using "${interaction.player.currentResource.metadata.listing.title}"`
         )
         result = await MixMatcher.similarTracks(
           interaction.player.currentResource.metadata.track.listing
@@ -63,7 +63,7 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
     }
 
     await interaction.reply(
-      `Mixing ${result.length} tracks off ${interaction.player.currentResource.metadata.artist}`
+      `Mixing ${result.length} tracks off ${interaction.player.currentResource.metadata.listing.artist}`
     )
   } else {
     // assume we want to mix the current artist?
@@ -76,7 +76,7 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
       )
 
       await interaction.reply(
-        `Mixing ${result.length} tracks off ${interaction.player.currentResource.metadata.artist}`
+        `Mixing ${result.length} tracks off ${interaction.player.currentResource.metadata.listing.artist}`
       )
 
       await interaction.player.enqueueMany(

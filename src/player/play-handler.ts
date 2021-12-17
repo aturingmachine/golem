@@ -3,13 +3,13 @@ import { Golem } from '../golem'
 import { Youtube } from '../integrations/youtube/youtils'
 import { YoutubeTrack } from '../integrations/youtube/youtube-track'
 import { LocalListing } from '../listing/listing'
-import { MessageInfo, ParsedMessage } from '../messages/message-info'
+import { ParsedMessage } from '../messages/message-info'
 import { GolemMessage } from '../messages/message-wrapper'
 import { ArtistConfirmReply } from '../messages/replies/artist-confirm'
+import { ListingEmbed } from '../messages/replies/listing-embed'
 import { WideSearch } from '../messages/replies/wide-search'
 import { LocalTrack } from '../tracks/track'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { GetEmbedFromListing } from '../utils/message-utils'
 import { MusicPlayer } from './music-player'
 
 export class PlayHandler {
@@ -163,18 +163,15 @@ export class PlayHandler {
     player: MusicPlayer,
     playNext = false
   ): Promise<void> {
-    const { image, embed } = await GetEmbedFromListing(listing, player, 'queue')
-
-    await interaction.reply({
-      embeds: [embed],
-      files: image ? [image] : [],
-    })
+    const listingEmbed = new ListingEmbed(interaction, listing)
 
     this.log.verbose('enqueing local track')
 
     const track = new LocalTrack(listing, interaction.info.userId)
 
     await player.enqueue(track, playNext)
+
+    await listingEmbed.send('queue')
   }
 
   isYoutubeQuery(query: string): boolean {
@@ -195,16 +192,18 @@ export class PlayHandler {
     playNext = false
   ): Promise<void> {
     const track = await YoutubeTrack.fromUrl(interaction.info.userId, url)
+    const listingEmbed = new ListingEmbed(interaction, track.listing)
 
     this.log.verbose('enqueing youtube track')
 
     await player.enqueue(track, playNext)
 
-    const { embed } = await GetEmbedFromListing(track.metadata, player, 'queue')
+    // const { embed } = await GetEmbedFromListing(track.metadata, player, 'queue')
 
-    await interaction.reply({
-      embeds: [embed],
-    })
+    // await interaction.reply({
+    //   embeds: [embed],
+    // })
+    await listingEmbed.send('queue')
   }
 
   /**

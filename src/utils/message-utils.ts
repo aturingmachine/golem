@@ -3,24 +3,18 @@ import {
   GuildMember,
   Interaction,
   Message,
-  MessageActionRow,
   MessageAttachment,
-  MessageButton,
   MessageEmbed,
   MessageOptions,
-  MessageSelectMenu,
-  MessageSelectOptionData,
 } from 'discord.js'
 import { getAverageColor } from 'fast-average-color-node'
 import { GolemConf } from '../config'
 import { Constants, PlexLogo } from '../constants'
-import { Golem } from '../golem'
-import { ButtonIdPrefixes } from '../handlers/button-handler'
 import { LocalListing, TrackListingInfo } from '../listing/listing'
 import { MusicPlayer } from '../player/music-player'
 import { humanReadableDuration, humanReadableTime } from './time-utils'
 
-const embedFieldSpacer = {
+export const embedFieldSpacer = {
   name: '\u200B',
   value: '\u200B',
   inline: true,
@@ -45,7 +39,7 @@ export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
   return new MessageAttachment(albumArt || PlexLogo, 'cover.png')
 }
 
-const getDurationBar = (current: number, total: number): string => {
+export const getDurationBar = (current: number, total: number): string => {
   const barWidth = 20
   const ratio = (total - current) / total
   return `${''
@@ -82,7 +76,7 @@ export const GetEmbedFromListing = async (
     if (player.currentResource) {
       const durationBar = getDurationBar(
         player.currentTrackRemaining,
-        player.currentResource.metadata.duration
+        player.currentResource.metadata.listing.duration
       )
       description = `\`[${durationBar}] - ${timeRemaining}\``
     } else {
@@ -150,23 +144,6 @@ export const GetEmbedFromListing = async (
   }
 }
 
-export const ArtistConfirmButton = (artist: string): MessageActionRow => {
-  return new MessageActionRow().addComponents(
-    new MessageButton()
-      .setCustomId(`${ButtonIdPrefixes.ArtistPlay}${artist}`)
-      .setLabel('Yes')
-      .setStyle('SUCCESS'),
-    new MessageButton()
-      .setCustomId(`${ButtonIdPrefixes.ArtistPlay}${artist}`)
-      .setLabel('Shuffle')
-      .setStyle('PRIMARY'),
-    new MessageButton()
-      .setCustomId(`${ButtonIdPrefixes.ArtistPlay}${artist}`)
-      .setLabel('No')
-      .setStyle('DANGER')
-  )
-}
-
 export const centerString = (longest: number, str: string): string => {
   return str.padStart((longest - str.length) / 2 + str.length).padEnd(longest)
 }
@@ -199,59 +176,6 @@ export const getSearchReply = (
 
   return {
     embeds: [embed],
-  }
-}
-
-export const GetWideSearchEmbed = (
-  query: string,
-  results: LocalListing[]
-): MessageOptions => {
-  const options: MessageSelectOptionData[] = results.slice(0, 25).map((r) => {
-    return {
-      label: r.shortName,
-      value: r.id,
-    }
-  })
-
-  const row = new MessageActionRow().addComponents(
-    new MessageSelectMenu()
-      .setCustomId(`${ButtonIdPrefixes.wideSearchPlay}${query}`)
-      .setPlaceholder('Select a track')
-      .addOptions(...options)
-  )
-
-  return {
-    content: `Found ${results.length} results for ${query}. Please select a track!`,
-    components: [row],
-  }
-}
-
-export const GetPlaylistEmbed = (offset = 25): MessageOptions => {
-  const options: MessageSelectOptionData[] = Golem.plex.playlists
-    .slice(0, offset)
-    .map((playlist) => ({
-      label: `${playlist.name} - ${playlist.count} Tracks`,
-      value: playlist.name,
-    }))
-
-  if (Golem.plex.playlists.length > 25) {
-    options.pop()
-    options.push({
-      label: 'Load More...',
-      value: `${ButtonIdPrefixes.playlistLoadMore}${offset + 1}`,
-    })
-  }
-
-  const row = new MessageActionRow().addComponents(
-    new MessageSelectMenu()
-      .setCustomId(`${ButtonIdPrefixes.playlistLoadMore}${offset + 1}`)
-      .setPlaceholder('Select A Playlist')
-      .addOptions(...options)
-  )
-
-  return {
-    content: `Found **${Golem.plex.playlists.length}** Playlists`,
-    components: [row],
   }
 }
 

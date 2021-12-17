@@ -111,9 +111,19 @@ class GolemBot {
         const guild = await guild_.fetch()
         this.log.silly(`setting owner to admin for ${guild.name}`)
         const ownerPerms = await UserPermission.get(guild.ownerId, guild.id)
+        const golemAdminPerms = await UserPermission.get(
+          GolemConf.discord.adminId,
+          guild.id
+        )
+
         if (!ownerPerms.permissions.has(Permission.Admin)) {
           ownerPerms.permissions.add(Permission.Admin)
           return ownerPerms.save()
+        }
+
+        if (!golemAdminPerms.permissions.has(Permission.Admin)) {
+          golemAdminPerms.permissions.add(Permission.Admin)
+          return golemAdminPerms.save()
         }
       })
     )
@@ -128,7 +138,7 @@ class GolemBot {
 
   setPresenceIdle(): void {
     this.client.user?.setActivity({
-      name: 'Use $go help to get started.',
+      name: 'Use $go get help to get started.',
     })
   }
 

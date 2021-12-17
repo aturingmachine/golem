@@ -97,7 +97,7 @@ export class GolemMessage {
 
   async reply(options: GolemMessageReplyOptions): Promise<Message> {
     let message: Message
-    let parsedOptions
+    let parsedOptions: MessageOptions
     if (typeof options === 'string') {
       parsedOptions = { content: options }
     } else {
@@ -135,7 +135,7 @@ export class GolemMessage {
       return
     }
 
-    let parsedOptions
+    let parsedOptions: MessageOptions
     if (typeof options === 'string') {
       parsedOptions = { content: options }
     } else {
@@ -153,16 +153,24 @@ export class GolemMessage {
     return this.replies.at(-1)
   }
 
-  get player(): MusicPlayer | undefined {
+  get player(): MusicPlayer {
     const player = Golem.playerCache.getOrCreate(this)
+
+    if (!player) {
+      throw new Error(`no player for ${this.info.guildId}`)
+    }
 
     return player
   }
 
   // TODO can probs be cleaner
   static ExpandBuiltInAlias(raw: string): string | undefined {
+    GolemMessage.log.debug(`running ${raw} as Built In Alias`)
+
     const parsed = raw.replace(/^\$/, '')
     const aliasName = StringUtils.wordAt(parsed, 0) as BuiltInAlias
+
+    GolemMessage.log.debug(`parsed ${raw} to alias: ${aliasName}`)
 
     switch (aliasName) {
       case CommandNames.Aliases.Play:
@@ -171,7 +179,7 @@ export class GolemMessage {
         return `playnext ${StringUtils.dropWords(parsed, 1)}`
       case CommandNames.Aliases.NP:
       case CommandNames.Aliases.NowPlaying:
-        return `go get np`
+        return `get np`
       case CommandNames.Aliases.Stop:
         return `stop`
       case CommandNames.Aliases.Skip:
@@ -179,7 +187,7 @@ export class GolemMessage {
       case CommandNames.Aliases.Pause:
         return `pause`
       case CommandNames.Aliases.Help:
-        return ''
+        return 'get help'
       default:
         return
     }

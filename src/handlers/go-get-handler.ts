@@ -12,6 +12,10 @@ export interface GetOptions {
 
 const noPlayerMsg = 'Unable to find player.'
 
+/**
+ * @todo this whole class needs to be reworked to use the new message
+ * wrapper. it is still using the old string manipulation everywhere...
+ */
 export class GoGet {
   async it(opts: Partial<GetOptions>): Promise<MessageOptions> {
     GolemLogger.verbose(`Go Getting With ${opts.value} ${opts.guildId}`, {

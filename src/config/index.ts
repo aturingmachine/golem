@@ -1,8 +1,9 @@
+import { readFileSync } from 'fs'
 import path from 'path'
-import { config } from 'dotenv'
+import YAML from 'yaml'
 import { LogLevel } from '../utils/logger'
 import {
-  JSONConfig,
+  ConfigurationOptions,
   CliOption,
   GolemModule,
   DiscordConfig,
@@ -13,14 +14,20 @@ import {
   PlexConfig,
   WebConfig,
   SearchConfig,
+  YoutubeConfig,
 } from './models'
-config({ path: path.resolve(__dirname, '../../.env') })
 
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
-const rawJSConfig: JSONConfig = require(path.resolve(
-  __dirname,
-  '../../config.js'
-))
+// const rawConfig: ConfigurationOptions = require(path.resolve(
+//   __dirname,
+//   '../../config.js'
+// ))
+
+const rawConfig: ConfigurationOptions = YAML.parse(
+  readFileSync(path.resolve(__dirname, '../../config.yml'), {
+    encoding: 'utf-8',
+  })
+)
 
 const optFlags: Record<CliOption, string[]> = {
   TTY: ['tty', '-i'],
@@ -54,7 +61,7 @@ class CliOptions {
 
 // TODO should probably add some more extendable/complex validation pattern
 export class GolemConf {
-  private static values = rawJSConfig
+  private static values = rawConfig
   static enabledModules = [] as GolemModule[]
   static cliOptions = new CliOptions(new Args(process.argv.slice(2)))
 
@@ -113,6 +120,7 @@ export class GolemConf {
       token: GolemConf.values.discord?.token || '',
       clientId: GolemConf.values.discord?.clientId || '',
       serverIds: GolemConf.values.discord?.serverIds || [],
+      adminId: GolemConf.values.discord?.adminId || '',
     }
   }
 
@@ -166,6 +174,12 @@ export class GolemConf {
         'remix',
       ],
       minimumScore: GolemConf.values.search?.minimumScore || 35,
+    }
+  }
+
+  static get youtube(): YoutubeConfig {
+    return {
+      ytdlpPath: GolemConf.values.youtube?.ytdlpPath || '',
     }
   }
 

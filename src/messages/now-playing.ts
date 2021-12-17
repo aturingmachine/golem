@@ -1,6 +1,6 @@
 import { MessageOptions, MessageEmbed } from 'discord.js'
-import { GetEmbedFromListing } from '../utils/message-utils'
 import { GolemMessage } from './message-wrapper'
+import { ListingEmbed } from './replies/listing-embed'
 
 export class NowPlayingEmbed {
   constructor(public interaction: GolemMessage) {}
@@ -12,16 +12,20 @@ export class NowPlayingEmbed {
 
   async getOptions(): Promise<MessageOptions> {
     if (this.interaction.player?.isPlaying) {
-      const assets = await GetEmbedFromListing(
-        this.interaction.player.nowPlaying!,
-        this.interaction.player,
-        'playing'
-      )
+      const listingEmbed = new ListingEmbed(this.interaction)
 
-      return {
-        embeds: [assets.embed],
-        files: assets.image ? [assets.image] : [],
-      }
+      // const assets = await GetEmbedFromListing(
+      //   this.interaction.player.nowPlaying!,
+      //   this.interaction.player,
+      //   'playing'
+      // )
+
+      return listingEmbed.messageOptions('play')
+
+      // return {
+      //   embeds: [assets.embed],
+      //   files: assets.image ? [assets.image] : [],
+      // }
     } else {
       const embed = new MessageEmbed()
         .setTitle('Now Playing')

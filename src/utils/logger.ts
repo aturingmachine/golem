@@ -37,6 +37,9 @@ const logger = winston.createLogger({
   transports: [
     new winston.transports.File({
       filename: './logs/combined.log',
+      maxsize: 1_000_000,
+      maxFiles: 10,
+      tailable: true,
     }),
     new winston.transports.Console({
       format: combine(colorize(), timestamp(), splat(), consoleLogFormat),

@@ -1,3 +1,5 @@
+import { MessageAttachment, EmbedFieldData } from 'discord.js'
+import { IFastAverageColorResult } from 'fast-average-color'
 import md5 from 'md5'
 import {
   Binary,
@@ -10,8 +12,17 @@ import {
 import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
 import { GolemConf } from '../config'
+import { PlexLogo } from '../constants'
 import { DatabaseRecord } from '../db'
 import { Golem } from '../golem'
+import { averageColor, embedFieldSpacer } from '../utils/message-utils'
+import { humanReadableDuration } from '../utils/time-utils'
+
+export type ListingEmbedData = {
+  fields: EmbedFieldData[]
+  color: IFastAverageColorResult
+  image?: MessageAttachment
+}
 
 export abstract class AListing {
   constructor(
@@ -21,6 +32,8 @@ export abstract class AListing {
     public album: string,
     public albumArt?: Buffer | string
   ) {}
+
+  abstract toEmbed(): Promise<ListingEmbedData> | ListingEmbedData
 }
 
 type ListingRecord = DatabaseRecord<Omit<LocalListing, 'albumArt'>> & {
@@ -166,6 +179,50 @@ export class LocalListing extends AListing {
 
   isArtist(artist: string): boolean {
     return artist === this.artist
+  }
+
+  async toEmbed(): Promise<ListingEmbedData> {
+    const image = new MessageAttachment(this.albumArt || PlexLogo, 'cover.png')
+    const color = await averageColor(this.albumArt)
+
+    const duration = this.hasDefaultDuration
+      ? '-'
+      : humanReadableDuration(this.duration)
+
+    const fields: EmbedFieldData[] = [
+      {
+        name: 'Artist',
+        value: this.artist,
+      },
+      {
+        name: 'Album',
+        value: this.album,
+        inline: true,
+      },
+      embedFieldSpacer,
+      {
+        name: 'Duration',
+        value: duration,
+        inline: true,
+      },
+      {
+        name: 'Track',
+        value: this.title,
+        inline: true,
+      },
+      embedFieldSpacer,
+      {
+        name: 'Genres',
+        value: this.genres.length ? this.genres.slice(0, 3).join(', ') : 'N/A',
+        inline: true,
+      },
+    ]
+
+    return {
+      fields,
+      color,
+      image,
+    }
   }
 
   static async fromMeta(

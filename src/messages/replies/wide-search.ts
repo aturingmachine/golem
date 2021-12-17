@@ -9,9 +9,9 @@ import { Golem } from '../../golem'
 import { SelectMenuId } from '../../handlers/button-handler'
 import { LocalTrack } from '../../tracks/track'
 import { GolemLogger, LogSources } from '../../utils/logger'
-import { GetEmbedFromListing } from '../../utils/message-utils'
 import { GolemMessage } from '../message-wrapper'
 import { SelectMenu } from '../select-menu'
+import { ListingEmbed } from './listing-embed'
 
 export class WideSearch {
   private static log = GolemLogger.child({ src: LogSources.WideSearch })
@@ -82,15 +82,11 @@ export class WideSearch {
 
     WideSearch.log.verbose(`Got ${listing.shortName} from id ${listingId}`)
 
-    const { image, embed } = await GetEmbedFromListing(
-      listing,
-      this.interaction.player,
-      'queue'
-    )
+    const listingEmbed = new ListingEmbed(this.interaction, listing)
+    const messageOptions = await listingEmbed.messageOptions('queue')
 
     await select.update({
-      embeds: [embed],
-      files: image ? [image] : [],
+      ...messageOptions,
       components: [],
     })
 

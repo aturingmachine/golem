@@ -2,8 +2,8 @@ import { GolemCommand } from '..'
 import { GolemModule } from '../../config/models'
 import { CommandNames } from '../../constants'
 import { GolemMessage } from '../../messages/message-wrapper'
+import { ListingEmbed } from '../../messages/replies/listing-embed'
 import { GolemLogger, LogSources } from '../../utils/logger'
-import { GetEmbedFromListing } from '../../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoSkip })
 
@@ -21,17 +21,20 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
   if (interaction.player.nowPlaying && interaction.player.currentResource) {
     await interaction.player.skip(skipCount)
     if (interaction.player.currentResource) {
-      const assets = await GetEmbedFromListing(
-        interaction.player.nowPlaying,
-        interaction.player,
-        'playing'
-      )
+      const listingEmbed = new ListingEmbed(interaction)
 
-      await interaction.reply({
-        content: 'Skipped!',
-        embeds: [assets.embed],
-        files: assets.image ? [assets.image] : [],
-      })
+      await listingEmbed.send('play', { content: 'Skipped!' })
+      // const assets = await GetEmbedFromListing(
+      //   interaction.player.nowPlaying,
+      //   interaction.player,
+      //   'playing'
+      // )
+
+      // await interaction.reply({
+      //   content: 'Skipped!',
+      //   embeds: [assets.embed],
+      //   files: assets.image ? [assets.image] : [],
+      // })
     } else {
       await interaction.reply({
         content: 'Skipped! Queue empty.',

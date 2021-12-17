@@ -28,12 +28,7 @@ export class LocalTrack extends Track {
     return createAudioResource<TrackAudioResourceMetadata>(this.listing.path, {
       inlineVolume: true,
       metadata: {
-        internalId: this.internalId,
-        trackId: this.listing.trackId,
-        artist: this.listing.artist,
-        album: this.listing.album,
-        title: this.listing.title,
-        duration: this.listing.duration,
+        listing: this.listing,
         track: this,
       },
     })

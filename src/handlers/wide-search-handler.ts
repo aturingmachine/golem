@@ -1,9 +1,9 @@
 import { SelectMenuInteraction } from 'discord.js'
 import { Golem } from '../golem'
 import { GolemMessage } from '../messages/message-wrapper'
+import { ListingEmbed } from '../messages/replies/listing-embed'
 import { LocalTrack } from '../tracks/track'
 import { GolemLogger, LogSources } from '../utils/logger'
-import { GetEmbedFromListing } from '../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.WideSearch })
 
@@ -26,15 +26,11 @@ export async function wideSearchHandler(
 
   log.verbose(`Got ${listing.shortName} from id ${listingId}`)
 
-  const { image, embed } = await GetEmbedFromListing(
-    listing,
-    this.player,
-    'queue'
-  )
+  const listingEmbed = new ListingEmbed(this, listing)
+  const messageOptions = await listingEmbed.messageOptions('queue')
 
   await interaction.update({
-    embeds: [embed],
-    files: image ? [image] : [],
+    ...messageOptions,
     components: [],
   })
 
