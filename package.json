@@ -5,7 +5,7 @@
   "scripts": {
     "build": "tsc",
     "build:clean": "rm -rf dist/ && npm run build",
-    "dev": "npm run build && node dist/index.js",
+    "dev": " npm run build && NODE_OPTIONS=--enable-source-maps node  dist/index.js",
     "dev:debug": "npm run dev debug tty",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint --fix src/**/*.ts",

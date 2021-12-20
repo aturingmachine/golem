@@ -5,7 +5,7 @@ export class PlayerService {
 
   constructor(channelId) {
     this.http = axios.create({
-      baseURL: `http://${window.location.hostname}:3000/api/player/${channelId}`
+      baseURL: `http://${window.location.hostname}:3828/api/player/${channelId}`
     })
   }
 

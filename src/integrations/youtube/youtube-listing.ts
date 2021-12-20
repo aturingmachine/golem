@@ -1,3 +1,4 @@
+import { URL } from 'url'
 import { EmbedFieldData } from 'discord.js'
 import ytpl from 'ytpl'
 import { AListing, ListingEmbedData } from '../../listing/listing'
@@ -17,7 +18,9 @@ export class YoutubeListing extends AListing {
     duration: number,
     artworkUrl?: string
   ) {
-    super(title, duration, author, '', artworkUrl)
+    const parsedUrl = new URL(url)
+    const listingId = parsedUrl.searchParams.get('v')
+    super(listingId || url, title, duration, author, '', artworkUrl)
   }
 
   async toEmbed(): Promise<ListingEmbedData> {
@@ -31,7 +34,7 @@ export class YoutubeListing extends AListing {
       },
       {
         name: 'Album',
-        value: this.album,
+        value: '-',
         inline: true,
       },
       embedFieldSpacer,

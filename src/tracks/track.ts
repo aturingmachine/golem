@@ -49,15 +49,15 @@ export class LocalTrack extends Track {
   }
 
   onQueue(): void {
-    Analytics.createPlayRecord(this.listing.trackId, this.userId, 'queue')
+    Analytics.createPlayRecord(this.listing.listingId, this.userId, 'queue')
   }
 
   onPlay(): void {
-    Analytics.createPlayRecord(this.listing.trackId, this.userId, 'play')
+    Analytics.createPlayRecord(this.listing.listingId, this.userId, 'play')
   }
 
   onSkip(): void {
-    Analytics.createPlayRecord(this.listing.trackId, this.userId, 'skip')
+    Analytics.createPlayRecord(this.listing.listingId, this.userId, 'skip')
   }
 
   static fromListing(listing: LocalListing, userId: string): LocalTrack {

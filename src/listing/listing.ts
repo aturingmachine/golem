@@ -15,6 +15,7 @@ import { GolemConf } from '../config'
 import { PlexLogo } from '../constants'
 import { DatabaseRecord } from '../db'
 import { Golem } from '../golem'
+import { formatForLog } from '../utils/debug-utils'
 import { averageColor, embedFieldSpacer } from '../utils/message-utils'
 import { humanReadableDuration } from '../utils/time-utils'
 
@@ -26,6 +27,7 @@ export type ListingEmbedData = {
 
 export abstract class AListing {
   constructor(
+    public listingId: string,
     public title: string,
     public duration: number,
     public artist: string,
@@ -67,7 +69,7 @@ type ListingNames = {
 }
 
 export type ListingInfo = {
-  trackId: string
+  listingId: string
   artist: string
   album: string
   title: string
@@ -104,7 +106,7 @@ export class LocalListing extends AListing {
    * An attempt at a consistent unique id made by md5 hashing
    * some info of the listing
    */
-  trackId: string
+  listingId: string
   hasDefaultDuration!: boolean
   path: string
   genres: string[]
@@ -116,9 +118,16 @@ export class LocalListing extends AListing {
   albumArt?: Buffer
 
   constructor(info: ListingInfo) {
-    super(info.title, info.duration, info.artist, info.album, info.albumArt)
+    super(
+      info.listingId,
+      info.title,
+      info.duration,
+      info.artist,
+      info.album,
+      info.albumArt
+    )
 
-    this.trackId = info.trackId
+    this.listingId = info.listingId
     this.path = info.path
     this.genres = info.genres
     this.key = info.key
@@ -174,7 +183,10 @@ export class LocalListing extends AListing {
   }
 
   get debugString(): string {
-    return `{artist=${this.artist}; album=${this.album}; track=${this.title}}`
+    return formatForLog({
+      ...this,
+      albumArt: this.albumArt ? 'OMIT' : 'UNDEFINED',
+    })
   }
 
   isArtist(artist: string): boolean {
@@ -232,7 +244,8 @@ export class LocalListing extends AListing {
   ): Promise<LocalListing> {
     const targetConfig = GolemConf.library.paths.find((p) => path.includes(p))
 
-    const split = path.replace(targetConfig || 'NO PATH FOUND', '').split('/')
+    const split =
+      path.replace(targetConfig || 'NO PATH FOUND', '')?.split('/') || []
     const artist = meta.common.artist || meta.common.artists?.[0] || split[1]
     const album = meta.common.album || split[2]
     const track = meta.common.title || split[3]
@@ -253,14 +266,14 @@ export class LocalListing extends AListing {
     const trackMbId = meta.common.musicbrainz_trackid || ''
 
     return new LocalListing({
-      trackId: id,
+      listingId: id,
       artist,
       album,
       title: track,
       duration: meta.format.duration || 160,
       hasDefaultDuration: !meta.format.duration,
       path,
-      genres: meta.common.genre?.map((g) => g.split('/')).flat(1) || [],
+      genres: meta.common.genre?.map((g) => g?.split('/')).flat(1) || [],
       key,
       moods: moods,
       bpm: bpm ? parseInt(bpm, 10) : undefined,

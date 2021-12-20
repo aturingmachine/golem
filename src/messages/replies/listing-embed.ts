@@ -5,11 +5,14 @@ import {
   MessageOptions,
 } from 'discord.js'
 import { AListing } from '../../listing/listing'
+import { formatForLog } from '../../utils/debug-utils'
+import { GolemLogger } from '../../utils/logger'
 import { getDurationBar } from '../../utils/message-utils'
 import { humanReadableTime } from '../../utils/time-utils'
 import { GolemMessage } from '../message-wrapper'
 
 export class ListingEmbed {
+  private log = GolemLogger.child({ src: 'listing-embed' })
   private image!: MessageAttachment | undefined
   public listing: AListing
 
@@ -39,10 +42,16 @@ export class ListingEmbed {
     const embed =
       context === 'queue' ? await this.queueMessage() : await this.playMessage()
 
-    return {
+    const options = {
       embeds: [embed],
       files: this.image ? [this.image] : [],
     }
+
+    this.log.silly(
+      `${this.listing.title} generated message embed ${formatForLog(options)}`
+    )
+
+    return options
   }
 
   private async queueMessage(): Promise<MessageEmbed> {
@@ -51,7 +60,9 @@ export class ListingEmbed {
       ? 'Added to Queue'
       : 'Now Playing'
     const description = this.message.player?.isPlaying
-      ? `Starts In: ${this.message.player?.stats.hTime}`
+      ? `Starts In: ${humanReadableTime(
+          this.message.player?.stats.time - this.listing.duration
+        )}`
       : 'Starting Now'
 
     embed.setTitle(title).setDescription(description)
@@ -91,9 +102,26 @@ export class ListingEmbed {
     const embed = new MessageEmbed()
       .setDescription('')
       .setColor(listingEmbed.color.hex as HexColorString)
-      .setThumbnail('')
+      .setThumbnail(this.thumbnail)
       .setFields(listingEmbed.fields)
 
     return embed
+  }
+
+  private get thumbnail(): string {
+    this.log.silly(
+      `generatig thumbnail uri for ${formatForLog({
+        ...this.listing,
+        albumArt: !!this.listing.albumArt ? 'OMIT' : 'UNDEFINED',
+      })}`
+    )
+
+    if (!this.listing.albumArt || this.listing.albumArt.length < 1) {
+      return ''
+    }
+
+    return typeof this.listing.albumArt !== 'string'
+      ? 'attachment://cover.png'
+      : this.listing.albumArt
   }
 }

@@ -46,7 +46,7 @@ class WebSocketClient {
 
 export class VoiceConnectionsWebSocketClient extends WebSocketClient {
   constructor() {
-    super(`ws://${window.location.hostname}:3000/ws/connections`)
+    super(`ws://${window.location.hostname}:3828/ws/connections`)
   }
 
   addLogStreamHandler(handler) {
@@ -56,7 +56,7 @@ export class VoiceConnectionsWebSocketClient extends WebSocketClient {
 
 export class PlayerWebSocketClient extends WebSocketClient {
   constructor(channelId) {
-    super(`ws://${window.location.hostname}:3000/ws/nowplaying/${channelId}`)
+    super(`ws://${window.location.hostname}:3828/ws/nowplaying/${channelId}`)
     this.channelId = channelId
   }
 
@@ -67,7 +67,7 @@ export class PlayerWebSocketClient extends WebSocketClient {
 
 export class QueueWebSocketClient extends WebSocketClient {
   constructor(channelId) {
-    super(`ws://${window.location.hostname}:3000/ws/queue/${channelId}`)
+    super(`ws://${window.location.hostname}:3828/ws/queue/${channelId}`)
     this.channelId = channelId
   }
 
@@ -78,7 +78,7 @@ export class QueueWebSocketClient extends WebSocketClient {
 
 export class LogWebSocketClient extends WebSocketClient {
   constructor() {
-    super(`ws://${window.location.hostname}:3000/ws/logs`)
+    super(`ws://${window.location.hostname}:3828/ws/logs`)
   }
 
   addUpdateHandler(handler) {

@@ -33,12 +33,15 @@ export class ParsedMessage {
 
     this.content = sliceIndex > 0 ? rawContent.slice(0, sliceIndex) : rawContent
 
-    this.args = Object.fromEntries(
-      rawContent
-        .slice(sliceIndex)
-        .split(/(?<!"[A-z0-9 ]*[^ ])\s/g)
-        .map((argPair) => argPair.split('='))
-    )
+    this.args =
+      sliceIndex < 1
+        ? {}
+        : Object.fromEntries(
+            rawContent
+              .slice(sliceIndex)
+              .split(/(?<!"[A-z0-9 ]*[^ ])\s/g)
+              .map((argPair) => argPair.split('='))
+          )
 
     log.silly(`new - ${formatForLog(this)}`)
   }

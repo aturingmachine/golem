@@ -88,7 +88,7 @@ export class PlayHandler {
         return
       }
 
-      this.log.verbose(`Query Result: \n${res.listing.debugString}`)
+      this.log.verbose(`Query Result: ${res.listing.debugString}`)
 
       // Handle artist query
       if (res.isArtistQuery) {

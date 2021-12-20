@@ -13,6 +13,8 @@ export interface TrackAudioResourceMetadata {
 }
 
 export abstract class Track {
+  listing!: AListing
+
   constructor(public userId: string) {}
 
   abstract toAudioResource():

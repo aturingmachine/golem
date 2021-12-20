@@ -173,10 +173,8 @@ export class ListingLoader {
 
     log.warn(`Encountered ${newListings.errors} errors while loading library.`)
 
-    log.info('Attempting backup save')
     await this.save(name, listings)
     this.listings.push(...listings)
-    log.info('Backup saved to database')
 
     return listings
   }
