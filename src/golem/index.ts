@@ -1,9 +1,11 @@
 import fs from 'fs'
 import path from 'path'
 import { Client, Intents, Interaction, Message, User } from 'discord.js'
-import { Db, MongoClient } from 'mongodb'
+import { Collection, Db, MongoClient } from 'mongodb'
 import winston from 'winston'
 import { GolemConf } from '../config'
+import { CollectionNames } from '../constants'
+import { LocalAlbumRecord } from '../db/records'
 import { EventHandler } from '../events'
 import { LastFm } from '../integrations/lastfm'
 import { PlexConnection } from '../integrations/plex'
@@ -145,6 +147,17 @@ class GolemBot {
   // TODO Maybe we can make a wrapper for this that is nicer to work with
   getUser(id: string): Promise<User> {
     return this.client.users.fetch(id)
+  }
+
+  get database(): Record<CollectionNames, Collection<any>> {
+    return {
+      localalbums: Golem.db.collection<LocalAlbumRecord>('localalbums'),
+      customaliases: Golem.db.collection('customaliases'),
+      playrecords: Golem.db.collection('playrecords'),
+      libindexes: Golem.db.collection('libindexes'),
+      listings: Golem.db.collection('listings'),
+      permissions: Golem.db.collection('permissions'),
+    }
   }
 
   private loadEventHandlers(): void {

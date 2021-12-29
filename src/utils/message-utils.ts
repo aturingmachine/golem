@@ -1,14 +1,9 @@
 import {
   EmbedFieldData,
-  GuildMember,
-  Interaction,
-  Message,
   MessageAttachment,
   MessageEmbed,
   MessageOptions,
 } from 'discord.js'
-import { getAverageColor } from 'fast-average-color-node'
-import { GolemConf } from '../config'
 import { Constants, PlexLogo } from '../constants'
 import { LocalListing } from '../listing/listing'
 import { MusicPlayer } from '../player/music-player'
@@ -18,21 +13,6 @@ export const embedFieldSpacer = {
   value: '\u200B',
   inline: true,
 }
-
-export const averageColor = (img?: Buffer | string): any =>
-  getAverageColor(img || PlexLogo, {
-    algorithm: GolemConf.image.avgColorAlgorithm,
-  })
-
-export const memberFrom = (
-  interaction: Message | Interaction
-): GuildMember | null => interaction.member as GuildMember
-
-export const userFrom = (interaction: Message | Interaction): string =>
-  interaction.member?.user.id || ''
-
-export const guildIdFrom = (interaction: Message | Interaction): string =>
-  interaction.guild?.id || interaction.guildId || ''
 
 export const GetMessageAttachement = (albumArt?: Buffer): MessageAttachment => {
   return new MessageAttachment(albumArt || PlexLogo, 'cover.png')

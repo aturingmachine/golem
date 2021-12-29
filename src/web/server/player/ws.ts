@@ -4,10 +4,10 @@ import { Snowflake } from 'discord-api-types'
 import ws from 'ws'
 import { Golem } from '../../../golem'
 import { GolemEvent } from '../../../golem/event-emitter'
-import { AListing } from '../../../listing/listing'
+import { AListing, LocalListing } from '../../../listing/listing'
 import { MusicPlayer } from '../../../player/music-player'
 import { GolemLogger } from '../../../utils/logger'
-import { Transformer } from '../utils/transformer'
+import { ImageCache } from '../utils/image-cache'
 
 export class VoiceConnectionsWebSocket {
   private wsServer: ws.Server
@@ -15,7 +15,6 @@ export class VoiceConnectionsWebSocket {
   private timer!: NodeJS.Timer
 
   constructor() {
-    console.log('Making new VS Web Socket.')
     this.wsServer = new ws.Server({ noServer: true })
     this.wsServer.on('connection', this.onConnection.bind(this))
 
@@ -84,7 +83,6 @@ export class PlayerWebSocket {
       })
 
       this.wsServer.on('connection', this.onConnection.bind(this))
-      // this.wsServer.once('connection', this.setUpdateInterval.bind(this))
     }
   }
 
@@ -113,14 +111,23 @@ export class PlayerWebSocket {
       const currentTime = this.player.currentTrackRemaining
 
       if (this.nowPlaying?.listingId !== np.listingId) {
-        this.parsedArt = await Transformer.normalizeArt(np.albumArt)
+        this.parsedArt = await ImageCache.getOrCreate(np)
 
         this.nowPlaying = np
 
-        data = {
-          nowPlaying: { ...np, albumArt: this.parsedArt },
-          currentTime,
-        }
+        data =
+          np instanceof LocalListing
+            ? {
+                listing: np.listingId,
+                currentTime,
+              }
+            : {
+                listing: {
+                  ...np,
+                  art: this.parsedArt,
+                },
+                currentTime,
+              }
       } else {
         data = {
           currentTime: this.player.currentTrackRemaining,
@@ -143,7 +150,7 @@ export class QueueWebSocket {
   private socket!: ws
   private timer!: NodeJS.Timer
   private player?: MusicPlayer
-  private imageCache: Record<string, string> = {}
+  private imageCache = ImageCache
 
   constructor(private guildId: string) {
     this.wsServer = new ws.Server({ noServer: true })
@@ -180,26 +187,11 @@ export class QueueWebSocket {
     const queue = this.player?.peek(-1)
 
     if (queue) {
-      const data = []
-      for (const item of queue) {
-        const cachedRecord = this.imageCache[item.listing.listingId]
-        this.log.silly(
-          `item ${item.listing.title} found cached image ${cachedRecord}`
-        )
-
-        if (!cachedRecord || cachedRecord === '') {
-          this.log.silly(`image cache miss for ${item.listing.title}`)
-          const art = await Transformer.normalizeArt(item.listing.albumArt)
-          this.log.silly(`caching ${art} for ${item.listing.title}`)
-
-          this.imageCache[item.listing.listingId] = art
-        }
-
-        data.push({
-          ...item.metadata,
-          albumArt: this.imageCache[item.listing.listingId],
-        })
-      }
+      const data = queue.map((item) =>
+        item.listing instanceof LocalListing
+          ? item.listing.listingId
+          : item.listing
+      )
 
       this.socket.send(JSON.stringify({ queue: data }))
     }

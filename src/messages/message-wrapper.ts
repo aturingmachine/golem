@@ -111,6 +111,7 @@ export class GolemMessage {
         ...parsedOptions,
         fetchReply: true,
       })
+
       if (res instanceof Message) {
         message = res
       } else {

@@ -2,6 +2,9 @@ import { Socket } from 'net'
 import express from 'express'
 import { GolemConf } from '../../config'
 import { GolemLogger, LogSources } from '../../utils/logger'
+import { aliasRouter } from './aliases/rest'
+import { analyticsRouter } from './analytics/rest'
+import { listingRouter } from './listings/rest'
 import { cors } from './middleware/cors'
 import { playerRouter } from './player/rest'
 import {
@@ -19,7 +22,10 @@ export const startApi = (): void => {
 
   app.use(cors)
 
+  app.use('/api/listings', listingRouter)
   app.use('/api/player', playerRouter)
+  app.use('/api/aliases', aliasRouter)
+  app.use('/api/analytics', analyticsRouter)
 
   log.verbose(`Attempting to run on port ${GolemConf.web.apiPort}`)
 

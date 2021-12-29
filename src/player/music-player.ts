@@ -110,6 +110,11 @@ export class MusicPlayer {
     track.onPlay()
 
     void (await this.processQueue())
+
+    Golem.events.trigger(
+      GolemEvent.Queue,
+      this.voiceConnection.joinConfig.guildId
+    )
   }
 
   public async enqueueMany(userId: string, tracks: Track[]): Promise<void> {
@@ -118,6 +123,11 @@ export class MusicPlayer {
     // TODO handle this properly
     // tracks.forEach((t) => t.onPlay())
     await this.processQueue()
+
+    Golem.events.trigger(
+      GolemEvent.Queue,
+      this.voiceConnection.joinConfig.guildId
+    )
   }
 
   public async skip(count = 0): Promise<void> {

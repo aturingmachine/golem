@@ -151,11 +151,11 @@ export class YoutubeTrack extends Track {
     listing: YoutubeListing
   ): YoutubeTrack {
     return new YoutubeTrack(userId, listing.url, listing, {
-      album: '-',
+      album: listing.album,
       artist: listing.artist,
       title: listing.title,
       duration: listing.duration,
-      albumArt: listing.albumArt,
+      albumName: '-',
     })
   }
 }

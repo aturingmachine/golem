@@ -9,6 +9,12 @@ export class PlayerService {
     })
   }
 
+  async playPause() {
+    const res = await this.http.post('/playPause')
+
+    console.log(res)
+  }
+
   async skip() {
     const res = await this.http.post('/skip')
 
