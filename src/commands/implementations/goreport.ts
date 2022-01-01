@@ -46,6 +46,7 @@ const goreport = new GolemCommand({
             'What you were doing leading up to the bug & what you expected to happen.',
         },
         required: true,
+        rest: true,
       },
     ],
     examples: {
