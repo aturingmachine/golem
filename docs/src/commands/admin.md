@@ -29,4 +29,6 @@ $go admin librefresh
 ## Subcommands
 - **librefresh**: Refresh all libraries, reading in new listings.
 
+- **bugs**: View last 5 bug reports.
+
 

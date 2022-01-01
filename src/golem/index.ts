@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { Client, Intents, Interaction, Message, User } from 'discord.js'
+import { Client, Guild, Intents, Interaction, Message, User } from 'discord.js'
 import { Db, MongoClient } from 'mongodb'
 import winston from 'winston'
 import { GolemConf } from '../config'
@@ -148,6 +148,10 @@ class GolemBot {
   // TODO Maybe we can make a wrapper for this that is nicer to work with
   getUser(id: string): Promise<User> {
     return this.client.users.fetch(id)
+  }
+
+  getGuild(id: string): Promise<Guild> {
+    return this.client.guilds.fetch(id)
   }
 
   private loadEventHandlers(): void {

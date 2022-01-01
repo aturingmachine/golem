@@ -18,6 +18,13 @@ export class BugReport {
     readonly timestamp: string
   ) {}
 
+  async toString(): Promise<string> {
+    const user = await Golem.getUser(this.userId)
+    const guild = await Golem.getGuild(this.guildId)
+
+    return `[${this.timestamp}] ${user.username} - ${guild.name}: ${this.content}`
+  }
+
   async save(): Promise<this> {
     if (this._id) {
       await BugReport.Collection.replaceOne(
