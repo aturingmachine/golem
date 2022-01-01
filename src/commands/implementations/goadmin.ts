@@ -26,9 +26,10 @@ const execute = async (message: GolemMessage): Promise<void> => {
 
   switch (subcommand) {
     case AdminSubcommands.LibRefresh:
-      AdminHandler.libRefresh(message)
+      await AdminHandler.libRefresh(message)
       break
     case AdminSubcommands.Bugs:
+      await AdminHandler.getLatestBugReports(message)
       break
     default:
       if (!subcommand) {
