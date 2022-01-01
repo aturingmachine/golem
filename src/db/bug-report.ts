@@ -26,6 +26,7 @@ export class BugReport {
   }
 
   async save(): Promise<this> {
+    BugReport.log.silly(`saving bug report content ${this.content}`)
     if (this._id) {
       await BugReport.Collection.replaceOne(
         { _id: { $eq: this._id } },
@@ -61,6 +62,9 @@ export class BugReport {
   static fromMessage(message: GolemMessage): BugReport {
     BugReport.log.silly(
       `creating bug report from message: ${message.toDebug()}`
+    )
+    BugReport.log.silly(
+      `parsed content: ${message.parsed.getDefault('content', 'N/A')}`
     )
     return new BugReport(
       message.info.userId,
