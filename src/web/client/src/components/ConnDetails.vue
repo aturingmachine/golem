@@ -64,7 +64,7 @@
                     <td>Moods:</td>
                     <td class="text-right">
                       {{
-                        nowPlaying.moods.length
+                        nowPlaying.moods && nowPlaying.moods.length
                           ? nowPlaying.moods.join(', ')
                           : 'N/A'
                       }}

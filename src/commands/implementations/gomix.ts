@@ -1,10 +1,8 @@
-import { CommandInteraction, Message } from 'discord.js'
 import { GolemCommand } from '..'
 import { GolemModule } from '../../config/models'
 import { CommandNames } from '../../constants'
-import { Golem } from '../../golem'
 import { LocalListing } from '../../listing/listing'
-import { MessageInfo } from '../../messages/message-info'
+import { GolemMessage } from '../../messages/message-wrapper'
 import { MixMatcher } from '../../player/mixing/mix-matcher'
 import { LocalTrack } from '../../tracks/track'
 import { ArrayUtils } from '../../utils/list-utils'
@@ -12,28 +10,14 @@ import { GolemLogger, LogSources } from '../../utils/logger'
 
 const log = GolemLogger.child({ src: LogSources.GoMix })
 
-const execute = async (
-  interaction: CommandInteraction | Message,
-  mixtype?: string,
-  _query?: string
-): Promise<void> => {
-  const player = Golem.playerCache.getOrCreate(interaction)
-
-  if (!player) {
+const execute = async (interaction: GolemMessage): Promise<void> => {
+  if (!interaction.player) {
     await interaction.reply('Not in a valid voice channel.')
     log.info(`no channel to join, exiting early`)
     return
   }
 
-  let mixBy = mixtype || ''
-
-  const isSlashCommand = interaction instanceof CommandInteraction
-
-  if (isSlashCommand) {
-    mixBy = interaction.options.getString('mixtype') || ''
-  }
-
-  const info = new MessageInfo(interaction)
+  const mixBy = interaction.parsed.getDefault('mixtype', '')
 
   log.info(`executing with mixtype: ${mixBy || 'blank'}`)
 
@@ -42,14 +26,16 @@ const execute = async (
 
   if (['artist', 'track'].includes(mixBy.toLowerCase())) {
     if (
-      !player.currentResource ||
-      !(player.currentResource.metadata.track instanceof LocalTrack)
+      !interaction.player.currentResource ||
+      !(interaction.player.currentResource.metadata.track instanceof LocalTrack)
     ) {
       await interaction.reply('No current playing resource to mix off of.')
       return
     }
 
-    if (!(player.currentResource.metadata.track instanceof LocalTrack)) {
+    if (
+      !(interaction.player.currentResource.metadata.track instanceof LocalTrack)
+    ) {
       await interaction.reply('Currently unable to mix off non-local tracks.')
 
       return
@@ -60,42 +46,45 @@ const execute = async (
     switch (mixBy.toLowerCase()) {
       case 'artist':
         log.info(
-          `mixing by artist using "${player.currentResource.metadata.artist}"`
+          `mixing by artist using "${interaction.player.currentResource.metadata.listing.artist}"`
         )
         result = await MixMatcher.similarArtists(
-          player.currentResource.metadata.track.listing
+          interaction.player.currentResource.metadata.track.listing
         )
         break
       case 'track':
         log.info(
-          `mixing by track using "${player.currentResource.metadata.title}"`
+          `mixing by track using "${interaction.player.currentResource.metadata.listing.title}"`
         )
         result = await MixMatcher.similarTracks(
-          player.currentResource.metadata.track.listing
+          interaction.player.currentResource.metadata.track.listing
         )
         break
     }
 
     await interaction.reply(
-      `Mixing ${result.length} tracks off ${player.currentResource.metadata.artist}`
+      `Mixing ${result.length} tracks off ${interaction.player.currentResource.metadata.listing.artist}`
     )
   } else {
     // assume we want to mix the current artist?
     if (
-      player.currentResource &&
-      player.currentResource.metadata.track instanceof LocalTrack
+      interaction.player.currentResource &&
+      interaction.player.currentResource.metadata.track instanceof LocalTrack
     ) {
       const result = await MixMatcher.similarArtists(
-        player.currentResource?.metadata.track.listing
+        interaction.player.currentResource?.metadata.track.listing
       )
 
       await interaction.reply(
-        `Mixing ${result.length} tracks off ${player.currentResource.metadata.artist}`
+        `Mixing ${result.length} tracks off ${interaction.player.currentResource.metadata.listing.artist}`
       )
 
-      await player.enqueueMany(
-        info.userId,
-        LocalTrack.fromListings(ArrayUtils.shuffleArray(result), info.userId)
+      await interaction.player.enqueueMany(
+        interaction.info.userId,
+        LocalTrack.fromListings(
+          ArrayUtils.shuffleArray(result),
+          interaction.info.userId
+        )
       )
     } else {
       // we have no current to work off of...
@@ -110,7 +99,7 @@ const gomix = new GolemCommand({
   logSource: LogSources.GoMix,
   handler: execute,
   info: {
-    name: CommandNames.mix,
+    name: CommandNames.Base.mix,
     description: {
       long: 'Enqueue a selection of tracks mixed off the current playing track. Can mix by either like artist or like tracks, defaulting to artist if no argument is provided.',
       short: 'Add a short collection of songs; by similar artist or genre/mood',

@@ -1,6 +1,6 @@
 import { Snowflake } from 'discord-api-types'
 import { Interaction, Message } from 'discord.js'
-import { MessageInfo } from '../messages/message-info'
+import { GolemMessage } from '../messages/message-wrapper'
 import { MusicPlayer } from '../player/music-player'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { GolemEvent } from './event-emitter'
@@ -29,35 +29,35 @@ export class PlayerCache {
     return this.data.get(searchVal.guild.id)
   }
 
-  getOrCreate(interaction: Interaction | Message): MusicPlayer | undefined {
-    const info = new MessageInfo(interaction)
-
+  getOrCreate(interaction: GolemMessage): MusicPlayer | undefined {
     this.log.debug(
-      `getting player for: guild=${info.guild?.name}; member=${info.member?.user.username}; voiceChannel=${info.voiceChannel?.id}`
+      `getting player for: guild=${interaction.info.guild?.name}; member=${interaction.info.member?.user.username}; voiceChannel=${interaction.info.voiceChannel?.id}`
     )
 
-    if (!info.guild) {
+    if (!interaction.info.guild) {
       this.log.warn('no guild - cannot get player')
       return undefined
     }
 
-    if (!info.voiceChannel) {
+    if (!interaction.info.voiceChannel) {
       this.log.warn('not in a valid voice channel')
       return undefined
     }
 
-    if (!this.data.has(info.guildId)) {
-      this.log.verbose(`no player for ${info.guildId} - creating new`)
+    if (!this.data.has(interaction.info.guildId)) {
+      this.log.verbose(
+        `no player for ${interaction.info.guildId} - creating new`
+      )
       const player = new MusicPlayer({
-        channelId: info.voiceChannel.id || '',
-        guildId: info.guildId,
-        adapterCreator: info.guild.voiceAdapterCreator,
+        channelId: interaction.info.voiceChannel.id || '',
+        guildId: interaction.info.guildId,
+        adapterCreator: interaction.info.guild.voiceAdapterCreator,
       })
 
-      this.data.set(info.guildId, player)
+      this.data.set(interaction.info.guildId, player)
     }
 
-    return this.data.get(info.guildId)
+    return this.data.get(interaction.info.guildId)
   }
 
   delete(key: Snowflake): void {

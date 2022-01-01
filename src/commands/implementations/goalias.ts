@@ -1,32 +1,14 @@
-import { CommandInteraction, Message } from 'discord.js'
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { Handlers } from '../../handlers'
-import { MessageInfo } from '../../messages/message-info'
-import { formatForLog } from '../../utils/debug-utils'
+import { GolemMessage } from '../../messages/message-wrapper'
 import { GolemLogger, LogSources } from '../../utils/logger'
 
 const log = GolemLogger.child({ src: LogSources.GoAlias })
 
-const execute = async (
-  interaction: CommandInteraction | Message,
-  aliasContent?: string
-): Promise<void> => {
-  let subcommand = aliasContent?.split(' ').slice(0, 1).join('')
-  let commandParam = aliasContent?.split(' ').slice(1).join(' ')
-  log.silly(formatForLog({ subcommand, commandParam }))
-
-  if (interaction instanceof CommandInteraction) {
-    subcommand = interaction.options.getSubcommand()
-    commandParam =
-      interaction.options.getString('aliascommand') ||
-      interaction.options.getString('aliasname') ||
-      ''
-
-    log.debug(
-      `invoked as command with subcommand=${subcommand}; commandParam=${commandParam};`
-    )
-  }
+const execute = async (interaction: GolemMessage): Promise<void> => {
+  const subcommand = interaction.parsed.subCommand
+  log.silly(interaction.toDebug())
 
   if (!subcommand) {
     await interaction.reply(`Please provide a valid subcommand`)
@@ -34,11 +16,9 @@ const execute = async (
     return
   }
 
-  const info = new MessageInfo(interaction)
-
-  if (!info.guildId || !info.userId) {
+  if (!interaction.info.guildId || !interaction.info.userId) {
     log.error(
-      `Missing required values: guildId=${info.guildId}; userId=${info.userId};`
+      `Missing required values: guildId=${interaction.info.guildId}; userId=${interaction.info.userId};`
     )
 
     return
@@ -46,6 +26,8 @@ const execute = async (
 
   switch (subcommand) {
     case 'create':
+      const commandParam = interaction.parsed.getString('aliascommand')
+
       if (!commandParam) {
         await interaction.reply('Command requires a valid alias string')
 
@@ -57,17 +39,19 @@ const execute = async (
 
     case 'list':
     default:
-      await Handlers.Alias.listAliases(interaction, info.guildId)
+      await Handlers.Alias.listAliases(interaction, interaction.info.guildId)
       return
 
     case 'delete':
-      if (!commandParam) {
+      const aliasName = interaction.parsed.getString('aliasname')
+      if (!aliasName) {
         await interaction.reply('Command requires a valid alias string')
 
         return
       }
 
-      await Handlers.Alias.deleteAlias(interaction, commandParam)
+      await Handlers.Alias.deleteAlias(interaction, aliasName)
+      return
   }
 }
 
@@ -75,7 +59,7 @@ const goalias = new GolemCommand({
   logSource: LogSources.GoAlias,
   handler: execute,
   info: {
-    name: CommandNames.alias,
+    name: CommandNames.Base.alias,
     description: {
       short: 'Interact with the aliases registered for this server.',
     },

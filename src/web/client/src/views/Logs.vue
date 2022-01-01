@@ -1,47 +1,68 @@
 <template>
-  <div>
+  <div class="page">
     <div class="filter-container">
       <v-container>
         <v-row>
-          <v-col cols="12" sm="6" md="3">
-            <v-select
-              v-model="selectedSources"
-              @change="updateFilter()"
-              :items="sources"
-              label="Sources"
-              multiple
-              chips
-            ></v-select>
-          </v-col>
+          <v-form class="filter-form">
+            <v-col cols="12" sm="6" md="3" class="pt-0 pb-0">
+              <v-select
+                v-model="selectedSources"
+                @change="updateFilter()"
+                :items="sources"
+                label="Sources"
+                multiple
+                chips
+                dense
+              ></v-select>
+            </v-col>
 
-          <v-col cols="12" sm="6" md="3">
-            <v-select
-              v-model="selectedLevels"
-              @change="updateFilter()"
-              :items="logLevels"
-              label="Log Levels"
-              multiple
-              chips
-            ></v-select>
-          </v-col>
+            <v-col cols="12" sm="6" md="3" class="pt-0 pb-0">
+              <v-select
+                v-model="selectedLevels"
+                @change="updateFilter()"
+                :items="logLevels"
+                label="Log Levels"
+                multiple
+                chips
+                dense
+              ></v-select>
+            </v-col>
 
-          <v-col cols="12" sm="6" md="3">
-            <v-form>
-              <v-text-field
-                v-model="filterString"
-                label="Filter Logs"
-                @input="updateFilter()"
-              ></v-text-field>
-            </v-form>
-          </v-col>
+            <v-col cols="12" sm="6" md="3" class="pt-0 pb-0">
+              <v-form>
+                <v-text-field
+                  v-model="filterString"
+                  label="Filter Logs"
+                  @input="updateFilter()"
+                  dense
+                ></v-text-field>
+              </v-form>
+            </v-col>
+          </v-form>
         </v-row>
       </v-container>
     </div>
 
     <div class="log-container">
-      <pre id="log-console">
-        <div v-for="log in logs" :key="log.id"><i :class="`log-level ${log._client_level_class}`">{{ log.level }}</i> [<i :class="`log-src ${log._client_src_class}`">{{ log.src.trim() }}</i>] {{ log.message }}</div>
+      <pre v-if="logs.length" id="log-console">
+        <v-simple-table>
+          <template v-slot:default>
+          <thead>
+            <th class="text-left">level</th>
+            <th class="text-left">source</th>
+            <th>message</th>
+          </thead>
+          <tbody>
+            <tr v-for="log in logs" :key="log.id">
+              <td :class="`text-left log-level ${log._client_level_class}`"> {{ log.level }} </td>
+              <td :class="`text-left log-src ${log._client_src_class}`"> {{ log.src.trim() }} </td>
+              <td class="log-message"> {{ log.message }} </td>
+            </tr>
+          </tbody>
+          </template>
+        </v-simple-table>
       </pre>
+      <div class="pl-5" v-else>No Logs Streamed</div>
     </div>
   </div>
 </template>
@@ -55,7 +76,7 @@ export default {
 
   data: () => ({
     logsService: {},
-    logLevels: ['info', 'debug', 'warn', 'error'],
+    logLevels: ['info', 'verbose', 'debug', 'silly', 'warn', 'error'],
     selectedSources: [],
     selectedLevels: [],
     filterString: '',
@@ -106,19 +127,45 @@ export default {
 </script>
 
 <style lang="scss">
-.log-container {
-  padding-bottom: 48px;
+.filter-container {
+  position: sticky;
+  top: 60px;
+  background: #121212;
+  border-bottom: 2px #414141 solid;
+  padding-bottom: 0;
+  padding-top: 10px;
+  box-shadow: 1px 1px 4px #414141;
 }
 
-#log-console {
-  padding-left: 0;
+.filter-form {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  width: 100%;
+  align-items: center;
+}
+
+.log-container {
+  padding-bottom: 48px;
+  padding-top: 20px;
+}
+
+.log-message {
+  white-space: pre-line;
+  word-wrap: break-word;
+}
+
+.log-level,
+.log-src {
+  text-align: left;
+}
+
+.log #log-console {
+  padding-left: 0;
 }
 
 #log-console div {
-  white-space: pre-line;
-  word-break: break-word;
+  // white-space: pre-line;
+  // word-break: break-word;
   margin-bottom: 0;
   padding: 3px 10px 3px 6px;
 }
@@ -128,7 +175,7 @@ export default {
   background-color: rgba(255, 255, 255, 0.075);
 }
 
-#log-console i {
+#log-console td {
   font-style: normal;
   background-color: transparent !important;
 

@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { Client, Intents, Interaction, Message } from 'discord.js'
+import { Client, Guild, Intents, Interaction, Message, User } from 'discord.js'
 import { Db, MongoClient } from 'mongodb'
 import winston from 'winston'
 import { GolemConf } from '../config'
@@ -9,7 +9,11 @@ import { LastFm } from '../integrations/lastfm'
 import { PlexConnection } from '../integrations/plex'
 import { TrackListingInfo } from '../listing/listing'
 import { ListingLoader } from '../listing/listing-loaders'
-import { UserPermissionCache } from '../permissions/permission'
+import {
+  Permission,
+  UserPermission,
+  UserPermissionCache,
+} from '../permissions/permission'
 import { MusicPlayer } from '../player/music-player'
 import { ListingFinder } from '../search/track-finder'
 import { Debugger } from '../utils/debugger'
@@ -50,6 +54,9 @@ class GolemBot {
       this.loader = new ListingLoader()
 
       this.client = new Client({
+        allowedMentions: {
+          parse: ['users'],
+        },
         intents: [
           Intents.FLAGS.GUILDS,
           Intents.FLAGS.GUILD_VOICE_STATES,
@@ -64,7 +71,7 @@ class GolemBot {
       this.log.verbose(`Loaded ${this.loader.listings.length} listings`)
 
       if (GolemConf.modules.Music) {
-        this.trackFinder = new ListingFinder(this.loader.listings)
+        this.trackFinder = new ListingFinder()
       }
 
       await this.connectToPlex()
@@ -98,7 +105,31 @@ class GolemBot {
   }
 
   async login(): Promise<void> {
-    this.client.login(GolemConf.discord.token)
+    await this.client.login(GolemConf.discord.token)
+
+    this.log.silly(`attempting to set all guild owners to admin`)
+
+    await Promise.all(
+      this.client.guilds.cache.map(async (guild_) => {
+        const guild = await guild_.fetch()
+        this.log.silly(`setting owner to admin for ${guild.name}`)
+        const ownerPerms = await UserPermission.get(guild.ownerId, guild.id)
+        const golemAdminPerms = await UserPermission.get(
+          GolemConf.discord.adminId,
+          guild.id
+        )
+
+        if (!ownerPerms.permissions.has(Permission.Admin)) {
+          ownerPerms.permissions.add(Permission.Admin)
+          return ownerPerms.save()
+        }
+
+        if (!golemAdminPerms.permissions.has(Permission.Admin)) {
+          golemAdminPerms.permissions.add(Permission.Admin)
+          return golemAdminPerms.save()
+        }
+      })
+    )
   }
 
   setPresenceListening(listing: TrackListingInfo): void {
@@ -110,8 +141,17 @@ class GolemBot {
 
   setPresenceIdle(): void {
     this.client.user?.setActivity({
-      name: 'Use $go help to get started.',
+      name: 'Use $go get help to get started.',
     })
+  }
+
+  // TODO Maybe we can make a wrapper for this that is nicer to work with
+  getUser(id: string): Promise<User> {
+    return this.client.users.fetch(id)
+  }
+
+  getGuild(id: string): Promise<Guild> {
+    return this.client.guilds.fetch(id)
   }
 
   private loadEventHandlers(): void {

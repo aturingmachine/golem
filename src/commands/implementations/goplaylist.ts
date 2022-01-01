@@ -1,33 +1,28 @@
-import { CommandInteraction, Message } from 'discord.js'
 import { GolemCommand } from '..'
 import { GolemModule } from '../../config/models'
 import { CommandNames } from '../../constants'
 import { Golem } from '../../golem'
+import { GolemMessage } from '../../messages/message-wrapper'
+import { PlaylistMenu } from '../../playlist/playlist-menu'
 import { LocalTrack } from '../../tracks/track'
 import { GolemLogger, LogSources } from '../../utils/logger'
-import { GetPlaylistEmbed } from '../../utils/message-utils'
 import { Replier } from '../../utils/replies'
 
 const log = GolemLogger.child({ src: LogSources.GoPlayList })
 
 const execute = async (
-  interaction: CommandInteraction | Message,
+  interaction: GolemMessage,
   playlist?: string
 ): Promise<void> => {
   log.verbose('invoked')
-  const player = Golem.playerCache.getOrCreate(interaction)
 
-  if (!player) {
+  if (!interaction.player) {
     await interaction.reply('Not in a valid voice channel.')
     log.info(`no channel to join, exiting early`)
     return
   }
 
-  let listName = playlist || ''
-
-  if (interaction instanceof CommandInteraction) {
-    listName = interaction.options.getString('playlist') || ''
-  }
+  const listName = interaction.parsed.getString('playlist') || ''
 
   log.verbose(`invoked with ${playlist}`)
 
@@ -39,11 +34,11 @@ const execute = async (
 
     if (list) {
       log.verbose(`Enqueuing List ${list.name}`)
-      await player.enqueueMany(
-        interaction.member?.user.id || '',
+      await interaction.player.enqueueMany(
+        interaction.info.userId,
         LocalTrack.fromListings(
           Golem.trackFinder.findListingsByIds(list.listings),
-          interaction.member?.user.id || ''
+          interaction.info.userId
         )
       )
       await interaction.reply(
@@ -53,7 +48,10 @@ const execute = async (
       await interaction.reply(`No playlist found with name ${listName}`)
     }
   } else {
-    await interaction.reply(GetPlaylistEmbed())
+    const menu = new PlaylistMenu(interaction)
+
+    await menu.send()
+    await menu.collectResponse()
   }
 }
 
@@ -61,7 +59,7 @@ const goplaylist = new GolemCommand({
   logSource: LogSources.GoPlayList,
   handler: execute,
   info: {
-    name: CommandNames.playlist,
+    name: CommandNames.Base.playlist,
     description: {
       long: 'Play a given playlist by name. Presents a select of all playlists if no playlist name is provided. Requires enabling the Plex module and a local Plex Media Server.',
       short: 'Play a given playlist or choose one from a select menu.',

@@ -2,6 +2,7 @@ export type DiscordConfig = {
   token: string
   clientId: string
   serverIds: string[]
+  adminId: string
 }
 
 export type ImageConfig = {
@@ -38,7 +39,11 @@ export type WebConfig = {
   apiPort: number
 }
 
-export type JSONConfig = {
+export type YoutubeConfig = {
+  ytdlpPath: string
+}
+
+export type ConfigurationOptions = {
   discord?: DiscordConfig
   image?: ImageConfig
   lastfm?: LastFmConfig
@@ -47,7 +52,7 @@ export type JSONConfig = {
   plex?: PlexConfig
   search?: SearchConfig
   web?: WebConfig
-  youtube?: boolean
+  youtube?: YoutubeConfig
 }
 
 export enum GolemModule {

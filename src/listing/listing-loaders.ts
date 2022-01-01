@@ -12,11 +12,7 @@ const log = GolemLogger.child({ src: LogSources.Loader })
 const reg = /.*\.(png|html|pdf|db|jpg|jpeg|xml|js|css|ini)$/
 
 export class ListingLoader {
-  public readonly listings: LocalListing[]
-
-  constructor() {
-    this.listings = []
-  }
+  public readonly listings: LocalListing[] = []
 
   async load(): Promise<LocalListing[]> {
     if (!GolemConf.modules.Music) {
@@ -37,52 +33,150 @@ export class ListingLoader {
     return this.listings
   }
 
-  private async loadFromDisk(path: string, name: string): Promise<void> {
+  async refresh(): Promise<Record<string, number>> {
+    const result: Record<string, number> = {}
+
+    for (const lib of GolemConf.library.paths) {
+      const name = lib.split('/').pop() || 'Library'
+      log.info(`refreshing library - ${name}@${lib}`)
+
+      const record = await LibIndex.findOne({ name })
+      log.silly(`library - ${name}@${lib} mongoId: ${record?._id}`)
+
+      if (!record) {
+        log.info(`no record found for library - ${name}@${lib}`)
+        continue
+      }
+
+      // Get all paths for the library
+      const paths = this.getPaths(lib)
+      const newPathCount = paths.length - record.count
+
+      if (newPathCount === 0) {
+        log.info(`no new listings in library - ${name}@${lib}`)
+        continue
+      }
+
+      log.debug(
+        `found ${newPathCount} new listings for library - ${name}@${lib}`
+      )
+
+      const listingPaths = (
+        await LocalListing.find({
+          _id: { $in: record.listingIds },
+        })
+      ).map((l) => l.path)
+
+      const newListings = await this.listingsFromPaths(
+        paths.filter((path) => !listingPaths.includes(path)),
+        (listing) => {
+          record.listingIds.push(listing._id)
+          this.listings.push(listing)
+        }
+      )
+
+      result[name] = newListings.listings.length
+
+      log.verbose(`saving library - ${name}@${lib}`)
+      log.verbose(
+        `added ${newListings.listings.length} listings to - ${name}@${lib}`
+      )
+      log.warn(`encountered ${newListings.errors.length} errors`)
+
+      await record.save()
+    }
+
+    return result
+  }
+
+  private getPaths(path: string): string[] {
+    return getAllFiles(path, []).filter((trackPath) => !reg.test(trackPath))
+  }
+
+  /**
+   * Get LocalListings generated from some collection of paths.
+   *
+   * @param paths
+   * @param cb
+   * @returns
+   */
+  private async listingsFromPaths(
+    paths: string[],
+    cb?: (l: LocalListing) => void
+  ): Promise<{ listings: LocalListing[]; errors: Error[] }> {
+    const listings: LocalListing[] = []
+    const errors: Error[] = []
+
+    for (const path of paths) {
+      try {
+        const newListing = await this.saveListingFromPath(path)
+
+        listings.push(newListing)
+
+        if (cb) {
+          cb(newListing)
+        }
+      } catch (error) {
+        errors.push(error as Error)
+      }
+    }
+
+    return {
+      listings,
+      errors,
+    }
+  }
+
+  /**
+   * Create a LocalListing by reading a file at the provided path
+   * @param path
+   * @returns
+   */
+  private async saveListingFromPath(path: string): Promise<LocalListing> {
+    try {
+      const birthTime = fs.statSync(path).birthtimeMs
+      const meta = await mm.parseFile(path)
+      const listing = await LocalListing.fromMeta(meta, path, birthTime)
+
+      log.silly(`attempting to save ${listing.names.short.dashed}`)
+      await listing.save()
+      log.silly(`saved ${listing.names.short.dashed}`)
+
+      return listing
+    } catch (error) {
+      log.error(`${path} encountered error.`)
+      log.error(error)
+      throw error
+    }
+  }
+
+  private async loadFromDisk(
+    path: string,
+    name: string
+  ): Promise<LocalListing[]> {
     await this.wipeData(name)
 
-    log.verbose('Loading library from filesystem')
-    const paths = getAllFiles(path, []).filter(
-      (trackPath) => !reg.test(trackPath)
-    )
-    log.verbose(`Found ${paths.length} paths.`)
-
-    let errorCount = 0
     const listings: LocalListing[] = []
+
+    log.verbose('Loading library from filesystem')
+    const paths = this.getPaths(path)
+    log.verbose(`Found ${paths.length} paths.`)
 
     EzProgressBar.start(paths.length)
 
-    for (const trackPath of paths) {
-      try {
-        const birthTime = fs.statSync(trackPath).birthtimeMs
-        const meta = await mm.parseFile(trackPath)
-        const listing = await LocalListing.fromMeta(meta, trackPath, birthTime)
+    const newListings = await this.listingsFromPaths(paths, (listing) => {
+      EzProgressBar.add(1 / paths.length, `${listing.path.split('/').pop()}`)
+    })
 
-        log.silly(`attempting to save ${listing.names.short.dashed}`)
-        await listing.save()
-        log.silly(`saved ${listing.names.short.dashed}`)
-
-        listings.push(listing)
-      } catch (error) {
-        log.error(`${trackPath} encountered error.`)
-        log.warn('Continuing with library read')
-        log.error(error)
-        errorCount++
-      }
-
-      EzProgressBar.add(
-        1 / paths.length,
-        `${trackPath.split('/')[trackPath.split('/').length - 1]}`
-      )
-    }
-
+    listings.push(...newListings.listings)
     EzProgressBar.stop()
 
-    log.warn(`Encountered ${errorCount} errors while loading library.`)
+    log.warn(`Encountered ${newListings.errors} errors while loading library.`)
 
-    log.info('Attempting backup save')
     await this.save(name, listings)
     this.listings.push(...listings)
-    log.info('Backup saved to database')
+
+    return listings
   }
 
   private async loadTracksFromDB(path: string, name: string): Promise<void> {
@@ -126,10 +220,9 @@ export class ListingLoader {
     }
   }
 
-  private async save(
-    name: string,
-    listings: LocalListing[]
-  ): Promise<LocalListing[]> {
+  private async save(name: string, listings: LocalListing[]): Promise<void> {
+    log.info('Attempting backup save')
+
     const record = new LibIndex(
       name,
       listings.length,
@@ -138,6 +231,6 @@ export class ListingLoader {
 
     await record.save()
 
-    return listings
+    log.info('Backup saved to database')
   }
 }

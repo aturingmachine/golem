@@ -1,10 +1,8 @@
 import { ObjectId } from 'bson'
-import { Message } from 'discord.js'
 import { Collection, DeleteResult, Filter, FindOptions } from 'mongodb'
 import { RegisteredCommands } from '../commands/register-commands'
 import { DatabaseRecord } from '../db'
 import { Golem } from '../golem'
-import { Handlers } from '../handlers'
 import { ParsedMessage } from '../messages/message-info'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -30,6 +28,7 @@ function parseAliasFunctions(raw: string): AAliasFunction[] {
 
 export class CustomAlias {
   private static log = GolemLogger.child({ src: LogSources.CustomAlias })
+  private static cache: Map<string, CustomAlias[]> = new Map()
 
   public functions: AAliasFunction[] = []
 
@@ -48,11 +47,6 @@ export class CustomAlias {
 
   toString(): string {
     return `name=${this.name}; command=${this.command}; args=${this.args}`
-  }
-
-  // TODO get this to take in args as well or some shit idk
-  async run(msg: Message): Promise<void> {
-    await Handlers.Legacy.executeCustomAlias(msg, this.evaluated)
   }
 
   get helpString(): string {
@@ -125,9 +119,18 @@ export class CustomAlias {
 
   static async getAliases(guildId: string): Promise<CustomAlias[]> {
     CustomAlias.log.silly(`getting aliases for guild=${guildId}`)
-    const aliases = await CustomAlias.find({ guildId })
-    CustomAlias.log.silly(`found ${aliases.length} custom aliases`)
-    return aliases.map(
+
+    if (CustomAlias.cache.has(guildId)) {
+      CustomAlias.log.debug(`CustomAlias cache hit for ${guildId}`)
+      return CustomAlias.cache.get(guildId)!
+    }
+
+    CustomAlias.log.debug(`CustomAlias cache miss for ${guildId}`)
+
+    const records = await CustomAlias.find({ guildId })
+    CustomAlias.log.silly(`found ${records.length} custom aliases`)
+
+    const aliases = records.map(
       (match) =>
         new CustomAlias(
           match.name,
@@ -138,6 +141,10 @@ export class CustomAlias {
           match.description
         )
     )
+
+    CustomAlias.cache.set(guildId, aliases)
+
+    return aliases
   }
 
   static async getAliasFor(
@@ -171,7 +178,8 @@ export class CustomAlias {
     if (this._id) {
       await CustomAlias.Collection.replaceOne({ _id: { $eq: this._id } }, this)
     } else {
-      await CustomAlias.Collection.insertOne(this)
+      const res = await CustomAlias.Collection.insertOne(this)
+      this._id = res.insertedId
     }
 
     return this

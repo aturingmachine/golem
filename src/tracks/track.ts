@@ -28,12 +28,7 @@ export class LocalTrack extends Track {
     return createAudioResource<TrackAudioResourceMetadata>(this.listing.path, {
       inlineVolume: true,
       metadata: {
-        internalId: this.internalId,
-        trackId: this.listing.trackId,
-        artist: this.listing.artist,
-        album: this.listing.album,
-        title: this.listing.title,
-        duration: this.listing.duration,
+        listing: this.listing,
         track: this,
       },
     })
@@ -54,15 +49,15 @@ export class LocalTrack extends Track {
   }
 
   onQueue(): void {
-    Analytics.createPlayRecord(this.listing.trackId, this.userId, 'queue')
+    Analytics.createPlayRecord(this.listing.listingId, this.userId, 'queue')
   }
 
   onPlay(): void {
-    Analytics.createPlayRecord(this.listing.trackId, this.userId, 'play')
+    Analytics.createPlayRecord(this.listing.listingId, this.userId, 'play')
   }
 
   onSkip(): void {
-    Analytics.createPlayRecord(this.listing.trackId, this.userId, 'skip')
+    Analytics.createPlayRecord(this.listing.listingId, this.userId, 'skip')
   }
 
   static fromListing(listing: LocalListing, userId: string): LocalTrack {

@@ -4,12 +4,13 @@ import {
   createAudioResource,
 } from '@discordjs/voice'
 import winston from 'winston'
-import { raw as ytdl } from 'youtube-dl-exec'
 import { getInfo } from 'ytdl-core'
 import { TrackListingInfo } from '../../listing/listing'
 import { Track, TrackAudioResourceMetadata } from '../../tracks'
+import { formatForLog } from '../../utils/debug-utils'
 import { GolemLogger, LogSources } from '../../utils/logger'
 import { YoutubeListing } from './youtube-listing'
+import { youtubeDownload } from './ytdl'
 
 export class YoutubeTrack extends Track {
   private static readonly log: winston.Logger = GolemLogger.child({
@@ -19,6 +20,7 @@ export class YoutubeTrack extends Track {
   constructor(
     userId: string,
     public url: string,
+    public listing: YoutubeListing,
     public meta: TrackListingInfo
   ) {
     super(userId)
@@ -47,17 +49,9 @@ export class YoutubeTrack extends Track {
   }
 
   async toAudioResource(): Promise<AudioResource<TrackAudioResourceMetadata>> {
+    YoutubeTrack.log.debug(`${this.url} converting to audio resource`)
     return new Promise((resolve, reject) => {
-      const process = ytdl(
-        this.url,
-        {
-          o: '-',
-          q: true,
-          f: 'bestaudio[ext=webm+acodec=opus+asr=48000]/bestaudio',
-          r: '100K',
-        },
-        { stdio: ['ignore', 'pipe', 'ignore'] }
-      )
+      const process = youtubeDownload(this.url)
 
       if (!process.stdout) {
         reject(new Error('No stdout'))
@@ -82,10 +76,12 @@ export class YoutubeTrack extends Track {
 
       process.once('spawn', async () => {
         try {
+          YoutubeTrack.log.silly(`attempting to demux - ${this.listing.title}`)
           const metadata: TrackAudioResourceMetadata = {
-            ...this.meta,
             track: this,
+            listing: this.listing,
           }
+
           const demux = await demuxProbe(stream)
           const audioResource = createAudioResource<TrackAudioResourceMetadata>(
             stream,
@@ -103,7 +99,7 @@ export class YoutubeTrack extends Track {
         }
       })
 
-      process.once('error', onError)
+      process.on('error', onError)
     })
   }
 
@@ -123,13 +119,23 @@ export class YoutubeTrack extends Track {
 
     const imgUrl = _imgUrl?.slice(0, _imgUrl.indexOf('?'))
 
-    return new YoutubeTrack(userId, url, {
-      title: info.videoDetails.title,
-      duration: parseInt(info.videoDetails.lengthSeconds, 10),
-      artist: info.videoDetails.ownerChannelName,
-      album: '-',
-      albumArt: imgUrl,
-    })
+    const listing = new YoutubeListing(
+      url,
+      info.videoDetails.ownerChannelName,
+      info.videoDetails.title,
+      parseInt(info.videoDetails.lengthSeconds, 10),
+      imgUrl
+    )
+
+    YoutubeTrack.log.silly(
+      `created listing from ${url} - ${formatForLog(listing)}`
+    )
+
+    const track = YoutubeTrack.fromYoutubeListing(userId, listing)
+
+    YoutubeTrack.log.silly(`created track - ${formatForLog(listing)}`)
+
+    return track
   }
 
   /**
@@ -144,7 +150,7 @@ export class YoutubeTrack extends Track {
     userId: string,
     listing: YoutubeListing
   ): YoutubeTrack {
-    return new YoutubeTrack(userId, listing.url, {
+    return new YoutubeTrack(userId, listing.url, listing, {
       album: '-',
       artist: listing.artist,
       title: listing.title,

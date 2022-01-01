@@ -1,7 +1,7 @@
 import { Snowflake } from 'discord-api-types'
 import express from 'express'
 import { Golem } from '../../../golem'
-// import { resize } from '../../../utils/image-utils'
+import { Transformer } from '../utils/transformer'
 
 const router = express.Router()
 
@@ -34,15 +34,14 @@ router.get('/:serverId/nowplaying', async (req, res) => {
   }
 
   const playing = player.nowPlaying
+  const albumArt = await Transformer.normalizeArt(playing?.albumArt)
 
-  // res.json({
-  //   nowPlaying: {
-  //     ...playing,
-  //     albumArt: playing
-  //       ? (await resize(playing.albumArt)).toString('base64')
-  //       : '',
-  //   },
-  // })
+  res.json({
+    nowPlaying: {
+      ...playing,
+      albumArt: albumArt,
+    },
+  })
 })
 
 /**

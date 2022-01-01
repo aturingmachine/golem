@@ -32,3 +32,12 @@ $go play <youtube playlist url>
 - **query*** - `string`: If a string is provided the argument is interpreted as a search query. First searching the Local Libraries, if no Local Track is found the query is then run against YouTube - taking the first result as the track to play. If a Youtube link is provided it will be played - if the link is a playlist it will have the first 20 tracks shuffled and queued. This number can be modified using the extended argument `limit=20`.
 
 
+
+## Extended Arguments
+
+- **limit**
+	- Type: `number`
+	- Requires a YouTube playlist - Override the default fetch limit of 20
+- **shuffle**
+	- Type: `boolean`
+	- Requires a YouTube playlist - Shuffle the tracks pulled from the YouTube playlist

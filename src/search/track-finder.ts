@@ -1,4 +1,5 @@
 import fuzzy from 'fuzzy'
+import { Golem } from '../golem'
 import {
   SimilarArtistMatch,
   SimilarTrackMatch,
@@ -34,18 +35,13 @@ export class SearchResult {
 }
 
 export class ListingFinder {
-  public readonly listings: LocalListing[]
-
   private _artistNames!: string[]
-
-  constructor(listings: LocalListing[]) {
-    log.info('instantiating track finder', listings)
-    this.listings = listings
-  }
 
   private get artistNames(): string[] {
     if (!this._artistNames) {
-      this._artistNames = this.listings.map((l) => l.artist.toLowerCase())
+      this._artistNames = Golem.loader.listings.map((l) =>
+        l.artist.toLowerCase()
+      )
     }
 
     return this._artistNames
@@ -53,9 +49,11 @@ export class ListingFinder {
 
   search(query: string): SearchResult | undefined {
     log.info(`searching for ${query}`)
-    log.verbose(`using titleSearch over ${this.listings.length} listings`)
+    log.verbose(
+      `using titleSearch over ${Golem.loader.listings.length} listings`
+    )
 
-    const result = SearchSchemes.cascading(query, this.listings)
+    const result = SearchSchemes.cascading(query, Golem.loader.listings)
 
     const isArtistQuery = this.isArtistQuery(query, result)
     const isWideMatch = this.isWideMatch(result)
@@ -84,7 +82,7 @@ export class ListingFinder {
   }
 
   searchMany(query: string): LocalListing[] {
-    const result = SearchSchemes.cascading(query, this.listings)
+    const result = SearchSchemes.cascading(query, Golem.loader.listings)
 
     return result.map((r) => r.original)
   }
@@ -104,7 +102,10 @@ export class ListingFinder {
     return ArrayUtils.shuffleArray(availableSimilarArtists)
       .slice(0, takeArtists)
       .reduce((prev, curr) => {
-        const res = SearchSchemes.byArtistWithMb(curr.name, this.listings)
+        const res = SearchSchemes.byArtistWithMb(
+          curr.name,
+          Golem.loader.listings
+        )
         return prev.concat(
           res
             .map((r) => r.original)
@@ -121,7 +122,7 @@ export class ListingFinder {
     log.info('get similar tracks')
     return ArrayUtils.shuffleArray(
       similarMatches.reduce((prev, curr) => {
-        const res = SearchSchemes.byTitle(curr.name, this.listings)
+        const res = SearchSchemes.byTitle(curr.name, Golem.loader.listings)
         return res[0] ? prev.concat(res[0].original) : prev
       }, [] as LocalListing[])
     ).slice(0, takeTracks)
@@ -129,7 +130,7 @@ export class ListingFinder {
 
   artistSample(artist: string, count = 1): LocalListing[] {
     const res = []
-    let listings = this.listings.filter(
+    let listings = Golem.loader.listings.filter(
       (l) => l.artist.toLowerCase() === artist.toLowerCase() && l.albumArt
     )
 
@@ -149,7 +150,7 @@ export class ListingFinder {
   }
 
   findIdByPath(path: string): { id: string; name: string } {
-    const listing = this.listings.find((l) => l.path === path)
+    const listing = Golem.loader.listings.find((l) => l.path === path)
 
     return {
       id: listing?.id || '',
@@ -159,12 +160,12 @@ export class ListingFinder {
 
   findListingsByIds<Q extends { id: string }>(params: Q[]): LocalListing[] {
     return params
-      .map((param) => this.listings.find((l) => l.id === param.id))
+      .map((param) => Golem.loader.listings.find((l) => l.id === param.id))
       .filter(ArrayUtils.isDefined)
   }
 
   get trackCount(): number {
-    return this.listings.length
+    return Golem.loader.listings.length
   }
 
   private isArtistQuery(

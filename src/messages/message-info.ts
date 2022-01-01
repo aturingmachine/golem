@@ -1,7 +1,6 @@
 import {
   Guild,
   GuildMember,
-  Interaction,
   Message,
   StageChannel,
   VoiceChannel,
@@ -9,12 +8,15 @@ import {
 import { Permission, UserPermission } from '../permissions/permission'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger, LogSources } from '../utils/logger'
+import { GolemMessageInteraction } from './message-wrapper'
 
 const log = GolemLogger.child({ src: LogSources.ParsedMessage })
 
 /**
  * Parses legacy string commands into content and arguments
  * for easy consumption.
+ *
+ * @todo this needs to be moved to the OTHER Parsed stuff
  */
 export class ParsedMessage {
   public static argSeparatorRegexGlobal = / --/g
@@ -31,12 +33,15 @@ export class ParsedMessage {
 
     this.content = sliceIndex > 0 ? rawContent.slice(0, sliceIndex) : rawContent
 
-    this.args = Object.fromEntries(
-      rawContent
-        .slice(sliceIndex)
-        .split(/(?<!"[A-z0-9 ]*[^ ])\s/g)
-        .map((argPair) => argPair.split('='))
-    )
+    this.args =
+      sliceIndex < 1
+        ? {}
+        : Object.fromEntries(
+            rawContent
+              .slice(sliceIndex)
+              .split(/(?<!"[A-z0-9 ]*[^ ])\s/g)
+              .map((argPair) => argPair.split('='))
+          )
 
     log.silly(`new - ${formatForLog(this)}`)
   }
@@ -52,7 +57,7 @@ export class MessageInfo {
    */
   public parsed: ParsedMessage
 
-  constructor(public interaction: Message | Interaction) {
+  constructor(public interaction: GolemMessageInteraction) {
     this.member = this.interaction.member as GuildMember
     this.guild = this.interaction.guild
 
@@ -80,11 +85,11 @@ export class MessageInfo {
 
   /**
    * Check if this user can do some action in this guild
-   * @param perms
+   * @param perm
    * @returns
    */
-  async can(perms: Permission[]): Promise<boolean> {
-    return (await this.permissions).can(perms)
+  async can(perm: Permission): Promise<boolean> {
+    return (await this.permissions).can(perm)
   }
 }
 

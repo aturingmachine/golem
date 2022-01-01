@@ -1,17 +1,20 @@
 import { AudioResource } from '@discordjs/voice'
-import { TrackListingInfo } from '../listing/listing'
+import { AListing, TrackListingInfo } from '../listing/listing'
 
 export interface TrackAudioResourceMetadata {
-  title: string
-  duration: number
+  // title: string
+  // duration: number
   track: Track
-  internalId?: string
-  trackId?: string
-  artist?: string
-  album?: string
+  listing: AListing
+  // internalId?: string
+  // trackId?: string
+  // artist?: string
+  // album?: string
 }
 
 export abstract class Track {
+  listing!: AListing
+
   constructor(public userId: string) {}
 
   abstract toAudioResource():

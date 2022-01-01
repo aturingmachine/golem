@@ -2,7 +2,6 @@ import chalk from 'chalk'
 import winston from 'winston'
 import { GolemConf } from '../../config'
 import { Golem } from '../../golem'
-import { Handlers } from '../../handlers'
 import { Youtube } from '../../integrations/youtube/youtils'
 import { GolemLogger, LogSources } from '../logger'
 import { GolemRepl } from './golem-repl'
@@ -16,7 +15,6 @@ enum DebugCommands {
   Inspect = 'inspect',
   Pry = 'pry',
   Connections = 'conns',
-  Stats = 'stats',
   Exec = 'exec',
   Similar = 'sim',
   Youtube = 'yt',
@@ -115,20 +113,6 @@ export class Debugger {
       case DebugCommands.Youtube:
         const result = await Youtube.search(cmd.split(' ').slice(1).join(' '))
         console.log(result)
-        break
-      case DebugCommands.Stats:
-        const id =
-          cmd.split(' ')[1] || Golem.playerCache.keys().next().value || ''
-
-        console.log(
-          Handlers.GoGet.it({
-            value: cmd
-              .split(' ')
-              .filter((x) => !/^[0-9]*$/.test(x))
-              .join(' '),
-            guildId: id,
-          })
-        )
         break
 
       case DebugCommands.Inspect:

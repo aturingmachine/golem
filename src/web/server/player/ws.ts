@@ -4,10 +4,10 @@ import { Snowflake } from 'discord-api-types'
 import ws from 'ws'
 import { Golem } from '../../../golem'
 import { GolemEvent } from '../../../golem/event-emitter'
-import { LocalListing } from '../../../listing/listing'
+import { AListing } from '../../../listing/listing'
 import { MusicPlayer } from '../../../player/music-player'
-// import { resize } from '../../../utils/image-utils'
 import { GolemLogger } from '../../../utils/logger'
+import { Transformer } from '../utils/transformer'
 
 export class VoiceConnectionsWebSocket {
   private wsServer: ws.Server
@@ -71,8 +71,8 @@ export class PlayerWebSocket {
   private socket!: ws
   private timer!: NodeJS.Timer
   private player?: MusicPlayer
-  private nowPlaying?: LocalListing
-  private b64Art?: string
+  private nowPlaying?: AListing
+  private parsedArt?: string
 
   constructor(private guildId: string) {
     this.wsServer = new ws.Server({ noServer: true })
@@ -107,33 +107,38 @@ export class PlayerWebSocket {
   }
 
   private async updateNowPlaying(): Promise<void> {
-    // if (this.player?.nowPlaying) {
-    //   let data
-    //   const np = this.player.nowPlaying
-    //   const currentTime = this.player.currentTrackRemaining
-    //   if (this.nowPlaying?.trackId !== np.trackId) {
-    //     this.nowPlaying = np
-    //     this.b64Art = (await resize(np.albumArt, 300)).toString('base64')
-    //     data = {
-    //       nowPlaying: { ...np, albumArt: this.b64Art },
-    //       currentTime,
-    //     }
-    //   } else {
-    //     data = {
-    //       currentTime: this.player.currentTrackRemaining,
-    //     }
-    //   }
-    //   try {
-    //     this.socket.send(JSON.stringify(data))
-    //   } catch (error) {
-    //     console.error(error)
-    //     console.error('SOCKET SEND FAILED!')
-    //   }
-    // }
+    if (this.player?.nowPlaying) {
+      let data
+      const np = this.player.nowPlaying
+      const currentTime = this.player.currentTrackRemaining
+
+      if (this.nowPlaying?.listingId !== np.listingId) {
+        this.parsedArt = await Transformer.normalizeArt(np.albumArt)
+
+        this.nowPlaying = np
+
+        data = {
+          nowPlaying: { ...np, albumArt: this.parsedArt },
+          currentTime,
+        }
+      } else {
+        data = {
+          currentTime: this.player.currentTrackRemaining,
+        }
+      }
+
+      try {
+        this.socket.send(JSON.stringify(data))
+      } catch (error) {
+        console.error(error)
+        console.error('SOCKET SEND FAILED!')
+      }
+    }
   }
 }
 
 export class QueueWebSocket {
+  private log = GolemLogger.child({ src: 'queue-ws' })
   private wsServer: ws.Server
   private socket!: ws
   private timer!: NodeJS.Timer
@@ -177,22 +182,24 @@ export class QueueWebSocket {
     if (queue) {
       const data = []
       for (const item of queue) {
-        if (!this.imageCache[item.metadata.album]) {
-          // const art = (await resize(item.meta.albumArt, 100)).toString('base64')
-          // this.imageCache[item.meta.album] = art
+        const cachedRecord = this.imageCache[item.listing.listingId]
+        this.log.silly(
+          `item ${item.listing.title} found cached image ${cachedRecord}`
+        )
+
+        if (!cachedRecord || cachedRecord === '') {
+          this.log.silly(`image cache miss for ${item.listing.title}`)
+          const art = await Transformer.normalizeArt(item.listing.albumArt)
+          this.log.silly(`caching ${art} for ${item.listing.title}`)
+
+          this.imageCache[item.listing.listingId] = art
         }
 
         data.push({
           ...item.metadata,
-          albumArt: this.imageCache[item.metadata.album],
+          albumArt: this.imageCache[item.listing.listingId],
         })
       }
-      // const data = {
-      //   queue: queue.map((t) => ({
-      //     ...t.listing,
-      //     albumArt: (await resize(t.listing.albumArt, 100)).toString('base64'),
-      //   })),
-      // }
 
       this.socket.send(JSON.stringify({ queue: data }))
     }

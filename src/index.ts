@@ -2,7 +2,7 @@ import { registerCommands } from './commands/register-commands'
 import { GolemConf } from './config'
 import { Golem } from './golem'
 import { GolemLogger } from './utils/logger'
-// import { startApi } from './web/server'
+import { startApi } from './web/server'
 
 function shutdownHandler(): void {
   GolemLogger?.info('running shutdown handler', { src: 'main' }) ||
@@ -35,9 +35,9 @@ const main = async (): Promise<void> => {
 
   await Golem.login()
 
-  // if (GolemConf.modules.Web) {
-  //   startApi()
-  // }
+  if (GolemConf.modules.Web) {
+    startApi()
+  }
 
   Golem.debugger.start()
 

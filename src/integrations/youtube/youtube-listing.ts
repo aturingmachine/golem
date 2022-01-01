@@ -1,6 +1,10 @@
+import { URL } from 'url'
+import { EmbedFieldData } from 'discord.js'
 import ytpl from 'ytpl'
-import { AListing } from '../../listing/listing'
+import { AListing, ListingEmbedData } from '../../listing/listing'
 import { GolemLogger, LogSources } from '../../utils/logger'
+import { averageColor, embedFieldSpacer } from '../../utils/message-utils'
+import { humanReadableDuration } from '../../utils/time-utils'
 
 export class YoutubeListing extends AListing {
   private static log = GolemLogger.child({ src: LogSources.YoutubeListing })
@@ -14,7 +18,40 @@ export class YoutubeListing extends AListing {
     duration: number,
     artworkUrl?: string
   ) {
-    super(title, duration, author, '', artworkUrl)
+    const parsedUrl = new URL(url)
+    const listingId = parsedUrl.searchParams.get('v')
+    super(listingId || url, title, duration, author, '', artworkUrl)
+  }
+
+  async toEmbed(): Promise<ListingEmbedData> {
+    const duration = humanReadableDuration(this.duration)
+    const color = await averageColor(this.albumArt)
+
+    const fields: EmbedFieldData[] = [
+      {
+        name: 'Artist',
+        value: this.artist,
+      },
+      {
+        name: 'Album',
+        value: '-',
+        inline: true,
+      },
+      embedFieldSpacer,
+      {
+        name: 'Duration',
+        value: duration,
+        inline: true,
+      },
+      {
+        name: 'Track',
+        value: this.title,
+        inline: true,
+      },
+      embedFieldSpacer,
+    ]
+
+    return { fields, color }
   }
 
   static fromPlaylistItem(item: ytpl.Item): YoutubeListing {

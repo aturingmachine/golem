@@ -17,7 +17,7 @@ import {
 import winston from 'winston'
 import { Golem } from '../golem'
 import { GolemEvent } from '../golem/event-emitter'
-import { TrackListingInfo } from '../listing/listing'
+import { AListing } from '../listing/listing'
 import { Track, TrackAudioResourceMetadata } from '../tracks'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { humanReadableTime, wait } from '../utils/time-utils'
@@ -59,13 +59,13 @@ export class MusicPlayer {
     return this.audioPlayer.state.status === AudioPlayerStatus.Playing
   }
 
-  public get nowPlaying(): TrackListingInfo | undefined {
-    return this.currentResource?.metadata.track.metadata
+  public get nowPlaying(): AListing | undefined {
+    return this.currentResource?.metadata.listing
   }
 
   public get currentTrackRemaining(): number {
     return (
-      (this.currentResource?.metadata.duration || 0) -
+      (this.currentResource?.metadata.listing.duration || 0) -
       (this.currentResource?.playbackDuration || 0) / 1000
     )
   }
@@ -115,12 +115,13 @@ export class MusicPlayer {
   public async enqueueMany(userId: string, tracks: Track[]): Promise<void> {
     this.log.info(`enqueueing ${tracks.length} listings`)
     this.queue.addMany(userId, tracks)
-    tracks.forEach((t) => t.onPlay())
-    void (await this.processQueue())
+    // TODO handle this properly
+    // tracks.forEach((t) => t.onPlay())
+    await this.processQueue()
   }
 
   public async skip(count = 0): Promise<void> {
-    this.log.info(`skipping ${this.currentResource?.metadata.title}`)
+    this.log.info(`skipping ${this.currentResource?.metadata.listing.title}`)
     this.currentResource?.metadata.track.onSkip()
 
     this.queue.skip(count)

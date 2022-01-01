@@ -1,16 +1,11 @@
-import { CommandInteraction, Message } from 'discord.js'
 import { GolemCommand } from '..'
 import { GolemModule } from '../../config/models'
 import { CommandNames } from '../../constants'
-import { Golem } from '../../golem'
+import { GolemMessage } from '../../messages/message-wrapper'
 import { GolemLogger, LogSources } from '../../utils/logger'
 
-const execute = async (
-  interaction: CommandInteraction | Message
-): Promise<void> => {
-  const player = Golem.getPlayer(interaction)
-
-  if (!player) {
+const execute = async (interaction: GolemMessage): Promise<void> => {
+  if (!interaction.player) {
     await interaction.reply('Not in a valid voice channel')
     return
   }
@@ -20,7 +15,7 @@ const execute = async (
   await interaction.reply('Clearing the queue!')
 
   try {
-    player.stop()
+    interaction.player.stop()
   } catch (error) {
     GolemLogger.warn('player stop threw error')
   }
@@ -30,7 +25,7 @@ const gostop = new GolemCommand({
   logSource: LogSources.GoStop,
   handler: execute,
   info: {
-    name: CommandNames.stop,
+    name: CommandNames.Base.stop,
     description: {
       short: 'Stops the current playback.',
     },
