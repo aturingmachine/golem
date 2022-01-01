@@ -115,6 +115,8 @@ export class ParsedCommand {
       case BuiltInAlias.PlayNext:
       case CommandBase.playNext:
         return parseString(parsed, RegisteredCommands.goplaynext.info)
+      case CommandBase.report:
+        return parseString(parsed, RegisteredCommands.goreport.info)
       case CommandBase.search:
         return parseString(parsed, RegisteredCommands.gosearch.info)
       case CommandBase.shuffle:
