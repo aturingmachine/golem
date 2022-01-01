@@ -70,7 +70,7 @@ const gopermission = new GolemCommand({
             type: 'user',
             name: 'user',
             description: {
-              long: '',
+              long: 'The mentioned user to fetch permissions for. Autocompleting the user using the `@` syntax will select the proper user.',
               short: 'The user to fetch permissions for.',
             },
             required: true,
@@ -87,8 +87,8 @@ const gopermission = new GolemCommand({
             type: 'user',
             name: 'user',
             description: {
-              long: '',
-              short: 'The user to grant permissions to.',
+              long: 'The mentioned user whos permissions should be set. Autocompleting the user using the `@` syntax will select the proper user.',
+              short: 'The user whose permissions are being set.',
             },
             required: true,
           },
@@ -96,7 +96,7 @@ const gopermission = new GolemCommand({
             type: 'string',
             name: 'permissions',
             description: {
-              long: '',
+              long: 'The dot notation based permission strings to set on the user. Delimit seperate permissions with a space to set multiple permissions. This will overwrite the users existing permissions',
               short:
                 'The permissions to set, space delimited. Overwrites existing permissions.',
             },
@@ -115,7 +115,7 @@ const gopermission = new GolemCommand({
             type: 'user',
             name: 'user',
             description: {
-              long: '',
+              long: 'The mentioned user to grant permissions to. Autocompleting the user using the `@` syntax will select the proper user.',
               short: 'The user to grant permissions to.',
             },
             required: true,
@@ -124,7 +124,7 @@ const gopermission = new GolemCommand({
             type: 'string',
             name: 'permission',
             description: {
-              long: '',
+              long: 'The dot notation based permission string to grant to the user.',
               short: 'The permission to grant.',
             },
             required: true,
@@ -141,7 +141,7 @@ const gopermission = new GolemCommand({
             type: 'user',
             name: 'user',
             description: {
-              long: '',
+              long: 'The mentioned user to remove permissions from. Autocompleting the user using the `@` syntax will select the proper user.',
               short: 'The user to remove permissions from.',
             },
             required: true,
@@ -150,7 +150,7 @@ const gopermission = new GolemCommand({
             type: 'string',
             name: 'permission',
             description: {
-              long: '',
+              long: 'The dot notation based permission to remove from the user.',
               short: 'The permissions to remove.',
             },
             required: true,
@@ -160,8 +160,18 @@ const gopermission = new GolemCommand({
     ],
     args: [],
     examples: {
-      legacy: [],
-      slashCommand: [],
+      legacy: [
+        '$go perms get @Kim Dahyun',
+        '$go perms set @Kim Dahyun alias.create alias.edit moderator',
+        '$go perms add @Kim Dahyun alias.delete',
+        '$go perms remove @Kim Dahyun moderator',
+      ],
+      slashCommand: [
+        '/goperms get @Kim Dahyun',
+        '/goperms set @Kim Dahyun alias.create alias.edit moderator',
+        '/goperms add @Kim Dahyun alias.delete',
+        '/goperms remove @Kim Dahyun moderator',
+      ],
     },
   },
 })

@@ -30,7 +30,7 @@ Enables reading playlists from a Plex Media Server that uses one or more loaded 
 
 ## YouTube
 
-Enables playing YouTube videos as tracks. Requires ffmpeg to be on the path of the user running Golem.
+Enables playing YouTube videos as tracks. Requires ffmpeg to be on the path of the user running Golem, as well as a local [ytdlp](https://github.com/yt-dlp/yt-dlp) installation (see [The ytdlp Entry in Admin=>External Dependencies](../admin/index.md#ytdlp)).
 
 > See also: the [$go play](../commands/play.md) command
 

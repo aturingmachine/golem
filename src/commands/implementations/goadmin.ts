@@ -56,8 +56,8 @@ const goadmin = new GolemCommand({
     ],
     args: [],
     examples: {
-      legacy: [],
-      slashCommand: [],
+      legacy: ['$go admin librefresh'],
+      slashCommand: ['/goadmin librefresh'],
     },
   },
 })

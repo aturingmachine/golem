@@ -28,3 +28,5 @@ $go search twice tt
 - **query*** - `string`: The query to run against the Local Search Index.
 
 
+
+

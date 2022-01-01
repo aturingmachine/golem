@@ -72,6 +72,18 @@ class DocCommand {
 
     return all.join(' ').concat(oneOfMods.join(' '))
   }
+
+  get extendedArguments() {
+    if (!this.info.extendedArgs || this.info.extendedArgs.length < 1) {
+      return []
+    }
+
+    return this.info.extendedArgs.reduce((prev, curr) => {
+      return prev.concat(
+        `\n- **${curr.key}**\n\t- Type: \`${curr.type}\`\n\t- ${curr.description}`
+      )
+    }, '## Extended Arguments\n')
+  }
 }
 
 commands.forEach((cmd) => {
@@ -94,6 +106,7 @@ commands.forEach((cmd) => {
     .replaceAll('<%arguments>', command.argsString())
     .replaceAll('<%subcommands>', command.subcommands)
     .replaceAll('<%badge>', command.badges)
+    .replaceAll('<%extended_args>', command.extendedArguments)
 
   writeFileSync(fp, content, { encoding: 'utf-8' })
   console.log(`[DOCGEN] Page rendered at ${fp}`)

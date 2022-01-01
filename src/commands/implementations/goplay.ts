@@ -50,6 +50,20 @@ const goplay = new GolemCommand({
       oneOf: [GolemModule.Music, GolemModule.Youtube],
     },
     alias: 'play',
+    extendedArgs: [
+      {
+        key: 'limit',
+        type: 'number',
+        description:
+          'Requires a YouTube playlist - Override the default fetch limit of 20',
+      },
+      {
+        key: 'shuffle',
+        type: 'boolean',
+        description:
+          'Requires a YouTube playlist - Shuffle the tracks pulled from the YouTube playlist',
+      },
+    ],
   },
 })
 

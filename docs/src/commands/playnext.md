@@ -32,3 +32,5 @@ $go playnext <youtube playlist url>
 - **query*** - `string`: If a string is provided the argument is interpreted as a search query. First searching the Local Libraries, if no Local Track is found the query is then run against YouTube - taking the first result as the track to play.
 
 
+
+

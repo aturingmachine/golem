@@ -24,17 +24,6 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
       const listingEmbed = new ListingEmbed(interaction)
 
       await listingEmbed.send('play', { content: 'Skipped!' })
-      // const assets = await GetEmbedFromListing(
-      //   interaction.player.nowPlaying,
-      //   interaction.player,
-      //   'playing'
-      // )
-
-      // await interaction.reply({
-      //   content: 'Skipped!',
-      //   embeds: [assets.embed],
-      //   files: assets.image ? [assets.image] : [],
-      // })
     } else {
       await interaction.reply({
         content: 'Skipped! Queue empty.',
