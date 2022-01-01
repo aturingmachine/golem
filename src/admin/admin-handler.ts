@@ -20,7 +20,7 @@ export const AdminHandler = {
     this.log.debug(`getting bug reports`)
     const reports = await BugReport.find(
       {},
-      { limit: 5, sort: [['timestamp', 'asc']] }
+      { limit: 5, sort: [['timestamp', 'desc']] }
     )
     let response = 'Last 5 Reports:\n'
 
