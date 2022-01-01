@@ -18,7 +18,10 @@ export const AdminHandler = {
 
   async getLatestBugReports(message: GolemMessage): Promise<void> {
     this.log.debug(`getting bug reports`)
-    const reports = await BugReport.find({}, { limit: 5 })
+    const reports = await BugReport.find(
+      {},
+      { limit: 5, sort: [['timestamp', 'asc']] }
+    )
     let response = 'Last 5 Reports:\n'
 
     for (const report of reports) {
