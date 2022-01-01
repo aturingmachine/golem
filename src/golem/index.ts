@@ -54,6 +54,9 @@ class GolemBot {
       this.loader = new ListingLoader()
 
       this.client = new Client({
+        allowedMentions: {
+          parse: ['users'],
+        },
         intents: [
           Intents.FLAGS.GUILDS,
           Intents.FLAGS.GUILD_VOICE_STATES,

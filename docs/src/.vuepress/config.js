@@ -52,6 +52,7 @@ module.exports = {
       },
       {
         text: 'Admin', items: [
+          { text: 'General Information', link: '/admin/index' },
           { text: 'Config', link: '/admin/config' }
         ]
       },
