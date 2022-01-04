@@ -30,3 +30,5 @@ $go mix track
 - **mixtype** - `string`: How to execute the mix. The supported option will be parsed off the currently playing track, like tracks found, then shuffled and queued.
 
 
+
+

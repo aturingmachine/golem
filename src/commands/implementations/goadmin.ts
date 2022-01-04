@@ -8,6 +8,7 @@ const log = GolemLogger.child({ src: LogSources.GoAdmin })
 
 export enum AdminSubcommands {
   LibRefresh = 'librefresh',
+  Bugs = 'bugs',
 }
 
 const execute = async (message: GolemMessage): Promise<void> => {
@@ -25,7 +26,10 @@ const execute = async (message: GolemMessage): Promise<void> => {
 
   switch (subcommand) {
     case AdminSubcommands.LibRefresh:
-      AdminHandler.libRefresh(message)
+      await AdminHandler.libRefresh(message)
+      break
+    case AdminSubcommands.Bugs:
+      await AdminHandler.getLatestBugReports(message)
       break
     default:
       if (!subcommand) {
@@ -53,11 +57,18 @@ const goadmin = new GolemCommand({
         },
         args: [],
       },
+      {
+        name: 'bugs',
+        description: {
+          short: 'View last 5 bug reports.',
+        },
+        args: [],
+      },
     ],
     args: [],
     examples: {
-      legacy: [],
-      slashCommand: [],
+      legacy: ['$go admin librefresh'],
+      slashCommand: ['/goadmin librefresh'],
     },
   },
 })

@@ -41,14 +41,12 @@ export function expandBuiltInAlias(raw: string): string | undefined {
 }
 
 export type CommandHandlerFn = (
-  // interaction: Message | CommandInteraction,
   message: GolemMessage,
   ...args: any[]
 ) => Promise<any>
 
 export type CommandErrorHandlerFn = (
   error: Error,
-  // interaction: Message | CommandInteraction,
   message: GolemMessage,
   ...args: any[]
 ) => Promise<any>
@@ -122,6 +120,12 @@ type CommandArgs =
   | StringCommandArgWithChoices
   | IntegerCommandArgWithChoices
 
+type ExtendedArg = {
+  key: string
+  type: 'string' | 'number' | 'boolean'
+  description: string
+}
+
 export type CommandDescription = {
   name: CommandBase
   description: CommandInfo
@@ -136,6 +140,7 @@ export type CommandDescription = {
   }
   alias?: string
   subcommands?: SubCommand[]
+  extendedArgs?: ExtendedArg[]
 }
 
 type CommandOptions = {

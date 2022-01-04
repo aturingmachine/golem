@@ -5,8 +5,8 @@ const cmds = commands.map((cmd) => {
   const fp = require('path')
     .resolve(__dirname, `../commands/${cmd.options.info.name}.md`)
 
-  return { 
-    path: `/commands/${cmd.options.info.name}`, 
+  return {
+    path: `/commands/${cmd.options.info.name}`,
     filePath: fp,
     name: cmd.options.info.name
   }
@@ -37,8 +37,8 @@ module.exports = {
     logo: '/golem-logo.png',
     smoothScroll: true,
     nav: [
-      { 
-        text: 'Commands', 
+      {
+        text: 'Commands',
         items: [{ text: 'All commands', link: '/commands/' }, ...cmds.map(cmd => ({ text: cmd.name, link: cmd.path }))],
       },
       {
@@ -47,16 +47,18 @@ module.exports = {
           { text: 'GolemAlias', link: '/reference/alias-strings' },
           { text: 'Modules', link: '/reference/modules' },
           { text: 'Tracks', link: '/reference/tracks' },
+          { text: 'Extended Arguments', link: '/reference/extended-args' },
         ]
       },
       {
         text: 'Admin', items: [
+          { text: 'General Information', link: '/admin/index' },
           { text: 'Config', link: '/admin/config' }
         ]
       },
     ],
     sidebar: {
-      '/commands': cmds.map((cmd) => [cmd.path, cmd.name ])
+      '/commands': cmds.map((cmd) => [cmd.path, cmd.name])
     }
   },
 

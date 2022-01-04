@@ -12,6 +12,7 @@ import gopermission from './implementations/gopermission'
 import goplay from './implementations/goplay'
 import goplaylist from './implementations/goplaylist'
 import goplaynext from './implementations/goplaynext'
+import goreport from './implementations/goreport'
 import gosearch from './implementations/gosearch'
 import goshuffle from './implementations/goshuffle'
 import goskip from './implementations/goskip'
@@ -70,6 +71,7 @@ export const RegisteredCommands = {
   goplay,
   goplaylist,
   goplaynext,
+  goreport,
   gosearch,
   goshuffle,
   goskip,

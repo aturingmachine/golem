@@ -17,12 +17,6 @@ import {
   YoutubeConfig,
 } from './models'
 
-/* eslint-disable-next-line @typescript-eslint/no-var-requires */
-// const rawConfig: ConfigurationOptions = require(path.resolve(
-//   __dirname,
-//   '../../config.js'
-// ))
-
 const rawConfig: ConfigurationOptions = YAML.parse(
   readFileSync(
     path.resolve(

@@ -27,3 +27,5 @@ tags:
 <%arguments>
 
 <%subcommands>
+
+<%extended_args>

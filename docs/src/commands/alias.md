@@ -40,3 +40,5 @@ $go alias delete hype
 	- **aliasname*** - `string`: The name of the alias to delete. The name is equivalent to what one runs for the command without the prefixed $.
 
 - **list**: List aliases registered to this server.
+
+

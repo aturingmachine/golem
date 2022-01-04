@@ -8,7 +8,7 @@ tags:
 
 # Golem Configuration
 
-Golem is configured via a `config.js` file. This file control everything from being able to log Golem into Discord, to what modules to load.
+Golem is configured via a `config.yml` file. This file controls everything from being able to log Golem into Discord, to what modules to load.
 
 ## Example Configuration File
 

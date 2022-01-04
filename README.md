@@ -1,5 +1,11 @@
 # Golem
 
+Golem is a Discord Bot mean to be run locally as a sort-of-replacement for music playing bots of old.
+
+## Documentation
+
+Detailed documentation can be found on the [Golem Documentation Site](https://aturingmachine.github.io/golem/).
+
 ## Features
 
 - Stream local music to Discord voice channels
@@ -19,22 +25,8 @@ git clone git@github.com:aturingmachine/discord-bot.git
 npm ci
 
 # Copy configuration files
-cp config.example.js config.js
+cp config.example.yml config.yml
+
+# Dev only - dependecy install helper
+bash scripts/dev-install.sh
 ```
-
-## Configuring Golem
-
-TODO
-
-1. discord dev help
-2. setting up config values
-3. running mongo
-
-## Golem Modules
-
-Golem can be configured to only enable the features you want. As of writing the code/dependencies for supporting these will still exist on your local Installation but Golem will disable their functionality.
-
- - Plex: Integrate with a Plex Media Server to read existing playlists
- - LastFm: Allow queueing tracks of like Artists/Tracks using LastFM's similarity API
- - Web: Enable a Web Client for managing Golem
- - Youtube: Enable Streaming Youtube audio to the Voice Channel

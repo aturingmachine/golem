@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import { Client, Intents, Interaction, Message, User } from 'discord.js'
+import { Client, Guild, Intents, Interaction, Message, User } from 'discord.js'
 import { Collection, Db, MongoClient } from 'mongodb'
 import winston from 'winston'
 import { GolemConf } from '../config'
@@ -56,6 +56,9 @@ class GolemBot {
       this.loader = new ListingLoader()
 
       this.client = new Client({
+        allowedMentions: {
+          parse: ['users'],
+        },
         intents: [
           Intents.FLAGS.GUILDS,
           Intents.FLAGS.GUILD_VOICE_STATES,
@@ -158,6 +161,10 @@ class GolemBot {
       listings: Golem.db.collection('listings'),
       permissions: Golem.db.collection('permissions'),
     }
+  }
+
+  getGuild(id: string): Promise<Guild> {
+    return this.client.guilds.fetch(id)
   }
 
   private loadEventHandlers(): void {

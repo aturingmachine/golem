@@ -20,6 +20,7 @@ export enum CommandBase {
   play = 'play',
   playlist = 'playlist',
   playNext = 'playnext',
+  report = 'report',
   search = 'search',
   shuffle = 'shuffle',
   skip = 'skip',
