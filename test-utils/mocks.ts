@@ -127,3 +127,21 @@ export const deepMock = <S>(service: S): Mocked<S> => {
       .filter(([_prop, val]) => val !== undefined)
   )
 }
+
+export function addStaticMocks(
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  o: object,
+  ...funcNames: (string | [string, any])[]
+): void {
+  const mockProps = Object.fromEntries(
+    funcNames.map((f) => {
+      if (typeof f === 'string') {
+        return [f, { value: jest.fn() }]
+      }
+
+      return [f[0], { value: f[1] }]
+    })
+  )
+
+  Object.defineProperties(o, mockProps)
+}

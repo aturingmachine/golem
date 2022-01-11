@@ -1,19 +1,19 @@
 import { User } from 'discord.js'
-import { Collection, ObjectId, OptionalId } from 'mongodb'
-import { CollectionNames } from '../src/constants'
+import { Collection } from 'mongodb'
+import { CollectionNames } from '../../src/constants'
 import {
-  CustomAliasRecord,
-  DBPlayRecord,
-  LibIndexRecord,
   ListingRecord,
-  LocalAlbumRecord,
+  CustomAliasRecord,
+  LibIndexRecord,
   UserPermissionRecord,
-} from '../src/db/records'
-import { GolemEventEmitter } from '../src/golem/event-emitter'
-import { PlayerCache } from '../src/golem/player-cache'
-import { UserPermissionCache } from '../src/permissions/permission'
-import { MockedMusicPlayer } from './mock-music-player'
-import { Mocked } from './mocks'
+  LocalAlbumRecord,
+  DBPlayRecord,
+} from '../../src/db/records'
+import { GolemEventEmitter } from '../../src/golem/event-emitter'
+import { PlayerCache } from '../../src/golem/player-cache'
+import { UserPermissionCache } from '../../src/permissions/permission'
+import { Mocked } from '../mocks'
+import { MockMusicPlayer } from './music-player'
 
 export type MockedGolem = {
   permissions: Mocked<UserPermissionCache>
@@ -71,7 +71,7 @@ export type MockedGolem = {
   }
 
   initialize: jest.SpyInstance<Promise<void>>
-  getPlayer: jest.SpyInstance<MockedMusicPlayer | undefined>
+  getPlayer: jest.SpyInstance<typeof MockMusicPlayer | undefined>
   removePlayer: jest.SpyInstance<Promise<void>>
   login: jest.SpyInstance<Promise<void>>
   setPresenceListening: jest.SpyInstance
@@ -208,7 +208,7 @@ export const MockGolem: MockedGolem = {
   getUser: jest.fn(),
 }
 
-jest.mock('../src/golem', () => {
+jest.mock('../../src/golem', () => {
   return {
     __esModule: true,
     Golem: MockGolem,
@@ -216,5 +216,5 @@ jest.mock('../src/golem', () => {
 })
 
 // MockGolem.database.permissions.insertOne.mockResolvedValue({
-//   insertedId: new ObjectId(''),
+//   insertedId: ObjectId(''),
 // })

@@ -1,7 +1,7 @@
 import winston from 'winston'
-import { GolemLogger } from '../src/utils/logger'
+import { GolemLogger } from '../../src/utils/logger'
 
-jest.mock('../src/utils/logger')
+jest.mock('../../src/utils/logger')
 
 jest.spyOn(GolemLogger, 'child').mockReturnValue({
   info: jest.fn(),

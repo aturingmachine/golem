@@ -192,8 +192,12 @@ export class LocalListing extends AListing {
 
   async toEmbed(): Promise<ListingEmbedData> {
     const artBuffer = (await this.album.getArt(200)) || PlexLogo
+    console.log('Have Art')
     const image = new MessageAttachment(artBuffer, 'cover.png')
+    console.log('Have Message Attachment')
+    console.log(ImageUtils)
     const color = await ImageUtils.averageColor(artBuffer)
+    console.log('Have Color')
 
     const duration = this.hasDefaultDuration
       ? '-'
@@ -227,6 +231,8 @@ export class LocalListing extends AListing {
         inline: true,
       },
     ]
+
+    console.log('Returning Embed')
 
     return {
       fields,

@@ -1,36 +1,26 @@
+import '../../test-utils/mocks/mock-message'
+import '../../test-utils/mocks/mock-listing'
+import '../../test-utils/mocks/mock-listing-embed'
 import goskip from '../../src/commands/implementations/goskip'
-import { MockGolem } from '../../test-utils/mock-golem'
+import { MockAudioResource } from '../../test-utils/mocks/discordjs'
 import {
-  createAudioResource,
-  createLocalListing,
-} from '../../test-utils/mock-listing'
-import { MockedMessage, MockMessage } from '../../test-utils/mock-message'
-import {
-  MockedMusicPlayer,
-  MockMusicPlayer,
-} from '../../test-utils/mock-music-player'
+  MockedListingEmbed,
+  MockLocalListing,
+} from '../../test-utils/mocks/listing'
+import { MockedMessage, MockMessage } from '../../test-utils/mocks/message'
 
 describe('goskip', () => {
   let mockMessage: MockedMessage
-  let mockMusicPlayer: MockedMusicPlayer
 
   beforeEach(() => {
-    mockMusicPlayer = MockMusicPlayer()
-    MockGolem.playerCache.getOrCreate.mockReturnValue(mockMusicPlayer)
+    MockedListingEmbed.send.mockClear()
+
     mockMessage = MockMessage()
     mockMessage.parsed.getDefault.mockReturnValue(10)
     mockMessage.reply.mockClear()
 
-    mockMessage.player.currentResource = createAudioResource()
-    mockMessage.player.nowPlaying = createLocalListing()
-    // MockDatabase.findOne.mockResolvedValue({
-    //   art: {
-    //     200: { buffer: Buffer.from('200Art', 'utf-8') },
-    //     400: { buffer: Buffer.from('400Art', 'utf-8') },
-    //     1000: { buffer: Buffer.from('1000Art', 'utf-8') },
-    //     original: { buffer: Buffer.from('originalArt', 'utf-8') },
-    //   },
-    // })
+    mockMessage.player.currentResource = new MockAudioResource()
+    mockMessage.player.nowPlaying = new MockLocalListing()
   })
 
   it('should reply that the player has no currentResource', async () => {
@@ -58,8 +48,17 @@ describe('goskip', () => {
   it('should reply using the ListingEmbed if there is another track', async () => {
     await goskip.execute(mockMessage._toWrapper())
 
-    expect(mockMessage.reply).toHaveBeenCalledWith('')
+    expect(MockedListingEmbed.send).toHaveBeenCalledWith('play', {
+      content: 'Skipped!',
+    })
   })
 
-  // it('should reply with the empty queue message if the queue is empty', async () => {})
+  it('should reply with the empty queue message if the queue is empty', async () => {
+    mockMessage.player.nowPlaying = undefined
+    mockMessage.player.currentResource = undefined
+
+    await goskip.execute(mockMessage._toWrapper())
+
+    expect(mockMessage.reply).toHaveBeenCalledWith('No track to skip')
+  })
 })

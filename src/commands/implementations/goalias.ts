@@ -44,8 +44,9 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
 
     case 'delete':
       const aliasName = interaction.parsed.getString('aliasname')
+
       if (!aliasName) {
-        await interaction.reply('Command requires a valid alias string')
+        await interaction.reply('Command requires a valid alias name')
 
         return
       }
