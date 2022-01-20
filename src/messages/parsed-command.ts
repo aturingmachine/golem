@@ -167,6 +167,7 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
   }
 
   console.log(parsedContent, ' => meat => ', meat)
+  console.log(`"${parsedContent}" => meat => "${meat}"`)
 
   if (meat.trim() === '--help') {
     result.subCommand = '--help'
