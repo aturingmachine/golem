@@ -6,6 +6,11 @@ Golem is a Discord Bot mean to be run locally as a sort-of-replacement for music
 
 Detailed documentation can be found on the [Golem Documentation Site](https://aturingmachine.github.io/golem/).
 
+## External Dependencies
+
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+- [MongoDB](https://docs.mongodb.com/manual/installation/)
+
 ## Features
 
 - Stream local music to Discord voice channels
@@ -19,7 +24,7 @@ Detailed documentation can be found on the [Golem Documentation Site](https://at
 
 ```sh
 # Clone Repo
-git clone git@github.com:aturingmachine/discord-bot.git
+git clone git@github.com:aturingmachine/golemt.git
 
 # Install Dependencies
 npm ci

@@ -8,6 +8,13 @@ export async function CommandRunner(message: GolemMessage): Promise<void> {
   console.log(`Command runner using command ${command?.info.name}`)
 
   try {
+    if (message.parsed.subCommand === 'help') {
+      await message.reply({
+        content: command?.toString(),
+        ephemeral: true,
+      })
+    }
+
     await command?.execute(message)
   } catch (error) {
     console.error(error)
