@@ -99,7 +99,7 @@ export class GoGet {
   }
 
   private get helpMessage(): string {
-    let helpMsg = ''
+    let helpMsg = 'Get help for any command via: `$go <command> --help`\n'
 
     const builtInCommandsHelp = Array.from(Commands.values()).reduce(
       (prev, curr) => {
