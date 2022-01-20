@@ -36,7 +36,6 @@ const messageCreate: EventHandler<'messageCreate'> = {
     const parsedContent = message.content.replace(/^\$(go )?/, '')
 
     log.silly(`parsed content - "${parsedContent}"`)
-    console.log(BuiltInCommands)
 
     // Check if the message matches a build in command, or a built in alias.
     const builtIn = BuiltInCommands.find(

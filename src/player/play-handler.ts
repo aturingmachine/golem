@@ -219,7 +219,6 @@ export class PlayHandler {
   ): Promise<void> {
     try {
       const parsed = new ParsedMessage(raw)
-      console.log(interaction.info)
       const args = parsed.args
 
       const limit = args.limit ? parseInt(args.limit, 10) : undefined

@@ -14,14 +14,12 @@ const rest = new REST({ version: '9' }).setToken(GolemConf.discord.token)
       const cmdJson = Array.from(Commands.values()).map((x) =>
         x.slashCommand.toJSON()
       )
-      const resp = await rest.put(
+      await rest.put(
         Routes.applicationGuildCommands(GolemConf.discord.clientId, guildId),
         {
           body: cmdJson,
         }
       )
-
-      console.log(resp)
     }
     GolemLogger.info('Application Commands Registered', {
       src: LogSources.CommandDeploy,

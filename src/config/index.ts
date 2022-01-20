@@ -102,7 +102,6 @@ export class GolemConf {
 
   static init(): void {
     // kill application if no required config
-    console.log('inside init')
     if (
       !GolemConf.values.discord ||
       !GolemConf.values.discord.clientId ||

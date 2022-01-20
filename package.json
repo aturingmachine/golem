@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "homebrew discord bot",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --project tsconfig.build.json",
     "build:clean": "rm -rf dist/ && npm run build",
     "dev": " npm run build && NODE_OPTIONS=--enable-source-maps node  dist/index.js",
     "dev:debug": "npm run dev debug tty",

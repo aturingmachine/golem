@@ -19,7 +19,6 @@ export enum Permission {
 }
 
 export function toPermission(str: string): Permission | undefined {
-  console.log(Object.values(Permission))
   return Object.values(Permission)
     .filter((perm) => perm === str)
     .pop()

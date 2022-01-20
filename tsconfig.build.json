@@ -5,7 +5,8 @@
   "exclude": [
     "src/client/**",
     "dist/**",
-    "specs/**"
+    "specs/**",
+    "test-utils/**/*.ts"
   ],
   "compilerOptions": {
     "target": "esnext",
