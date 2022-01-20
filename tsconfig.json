@@ -1,0 +1,22 @@
+{
+  "exclude": [
+    "src/client/**",
+    "dist/**"
+  ],
+  "compilerOptions": {
+    "target": "esnext",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "lib": [
+      "esnext"
+    ],
+    "outDir": "dist",
+    "types": [
+      "node",
+      "jest",
+    ],
+    "forceConsistentCasingInFileNames": true,
+  },
+}

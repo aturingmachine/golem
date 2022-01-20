@@ -1,0 +1,25 @@
+# Node Modules
+node_modules/
+
+*.png
+*.jpg
+!golem-logo.png
+
+.env
+config.js
+config.yml
+!docs/**/config.js
+!docs/**/*.png
+
+dist/
+
+data-out.json
+list-out.json
+out.put
+
+logs/
+
+
+todo
+
+commands.json
