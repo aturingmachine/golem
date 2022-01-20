@@ -18,7 +18,7 @@ npm run docs:build
 # Navigate into the build output directory
 cd ./docs/src/.vuepress/dist
 
-git init
+git init -b main
 git add -A
 git commit -m 'deploy'
 

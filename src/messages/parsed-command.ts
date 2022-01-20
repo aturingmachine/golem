@@ -11,7 +11,6 @@ export interface IParsedCommand {
   subCommand?: string
 }
 
-// TODO we have turned our backs on HaShem
 type ObjectType<T> = T extends string
   ? string
   : T extends number

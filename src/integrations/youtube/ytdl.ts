@@ -1,5 +1,6 @@
 import dargs from 'dargs'
 import execa from 'execa'
+import { GolemConf } from '../../config'
 
 /**
  * Potentially temporary fix for dealing with an issue in which our
@@ -18,7 +19,7 @@ export function youtubeDownload(url: string): execa.ExecaChildProcess<string> {
     limitRate: '100K',
   })
 
-  const process = execa('/usr/local/bin/yt-dlp', [url, ...opts], {
+  const process = execa(GolemConf.youtube.ytdlpPath, [url, ...opts], {
     stdio: ['ignore', 'pipe', 'ignore'],
   })
 
