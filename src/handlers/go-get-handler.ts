@@ -110,6 +110,8 @@ export class GoGet {
 
     helpMsg = helpMsg.concat(builtInCommandsHelp)
 
-    return helpMsg.concat('```')
+    return helpMsg.concat(
+      '```\nFind more info at https://aturingmachine.github.io/golem/'
+    )
   }
 }
