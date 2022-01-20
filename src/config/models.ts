@@ -53,6 +53,9 @@ export type ConfigurationOptions = {
   search?: SearchConfig
   web?: WebConfig
   youtube?: YoutubeConfig
+  crash?: {
+    run: string
+  }
 }
 
 export enum GolemModule {

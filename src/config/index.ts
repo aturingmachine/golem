@@ -183,6 +183,10 @@ export class GolemConf {
     }
   }
 
+  static get crashHandler(): string | undefined {
+    return GolemConf.values.crash?.run
+  }
+
   static get logLevel(): LogLevel {
     let level = LogLevel.Info
 

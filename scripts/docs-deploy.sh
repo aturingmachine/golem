@@ -22,6 +22,6 @@ git init
 git add -A
 git commit -m 'deploy'
 
-git push -f git@github.com:aturingmachine/golem.git master:gh-pages
+git push -f git@github.com:aturingmachine/golem.git main:gh-pages
 
 cd -

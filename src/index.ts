@@ -1,3 +1,4 @@
+import { execSync } from 'child_process'
 import { registerCommands } from './commands/register-commands'
 import { GolemConf } from './config'
 import { Golem } from './golem'
@@ -48,6 +49,11 @@ const main = async (): Promise<void> => {
 }
 
 process.once('exit', shutdownHandler)
+process.once('uncaughtException', () => {
+  if (GolemConf.crashHandler) {
+    execSync(GolemConf.crashHandler)
+  }
+})
 process.once('SIGINT', () => process.exit(1))
 
 main()
