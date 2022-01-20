@@ -3,6 +3,7 @@ node_modules/
 
 *.png
 *.jpg
+!golem-logo.png
 
 .env
 config.js
