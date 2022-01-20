@@ -8,6 +8,7 @@ registerCommands()
 
 const rest = new REST({ version: '9' }).setToken(GolemConf.discord.token)
 
+// TODO this should pull the guildids to register to from the guilds Golem is actually in.
 ;(async () => {
   try {
     for (const guildId of GolemConf.discord.serverIds) {
