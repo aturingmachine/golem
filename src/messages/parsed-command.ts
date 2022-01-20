@@ -171,6 +171,7 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
 
   if (meat.trim() === '--help') {
     result.subCommand = '--help'
+    return new ParsedCommand(result.command, result.params, result.subCommand)
   }
 
   if (def.subcommands && !result.subCommand) {
