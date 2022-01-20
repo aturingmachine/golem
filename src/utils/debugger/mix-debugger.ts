@@ -8,8 +8,6 @@ export class MixDebugger {
     const mixType = cmd.split(' ')[1]
     const search = Golem.trackFinder.search(queryString)
 
-    console.log('query found', search?.listing.shortName)
-
     if (search) {
       try {
         switch (mixType) {
@@ -27,7 +25,6 @@ export class MixDebugger {
         console.error(error)
       }
     } else {
-      console.log('No listings found for', queryString)
     }
   }
 

@@ -166,23 +166,17 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
     params: {},
   }
 
-  console.log(parsedContent, ' => meat => ', meat)
-  console.log(`"${parsedContent}" => meat => "${meat}"`)
-
   if (meat.trim() === '--help') {
     result.subCommand = '--help'
     return new ParsedCommand(result.command, result.params, result.subCommand)
   }
 
   if (def.subcommands && !result.subCommand) {
-    console.log(parsedContent, 'hasSubCommand')
-
     result.subCommand = meat.split(' ')[0]
 
     def.subcommands
       .filter((subc) => subc.name === meat.split(' ')[0])
       .forEach((subc) => {
-        console.log(parsedContent, 'parsing subc', subc)
         if (subc.args?.length) {
           const argString = StringUtils.dropWords(meat, 1)
           if (subc.args?.length > 1) {
@@ -199,12 +193,9 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
       })
   } else {
     if (def.args?.length) {
-      console.log(parsedContent, 'has args')
       if (def.args?.length > 1) {
-        console.log(parsedContent, 'multiple args')
         const args = StringUtils.smartSplit(meat)
         def.args.forEach((arg, index) => {
-          console.log(parsedContent, 'parsing arg', arg.name)
           result.params[arg.name] = arg.rest
             ? args.slice(index, args.indexOf(' -- ')).join(' ')
             : args[index]
