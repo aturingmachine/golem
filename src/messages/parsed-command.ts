@@ -168,8 +168,8 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
 
   console.log(parsedContent, ' => meat => ', meat)
 
-  if (meat.split(' ')[0] === 'help') {
-    result.subCommand = 'help'
+  if (meat.trim() === '--help') {
+    result.subCommand = '--help'
   }
 
   if (def.subcommands && !result.subCommand) {
