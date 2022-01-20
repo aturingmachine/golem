@@ -13,6 +13,8 @@ export async function CommandRunner(message: GolemMessage): Promise<void> {
         content: command?.toString(),
         ephemeral: true,
       })
+
+      return
     }
 
     await command?.execute(message)
