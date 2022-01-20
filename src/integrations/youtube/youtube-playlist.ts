@@ -1,6 +1,6 @@
 import { EmbedFieldData, MessageEmbed, MessageOptions } from 'discord.js'
 import { MusicPlayer } from '../../player/music-player'
-import { averageColor } from '../../utils/message-utils'
+import { ImageUtils } from '../../utils/image-utils'
 import { YoutubeListing } from './youtube-listing'
 import { YoutubeTrack } from './youtube-track'
 
@@ -20,7 +20,7 @@ export class YoutubePlaylistEmbed {
     thumbnail: string | null,
     tracks: YoutubeTrack[]
   ): Promise<YoutubePlaylistEmbed> {
-    const color = await averageColor(thumbnail || undefined)
+    const color = await ImageUtils.averageColor(thumbnail || undefined)
 
     const firstTracks: EmbedFieldData[] = tracks
       .slice(0, YoutubePlaylistEmbed.trackListCount)

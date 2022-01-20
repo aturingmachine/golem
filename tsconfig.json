@@ -1,7 +1,4 @@
 {
-  "include": [
-    "src/**/*",
-  ],
   "exclude": [
     "src/client/**",
     "dist/**"
@@ -18,6 +15,7 @@
     "outDir": "dist",
     "types": [
       "node",
+      "jest",
     ],
     "forceConsistentCasingInFileNames": true,
   },

@@ -25,7 +25,7 @@ const extractors = {
 
   // album only
   album: {
-    extract: (t: LocalListing) => t.album.toLowerCase(),
+    extract: (t: LocalListing) => t.albumName.toLowerCase(),
   },
 
   // artist - title

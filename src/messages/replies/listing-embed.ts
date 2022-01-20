@@ -102,26 +102,26 @@ export class ListingEmbed {
     const embed = new MessageEmbed()
       .setDescription('')
       .setColor(listingEmbed.color.hex as HexColorString)
-      .setThumbnail(this.thumbnail)
+      .setThumbnail(await this.thumbnail())
       .setFields(listingEmbed.fields)
 
     return embed
   }
 
-  private get thumbnail(): string {
+  private async thumbnail(): Promise<string> {
     this.log.silly(
-      `generatig thumbnail uri for ${formatForLog({
+      `generating thumbnail uri for ${formatForLog({
         ...this.listing,
-        albumArt: !!this.listing.albumArt ? 'OMIT' : 'UNDEFINED',
+        album: !!this.listing.album ? 'OMIT' : 'UNDEFINED',
       })}`
     )
 
-    if (!this.listing.albumArt || this.listing.albumArt.length < 1) {
+    const art = await this.listing.album?.getArt(200)
+
+    if (!art || art.length < 0) {
       return ''
     }
 
-    return typeof this.listing.albumArt !== 'string'
-      ? 'attachment://cover.png'
-      : this.listing.albumArt
+    return typeof art !== 'string' ? 'attachment://cover.png' : art
   }
 }

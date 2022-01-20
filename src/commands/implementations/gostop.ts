@@ -5,11 +5,6 @@ import { GolemMessage } from '../../messages/message-wrapper'
 import { GolemLogger, LogSources } from '../../utils/logger'
 
 const execute = async (interaction: GolemMessage): Promise<void> => {
-  if (!interaction.player) {
-    await interaction.reply('Not in a valid voice channel')
-    return
-  }
-
   GolemLogger.info('executing', { src: LogSources.GoStop })
 
   await interaction.reply('Clearing the queue!')

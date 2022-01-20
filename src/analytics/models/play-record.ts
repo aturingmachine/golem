@@ -1,9 +1,7 @@
 import { ObjectId } from 'bson'
 import { Collection, DeleteResult, Filter, FindOptions } from 'mongodb'
-import { DatabaseRecord } from '../../db'
+import { DBPlayRecord } from '../../db/records'
 import { Golem } from '../../golem'
-
-type DBPlayRecord = DatabaseRecord<PlayRecord>
 
 export class PlayRecord {
   public _id!: ObjectId
@@ -51,6 +49,6 @@ export class PlayRecord {
   }
 
   private static get Collection(): Collection<DBPlayRecord> {
-    return Golem.db.collection<DBPlayRecord>('playrecords')
+    return Golem.database.playrecords
   }
 }

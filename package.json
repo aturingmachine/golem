@@ -9,7 +9,7 @@
     "dev:debug": "npm run dev debug tty",
     "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint --fix src/**/*.ts",
-    "test": "jest",
+    "test": "NODE_ENV=test jest",
     "cmd:reg": "npm run build && node dist/deploy-commands.js -- noRun",
     "cmd:dmp": "node ./scripts/dump-commands.js",
     "docs:dev": "npm run cmd:dmp && npm run dev:gen --prefix ./docs",
@@ -32,9 +32,9 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-prettier": "^4.0.0",
-    "jest": "^27.1.0",
+    "jest": "^27.4.5",
     "prettier": "^2.3.2",
-    "ts-jest": "^27.0.5",
+    "ts-jest": "^27.1.2",
     "typescript": "^4.4.2"
   },
   "dependencies": {

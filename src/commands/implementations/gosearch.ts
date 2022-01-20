@@ -16,7 +16,7 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
 
   searchCount = searchCount > 10 ? 10 : searchCount
 
-  if (!searchQuery) {
+  if (!searchQuery.length) {
     log.warn(`No query provided by ${interaction.info.member?.user.username}`)
     await interaction.reply('No search string provided.')
   } else {

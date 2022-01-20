@@ -192,8 +192,6 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
         }
       })
   } else {
-    console.log(parsedContent, 'Does not have sub command')
-
     if (def.args?.length) {
       console.log(parsedContent, 'has args')
       if (def.args?.length > 1) {

@@ -1,0 +1,31 @@
+---
+discord:
+  token: discordToken
+  clientId: 828
+  serverIds:
+  - 211
+  adminId: 528
+image:
+  fallbackPath: "./plex-logo.png"
+  avgColorAlgorithm: sqrt
+lastfm:
+  apiKey: lastFmKey
+library:
+  paths:
+  - "/library/path"
+mongo:
+  uri: mongodb://localhost:27017
+  dbName: golem
+plex:
+  uri: http://localhost:32400
+  appId: appId
+  username: plexUser
+  password: plexPass
+search:
+  forceWeightTerms:
+  - instrumental
+  - inst.
+web:
+  apiPort: 3828
+youtube:
+  ytdlpPath: "/usr/local/bin/yt-dlp"

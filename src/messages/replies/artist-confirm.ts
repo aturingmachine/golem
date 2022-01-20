@@ -6,7 +6,7 @@ import { LocalTrack } from '../../tracks/track'
 import { ImageUtils } from '../../utils/image-utils'
 import { ArrayUtils } from '../../utils/list-utils'
 import { GolemLogger, LogSources } from '../../utils/logger'
-import { GetMessageAttachement, averageColor } from '../../utils/message-utils'
+import { GetMessageAttachement } from '../../utils/message-utils'
 import { Replier } from '../../utils/replies'
 import { ButtonRow } from '../button-row'
 import { CustomId } from '../custom-id'
@@ -66,7 +66,7 @@ export class ArtistConfirmReply {
           components: [],
           embeds: [],
           files: [],
-          attachments: [],
+          // attachments: [],
         })
 
         const artistTracks = Golem.trackFinder
@@ -99,17 +99,18 @@ export class ArtistConfirmReply {
 
   private async getMessageOptions(): Promise<MessageOptions> {
     const srcs = Golem.trackFinder.artistSample(this.sourceListing.artist, 4)
+
     const albumArt = await ImageUtils.fourSquare({
       images: {
-        img1: srcs[0].albumArt,
-        img2: srcs[1].albumArt,
-        img3: srcs[2].albumArt,
-        img4: srcs[3].albumArt,
+        img1: await srcs[0].album.getArt(200),
+        img2: await srcs[1].album.getArt(200),
+        img3: await srcs[2].album.getArt(200),
+        img4: await srcs[3].album.getArt(200),
       },
     })
 
     const image = GetMessageAttachement(albumArt)
-    const color = await averageColor(albumArt)
+    const color = await ImageUtils.averageColor(albumArt)
 
     // const row = ArtistConfirmButton(this.listing.artist)
     const buttons = new ButtonRow({

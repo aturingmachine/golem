@@ -1,9 +1,31 @@
+import { getAverageColor } from 'fast-average-color-node'
 import sharp, { gravity } from 'sharp'
+import { GolemConf } from '../config'
 import { PlexLogo } from '../constants'
 
 export const ImageUtils = {
-  resize: async (img: Buffer = PlexLogo, size = 200): Promise<Buffer> =>
-    await sharp(img).resize(size, size).toBuffer(),
+  averageColor: (img?: Buffer | string): any =>
+    getAverageColor(img || PlexLogo, {
+      algorithm: GolemConf.image.avgColorAlgorithm,
+    }),
+
+  async resize(img: Buffer = PlexLogo, size = 200): Promise<Buffer> {
+    return await sharp(img).resize(size, size).toBuffer()
+  },
+
+  async resizeWithMaxSize(
+    img: Buffer = PlexLogo,
+    size = 200,
+    maxBufferSize = 16_000_000
+  ): Promise<Buffer> {
+    const result = await this.resize(img, size)
+
+    if (result.byteLength <= maxBufferSize) {
+      return result
+    }
+
+    return this.resizeWithMaxSize(img, size * 0.9)
+  },
 
   fourSquare: async (config: {
     images: {
@@ -23,10 +45,22 @@ export const ImageUtils = {
       .toBuffer()
 
     const composite = [
-      { src: config.images.img1 || logo, pos: gravity.northwest },
-      { src: config.images.img2 || logo, pos: gravity.northeast },
-      { src: config.images.img3 || logo, pos: gravity.southeast },
-      { src: config.images.img4 || logo, pos: gravity.southwest },
+      {
+        src: config.images.img1?.length ? config.images.img1 : logo,
+        pos: gravity.northwest,
+      },
+      {
+        src: config.images.img2?.length ? config.images.img2 : logo,
+        pos: gravity.northeast,
+      },
+      {
+        src: config.images.img3?.length ? config.images.img3 : logo,
+        pos: gravity.southeast,
+      },
+      {
+        src: config.images.img4?.length ? config.images.img4 : logo,
+        pos: gravity.southwest,
+      },
     ]
     const a = []
 

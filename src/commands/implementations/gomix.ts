@@ -22,6 +22,7 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
   log.info(`executing with mixtype: ${mixBy || 'blank'}`)
 
   if (['genre', 'mood'].includes(mixBy.toLowerCase())) {
+    // TODO
   }
 
   if (['artist', 'track'].includes(mixBy.toLowerCase())) {

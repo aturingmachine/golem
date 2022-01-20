@@ -131,11 +131,12 @@ export class ListingFinder {
   artistSample(artist: string, count = 1): LocalListing[] {
     const res = []
     let listings = Golem.loader.listings.filter(
-      (l) => l.artist.toLowerCase() === artist.toLowerCase() && l.albumArt
+      (l) => l.artist.toLowerCase() === artist.toLowerCase() && l.album
     )
 
     const uniques = listings.filter(
-      (l, index, self) => self.map((x) => x.album).indexOf(l.album) === index
+      (l, index, self) =>
+        self.map((x) => x.albumName).indexOf(l.albumName) === index
     )
 
     if (count < uniques.length) {

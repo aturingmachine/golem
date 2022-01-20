@@ -6,7 +6,7 @@
         <v-list-item :key="item.track_id">
           <v-list-item-content class="d-flex align-center">
             <v-list-item-title class="d-flex align-center">
-              <v-btn
+              <!-- <v-btn
                 class="
                   rounded-lg
                   elevation-6
@@ -14,12 +14,17 @@
                   align-center
                   justify-center
                   d-flex
+                  queue-play-button
                 "
                 icon
-                :style="`background-image: url(data:image/png;base64,${item.albumArt}); background-size: cover; width: 50px; height: 50px;`"
-              >
-                <v-icon color="primary">mdi-play</v-icon>
-              </v-btn>
+                :style="`background-image: url(${albumArt(
+                  item
+                )}); background-size: cover; width: 50px; height: 50px;`"
+              > -->
+              <queue-button :albumId="item.album">
+                <v-icon class="queue-play" color="primary">mdi-play</v-icon>
+              </queue-button>
+              <!-- </v-btn> -->
               {{ item.title }}
             </v-list-item-title>
             <v-list-item-subtitle class="pl-16">
@@ -32,13 +37,21 @@
       </template>
     </v-virtual-scroll>
   </div>
-  <div v-else>No Queued Tracks</div>
+  <div v-else>
+    <h3 class="text-center pb-5">No Queued Tracks</h3>
+  </div>
 </template>
 
 <script>
 import { QueueWebSocketClient } from '../services/websocket-client'
+import QueueButton from './QueueButton.vue'
+
 export default {
   name: 'Queue',
+
+  components: {
+    QueueButton,
+  },
 
   props: {
     id: String,
@@ -50,7 +63,23 @@ export default {
 
   computed: {
     queue() {
-      return this.$store.state.queues[this.id]
+      return this.$store.getters['queue'](this.id)
+    },
+  },
+
+  methods: {
+    albumArt(item) {
+      if (!item) {
+        return ''
+      }
+
+      if (item.album?.name?.startsWith('http')) {
+        item.album.art
+      }
+
+      const records = this.$store.state.albums.records
+
+      return `data:image/png;base64,${records[item]?.album?.art}`
     },
   },
 
@@ -61,10 +90,23 @@ export default {
       const data = JSON.parse(ev.data)
 
       this.$store.commit('updateQueues', { id: this.id, queue: data.queue })
+      this.$store.dispatch('listings/getListing', data.queue)
     })
   },
 }
 </script>
 
-<style>
+<style lang="scss">
+.queue-play-button {
+  .queue-play {
+    border-radius: 50%;
+    background-color: rgba(0, 0, 0, 0.645);
+  }
+
+  &:hover {
+    .queue-play {
+      box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.645);
+    }
+  }
+}
 </style>
