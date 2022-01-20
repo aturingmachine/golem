@@ -1,4 +1,5 @@
 import { GolemMessage } from '../messages/message-wrapper'
+import { StringFormat } from '../utils/string-utils'
 import { Commands } from './register-commands'
 
 export async function CommandRunner(message: GolemMessage): Promise<void> {
@@ -7,10 +8,14 @@ export async function CommandRunner(message: GolemMessage): Promise<void> {
 
   console.log(`Command runner using command ${command?.info.name}`)
 
+  if (!command) {
+    return
+  }
+
   try {
     if (message.parsed.subCommand === '--help') {
       await message.reply({
-        content: command?.toString(),
+        content: StringFormat.preformatted(command.toString()),
         ephemeral: true,
       })
 
