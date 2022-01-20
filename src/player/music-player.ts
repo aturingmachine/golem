@@ -23,7 +23,7 @@ import { GolemLogger, LogSources } from '../utils/logger'
 import { humanReadableTime, wait } from '../utils/time-utils'
 import { TrackQueue } from './queue'
 
-type GolemTrackAudioResource = AudioResource & {
+export type GolemTrackAudioResource = AudioResource & {
   metadata: TrackAudioResourceMetadata
 }
 
@@ -72,7 +72,7 @@ export class MusicPlayer {
 
   public get stats(): { count: number; time: number; hTime: string } {
     return {
-      count: this.queue.queuedTrackCount + (this.isPlaying ? 1 : 0),
+      count: this.trackCount,
       time: this.queue.runTime + this.currentTrackRemaining,
       hTime: humanReadableTime(this.queue.runTime + this.currentTrackRemaining),
     }

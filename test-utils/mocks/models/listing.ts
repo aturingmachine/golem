@@ -1,13 +1,13 @@
-import { addStaticMocks } from '../mocks'
+import { addStaticMocks } from '../../mocks'
+import { MockImageUtils } from '../image-utils'
+import { MockMongoCollection } from '../mongodb-collection'
 import { MockAlbum } from './album'
-import { MockImageUtils } from './image-utils'
 import { MockedMessage, MockMessage } from './message'
-import { MockMongoCollection } from './mongodb-collection'
 
 MockImageUtils()
 
-export const MockLocalListing = jest.fn().mockImplementation(() => ({
-  listingId: '',
+export const MockLocalListing = jest.fn().mockImplementation((id?: string) => ({
+  listingId: id || '',
   hasDefaultDuration: false,
   path: '',
   genres: [],
@@ -17,6 +17,7 @@ export const MockLocalListing = jest.fn().mockImplementation(() => ({
   addedAt: 828,
   bpm: 160,
   album: MockAlbum(),
+  duration: 180,
   id: '',
   names: {},
   toString: jest.fn(),
@@ -82,3 +83,23 @@ export const MockedListingEmbed = {
 export const MockListingEmbed = jest
   .fn()
   .mockImplementation(() => MockedListingEmbed)
+
+export const MockedQueuePeek = {
+  _message: undefined as MockedMessage | undefined,
+
+  get message(): MockedMessage {
+    if (!this._message) {
+      this._message = MockMessage() as MockedMessage
+    }
+
+    return this._message
+  },
+
+  send: jest.fn(),
+  embed: {
+    title: 'Mock Peek',
+    description: '2 queued tracks',
+  },
+}
+
+export const MockQueuePeek = jest.fn().mockImplementation(() => MockedQueuePeek)

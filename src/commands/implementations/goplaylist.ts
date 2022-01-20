@@ -22,11 +22,11 @@ const execute = async (
     return
   }
 
-  const listName = interaction.parsed.getString('playlist') || ''
+  const listName = interaction.parsed.getString('playlist')
 
   log.verbose(`invoked with ${playlist}`)
 
-  if (listName.length) {
+  if (listName) {
     log.verbose(`Attempting to find playlist`)
     const list = Golem.plex.playlists.find((list) =>
       list.name.toLowerCase().includes(listName.toLowerCase())
@@ -34,13 +34,11 @@ const execute = async (
 
     if (list) {
       log.verbose(`Enqueuing List ${list.name}`)
-      await interaction.player.enqueueMany(
-        interaction.info.userId,
-        LocalTrack.fromListings(
-          Golem.trackFinder.findListingsByIds(list.listings),
-          interaction.info.userId
-        )
-      )
+      const listings = Golem.trackFinder.findListingsByIds(list.listings)
+      const tracks = LocalTrack.fromListings(listings, interaction.info.userId)
+
+      await interaction.player.enqueueMany(interaction.info.userId, tracks)
+
       await interaction.reply(
         `${Replier.affirmative}, I'll queue up ${list.name}`
       )

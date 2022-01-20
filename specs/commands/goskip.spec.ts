@@ -6,8 +6,11 @@ import { MockAudioResource } from '../../test-utils/mocks/discordjs'
 import {
   MockedListingEmbed,
   MockLocalListing,
-} from '../../test-utils/mocks/listing'
-import { MockedMessage, MockMessage } from '../../test-utils/mocks/message'
+} from '../../test-utils/mocks/models/listing'
+import {
+  MockedMessage,
+  MockMessage,
+} from '../../test-utils/mocks/models/message'
 
 describe('goskip', () => {
   let mockMessage: MockedMessage

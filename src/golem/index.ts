@@ -114,7 +114,9 @@ class GolemBot {
     await Promise.all(
       this.client.guilds.cache.map(async (guild_) => {
         const guild = await guild_.fetch()
-        this.log.silly(`setting owner to admin for ${guild.name}`)
+        this.log.silly(
+          `setting owner and golem-admin to admin for ${guild.name}`
+        )
         const ownerPerms = await UserPermission.get(guild.ownerId, guild.id)
         const golemAdminPerms = await UserPermission.get(
           GolemConf.discord.adminId,

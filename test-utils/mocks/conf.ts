@@ -16,7 +16,9 @@ jest.mock('../../src/config', () => ({
       Web: true,
       Youtube: true,
     },
-    discord: {},
+    discord: {
+      adminId: 'mock-admin-id',
+    },
     image: {
       fallbackPath: './golem-logo.png',
       avgColorAlgorithm: 'sqrt',
@@ -32,7 +34,3 @@ jest.mock('../../src/config', () => ({
   },
   logLevel: jest.fn(),
 }))
-
-// const MockConf = deepMock(GolemConf)
-
-// MockConf.logLevel = LogLevel.Info

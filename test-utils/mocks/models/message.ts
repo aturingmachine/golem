@@ -1,10 +1,10 @@
 import {
   GolemMessage,
   GolemMessageReplyOptions,
-} from '../../src/messages/message-wrapper'
-import { ParsedCommand } from '../../src/messages/parsed-command'
-import { Overwrite, Mocked } from '../mocks'
-import { MockMusicPlayer } from './music-player'
+} from '../../../src/messages/message-wrapper'
+import { ParsedCommand } from '../../../src/messages/parsed-command'
+import { Overwrite, Mocked } from '../../mocks'
+import { MockedMusicPlayer, MockMusicPlayer } from './music-player'
 import { MockPermission } from './permissions'
 
 export const MockedParsedCommand = (): jest.Mocked<ParsedCommand> =>
@@ -75,6 +75,7 @@ export type MockedMessage = Overwrite<
     ExpandBuiltInAlias: jest.Mock
     source: MockDiscordMessage
     info: MockMessageInfo
+    player: MockedMusicPlayer
   }
 > & {
   _toWrapper(): GolemMessage
@@ -90,7 +91,7 @@ export const MockMessage = jest.fn().mockImplementation(
     info: {
       permissions: MockPermission(),
       guildId: 'gugudan',
-      userId: '828',
+      userId: 'ksj',
     },
     // replies: [],
 

@@ -1,9 +1,9 @@
-import { UserPermission } from '../../src/permissions/permission'
-import { addStaticMocks, Overwrite } from '../mocks'
-import { MockMongoCollection } from './mongodb-collection'
+import { Permission, UserPermission } from '../../../src/permissions/permission'
+import { addStaticMocks, Overwrite } from '../../mocks'
+import { MockMongoCollection } from '../mongodb-collection'
 
 type MockPermInstance = {
-  permArray: any[]
+  permArray: Permission[]
   isAdmin: boolean
   can: jest.Mock
   add: jest.Mock
@@ -19,14 +19,6 @@ export const MockPermission = jest.fn(() => ({
   remove: jest.fn(),
   save: jest.fn(),
 }))
-// .mockImplementation(() => ({
-//   permArray: [],
-//   isAdmin: false,
-//   can: jest.fn(),
-//   add: jest.fn(),
-//   remove: jest.fn(),
-//   save: jest.fn(),
-// }))
 
 addStaticMocks(
   MockPermission,
@@ -46,4 +38,4 @@ export type MockPermission = (() => MockPermInstance) &
     }
   >
 
-export const MockedPermission = UserPermission as any as MockPermission
+export const MockedPermission = UserPermission as unknown as MockPermission

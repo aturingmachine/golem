@@ -1,7 +1,11 @@
+import '../../test-utils/mocks/handlers/mock-handlers'
 import goget from '../../src/commands/implementations/goget'
 import { executeCommand } from '../../test-utils'
 import { MockHandlers } from '../../test-utils/mocks/handlers/handlers'
-import { MockedMessage, MockMessage } from '../../test-utils/mocks/message'
+import {
+  MockedMessage,
+  MockMessage,
+} from '../../test-utils/mocks/models/message'
 
 describe('goget', () => {
   let mockMessage: MockedMessage

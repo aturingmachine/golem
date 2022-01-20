@@ -18,9 +18,12 @@ export const MockHandlers = {
 
     this.Play.process.mockClear()
   },
-}
 
-jest.mock('../../../src/handlers', () => ({
-  __esModule: true,
-  Handlers: MockHandlers,
-}))
+  Permissions: {
+    describe: jest.fn(),
+    get: jest.fn(),
+    set: jest.fn(),
+    add: jest.fn(),
+    remove: jest.fn(),
+  },
+}

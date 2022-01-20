@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { User } from 'discord.js'
 import { Collection } from 'mongodb'
 import { CollectionNames } from '../../src/constants'
@@ -11,9 +12,10 @@ import {
 } from '../../src/db/records'
 import { GolemEventEmitter } from '../../src/golem/event-emitter'
 import { PlayerCache } from '../../src/golem/player-cache'
+import { Playlist } from '../../src/integrations/plex/models'
 import { UserPermissionCache } from '../../src/permissions/permission'
 import { Mocked } from '../mocks'
-import { MockMusicPlayer } from './music-player'
+import { MockMusicPlayer } from './models/music-player'
 
 export type MockedGolem = {
   permissions: Mocked<UserPermissionCache>
@@ -46,10 +48,11 @@ export type MockedGolem = {
     getSimilarTracks: jest.Mock
     artistSample: jest.Mock
     findIdByPath: jest.Mock
-    findListingsById: jest.Mock
+    findListingsByIds: jest.Mock
     trackCount: number
   }
   plex: {
+    playlists: Playlist[]
     init: jest.Mock
     getPlaylists: jest.Mock
     getPlaylistById: jest.Mock
@@ -111,7 +114,7 @@ const mockTrackFinder = {
   getSimilarTracks: jest.fn(),
   artistSample: jest.fn(),
   findIdByPath: jest.fn(),
-  findListingsById: jest.fn(),
+  findListingsByIds: jest.fn(),
   trackCount: 0,
 }
 
@@ -119,6 +122,7 @@ const mockPlex = {
   init: jest.fn(),
   getPlaylists: jest.fn(),
   getPlaylistById: jest.fn(),
+  playlists: [],
 }
 
 const mockCollection = <
@@ -214,7 +218,3 @@ jest.mock('../../src/golem', () => {
     Golem: MockGolem,
   }
 })
-
-// MockGolem.database.permissions.insertOne.mockResolvedValue({
-//   insertedId: ObjectId(''),
-// })

@@ -1,5 +1,5 @@
-import { addStaticMocks } from '../mocks'
-import { MockMongoCollection } from './mongodb-collection'
+import { addStaticMocks } from '../../mocks'
+import { MockMongoCollection } from '../mongodb-collection'
 
 export const MockBuffer = {}
 
@@ -19,7 +19,3 @@ addStaticMocks(
   'fromRecord',
   ['Collection', MockMongoCollection()]
 )
-
-jest.mock('../../src/listing/album', () => ({
-  LocalAlbum: MockAlbum,
-}))

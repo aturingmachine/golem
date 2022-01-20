@@ -1,6 +1,10 @@
+import '../../test-utils/mocks/handlers/mock-handlers'
 import goalias from '../../src/commands/implementations/goalias'
 import { MockHandlers } from '../../test-utils/mocks/handlers/handlers'
-import { MockedMessage, MockMessage } from '../../test-utils/mocks/message'
+import {
+  MockedMessage,
+  MockMessage,
+} from '../../test-utils/mocks/models/message'
 
 describe('goalias', () => {
   let mockMessage: MockedMessage

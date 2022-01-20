@@ -1,7 +1,10 @@
 import '../../test-utils/mocks/handlers/mock-handlers'
 import goadmin from '../../src/commands/implementations/goadmin'
 import { MockAdminHandler } from '../../test-utils/mocks/handlers/admin'
-import { MockedMessage, MockMessage } from '../../test-utils/mocks/message'
+import {
+  MockedMessage,
+  MockMessage,
+} from '../../test-utils/mocks/models/message'
 
 describe('goadmin', () => {
   let mockMessage: MockedMessage

@@ -1,7 +1,7 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
+import { Handlers } from '../../handlers'
 import { GolemMessage } from '../../messages/message-wrapper'
-import { PermissionHandler } from '../../permissions/permission-handler'
 import { GolemLogger, LogSources } from '../../utils/logger'
 import { StringFormat } from '../../utils/string-utils'
 
@@ -21,19 +21,19 @@ const execute = async (message: GolemMessage): Promise<void> => {
 
   switch (message.parsed.subCommand) {
     case PermissionSubcommand.Describe:
-      await PermissionHandler.describe(message)
+      await Handlers.Permissions.describe(message)
       break
     case PermissionSubcommand.Get:
-      await PermissionHandler.get(message)
+      await Handlers.Permissions.get(message)
       break
     case PermissionSubcommand.Set:
-      await PermissionHandler.set(message)
+      await Handlers.Permissions.set(message)
       break
     case PermissionSubcommand.Add:
-      await PermissionHandler.add(message)
+      await Handlers.Permissions.add(message)
       break
     case PermissionSubcommand.Remove:
-      await PermissionHandler.remove(message)
+      await Handlers.Permissions.remove(message)
       break
     default:
       await message.reply(

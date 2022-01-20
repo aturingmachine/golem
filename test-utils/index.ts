@@ -1,9 +1,9 @@
 import { GolemCommand } from '../src/commands'
-import { MockedMessage } from './mocks/message'
+import { MockedMessage } from './mocks/models/message'
 
 export async function executeCommand(
   cmd: GolemCommand,
   msg: MockedMessage
 ): Promise<void> {
-  await cmd.execute(msg._toWrapper())
+  return cmd.execute(msg._toWrapper())
 }

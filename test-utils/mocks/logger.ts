@@ -6,7 +6,7 @@ jest.mock('../../src/utils/logger')
 jest.spyOn(GolemLogger, 'child').mockReturnValue({
   info: jest.fn(),
   error: jest.fn((...args: unknown[]) => {
-    console.error(...args)
+    console.log(...args)
   }),
   warn: jest.fn(),
   debug: jest.fn(),

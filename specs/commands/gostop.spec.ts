@@ -1,6 +1,9 @@
 import gostop from '../../src/commands/implementations/gostop'
 import { GolemMessage } from '../../src/messages/message-wrapper'
-import { MockedMessage, MockMessage } from '../../test-utils/mocks/message'
+import {
+  MockedMessage,
+  MockMessage,
+} from '../../test-utils/mocks/models/message'
 
 describe('gostop', () => {
   let mockMessage: MockedMessage
