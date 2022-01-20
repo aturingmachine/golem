@@ -1,11 +1,9 @@
 import { Collection, Filter, FindOptions, ObjectId } from 'mongodb'
-import { DatabaseRecord } from '../db'
+import { UserPermissionRecord } from '../db/records'
 import { Golem } from '../golem'
 import { GolemMessage } from '../messages/message-wrapper'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger } from '../utils/logger'
-
-type UserPermissionRecord = DatabaseRecord<UserPermission>
 
 export enum Permission {
   // Super User
@@ -115,37 +113,42 @@ export class UserPermission {
   }
 
   static async get(userId: string, guildId: string): Promise<UserPermission> {
-    // check cache
-    const cacheRecord = Golem.permissions.get(userId, guildId)
+    try {
+      // check cache
+      const cacheRecord = Golem.permissions.get(userId, guildId)
 
-    if (cacheRecord) {
-      UserPermission.log.debug('permission cache hit')
-      return cacheRecord
+      if (cacheRecord) {
+        UserPermission.log.debug('permission cache hit')
+        return cacheRecord
+      }
+      UserPermission.log.silly('permission cache miss')
+
+      // check db, insert to cache
+      const dbRecord = await UserPermission.findOne({
+        userId: userId,
+        guildId: guildId,
+      })
+
+      if (dbRecord) {
+        UserPermission.log.debug('permission record pulled from db')
+        const parsedDbRecord = UserPermission.fromData(dbRecord)
+
+        Golem.permissions.set(parsedDbRecord)
+        return parsedDbRecord
+      }
+
+      UserPermission.log.silly('permission db miss')
+      UserPermission.log.debug('creating new permission record')
+      // create new record, insert to db, set into cache
+      const newRecord = new UserPermission(userId, guildId)
+      Golem.permissions.set(newRecord)
+      await newRecord.save()
+
+      return newRecord
+    } catch (error) {
+      console.error(error)
+      return {} as UserPermission
     }
-    UserPermission.log.silly('permission cache miss')
-
-    // check db, insert to cache
-    const dbRecord = await UserPermission.findOne({
-      userId: userId,
-      guildId: guildId,
-    })
-
-    if (dbRecord) {
-      UserPermission.log.debug('permission record pulled from db')
-      const parsedDbRecord = UserPermission.fromData(dbRecord)
-
-      Golem.permissions.set(parsedDbRecord)
-      return parsedDbRecord
-    }
-
-    UserPermission.log.silly('permission db miss')
-    UserPermission.log.debug('creating new permission record')
-    // create new record, insert to db, set into cache
-    const newRecord = new UserPermission(userId, guildId)
-    Golem.permissions.set(newRecord)
-    await newRecord.save()
-
-    return newRecord
   }
 
   static async check(
@@ -180,7 +183,7 @@ export class UserPermission {
   }
 
   private static get Collection(): Collection<UserPermissionRecord> {
-    return Golem.db.collection<UserPermissionRecord>('permissions')
+    return Golem.database.permissions
   }
 }
 

@@ -49,3 +49,12 @@ export const CommandNames = {
     return `go${name}`
   },
 }
+
+export enum CollectionNames {
+  LocalAlbums = 'localalbums',
+  CustomAliases = 'customaliases',
+  PlayRecords = 'playrecords',
+  LibIndexes = 'libindexes',
+  Listings = 'listings',
+  Permissions = 'permissions',
+}

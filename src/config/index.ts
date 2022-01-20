@@ -18,9 +18,17 @@ import {
 } from './models'
 
 const rawConfig: ConfigurationOptions = YAML.parse(
-  readFileSync(path.resolve(__dirname, '../../config.yml'), {
-    encoding: 'utf-8',
-  })
+  readFileSync(
+    path.resolve(
+      __dirname,
+      process.env.NODE_ENV !== 'test'
+        ? '../../config.yml'
+        : '../../test-config.yml'
+    ),
+    {
+      encoding: 'utf-8',
+    }
+  )
 )
 
 const optFlags: Record<CliOption, string[]> = {
@@ -53,6 +61,39 @@ class CliOptions {
   }
 }
 
+export function logLevel(): LogLevel {
+  let level = LogLevel.Info
+
+  const debugLevelArgs = ['debug', '-D']
+  const verboseArgs = ['verbose', '-V']
+  const sillyArgs = ['silly']
+  const args = process.argv.slice(2)
+
+  let isDebug = false
+  let isVerbose = false
+  let isSilly = false
+
+  args.forEach((arg) => {
+    isDebug ||= debugLevelArgs.includes(arg)
+    isVerbose ||= verboseArgs.includes(arg)
+    isSilly ||= sillyArgs.includes(arg)
+  })
+
+  if (isDebug) {
+    level = LogLevel.Debug
+  }
+
+  if (isVerbose) {
+    level = LogLevel.Verbose
+  }
+
+  if (isSilly) {
+    level = LogLevel.Silly
+  }
+
+  return level
+}
+
 // TODO should probably add some more extendable/complex validation pattern
 export class GolemConf {
   private static values = rawConfig
@@ -61,6 +102,7 @@ export class GolemConf {
 
   static init(): void {
     // kill application if no required config
+    console.log('inside init')
     if (
       !GolemConf.values.discord ||
       !GolemConf.values.discord.clientId ||
@@ -184,35 +226,36 @@ export class GolemConf {
   }
 
   static get logLevel(): LogLevel {
-    let level = LogLevel.Info
+    return logLevel()
+    // let level = LogLevel.Info
 
-    const debugLevelArgs = ['debug', '-D']
-    const verboseArgs = ['verbose', '-V']
-    const sillyArgs = ['silly']
-    const args = process.argv.slice(2)
+    // const debugLevelArgs = ['debug', '-D']
+    // const verboseArgs = ['verbose', '-V']
+    // const sillyArgs = ['silly']
+    // const args = process.argv.slice(2)
 
-    let isDebug = false
-    let isVerbose = false
-    let isSilly = false
+    // let isDebug = false
+    // let isVerbose = false
+    // let isSilly = false
 
-    args.forEach((arg) => {
-      isDebug ||= debugLevelArgs.includes(arg)
-      isVerbose ||= verboseArgs.includes(arg)
-      isSilly ||= sillyArgs.includes(arg)
-    })
+    // args.forEach((arg) => {
+    //   isDebug ||= debugLevelArgs.includes(arg)
+    //   isVerbose ||= verboseArgs.includes(arg)
+    //   isSilly ||= sillyArgs.includes(arg)
+    // })
 
-    if (isDebug) {
-      level = LogLevel.Debug
-    }
+    // if (isDebug) {
+    //   level = LogLevel.Debug
+    // }
 
-    if (isVerbose) {
-      level = LogLevel.Verbose
-    }
+    // if (isVerbose) {
+    //   level = LogLevel.Verbose
+    // }
 
-    if (isSilly) {
-      level = LogLevel.Silly
-    }
+    // if (isSilly) {
+    //   level = LogLevel.Silly
+    // }
 
-    return level
+    // return level
   }
 }

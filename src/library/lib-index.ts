@@ -5,10 +5,8 @@ import {
   Collection,
   ObjectId,
 } from 'mongodb'
-import { DatabaseRecord } from '../db'
+import { LibIndexRecord } from '../db/records'
 import { Golem } from '../golem'
-
-type LibIndexRecord = DatabaseRecord<LibIndex>
 
 export class LibIndex {
   public _id!: ObjectId
@@ -65,7 +63,7 @@ export class LibIndex {
   }
 
   private static get Collection(): Collection<LibIndexRecord> {
-    return Golem.db.collection<LibIndexRecord>('libindexes')
+    return Golem.database.libindexes
   }
 
   private static fromRecord(record: LibIndexRecord): LibIndex {

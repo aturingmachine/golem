@@ -1,7 +1,7 @@
 import { Snowflake } from 'discord-api-types'
 import express from 'express'
 import { Golem } from '../../../golem'
-import { Transformer } from '../utils/transformer'
+import { ImageCache } from '../utils/image-cache'
 
 const router = express.Router()
 
@@ -34,12 +34,16 @@ router.get('/:serverId/nowplaying', async (req, res) => {
   }
 
   const playing = player.nowPlaying
-  const albumArt = await Transformer.normalizeArt(playing?.albumArt)
+
+  if (!playing) {
+    res.json(undefined)
+    return
+  }
 
   res.json({
     nowPlaying: {
       ...playing,
-      albumArt: albumArt,
+      album: await ImageCache.getOrCreate(playing),
     },
   })
 })
@@ -47,7 +51,7 @@ router.get('/:serverId/nowplaying', async (req, res) => {
 /**
  * Get queued tracks for a given connection
  */
-router.get('/:serverId/queue', (req, res) => {
+router.get('/:serverId/queue', async (req, res) => {
   const serverId = req.params.serverId
   const player = Golem.getPlayer(serverId)
 
@@ -59,10 +63,12 @@ router.get('/:serverId/queue', (req, res) => {
   const queue = player.peek(-1)
 
   res.json({
-    queue: queue.map((t) => ({
-      ...t.metadata,
-      albumArt: t.metadata.albumArt?.toString('base64'),
-    })),
+    queue: await Promise.all(
+      queue.map(async (t) => ({
+        ...t.metadata,
+        album: (await t.metadata.album.getArt(200)).toString('base64'),
+      }))
+    ),
   })
 })
 
@@ -75,6 +81,22 @@ router.post('/:channelId/skip', (req, res) => {
   }
 
   player?.skip()
+})
+
+router.post('/:channelId/playPause', (req, res) => {
+  const channelId = req.params.channelId
+  const player = Golem.getPlayer(channelId)
+
+  if (!player) {
+    res.status(404).json({ error: `No player for server ${channelId}` })
+    return
+  }
+
+  const isPausing = player.isPlaying
+
+  isPausing ? player.pause() : player?.unpause()
+
+  res.status(200).json({ msg: isPausing ? 'paused player' : 'unpaused player' })
 })
 
 export { router as playerRouter }

@@ -1,7 +1,7 @@
 import { ObjectId } from 'bson'
 import { Collection, DeleteResult, Filter, FindOptions } from 'mongodb'
 import { RegisteredCommands } from '../commands/register-commands'
-import { DatabaseRecord } from '../db'
+import { CustomAliasRecord } from '../db/records'
 import { Golem } from '../golem'
 import { ParsedMessage } from '../messages/message-info'
 import { formatForLog } from '../utils/debug-utils'
@@ -9,8 +9,6 @@ import { GolemLogger, LogSources } from '../utils/logger'
 import { AAliasFunction } from './functions'
 import { RandomAliasFunction } from './functions/random'
 import { RandomIntFunction } from './functions/random-number'
-
-type CustomAliasRecord = DatabaseRecord<CustomAlias>
 
 function parseAliasFunctions(raw: string): AAliasFunction[] {
   const fns: AAliasFunction[] = []
@@ -212,7 +210,7 @@ export class CustomAlias {
   }
 
   private static get Collection(): Collection<CustomAliasRecord> {
-    return Golem.db.collection<CustomAliasRecord>('customaliases')
+    return Golem.database.customaliases
   }
 
   private static async isValidName(

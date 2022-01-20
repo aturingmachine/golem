@@ -37,10 +37,10 @@ export class LocalTrack extends Track {
   get metadata(): TrackListingInfo {
     return {
       artist: this.listing.artist,
-      album: this.listing.album,
+      albumName: this.listing.albumName,
       title: this.listing.title,
       duration: this.listing.duration,
-      albumArt: this.listing.albumArt,
+      album: this.listing.album,
     }
   }
 

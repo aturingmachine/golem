@@ -106,10 +106,6 @@ export class TrackQueue {
     log.info('shuffled')
   }
 
-  get first(): Track {
-    return this.queue[0].track
-  }
-
   /**
    * Get rough runtime in seconds
    */

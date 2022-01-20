@@ -4,7 +4,7 @@
       {{ connection.name }}
     </v-expansion-panel-header>
     <v-expansion-panel-content>
-      <conn-details :id="connection.id" />
+      <conn-details :id="connection.id" :isPlaying="connection.isPlaying" />
     </v-expansion-panel-content>
   </v-expansion-panel>
 </template>

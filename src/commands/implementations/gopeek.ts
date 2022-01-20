@@ -2,8 +2,8 @@ import { GolemCommand } from '..'
 import { GolemModule } from '../../config/models'
 import { CommandNames } from '../../constants'
 import { GolemMessage } from '../../messages/message-wrapper'
+import { QueuePeek } from '../../messages/replies/queue-peek'
 import { GolemLogger, LogSources } from '../../utils/logger'
-import { GetPeekEmbed } from '../../utils/message-utils'
 
 const log = GolemLogger.child({ src: LogSources.GoPeek })
 
@@ -14,9 +14,9 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
     return
   }
 
-  const embed = GetPeekEmbed(interaction.player)
+  const peek = new QueuePeek(interaction)
 
-  await interaction.reply({ embeds: [embed] })
+  await peek.send()
 }
 
 const gopeek = new GolemCommand({

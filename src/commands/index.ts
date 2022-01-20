@@ -14,7 +14,7 @@ import { GolemConf } from '../config'
 import { GolemModule } from '../config/models'
 import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
 import { GolemMessage } from '../messages/message-wrapper'
-import { GolemLogger, LogSources } from '../utils/logger'
+import { GolemLogger, LogLevel, LogSources } from '../utils/logger'
 import { StringUtils } from '../utils/string-utils'
 
 export function expandBuiltInAlias(raw: string): string | undefined {
@@ -393,7 +393,7 @@ async function baseErrorHandler(
     { src: source }
   )
 
-  if (GolemConf.options.Debug || GolemConf.options.Verbose) {
+  if (GolemConf.logLevel !== LogLevel.Info || process.env.NODE_ENV === 'test') {
     console.error(error.stack)
   }
 

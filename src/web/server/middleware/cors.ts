@@ -8,7 +8,6 @@ export function cors(
   next: NextFunction
 ): void {
   const origin = req.headers.origin
-  console.log(req.headers)
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin)
   }

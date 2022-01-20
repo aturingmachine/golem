@@ -2,7 +2,6 @@ import { MessageAttachment, EmbedFieldData } from 'discord.js'
 import { IFastAverageColorResult } from 'fast-average-color'
 import md5 from 'md5'
 import {
-  Binary,
   Collection,
   DeleteResult,
   Filter,
@@ -13,11 +12,13 @@ import { IAudioMetadata } from 'music-metadata'
 import sharp from 'sharp'
 import { GolemConf } from '../config'
 import { PlexLogo } from '../constants'
-import { DatabaseRecord } from '../db'
+import { ListingRecord } from '../db/records'
 import { Golem } from '../golem'
 import { formatForLog } from '../utils/debug-utils'
-import { averageColor, embedFieldSpacer } from '../utils/message-utils'
+import { ImageUtils } from '../utils/image-utils'
+import { embedFieldSpacer } from '../utils/message-utils'
 import { humanReadableDuration } from '../utils/time-utils'
+import { Album, LocalAlbum } from './album'
 
 export type ListingEmbedData = {
   fields: EmbedFieldData[]
@@ -31,15 +32,11 @@ export abstract class AListing {
     public title: string,
     public duration: number,
     public artist: string,
-    public album: string,
-    public albumArt?: Buffer | string
+    public albumName: string,
+    public album: Album
   ) {}
 
   abstract toEmbed(): Promise<ListingEmbedData> | ListingEmbedData
-}
-
-type ListingRecord = DatabaseRecord<Omit<LocalListing, 'albumArt'>> & {
-  albumArt: Binary
 }
 
 /**
@@ -49,8 +46,8 @@ export interface TrackListingInfo {
   title: string
   duration: number
   artist: string
-  album: string
-  albumArt?: Buffer | string
+  albumName: string
+  album: Album
 }
 
 interface MusicBrainzData {
@@ -71,7 +68,7 @@ type ListingNames = {
 export type ListingInfo = {
   listingId: string
   artist: string
-  album: string
+  albumName: string
   title: string
   duration: number
   hasDefaultDuration: boolean
@@ -81,8 +78,8 @@ export type ListingInfo = {
   key: string
   mb: MusicBrainzData
   addedAt: number
+  album: LocalAlbum
   bpm?: number
-  albumArt?: Buffer
   id?: string
 }
 
@@ -115,7 +112,8 @@ export class LocalListing extends AListing {
   mb: MusicBrainzData
   addedAt: number
   bpm?: number
-  albumArt?: Buffer
+
+  declare album: LocalAlbum
 
   constructor(info: ListingInfo) {
     super(
@@ -123,8 +121,8 @@ export class LocalListing extends AListing {
       info.title,
       info.duration,
       info.artist,
-      info.album,
-      info.albumArt
+      info.albumName,
+      info.album
     )
 
     this.listingId = info.listingId
@@ -135,7 +133,6 @@ export class LocalListing extends AListing {
     this.bpm = info.bpm
     this.addedAt = info.addedAt
     this.mb = info.mb
-    this.albumArt = info.albumArt
   }
 
   /**
@@ -152,14 +149,14 @@ export class LocalListing extends AListing {
         dashed: `${this.artist} - ${this.title}`,
       },
       full: {
-        piped: `${this.artist} | ${this.album} | ${this.title}`,
-        dashed: `${this.artist} - ${this.album} - ${this.title}`,
+        piped: `${this.artist} | ${this.albumName} | ${this.title}`,
+        dashed: `${this.artist} - ${this.albumName} - ${this.title}`,
       },
     }
   }
 
   toString(): string {
-    return `${this.artist} - ${this.album} - ${this.title}`
+    return `${this.artist} - ${this.albumName} - ${this.title}`
   }
 
   get cleanDuration(): string {
@@ -175,17 +172,17 @@ export class LocalListing extends AListing {
   }
 
   get searchString(): string {
-    return `${this.artist} ${this.album} ${this.title}`
+    return `${this.artist} ${this.albumName} ${this.title}`
   }
 
   get longName(): string {
-    return `${this.artist} | ${this.album} | ${this.title}`
+    return `${this.artist} | ${this.albumName} | ${this.title}`
   }
 
   get debugString(): string {
     return formatForLog({
       ...this,
-      albumArt: this.albumArt ? 'OMIT' : 'UNDEFINED',
+      album: this.album ? 'OMIT' : 'UNDEFINED',
     })
   }
 
@@ -194,8 +191,13 @@ export class LocalListing extends AListing {
   }
 
   async toEmbed(): Promise<ListingEmbedData> {
-    const image = new MessageAttachment(this.albumArt || PlexLogo, 'cover.png')
-    const color = await averageColor(this.albumArt)
+    const artBuffer = (await this.album.getArt(200)) || PlexLogo
+    console.log('Have Art')
+    const image = new MessageAttachment(artBuffer, 'cover.png')
+    console.log('Have Message Attachment')
+    console.log(ImageUtils)
+    const color = await ImageUtils.averageColor(artBuffer)
+    console.log('Have Color')
 
     const duration = this.hasDefaultDuration
       ? '-'
@@ -208,7 +210,7 @@ export class LocalListing extends AListing {
       },
       {
         name: 'Album',
-        value: this.album,
+        value: this.albumName,
         inline: true,
       },
       embedFieldSpacer,
@@ -230,6 +232,8 @@ export class LocalListing extends AListing {
       },
     ]
 
+    console.log('Returning Embed')
+
     return {
       fields,
       color,
@@ -247,14 +251,14 @@ export class LocalListing extends AListing {
     const split =
       path.replace(targetConfig || 'NO PATH FOUND', '')?.split('/') || []
     const artist = meta.common.artist || meta.common.artists?.[0] || split[1]
-    const album = meta.common.album || split[2]
+    const albumName = meta.common.album || split[2]
     const track = meta.common.title || split[3]
     const identifier =
       meta.common.musicbrainz_trackid ||
       meta.common.musicbrainz_recordingid ||
       meta.common.isrc?.[0] ||
       ''
-    const id = md5(`${artist} - ${album} - ${track} - ${identifier}`)
+    const id = md5(`${artist} - ${albumName} - ${track} - ${identifier}`)
     const key: string =
       meta.native['ID3v2.3']?.find((t) => t.id === 'TKEY')?.value || 'NA'
     const bpm: string | undefined =
@@ -264,11 +268,16 @@ export class LocalListing extends AListing {
       .map((t) => t.value)
     const artistMBId = meta.common.musicbrainz_artistid?.[0] || ''
     const trackMbId = meta.common.musicbrainz_trackid || ''
+    const art = meta.common.picture
+      ? await sharp(meta.common.picture[0].data).toFormat('png').toBuffer()
+      : undefined
+
+    const album = await LocalAlbum.generate(albumName, artist, art || PlexLogo)
 
     return new LocalListing({
       listingId: id,
       artist,
-      album,
+      albumName,
       title: track,
       duration: meta.format.duration || 160,
       hasDefaultDuration: !meta.format.duration,
@@ -276,18 +285,13 @@ export class LocalListing extends AListing {
       genres: meta.common.genre?.map((g) => g?.split('/')).flat(1) || [],
       key,
       moods: moods,
+      album,
       bpm: bpm ? parseInt(bpm, 10) : undefined,
       addedAt: birthTime,
       mb: {
         artistId: artistMBId,
         trackId: trackMbId,
       },
-      albumArt: meta.common.picture
-        ? await sharp(meta.common.picture[0].data)
-            .resize(200, 200)
-            .toFormat('png')
-            .toBuffer()
-        : undefined,
     })
   }
 
@@ -297,13 +301,13 @@ export class LocalListing extends AListing {
         { _id: { $eq: this._id } },
         {
           ...this,
-          albumArt: new Binary(this.albumArt),
+          album: this.album._id,
         }
       )
     } else {
       const result = await LocalListing.Collection.insertOne({
         ...this,
-        albumArt: new Binary(this.albumArt),
+        album: this.album._id,
       })
       this._id = result.insertedId
     }
@@ -320,15 +324,7 @@ export class LocalListing extends AListing {
       options
     ).toArray()
 
-    return records.map((record) => {
-      const listing = new LocalListing({
-        ...record,
-        albumArt: record.albumArt.buffer,
-      })
-      listing._id = record._id
-
-      return listing
-    })
+    return await Promise.all(records.map(LocalListing.fromRecord))
   }
 
   static async findOne(
@@ -341,20 +337,43 @@ export class LocalListing extends AListing {
       return null
     }
 
-    const listing = new LocalListing({
-      ...record,
-      albumArt: record.albumArt.buffer,
-    })
-    listing._id = record._id
+    return LocalListing.fromRecord(record)
+  }
 
-    return listing
+  static async listingIds(): Promise<string[]> {
+    const record = await LocalListing.Collection.find(
+      {},
+      { projection: { listingId: 1 } }
+    ).toArray()
+
+    return record.map((r) => r.listingId)
   }
 
   static deleteMany(filter: Filter<ListingRecord>): Promise<DeleteResult> {
     return LocalListing.Collection.deleteMany(filter)
   }
 
+  private static async fromRecord(
+    record: ListingRecord
+  ): Promise<LocalListing> {
+    const album =
+      (await LocalAlbum.findOne({
+        albumName: record.albumName,
+        artistName: record.artist,
+      })) ||
+      (await LocalAlbum.generate(record.albumName, record.artist, PlexLogo))
+
+    const listing = new LocalListing({
+      ...record,
+      album,
+    })
+
+    listing._id = record._id
+
+    return listing
+  }
+
   private static get Collection(): Collection<ListingRecord> {
-    return Golem.db.collection<ListingRecord>('listings')
+    return Golem.database.listings
   }
 }

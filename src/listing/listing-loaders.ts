@@ -5,6 +5,7 @@ import { LibIndex } from '../library/lib-index'
 import { getAllFiles } from '../utils/filesystem'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { EzProgressBar } from '../utils/progress-bar'
+import { LocalAlbum } from './album'
 import { LocalListing } from './listing'
 
 const log = GolemLogger.child({ src: LogSources.Loader })
@@ -18,6 +19,10 @@ export class ListingLoader {
     if (!GolemConf.modules.Music) {
       log.verbose('music module disabled - not initializing track loading')
       return []
+    }
+
+    if (GolemConf.options.BustCache) {
+      await this.wipeData('')
     }
 
     for (const lib of GolemConf.library.paths) {
@@ -143,9 +148,9 @@ export class ListingLoader {
       log.silly(`saved ${listing.names.short.dashed}`)
 
       return listing
-    } catch (error) {
+    } catch (error: any) {
       log.error(`${path} encountered error.`)
-      log.error(error)
+      log.error(error.stack)
       throw error
     }
   }
@@ -154,7 +159,7 @@ export class ListingLoader {
     path: string,
     name: string
   ): Promise<LocalListing[]> {
-    await this.wipeData(name)
+    // await this.wipeData(name)
 
     const listings: LocalListing[] = []
 
@@ -206,18 +211,29 @@ export class ListingLoader {
     }
   }
 
-  private async wipeData(libName: string): Promise<void> {
-    const index = await LibIndex.findOne({ name: libName })
-    if (index) {
-      log.info(`Deleting stale cache for ${libName}`)
-      await LocalListing.deleteMany({
-        _id: { $in: index?.listingIds || [] },
-      })
-      await index?.delete()
-      log.info(`Stale ${libName} cache deleted`)
-    } else {
-      log.info(`no stale cache found for ${libName}`)
-    }
+  private async wipeData(_libName: string): Promise<void> {
+    log.info(`deleting all local track data`)
+    log.debug(`deleting library indexes`)
+    await LibIndex.deleteMany({})
+    log.debug(`delete library indexes complete`)
+    log.debug(`deleting local listings`)
+    await LocalListing.deleteMany({})
+    log.debug(`delete local listings complete`)
+    log.debug(`deleting local albums`)
+    await LocalAlbum.deleteMany({})
+    log.debug(`delete local albums complete`)
+
+    // const index = await LibIndex.findOne({ name: libName })
+    // if (index) {
+    //   log.info(`Deleting stale cache for ${libName}`)
+    //   await LocalListing.deleteMany({
+    //     _id: { $in: index?.listingIds || [] },
+    //   })
+    //   await index?.delete()
+    //   log.info(`Stale ${libName} cache deleted`)
+    // } else {
+    //   log.info(`no stale cache found for ${libName}`)
+    // }
   }
 
   private async save(name: string, listings: LocalListing[]): Promise<void> {

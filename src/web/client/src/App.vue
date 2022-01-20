@@ -43,9 +43,19 @@ export default {
         title: 'Home',
       },
       {
+        name: 'Listings',
+        route: '/listings',
+        title: 'Listings',
+      },
+      {
         name: 'logs',
         route: '/logs',
         title: 'Logs',
+      },
+      {
+        name: 'Analytics',
+        route: '/analytics',
+        title: 'Analytics',
       },
     ],
   }),
@@ -57,6 +67,8 @@ export default {
   },
 
   mounted() {
+    this.$store.dispatch('listings/getListings')
+
     const vcws = new VoiceConnectionsWebSocketClient()
     vcws.addLogStreamHandler((ev) => {
       const connectionData = JSON.parse(ev.data)

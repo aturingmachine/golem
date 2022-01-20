@@ -1,15 +1,34 @@
 import { URL } from 'url'
 import { EmbedFieldData } from 'discord.js'
 import ytpl from 'ytpl'
+import { Album } from '../../listing/album'
 import { AListing, ListingEmbedData } from '../../listing/listing'
+import { formatForLog } from '../../utils/debug-utils'
+import { ImageUtils } from '../../utils/image-utils'
 import { GolemLogger, LogSources } from '../../utils/logger'
-import { averageColor, embedFieldSpacer } from '../../utils/message-utils'
+import { embedFieldSpacer } from '../../utils/message-utils'
 import { humanReadableDuration } from '../../utils/time-utils'
+
+export class YoutubeAlbum extends Album {
+  readonly albumId: string
+  readonly art: string
+
+  constructor(url: string, thumbnail: string) {
+    super()
+
+    this.albumId = url
+    this.art = thumbnail
+  }
+
+  getArt(_size: 200 | 400 | 1000 | 'original' = 'original'): string {
+    return this.art
+  }
+}
 
 export class YoutubeListing extends AListing {
   private static log = GolemLogger.child({ src: LogSources.YoutubeListing })
 
-  declare albumArt: string
+  declare album: YoutubeAlbum
 
   constructor(
     public url: string,
@@ -18,14 +37,16 @@ export class YoutubeListing extends AListing {
     duration: number,
     artworkUrl?: string
   ) {
+    const album = new YoutubeAlbum(url, artworkUrl || '')
     const parsedUrl = new URL(url)
     const listingId = parsedUrl.searchParams.get('v')
-    super(listingId || url, title, duration, author, '', artworkUrl)
+
+    super(listingId || url, title, duration, author, '', album)
   }
 
   async toEmbed(): Promise<ListingEmbedData> {
     const duration = humanReadableDuration(this.duration)
-    const color = await averageColor(this.albumArt)
+    const color = await ImageUtils.averageColor(this.album.getArt('original'))
 
     const fields: EmbedFieldData[] = [
       {
@@ -55,12 +76,13 @@ export class YoutubeListing extends AListing {
   }
 
   static fromPlaylistItem(item: ytpl.Item): YoutubeListing {
-    YoutubeListing.log
-      .debug(`creating YoutubeListing from item values: author=${
-      item.author.name
-    }; title=${item.title}; url=${item.url}; duration=${
-      item.durationSec || 0
-    }; artworkUrl=${item.bestThumbnail.url || undefined};
+    YoutubeListing.log.debug(`creating YoutubeListing from ${formatForLog({
+      name: item.author.name,
+      title: item.title,
+      url: item.url,
+      duration: item.durationSec,
+      artworkUrl: item.bestThumbnail.url,
+    })}
     `)
 
     const cleanUrl = `${item.url.split('?')[0]}?${item.url
