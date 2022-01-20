@@ -6,7 +6,7 @@
     "src/client/**",
     "dist/**",
     "specs/**",
-    "test-utils/**"
+    "test-utils/**/*.ts"
   ],
   "compilerOptions": {
     "target": "esnext",
