@@ -120,6 +120,8 @@ export class CustomAlias {
 
     if (CustomAlias.cache.has(guildId)) {
       CustomAlias.log.debug(`CustomAlias cache hit for ${guildId}`)
+      // Safe to non Null here
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       return CustomAlias.cache.get(guildId)!
     }
 

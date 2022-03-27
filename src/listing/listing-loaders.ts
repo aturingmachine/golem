@@ -148,9 +148,9 @@ export class ListingLoader {
       log.silly(`saved ${listing.names.short.dashed}`)
 
       return listing
-    } catch (error: any) {
+    } catch (error) {
       log.error(`${path} encountered error.`)
-      log.error(error.stack)
+      log.error((error as Error).stack)
       throw error
     }
   }

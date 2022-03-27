@@ -9,16 +9,27 @@ import { Golem } from '.'
 export class PlayerCache {
   private log = GolemLogger.child({ src: LogSources.PlayerCache })
 
+  /**
+   * Map of GuildId - MusicPlayer
+   */
   private data: Map<Snowflake, MusicPlayer>
 
   constructor() {
     this.data = new Map()
   }
 
-  get(searchVal: string | Message | Interaction): MusicPlayer | undefined {
-    if (typeof searchVal === 'string') {
+  get(
+    searchVal: [string, string | undefined] | Message | Interaction
+  ): MusicPlayer | undefined {
+    if (Array.isArray(searchVal)) {
       this.log.silly(`string get player for: "${searchVal}"`)
-      return this.data.get(searchVal.trim())
+      const target = this.data.get(searchVal[0].trim())
+
+      if (!searchVal[1]) {
+        return target
+      }
+
+      return target?.channelId === searchVal[1] ? target : undefined
     }
 
     if (!searchVal.guild) {
@@ -31,7 +42,7 @@ export class PlayerCache {
 
   getOrCreate(interaction: GolemMessage): MusicPlayer | undefined {
     this.log.debug(
-      `getting player for: guild=${interaction.info.guild?.name}; member=${interaction.info.member?.user.username}; voiceChannel=${interaction.info.voiceChannel?.id}`
+      `getting player for: guild=${interaction.info.guild?.name}; member=${interaction.info.member?.user.username}; voiceChannel=${interaction.info.voiceChannel?.id}; voiceChannelName=${interaction.info.voiceChannel?.name}`
     )
 
     if (!interaction.info.guild) {
@@ -44,35 +55,54 @@ export class PlayerCache {
       return undefined
     }
 
-    if (!this.data.has(interaction.info.guildId)) {
+    const primaryKey = interaction.info.guildId
+    const secondaryKey = interaction.info.voiceChannel.id
+
+    if (
+      !this.data.has(primaryKey) ||
+      // Safe to non Null here
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this.data.get(primaryKey)!.secondaryKey !== secondaryKey
+    ) {
       this.log.verbose(
-        `no player for ${interaction.info.guildId} - creating new`
+        `no player for ${primaryKey} - ${secondaryKey} -- creating new`
       )
       const player = new MusicPlayer({
-        channelId: interaction.info.voiceChannel.id || '',
+        channelId: interaction.info.voiceChannel.id,
         guildId: interaction.info.guildId,
         adapterCreator: interaction.info.guild.voiceAdapterCreator,
         guildName: interaction.info.guild.name,
         channelName: interaction.info.voiceChannel.name,
       })
 
-      this.data.set(interaction.info.guildId, player)
+      this.data.set(primaryKey, player)
     }
 
-    return this.data.get(interaction.info.guildId)
+    return this.data.get(primaryKey)
   }
 
-  delete(key: Snowflake): void {
-    this.data.delete(key)
-    Golem.events.trigger(GolemEvent.Connection, key)
+  // TODO delete without seconday
+  delete(primaryKey: Snowflake, secondaryKey?: string): void {
+    this.log.debug(`attempting delete for ${primaryKey} - ${secondaryKey}`)
+
+    if (
+      !this.data.has(primaryKey) ||
+      // Safe to non Null here
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      (secondaryKey && this.data.get(primaryKey)!.secondaryKey !== secondaryKey)
+    ) {
+      this.log.warn(`attemped to delete nonexistent player for ${primaryKey}`)
+      return
+    }
+
+    this.data.delete(primaryKey)
+
+    Golem.events.trigger(GolemEvent.Connection, primaryKey)
   }
 
   disconnectAll(): void {
     this.data.forEach((player) => {
-      Golem.events.trigger(
-        GolemEvent.Connection,
-        player.voiceConnection.joinConfig.guildId
-      )
+      Golem.events.trigger(GolemEvent.Connection, player.primaryKey)
       player.disconnect()
     })
   }

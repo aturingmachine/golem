@@ -214,6 +214,7 @@ describe('Music Player', () => {
         await musicPlayer.destroy()
 
         expect(MockGolem.removePlayer).toHaveBeenCalledWith(
+          MockJoinOptions.guildId,
           MockJoinOptions.channelId
         )
         expect(MockDiscordJS.VoiceConnection.destroy).toHaveBeenCalled()

@@ -1,6 +1,7 @@
 import chalk from 'chalk'
 import { v4 as uuidv4 } from 'uuid'
 import winston from 'winston'
+import { formatForLog } from './debug-utils'
 
 export enum LogLevel {
   Debug = 'debug',
@@ -11,7 +12,7 @@ export enum LogLevel {
 
 const { combine, timestamp, colorize, printf, json, splat } = winston.format
 
-const consoleLogFormat = printf(({ level, message, timestamp, src }) => {
+const consoleLogFormat = printf(({ level, message, timestamp, src, aux }) => {
   const d = new Date(timestamp)
   const hours = d.getHours().toString().padStart(2, '0')
   const minutes = d.getMinutes().toString().padStart(2, '0')
@@ -21,7 +22,9 @@ const consoleLogFormat = printf(({ level, message, timestamp, src }) => {
 
   const srcColor = LogSourceColors[src as LogSources] || chalk.white
 
-  return `${timeString} <${level}> [${srcColor(src)}] ${message}`
+  const auxLog = !!aux ? ` ${formatForLog(aux)}` : ''
+
+  return `${timeString} <${level}> [${srcColor(src)}] ${message}${auxLog}`
 })
 
 const id = winston.format((info) => {
