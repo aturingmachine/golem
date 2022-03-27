@@ -27,6 +27,12 @@ export type GolemTrackAudioResource = AudioResource & {
   metadata: TrackAudioResourceMetadata
 }
 
+export type MusicPlayerOptions = JoinVoiceChannelOptions &
+  CreateVoiceConnectionOptions & {
+    guildName: string
+    channelName: string
+  }
+
 export class MusicPlayer {
   static readonly autoDCTime = 300000
   private readonly queue!: TrackQueue
@@ -41,9 +47,7 @@ export class MusicPlayer {
 
   public readonly audioPlayer!: AudioPlayer
 
-  public constructor(
-    private options: JoinVoiceChannelOptions & CreateVoiceConnectionOptions
-  ) {
+  public constructor(private options: MusicPlayerOptions) {
     this.log = GolemLogger.child({ src: LogSources.MusicPlayer })
     this.queue = new TrackQueue()
     this.audioPlayer = createAudioPlayer()

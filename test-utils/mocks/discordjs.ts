@@ -1,7 +1,4 @@
-import {
-  JoinVoiceChannelOptions,
-  CreateVoiceConnectionOptions,
-} from '@discordjs/voice'
+import { MusicPlayerOptions } from '../../src/player/music-player'
 import { MockedLocalListing, MockLocalListing } from './models/listing'
 import { MockLocalTrack } from './models/track'
 
@@ -55,9 +52,11 @@ export const MockVoiceConnection = {
 export const MockJoinOptions = {
   channelId: '828',
   guildId: 'clean',
+  guildName: 'sesang',
+  channelName: 'gugudan',
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   adapterCreator: () => {},
-} as unknown as JoinVoiceChannelOptions & CreateVoiceConnectionOptions
+} as unknown as MusicPlayerOptions
 
 enum AudioPlayerStatus {
   Idle = 'idle',

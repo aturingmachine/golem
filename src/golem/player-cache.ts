@@ -52,6 +52,8 @@ export class PlayerCache {
         channelId: interaction.info.voiceChannel.id || '',
         guildId: interaction.info.guildId,
         adapterCreator: interaction.info.guild.voiceAdapterCreator,
+        guildName: interaction.info.guild.name,
+        channelName: interaction.info.voiceChannel.name,
       })
 
       this.data.set(interaction.info.guildId, player)
