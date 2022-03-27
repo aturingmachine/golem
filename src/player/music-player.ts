@@ -34,7 +34,7 @@ export type MusicPlayerOptions = JoinVoiceChannelOptions &
   }
 
 export class MusicPlayer {
-  static readonly autoDCTime = 20_000
+  static readonly autoDCTime = 300_000
 
   private readonly queue: TrackQueue
   private readonly log: winston.Logger
@@ -100,11 +100,18 @@ export class MusicPlayer {
     )
   }
 
-  public get stats(): { count: number; time: number; hTime: string } {
+  public get stats(): {
+    count: number
+    time: number
+    hTime: string
+    explicitTime: number
+  } {
     return {
       count: this.trackCount,
       time: this.queue.runTime + this.currentTrackRemaining,
       hTime: humanReadableTime(this.queue.runTime + this.currentTrackRemaining),
+      explicitTime:
+        this.queue.explicitQueueRunTime + this.currentTrackRemaining,
     }
   }
 
@@ -124,7 +131,7 @@ export class MusicPlayer {
 
   public async enqueue(track: Track, enqueueAsNext = false): Promise<void> {
     this.log.silly(`enqueue - VC Status = ${this.voiceConnection.state.status}`)
-    this.log.info(`queueing ${track.name}`)
+    this.log.info(`queueing${enqueueAsNext ? ' as next ' : ' '}${track.name}`)
 
     if (enqueueAsNext) {
       this.queue.addNext(track.userId, track)

@@ -28,9 +28,10 @@ export class ListingEmbed {
 
   async send(
     context: 'queue' | 'play',
+    isPlayNext?: boolean,
     content?: Partial<MessageOptions>
   ): Promise<void> {
-    const options = await this.messageOptions(context)
+    const options = await this.messageOptions(context, isPlayNext)
 
     await this.message.reply({
       ...content,
@@ -38,9 +39,14 @@ export class ListingEmbed {
     })
   }
 
-  async messageOptions(context: 'queue' | 'play'): Promise<MessageOptions> {
+  async messageOptions(
+    context: 'queue' | 'play',
+    isPlayNext?: boolean
+  ): Promise<MessageOptions> {
     const embed =
-      context === 'queue' ? await this.queueMessage() : await this.playMessage()
+      context === 'queue'
+        ? await this.queueMessage(isPlayNext)
+        : await this.playMessage()
 
     const options = {
       embeds: [embed],
@@ -54,14 +60,16 @@ export class ListingEmbed {
     return options
   }
 
-  private async queueMessage(): Promise<MessageEmbed> {
+  private async queueMessage(isPlayNext?: boolean): Promise<MessageEmbed> {
     const embed = await this.toMessage()
     const title = this.message.player?.isPlaying
       ? 'Added to Queue'
       : 'Now Playing'
     const description = this.message.player?.isPlaying
       ? `Starts In: ${humanReadableTime(
-          this.message.player?.stats.time - this.listing.duration
+          (!isPlayNext
+            ? this.message.player?.stats.time
+            : this.message.player?.stats.explicitTime) - this.listing.duration
         )}`
       : 'Starting Now'
 

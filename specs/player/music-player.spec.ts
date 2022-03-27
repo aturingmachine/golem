@@ -89,11 +89,13 @@ describe('Music Player', () => {
         setCurrentResource()
         musicPlayer.currentResource!.playbackDuration = 100000
         MockedTrackQueue.runTime = 200
+        MockedTrackQueue.explicitQueueRunTime = 828
 
         expect(musicPlayer.stats).toEqual({
           count: 0,
           hTime: '04:40',
           time: 280,
+          explicitTime: 908,
         })
       })
     })

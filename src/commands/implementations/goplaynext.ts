@@ -5,7 +5,7 @@ import { Handlers } from '../../handlers'
 import { GolemMessage } from '../../messages/message-wrapper'
 import { GolemLogger, LogSources } from '../../utils/logger'
 
-const log = GolemLogger.child({ src: LogSources.GoPlay })
+const log = GolemLogger.child({ src: LogSources.GoPlayNext })
 
 const execute = async (interaction: GolemMessage): Promise<void> => {
   log.debug(`executing`)

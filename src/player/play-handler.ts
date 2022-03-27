@@ -164,6 +164,7 @@ export class PlayHandler {
     playNext = false
   ): Promise<void> {
     const listingEmbed = new ListingEmbed(interaction, listing)
+    const type = interaction.player.isPlaying ? 'queue' : 'play'
 
     this.log.verbose('enqueing local track')
 
@@ -171,7 +172,7 @@ export class PlayHandler {
 
     await player.enqueue(track, playNext)
 
-    await listingEmbed.send('queue')
+    await listingEmbed.send(type, playNext)
   }
 
   isYoutubeQuery(query: string): boolean {
@@ -193,17 +194,13 @@ export class PlayHandler {
   ): Promise<void> {
     const track = await YoutubeTrack.fromUrl(interaction.info.userId, url)
     const listingEmbed = new ListingEmbed(interaction, track.listing)
+    const type = interaction.player.isPlaying ? 'queue' : 'play'
 
     this.log.verbose('enqueing youtube track')
 
     await player.enqueue(track, playNext)
 
-    // const { embed } = await GetEmbedFromListing(track.metadata, player, 'queue')
-
-    // await interaction.reply({
-    //   embeds: [embed],
-    // })
-    await listingEmbed.send('queue')
+    await listingEmbed.send(type, playNext)
   }
 
   /**
