@@ -27,9 +27,16 @@ export type GolemTrackAudioResource = AudioResource & {
   metadata: TrackAudioResourceMetadata
 }
 
+export type MusicPlayerOptions = JoinVoiceChannelOptions &
+  CreateVoiceConnectionOptions & {
+    guildName: string
+    channelName: string
+  }
+
 export class MusicPlayer {
-  static readonly autoDCTime = 300000
-  private readonly queue!: TrackQueue
+  static readonly autoDCTime = 20_000
+
+  private readonly queue: TrackQueue
   private readonly log: winston.Logger
 
   private leaveTimeout!: NodeJS.Timeout
@@ -39,12 +46,19 @@ export class MusicPlayer {
   public voiceConnection!: VoiceConnection
   public currentResource?: GolemTrackAudioResource
 
-  public readonly audioPlayer!: AudioPlayer
+  public readonly audioPlayer: AudioPlayer
+  public readonly guildName: string
+  public readonly channelName: string
+  public readonly channelId: string
 
-  public constructor(
-    private options: JoinVoiceChannelOptions & CreateVoiceConnectionOptions
-  ) {
-    this.log = GolemLogger.child({ src: LogSources.MusicPlayer })
+  public constructor(private options: MusicPlayerOptions) {
+    this.log = GolemLogger.child({
+      src: LogSources.MusicPlayer,
+      aux: { guildName: options.guildName, channelName: options.channelName },
+    })
+    this.guildName = options.guildName
+    this.channelName = options.channelName
+    this.channelId = options.channelId
     this.queue = new TrackQueue()
     this.audioPlayer = createAudioPlayer()
 
@@ -53,6 +67,22 @@ export class MusicPlayer {
     this.audioPlayer.on('error', this.audioPlayErrorHandler.bind(this))
 
     this.joinVoice()
+  }
+
+  /**
+   * The primary key that the player should be referenced by.
+   * Currently the GuildID of the Player.
+   */
+  public get primaryKey(): string {
+    return this.options.guildId
+  }
+
+  /**
+   * The secondary key that the player should be referenced by.
+   * Currently the ChannlerId of the Player.
+   */
+  public get secondaryKey(): string {
+    return this.options.channelId
   }
 
   public get isPlaying(): boolean {
@@ -90,10 +120,6 @@ export class MusicPlayer {
 
   public get isDestroyed(): boolean {
     return this.voiceConnection.state.status === VoiceConnectionStatus.Destroyed
-  }
-
-  private get channelId(): string {
-    return this.options.channelId
   }
 
   public async enqueue(track: Track, enqueueAsNext = false): Promise<void> {
@@ -141,7 +167,7 @@ export class MusicPlayer {
 
   public async destroy(): Promise<void> {
     this.log.silly(
-      `attempt destroy voice connection for ${this.channelId} - state=${this.voiceConnection.state.status}`
+      `attempt destroy voice connection for ${this.primaryKey} - ${this.secondaryKey} - state=${this.voiceConnection.state.status}`
     )
     if (
       ![
@@ -149,11 +175,13 @@ export class MusicPlayer {
         VoiceConnectionStatus.Disconnected,
       ].includes(this.voiceConnection.state.status)
     ) {
-      this.log.debug(`destroying voice connection for ${this.channelId}`)
+      this.log.debug(
+        `destroying voice connection for ${this.primaryKey} - ${this.secondaryKey}`
+      )
 
       this.queueLock = false
       this.currentResource?.metadata.track.onSkip()
-      await Golem.removePlayer(this.channelId)
+      await Golem.removePlayer(this.primaryKey, this.secondaryKey)
       this.voiceConnection.destroy()
       Golem.setPresenceIdle()
     }
@@ -199,7 +227,9 @@ export class MusicPlayer {
         VoiceConnectionStatus.Disconnected,
       ].includes(this.voiceConnection.state.status)
     ) {
-      this.log.debug(`disconnecting voice connection for ${this.channelId}`)
+      this.log.debug(
+        `disconnecting voice connection for ${this.primaryKey} -  ${this.secondaryKey}`
+      )
 
       this.queueLock = false
       this.voiceConnection.disconnect()
@@ -234,7 +264,9 @@ export class MusicPlayer {
   }
 
   private startTimer(): void {
-    this.log.debug(`starting auto-dc timer for ${this.channelId}`)
+    this.log.debug(
+      `starting auto-dc timer for ${this.primaryKey} -  ${this.secondaryKey}`
+    )
     this.leaveTimeout = setTimeout(
       this.autoDisconnect.bind(this),
       MusicPlayer.autoDCTime
@@ -242,7 +274,9 @@ export class MusicPlayer {
   }
 
   private clearTimer(): void {
-    this.log.debug(`clearing auto-dc timer for ${this.channelId}`)
+    this.log.debug(
+      `clearing auto-dc timer for ${this.primaryKey} -  ${this.secondaryKey}`
+    )
     clearTimeout(this.leaveTimeout)
   }
 
@@ -254,7 +288,7 @@ export class MusicPlayer {
 
     if (this.isDestroyed) {
       this.log.debug(
-        `player destroyed at process attempt for ${this.channelId} - running rejoin and subscribe`
+        `player in destroyed state at process attempt for ${this.primaryKey}  -  ${this.secondaryKey} - running rejoin and subscribe`
       )
       this.joinVoice()
       // this.subscribe()
@@ -323,7 +357,7 @@ export class MusicPlayer {
     newState: AudioPlayerState
   ): Promise<void> {
     this.log.verbose(
-      `state change - player: ${this.channelId}; ${oldState.status} => ${newState.status}`
+      `state change - player: ${this.primaryKey} -  ${this.secondaryKey}; ${oldState.status} => ${newState.status}`
     )
 
     switch (newState.status) {

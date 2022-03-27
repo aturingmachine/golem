@@ -21,6 +21,7 @@ export class CustomId<P extends InteractionIdPrefixes> {
   static fromString<T extends InteractionIdPrefixes>(
     idString: string
   ): CustomId<T> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const config: Record<string, any> = {
       args: {},
     }

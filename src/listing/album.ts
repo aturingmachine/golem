@@ -34,6 +34,7 @@ export class LocalAlbum extends Album {
     })
 
     // TODO this is bad but also kind of hard to make happen so :shrug:
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     return record!.art[size].buffer
   }
 

@@ -84,12 +84,13 @@ class GolemBot {
     this.hasInitialized = true
   }
 
+  // Search Without voice channel
   getPlayer(
     searchVal: string | Message | Interaction
   ): MusicPlayer | undefined {
     if (typeof searchVal === 'string') {
       this.log.silly(`string get player for: "${searchVal}"`)
-      return this.playerCache.get(searchVal.trim())
+      return this.playerCache.get([searchVal, undefined])
     }
 
     if (!searchVal.guild) {
@@ -97,12 +98,12 @@ class GolemBot {
     }
 
     this.log.verbose(`interaction get player for: ${searchVal.guild.id}`)
-    return this.playerCache.get(searchVal.guild.id)
+    return this.playerCache.get(searchVal)
   }
 
-  async removePlayer(guildId: string): Promise<void> {
-    this.log.info(`Deleting player for ${guildId}`)
-    this.playerCache.delete(guildId)
+  async removePlayer(guildId: string, voiceChannelId: string): Promise<void> {
+    this.log.info(`Deleting player for ${guildId} - ${voiceChannelId}`)
+    this.playerCache.delete(guildId, voiceChannelId)
     await this.events.trigger(GolemEvent.Connection, guildId)
   }
 
@@ -154,6 +155,7 @@ class GolemBot {
     return this.client.users.fetch(id)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   get database(): Record<CollectionNames, Collection<any>> {
     return {
       localalbums: Golem.db.collection<LocalAlbumRecord>('localalbums'),
@@ -179,7 +181,7 @@ class GolemBot {
 
     for (const file of eventFiles) {
       this.log.debug(`Attempting to load Event Handler: ${file}`)
-      /* eslint-disable-next-line @typescript-eslint/no-var-requires */
+      /* eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-explicit-any  */
       const event: EventHandler<any> = require(`../events/${file}`).default
       this.log.debug(`Event Handler Loaded: ${event.on}`)
       if (event.once) {
@@ -220,10 +222,10 @@ class GolemBot {
 
     try {
       await this.plex.init(this.trackFinder)
-    } catch (error: any) {
+    } catch (error) {
       this.log.error('plex connection failed')
       this.log.error(error)
-      console.error(error.stack)
+      console.error((error as Error).stack)
     }
   }
 }

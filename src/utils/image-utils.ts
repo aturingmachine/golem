@@ -4,6 +4,8 @@ import { GolemConf } from '../config'
 import { PlexLogo } from '../constants'
 
 export const ImageUtils = {
+  // Genuinely not sure about this any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   averageColor: (img?: Buffer | string): any =>
     getAverageColor(img || PlexLogo, {
       algorithm: GolemConf.image.avgColorAlgorithm,
