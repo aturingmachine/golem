@@ -119,6 +119,16 @@ export class TrackQueue {
     return estRunTime
   }
 
+  get explicitQueueRunTime(): number {
+    const estRunTime = this.explicitQueue.reduce((prev, curr) => {
+      return prev + curr.track.metadata.duration
+    }, 0)
+
+    log.silly(`Estimated Explicit Runtime ${estRunTime}`)
+
+    return estRunTime
+  }
+
   get queuedTrackCount(): number {
     return this.queue.length
   }

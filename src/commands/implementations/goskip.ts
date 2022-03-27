@@ -23,7 +23,7 @@ const execute = async (interaction: GolemMessage): Promise<void> => {
     if (interaction.player.currentResource) {
       const listingEmbed = new ListingEmbed(interaction)
 
-      await listingEmbed.send('play', { content: 'Skipped!' })
+      await listingEmbed.send('play', false, { content: 'Skipped!' })
     } else {
       await interaction.reply({
         content: 'Skipped! Queue empty.',

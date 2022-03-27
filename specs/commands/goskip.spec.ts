@@ -51,7 +51,7 @@ describe('goskip', () => {
   it('should reply using the ListingEmbed if there is another track', async () => {
     await goskip.execute(mockMessage._toWrapper())
 
-    expect(MockedListingEmbed.send).toHaveBeenCalledWith('play', {
+    expect(MockedListingEmbed.send).toHaveBeenCalledWith('play', false, {
       content: 'Skipped!',
     })
   })
