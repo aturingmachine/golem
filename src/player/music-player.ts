@@ -190,7 +190,7 @@ export class MusicPlayer {
       this.currentResource?.metadata.track.onSkip()
       await Golem.removePlayer(this.primaryKey, this.secondaryKey)
       this.voiceConnection.destroy()
-      Golem.setPresenceIdle()
+      Golem.presence.update()
     }
   }
 
@@ -213,7 +213,7 @@ export class MusicPlayer {
     this.log.verbose(`force stopping player`)
     this.audioPlayer.stop(true)
     this.queueLock = false
-    Golem.setPresenceIdle()
+    Golem.presence.update()
     // this.disconnect()
   }
 
@@ -240,8 +240,37 @@ export class MusicPlayer {
 
       this.queueLock = false
       this.voiceConnection.disconnect()
-      Golem.setPresenceIdle()
+      Golem.presence.update()
     }
+  }
+
+  startTimer(): void {
+    this.log.debug(
+      `starting auto-dc timer for ${this.primaryKey} -  ${this.secondaryKey}`
+    )
+    this.leaveTimeout = setTimeout(
+      this.autoDisconnect.bind(this),
+      MusicPlayer.autoDCTime
+    )
+  }
+
+  async clearTimer(force = false): Promise<void> {
+    this.log.debug(
+      `clearing auto-dc timer for ${this.primaryKey} -  ${this.secondaryKey} - ${force}`
+    )
+
+    if (force) {
+      clearTimeout(this.leaveTimeout)
+      return
+    }
+
+    const channel = await Golem.client.channels.fetch(this.channelId)
+
+    if (channel?.isVoice() && channel.members.size === 1) {
+      return
+    }
+
+    clearTimeout(this.leaveTimeout)
   }
 
   private joinVoice(): void {
@@ -267,24 +296,7 @@ export class MusicPlayer {
     )
     await this.destroy()
 
-    this.clearTimer()
-  }
-
-  private startTimer(): void {
-    this.log.debug(
-      `starting auto-dc timer for ${this.primaryKey} -  ${this.secondaryKey}`
-    )
-    this.leaveTimeout = setTimeout(
-      this.autoDisconnect.bind(this),
-      MusicPlayer.autoDCTime
-    )
-  }
-
-  private clearTimer(): void {
-    this.log.debug(
-      `clearing auto-dc timer for ${this.primaryKey} -  ${this.secondaryKey}`
-    )
-    clearTimeout(this.leaveTimeout)
+    this.clearTimer(true)
   }
 
   private async processQueue(force = false): Promise<void> {
@@ -336,7 +348,6 @@ export class MusicPlayer {
         this.currentResource = next
         this.currentResource.volume?.setVolume(0.35)
         this.audioPlayer.play(this.currentResource)
-        Golem.setPresenceListening(nextTrack.metadata)
 
         Golem.events.trigger(
           GolemEvent.Queue,
@@ -376,7 +387,7 @@ export class MusicPlayer {
         this.clearTimer()
         break
       case AudioPlayerStatus.Idle:
-        Golem.setPresenceIdle()
+        Golem.presence.update()
         // start timer
         this.startTimer()
 

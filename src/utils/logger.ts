@@ -12,20 +12,29 @@ export enum LogLevel {
 
 const { combine, timestamp, colorize, printf, json, splat } = winston.format
 
-const consoleLogFormat = printf(({ level, message, timestamp, src, aux }) => {
-  const d = new Date(timestamp)
-  const hours = d.getHours().toString().padStart(2, '0')
-  const minutes = d.getMinutes().toString().padStart(2, '0')
-  const seconds = d.getSeconds().toString().padStart(2, '0')
+const consoleLogFormat = printf(
+  ({ level, message, timestamp, src, traceId, aux }) => {
+    const d = new Date(timestamp)
+    const hours = d.getHours().toString().padStart(2, '0')
+    const minutes = d.getMinutes().toString().padStart(2, '0')
+    const seconds = d.getSeconds().toString().padStart(2, '0')
+    const day = d.getDate().toString().padStart(2, '0')
+    const month = (d.getMonth() + 1).toString().padStart(2, '0')
+    const year = (d.getFullYear() - 2000).toString().padStart(2, '0')
 
-  const timeString = `${hours}:${minutes}:${seconds}`
+    const timeString = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`
 
-  const srcColor = LogSourceColors[src as LogSources] || chalk.white
+    const srcColor = LogSourceColors[src as LogSources] || chalk.white
 
-  const auxLog = !!aux ? ` ${formatForLog(aux)}` : ''
+    const auxLog = !!aux ? ` ${formatForLog(aux)}` : ''
 
-  return `${timeString} <${level}> [${srcColor(src)}] ${message}${auxLog}`
-})
+    const idString = !!traceId ? `[${traceId}] ` : ''
+
+    return `${timeString} <${level}> [${srcColor(
+      src
+    )}] ${idString}${message}${auxLog}`
+  }
+)
 
 const id = winston.format((info) => {
   info.id = uuidv4()
@@ -103,6 +112,7 @@ enum LogSources {
   GoAlias = 'go-alias',
   GoGet = 'goget',
   GoGetHandler = 'goget-handler',
+  GolemMessage = 'golem-message',
   GoMix = 'go-mix',
   GoPause = 'go-pause',
   GoPeek = 'go-peek',
@@ -130,10 +140,12 @@ enum LogSources {
   PlayHandler = 'play-handler',
   PlaylistMenu = 'playlist-menu',
   Plex = 'plex',
+  PresenceManager = 'presence-manager',
   Queue = 'queue',
   Search = 'search',
   SearchSchemes = 'search-schemes',
   WideSearch = 'wide-search',
+  VoiceStateUpdate = 'voice-state-update',
   Youtils = 'youtils',
   YoutubeListing = 'youtube-listing',
   YoutubeTrack = 'yt-track',
@@ -165,6 +177,7 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'go-skip': chalk.magentaBright,
   'go-stop': chalk.blue,
   'goget-handler': chalk.magenta,
+  'golem-message': chalk.cyanBright,
   'interaction-create': chalk.green,
   'last-fm': chalk.magentaBright,
   'legacy-handler': chalk.green,
@@ -177,9 +190,11 @@ const LogSourceColors: Record<LogSources, chalk.Chalk> = {
   'play-handler': chalk.green,
   'player-cache': chalk.magentaBright,
   'playlist-menu': chalk.yellow,
+  'presence-manager': chalk.blue,
   'search-schemes': chalk.blue,
   'web-server': chalk.magenta,
   'wide-search': chalk.magenta,
+  'voice-state-update': chalk.yellow,
   'youtube-listing': chalk.magentaBright,
   'yt-track': chalk.cyanBright,
   analytics: chalk.cyanBright,

@@ -7,11 +7,13 @@ import {
   MessageOptions,
   SelectMenuInteraction,
 } from 'discord.js'
+import { v4 } from 'uuid'
+import winston from 'winston'
 import { CustomAlias } from '../aliases/custom-alias'
 import { BuiltInAlias, CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { MusicPlayer } from '../player/music-player'
-import { GolemLogger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { StringUtils } from '../utils/string-utils'
 import { MessageInfo } from './message-info'
 import { ParsedCommand } from './parsed-command'
@@ -27,10 +29,15 @@ export type GolemMessageInteraction =
   | SelectMenuInteraction
 
 export class GolemMessage {
-  private static log = GolemLogger.child({ src: 'golem-msg' })
+  private readonly log: winston.Logger
 
   public readonly parsed: ParsedCommand
   public readonly info: MessageInfo
+
+  /**
+   * Internal UUID generated for this message
+   */
+  public readonly traceId: string
 
   private replies: Message[] = []
 
@@ -38,14 +45,20 @@ export class GolemMessage {
     public source: GolemMessageInteraction,
     customAlias?: CustomAlias
   ) {
+    this.traceId = v4()
+    this.log = GolemLogger.child({
+      src: LogSources.GolemMessage,
+      traceId: this.traceId,
+    })
+
     if (this.source instanceof Message) {
-      GolemMessage.log.silly(`got Message`)
+      this.log.silly(`got Message`)
       const raw =
         customAlias?.evaluated ||
-        GolemMessage.ExpandBuiltInAlias(this.source.content) ||
+        this.ExpandBuiltInAlias(this.source.content) ||
         this.source.content
 
-      GolemMessage.log.silly(`parsed raw => ${raw}`)
+      this.log.silly(`parsed raw => ${raw}`)
 
       this.parsed = ParsedCommand.fromRaw(raw)
     } else if (this.source.isCommand()) {
@@ -56,7 +69,7 @@ export class GolemMessage {
       throw new Error(`Invalid Interaction type - Cannot wrap ${this.source}`)
     }
 
-    GolemMessage.log.silly(`parsed => ${this.parsed.toDebug()}`)
+    this.log.silly(`parsed => ${this.parsed.toDebug()}`)
 
     this.info = new MessageInfo(this.source)
   }
@@ -154,24 +167,28 @@ export class GolemMessage {
     return this.replies.at(-1)
   }
 
-  get player(): MusicPlayer {
+  get player(): MusicPlayer | undefined {
     const player = Golem.playerCache.getOrCreate(this)
 
     if (!player) {
-      throw new Error(`no player for ${this.info.guildId}`)
+      return undefined
     }
 
     return player
   }
 
+  get logMeta(): { traceId: string } {
+    return { traceId: this.traceId }
+  }
+
   // TODO can probs be cleaner
-  static ExpandBuiltInAlias(raw: string): string | undefined {
-    GolemMessage.log.debug(`running ${raw} as Built In Alias`)
+  ExpandBuiltInAlias(raw: string): string | undefined {
+    this.log.debug(`running ${raw} as Built In Alias`)
 
     const parsed = raw.replace(/^\$/, '')
     const aliasName = StringUtils.wordAt(parsed, 0) as BuiltInAlias
 
-    GolemMessage.log.debug(`parsed ${raw} to alias: ${aliasName}`)
+    this.log.debug(`parsed ${raw} to alias: ${aliasName}`)
 
     switch (aliasName) {
       case CommandNames.Aliases.Play:

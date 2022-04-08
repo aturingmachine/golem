@@ -9,6 +9,12 @@ const extractors = {
     extract: (t: LocalListing) => t.searchString.toLowerCase(),
   },
 
+  // full name
+  baseReverse: {
+    extract: (t: LocalListing) =>
+      `${t.title} ${t.albumName} ${t.artist}`.toLowerCase(),
+  },
+
   // title only
   title: {
     extract: (t: LocalListing) => t.title.toLowerCase(),
@@ -110,6 +116,15 @@ export class SearchSchemes {
         }; using baseSearch`
       )
       result = fuzzy.filter(query, tracks, extractors.base)
+    }
+
+    if (result.length === 0 || result[0].score < 50) {
+      this.log.verbose(
+        `base ${
+          result.length ? 'scores: ' + result[0].score : 'miss'
+        }; using baseReverse`
+      )
+      result = fuzzy.filter(query, tracks, extractors.baseReverse)
     }
 
     return result[0]?.score > GolemConf.search.minimumScore ? result : []

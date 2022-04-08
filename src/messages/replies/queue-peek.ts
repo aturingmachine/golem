@@ -10,6 +10,11 @@ export class QueuePeek {
 
   get embed(): MessageEmbed {
     const player = this.message.player
+
+    if (!player) {
+      return new MessageEmbed().setTitle('Not playing anything.')
+    }
+
     const peekedTracks = player.peek()
 
     const fields = peekedTracks.map((track, index) => ({

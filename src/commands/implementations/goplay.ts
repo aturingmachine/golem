@@ -8,7 +8,7 @@ import { GolemLogger, LogSources } from '../../utils/logger'
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 
 const execute = async (interaction: GolemMessage): Promise<void> => {
-  log.debug(`executing`)
+  log.debug(`executing`, interaction.logMeta)
   await Handlers.Play.process(interaction, { playNext: false })
 }
 

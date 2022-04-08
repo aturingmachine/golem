@@ -19,7 +19,7 @@ export class ListingEmbed {
   constructor(public message: GolemMessage, listing?: AListing) {
     if (listing) {
       this.listing = listing
-    } else if (this.message.player.nowPlaying) {
+    } else if (this.message.player?.nowPlaying) {
       this.listing = this.message.player.nowPlaying
     } else {
       throw new Error('No listing provided')
@@ -81,6 +81,10 @@ export class ListingEmbed {
   private async playMessage(): Promise<MessageEmbed> {
     let description: string
     const title = 'Now Playing'
+
+    if (!this.message.player) {
+      throw new Error('Attempting to build ListingEmbed with no player.')
+    }
 
     const timeRemaining = humanReadableTime(
       this.message.player.currentTrackRemaining

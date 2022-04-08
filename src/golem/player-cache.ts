@@ -81,7 +81,6 @@ export class PlayerCache {
     return this.data.get(primaryKey)
   }
 
-  // TODO delete without seconday
   delete(primaryKey: Snowflake, secondaryKey?: string): void {
     this.log.debug(`attempting delete for ${primaryKey} - ${secondaryKey}`)
 

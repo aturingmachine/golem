@@ -7,6 +7,14 @@ import { GolemLogger, LogSources } from '../../utils/logger'
 const execute = async (interaction: GolemMessage): Promise<void> => {
   GolemLogger.info('executing', { src: LogSources.GoStop })
 
+  if (!interaction.player) {
+    await interaction.reply(
+      'Unable to stop player. Not in a valid voice channel.'
+    )
+    GolemLogger.info(`no channel to join, exiting early`)
+    return
+  }
+
   await interaction.reply('Clearing the queue!')
 
   try {

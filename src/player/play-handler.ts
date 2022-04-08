@@ -23,7 +23,7 @@ export class PlayHandler {
   ): Promise<void> {
     {
       if (!interaction.player) {
-        await interaction.reply('Not in a valid voice channel.')
+        await interaction.reply('Unable to play. Not in a valid voice channel.')
         this.log.info(`no channel to join, exiting early`)
         return
       }
@@ -164,7 +164,7 @@ export class PlayHandler {
     playNext = false
   ): Promise<void> {
     const listingEmbed = new ListingEmbed(interaction, listing)
-    const type = interaction.player.isPlaying ? 'queue' : 'play'
+    const type = player.isPlaying ? 'queue' : 'play'
 
     this.log.verbose('enqueing local track')
 
@@ -194,7 +194,7 @@ export class PlayHandler {
   ): Promise<void> {
     const track = await YoutubeTrack.fromUrl(interaction.info.userId, url)
     const listingEmbed = new ListingEmbed(interaction, track.listing)
-    const type = interaction.player.isPlaying ? 'queue' : 'play'
+    const type = player.isPlaying ? 'queue' : 'play'
 
     this.log.verbose('enqueing youtube track')
 
