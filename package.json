@@ -14,7 +14,9 @@
     "cmd:dmp": "node ./scripts/dump-commands.js",
     "docs:dev": "npm run cmd:dmp && npm run dev:gen --prefix ./docs",
     "docs:build": "npm run build --prefix ./docs",
-    "docs:deploy": "sh ./scripts/docs-deploy.sh"
+    "docs:deploy": "sh ./scripts/docs-deploy.sh",
+    "docker:run": "./scripts/docker-run.sh",
+    "docker:build": "./scripts/docker-build.sh"
   },
   "author": "",
   "license": "MIT",

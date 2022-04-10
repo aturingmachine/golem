@@ -1,0 +1,19 @@
+version: "3.9"
+services:
+  golem:
+    platform: linux/x86_64
+    container_name: golem
+    image: golem-bot
+    build:
+      context: $PWD
+      dockerfile: $PWD/docker/Dockerfile
+    ports:
+      - "3828:3828"
+    depends_on:
+      - mongo
+    command: ['node', 'dist/index.js', 'debug']
+    volumes: 
+      - $PWD:/opt/golem
+  mongo:
+    container_name: golem-mongo
+    image: mongo

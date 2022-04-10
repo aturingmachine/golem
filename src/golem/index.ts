@@ -211,7 +211,7 @@ class GolemBot {
   }
 
   private async connectToMongo(): Promise<void> {
-    this.log.info('connecting to database ' + GolemConf.mongo.dbName)
+    this.log.info(`connecting to database ${GolemConf.mongo.dbName} @ ${GolemConf.mongo.uri}`)
     try {
       await this.mongo.connect()
       this.db = this.mongo.db(GolemConf.mongo.dbName)
