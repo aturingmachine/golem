@@ -20,7 +20,7 @@ export function youtubeDownload(url: string): execa.ExecaChildProcess<string> {
   })
 
   const process = execa(GolemConf.youtube.ytdlpPath, [url, ...opts], {
-    stdio: ['ignore', 'pipe', 'ignore'],
+    stdio: ['pipe', 'pipe', 'ignore'],
   })
 
   return process

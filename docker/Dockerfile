@@ -22,8 +22,8 @@ CMD ['npm', 'run', 'build']
 EXPOSE 3828
 
 # Install YTDLP
-RUN mkdir -p ./bin/ytdlp
-RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ./bin/yt-dlp
+RUN mkdir -p /opt/bin/ytdlp
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /opt/bin/yt-dlp
 
 # Make YTDLP runnable
-RUN chmod a+rx ./bin/yt-dlp
+RUN chmod a+rx /opt/bin/yt-dlp

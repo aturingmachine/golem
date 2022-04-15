@@ -5,6 +5,7 @@ import {
 } from '@discordjs/voice'
 import winston from 'winston'
 import { getInfo } from 'ytdl-core'
+import { GolemConf } from '../../config'
 import { TrackListingInfo } from '../../listing/listing'
 import { Track, TrackAudioResourceMetadata } from '../../tracks'
 import { formatForLog } from '../../utils/debug-utils'
@@ -52,6 +53,14 @@ export class YoutubeTrack extends Track {
     YoutubeTrack.log.debug(`${this.url} converting to audio resource`)
     return new Promise((resolve, reject) => {
       const process = youtubeDownload(this.url)
+
+      if (!process) {
+        reject(new Error('Unable to spawn YoutubeDownload'))
+        YoutubeTrack.log.error(
+          `couldn't spawn youtube download using path: ${GolemConf.youtube.ytdlpPath}`
+        )
+        return
+      }
 
       if (!process.stdout) {
         reject(new Error('No stdout'))

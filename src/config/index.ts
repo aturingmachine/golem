@@ -17,6 +17,8 @@ import {
   YoutubeConfig,
 } from './models'
 
+const BundledYTDLPPath = '/opt/bin/ytdlp'
+
 const rawConfig: () => ConfigurationOptions = () =>
   YAML.parse(
     readFileSync(
@@ -215,7 +217,10 @@ export class GolemConf {
 
   static get youtube(): YoutubeConfig {
     return {
-      ytdlpPath: GolemConf.values.youtube?.ytdlpPath || '',
+      ytdlpPath:
+        Boolean(GolemConf.values.youtube?.ytdlpPath) !== false
+          ? GolemConf.values.youtube?.ytdlpPath || BundledYTDLPPath || ''
+          : '',
     }
   }
 

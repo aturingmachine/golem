@@ -11,7 +11,7 @@ services:
       - "3828:3828"
     depends_on:
       - mongo
-    command: ['node', 'dist/index.js', 'debug']
+    command: ['npm', 'run', 'build']
     volumes: 
       - $PWD:/opt/golem
   mongo:

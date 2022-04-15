@@ -16,5 +16,7 @@ if [ ! -f docker/docker-compose.volumes.yml ]; then
 fi
 
 echo ">>> Running Docker-Compose..."
-echo ">>> docker-compose -f docker/docker-compose.yml -f docker/docker-compose.volumes.yml up"
-docker-compose -f docker/docker-compose.yml -f docker/docker-compose.volumes.yml up
+echo ">>> docker-compose -f docker/docker-compose.yml -f docker/docker-compose.volumes.yml up -d"
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.volumes.yml up -d
+echo ">>> docker-compose -f docker/docker-compose.yml -f docker/docker-compose.volumes.yml logs -f golem"
+docker-compose -f docker/docker-compose.yml -f docker/docker-compose.volumes.yml logs -f golem

@@ -16,7 +16,8 @@
     "docs:build": "npm run build --prefix ./docs",
     "docs:deploy": "sh ./scripts/docs-deploy.sh",
     "docker:run": "./scripts/docker-run.sh",
-    "docker:build": "./scripts/docker-build.sh"
+    "docker:build": "./scripts/docker-build.sh",
+    "docker:stop": "docker stop golem golem-mongo"
   },
   "author": "",
   "license": "MIT",
