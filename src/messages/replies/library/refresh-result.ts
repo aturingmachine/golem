@@ -18,7 +18,7 @@ export class RefreshResult {
     return StringFormat.preformatted(resultString)
   }
 
-  send(): Promise<Message> {
+  send(): Promise<Message | undefined> {
     return this.message.reply(this.toMessage())
   }
 }

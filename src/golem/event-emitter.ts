@@ -1,4 +1,4 @@
-import { Snowflake } from 'discord-api-types'
+import { Snowflake } from 'discord.js'
 import { GolemLogger } from '../utils/logger'
 
 type GolemEventHandler = (guildId: string) => Promise<void> | void

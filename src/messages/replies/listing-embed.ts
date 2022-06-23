@@ -9,7 +9,7 @@ import { formatForLog } from '../../utils/debug-utils'
 import { GolemLogger } from '../../utils/logger'
 import { getDurationBar } from '../../utils/message-utils'
 import { humanReadableTime } from '../../utils/time-utils'
-import { GolemMessage } from '../message-wrapper'
+import { GolemMessage, GolemMessageOpts } from '../message-wrapper'
 
 export class ListingEmbed {
   private log = GolemLogger.child({ src: 'listing-embed' })
@@ -35,14 +35,14 @@ export class ListingEmbed {
 
     await this.message.reply({
       ...content,
-      ...options,
+      ...options.asMessage(),
     })
   }
 
   async messageOptions(
     context: 'queue' | 'play',
     isPlayNext?: boolean
-  ): Promise<MessageOptions> {
+  ): Promise<GolemMessageOpts> {
     const embed =
       context === 'queue'
         ? await this.queueMessage(isPlayNext)
@@ -57,7 +57,7 @@ export class ListingEmbed {
       `${this.listing.title} generated message embed ${formatForLog(options)}`
     )
 
-    return options
+    return new GolemMessageOpts(options)
   }
 
   private async queueMessage(isPlayNext?: boolean): Promise<MessageEmbed> {

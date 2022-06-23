@@ -1,5 +1,6 @@
 import {
   AwaitMessageComponentOptions,
+  CacheType,
   CommandInteraction,
   InteractionReplyOptions,
   Message,
@@ -20,13 +21,41 @@ import { ParsedCommand } from './parsed-command'
 import { SelectMenu } from './select-menu'
 
 export type GolemMessageReplyOptions =
-  | (MessageOptions & InteractionReplyOptions)
+  | MessageOptions
+  | InteractionReplyOptions
   | string
 
 export type GolemMessageInteraction =
   | Message
   | CommandInteraction
   | SelectMenuInteraction
+
+export class GolemMessageOpts {
+  constructor(readonly rawOpts: GolemMessageReplyOptions) {
+    if (typeof rawOpts === 'string') {
+      this.rawOpts = { content: rawOpts }
+    }
+  }
+
+  asInteraction(
+    aux?: Partial<InteractionReplyOptions>
+  ): InteractionReplyOptions {
+    return { ...(this.rawOpts as InteractionReplyOptions), ...aux }
+  }
+
+  asMessage(aux?: Partial<MessageOptions>): MessageOptions {
+    return { ...(this.rawOpts as MessageOptions), ...aux }
+  }
+
+  asObject<T extends MessageOptions | InteractionReplyOptions>(
+    aux?: Partial<T>
+  ): T {
+    return {
+      ...(this.rawOpts as T),
+      ...aux,
+    }
+  }
+}
 
 export class GolemMessage {
   private readonly log: winston.Logger
@@ -82,7 +111,7 @@ export class GolemMessage {
     return this.parsed.toDebug()
   }
 
-  collector<T extends MessageComponentInteraction>(
+  collector<T extends MessageComponentInteraction<CacheType>>(
     options: AwaitMessageComponentOptions<T>,
     handler: (interaction: T) => Promise<T | void>
   ): Promise<T | void> | undefined {
@@ -90,45 +119,52 @@ export class GolemMessage {
       return this.lastReply
         .awaitMessageComponent({
           ...options,
-          filter: async (interaction: T): Promise<boolean> => {
+          componentType: options.componentType || 'ACTION_ROW',
+          filter: async (interaction): Promise<boolean> => {
+            if (!interaction.isMessageComponent()) {
+              return false
+            }
+
             if (interaction.user.id !== this.info.userId) {
               return false
             }
 
             if (options.filter) {
-              return await options.filter(interaction)
+              return await options.filter(interaction as T)
             }
 
             return true
           },
         })
-        .then(handler)
+        .then((val) => handler(val as T))
     }
 
     return undefined
   }
 
-  async reply(options: GolemMessageReplyOptions): Promise<Message> {
+  async reply(
+    options: GolemMessageReplyOptions | GolemMessageOpts
+  ): Promise<Message | undefined> {
     let message: Message
-    let parsedOptions: MessageOptions
-    if (typeof options === 'string') {
-      parsedOptions = { content: options }
-    } else {
-      parsedOptions = options
-    }
+
+    const opts =
+      options instanceof GolemMessageOpts
+        ? options
+        : new GolemMessageOpts(options)
 
     if (this.source instanceof Message) {
-      message = await this.source.reply(parsedOptions)
+      message = await this.source.reply(opts.asMessage())
     } else {
       const res = await this.source.reply({
-        ...parsedOptions,
+        ...opts.asInteraction(),
         fetchReply: true,
       })
 
       if (res instanceof Message) {
         message = res
       } else {
-        message = new Message(this.source.client, res)
+        // message = new Message(this.source.client, res)
+        return
       }
     }
 
@@ -152,8 +188,11 @@ export class GolemMessage {
     let parsedOptions: MessageOptions
     if (typeof options === 'string') {
       parsedOptions = { content: options }
-    } else {
+    } else if ('reply' in options) {
       parsedOptions = options
+    } else {
+      // Handle interaction I guess?
+      parsedOptions = { ...options, flags: undefined }
     }
 
     const message = await this.lastReply.reply(parsedOptions)

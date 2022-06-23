@@ -324,7 +324,13 @@ export class GolemCommand {
         .setDescription(arg.description.short)
         .setRequired(arg.required)
 
-      target[AddOptions[arg.type]](option as any)
+      const addOption = AddOptions[arg.type]
+
+      if (subcommand?.builder) {
+        subcommand.builder[addOption](option as any)
+      } else {
+        this.slashCommand[addOption](option as any)
+      }
     })
   }
 

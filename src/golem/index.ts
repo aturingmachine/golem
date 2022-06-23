@@ -190,15 +190,21 @@ class GolemBot {
       const event: EventHandler<any> = require(`../events/${file}`).default
       this.log.debug(`Event Handler Loaded: ${event.on}`)
       if (event.once) {
-        this.client.once(
-          event.on,
-          async (...args) => await event.execute(...args)
-        )
+        this.client.once(event.on, async (...args) => {
+          try {
+            await event.execute(...args)
+          } catch (error) {
+            GolemLogger.info(`Handler once-${event.on} error: ${error}`)
+          }
+        })
       } else {
-        this.client.on(
-          event.on,
-          async (...args) => await event.execute(...args)
-        )
+        this.client.on(event.on, async (...args) => {
+          try {
+            await event.execute(...args)
+          } catch (error) {
+            GolemLogger.info(`Handler on-${event.on} error: ${error}`)
+          }
+        })
       }
 
       this.log.debug(`Event Handler Registered: ${event.on}`)

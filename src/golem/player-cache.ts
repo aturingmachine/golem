@@ -1,5 +1,5 @@
-import { Snowflake } from 'discord-api-types'
-import { Interaction, Message } from 'discord.js'
+import { DiscordGatewayAdapterCreator } from '@discordjs/voice'
+import { Interaction, Message, Snowflake } from 'discord.js'
 import { GolemMessage } from '../messages/message-wrapper'
 import { MusicPlayer } from '../player/music-player'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -70,7 +70,8 @@ export class PlayerCache {
       const player = new MusicPlayer({
         channelId: interaction.info.voiceChannel.id,
         guildId: interaction.info.guildId,
-        adapterCreator: interaction.info.guild.voiceAdapterCreator,
+        adapterCreator: interaction.info.guild
+          .voiceAdapterCreator as DiscordGatewayAdapterCreator,
         guildName: interaction.info.guild.name,
         channelName: interaction.info.voiceChannel.name,
       })

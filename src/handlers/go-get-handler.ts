@@ -1,7 +1,7 @@
 import { MessageOptions } from 'discord.js'
 import { Commands } from '../commands/register-commands'
 import { Golem } from '../golem'
-import { GolemMessage } from '../messages/message-wrapper'
+import { GolemMessage, GolemMessageOpts } from '../messages/message-wrapper'
 import { ListingEmbed } from '../messages/replies/listing-embed'
 import { MusicPlayer } from '../player/music-player'
 import { GolemLogger, LogSources } from '../utils/logger'
@@ -31,7 +31,7 @@ export class GoGet {
         }
       case 'np':
       case 'nowplaying':
-        return await this.npResponse(opts.message)
+        return (await this.npResponse(opts.message)).asMessage()
       case 'tcount':
         return { content: this.tCountResponse }
       case 'playlist':
@@ -52,7 +52,7 @@ export class GoGet {
     return `\n**Queued Tracks**: ${player?.stats.count || noPlayerMsg}`
   }
 
-  async npResponse(message: GolemMessage): Promise<MessageOptions> {
+  async npResponse(message: GolemMessage): Promise<GolemMessageOpts> {
     const listingEmbed = new ListingEmbed(message)
     return listingEmbed.messageOptions('play')
   }
@@ -82,7 +82,7 @@ export class GoGet {
       )
     }
 
-    const np = await this.npResponse(message)
+    const np = (await this.npResponse(message)).asObject()
 
     np.embeds?.[0].fields?.push(...fields)
 
