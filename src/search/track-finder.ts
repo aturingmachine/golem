@@ -1,4 +1,5 @@
 import fuzzy from 'fuzzy'
+import { GolemConf } from '../config'
 import { Golem } from '../golem'
 import {
   SimilarArtistMatch,
@@ -196,20 +197,47 @@ export class ListingFinder {
     log.verbose(
       `\n${resultSet
         .slice(0, 15)
-        .map((r) => `${r.original.title} scored ${r.score}`)
+        .map(
+          (r) =>
+            `${r.original.title} - ${r.original.albumName} scored ${r.score}`
+        )
         .join('\n')}`
     )
-    let pref = resultSet[0]
+    let pref: fuzzy.FilterResult<LocalListing> = resultSet[0]
     const startingScore = pref.score
-    log.verbose(`Post-Weight: Starting with ${pref.original.longName}`)
+    log.verbose(`Weighting: Starting with ${pref.original.longName}`)
 
-    if (this.isLiveOrInst(pref)) {
+    if (this.matchesWeightedTerm(pref)) {
       log.verbose(`Post-Weight: Pref flagged, searching for alternatives`)
       pref =
         resultSet
           .slice(0, 10)
           .filter((r) => Math.abs(startingScore - r.score) < 5)
-          .find((result) => !this.isLiveOrInst(result)) || pref
+          .find((result) => !this.matchesWeightedTerm(result)) || pref
+    }
+
+    log.verbose(`Weighting: Checking near results for close calls`)
+    const nextValid = resultSet
+      .slice(0, 10)
+      .filter(
+        (r) =>
+          Math.abs(startingScore - r.score) < 5 || r.score === startingScore
+      )
+      .filter((result) => !this.matchesWeightedTerm(result))
+
+    // TODO oh no
+    if (
+      nextValid[0]?.score === nextValid[1]?.score ||
+      nextValid[0]?.score === nextValid[2]?.score ||
+      nextValid[0]?.score === nextValid[3]?.score ||
+      nextValid[0]?.score - nextValid[1]?.score < 5 ||
+      nextValid[0]?.score - nextValid[2]?.score < 5 ||
+      nextValid[0]?.score - nextValid[3]?.score < 5
+    ) {
+      log.debug(`some valid scores within 5 - weighting on album name`)
+      pref =
+        nextValid.find((result) => !this.matchesWeightedTerm(result, true)) ||
+        pref
     }
 
     log.verbose(`Returning ${pref.original.title}`)
@@ -217,21 +245,21 @@ export class ListingFinder {
     return pref
   }
 
-  private isLiveOrInst(result: fuzzy.FilterResult<LocalListing>): boolean {
+  private matchesWeightedTerm(
+    result: fuzzy.FilterResult<LocalListing>,
+    checkAlbum = false
+  ): boolean {
     log.verbose(
       `Checking force weighting for ${result.original.title.toLowerCase()}`
     )
 
-    return [
-      'instrumental',
-      'inst.',
-      'live',
-      'tour',
-      'jp',
-      'eng.',
-      'english',
-      'remix',
-    ].some((s) => result.original.title.toLowerCase().includes(s))
+    return GolemConf.search.forceWeightTerms
+      .map((s) => s.toLowerCase())
+      .some((s) =>
+        checkAlbum
+          ? result.original.albumName.toLowerCase().includes(s)
+          : result.original.title.toLowerCase().includes(s)
+      )
   }
 
   private static getResultType(

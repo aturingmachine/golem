@@ -17,19 +17,20 @@ import {
   YoutubeConfig,
 } from './models'
 
-const rawConfig: ConfigurationOptions = YAML.parse(
-  readFileSync(
-    path.resolve(
-      __dirname,
-      process.env.NODE_ENV !== 'test'
-        ? '../../config.yml'
-        : '../../test-config.yml'
-    ),
-    {
-      encoding: 'utf-8',
-    }
+const rawConfig: () => ConfigurationOptions = () =>
+  YAML.parse(
+    readFileSync(
+      path.resolve(
+        __dirname,
+        process.env.NODE_ENV !== 'test'
+          ? '../../config.yml'
+          : '../../test-config.yml'
+      ),
+      {
+        encoding: 'utf-8',
+      }
+    )
   )
-)
 
 const optFlags: Record<CliOption, string[]> = {
   TTY: ['tty', '-i'],
@@ -96,7 +97,7 @@ export function logLevel(): LogLevel {
 
 // TODO should probably add some more extendable/complex validation pattern
 export class GolemConf {
-  private static values = rawConfig
+  private static values = rawConfig()
   static enabledModules = [] as GolemModule[]
   static cliOptions = new CliOptions(new Args(process.argv.slice(2)))
 

@@ -1,6 +1,6 @@
 import { IncomingMessage } from 'http'
 import { Socket } from 'net'
-import { Snowflake } from 'discord-api-types'
+import { Snowflake } from 'discord.js'
 import ws from 'ws'
 import { Golem } from '../../../golem'
 import { GolemEvent } from '../../../golem/event-emitter'

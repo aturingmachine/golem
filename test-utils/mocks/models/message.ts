@@ -82,10 +82,9 @@ export type MockedMessage = Overwrite<
   expectReply(expected: GolemMessageReplyOptions): void
 }
 
-// export type MockedMessage = ReturnType<typeof MockMessage>
-
 export const MockMessage = jest.fn().mockImplementation(
   (): MockedMessage => ({
+    traceId: 'mock-id',
     source: mockDiscordMessage(),
     parsed: MockedParsedCommand(),
     info: {
@@ -93,7 +92,6 @@ export const MockMessage = jest.fn().mockImplementation(
       guildId: 'gugudan',
       userId: 'ksj',
     },
-    // replies: [],
 
     toString: jest.fn(),
     toDebug: jest.fn(),

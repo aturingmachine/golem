@@ -9,7 +9,7 @@ import { formatForLog } from '../../utils/debug-utils'
 import { GolemLogger } from '../../utils/logger'
 import { getDurationBar } from '../../utils/message-utils'
 import { humanReadableTime } from '../../utils/time-utils'
-import { GolemMessage } from '../message-wrapper'
+import { GolemMessage, GolemMessageOpts } from '../message-wrapper'
 
 export class ListingEmbed {
   private log = GolemLogger.child({ src: 'listing-embed' })
@@ -19,7 +19,7 @@ export class ListingEmbed {
   constructor(public message: GolemMessage, listing?: AListing) {
     if (listing) {
       this.listing = listing
-    } else if (this.message.player.nowPlaying) {
+    } else if (this.message.player?.nowPlaying) {
       this.listing = this.message.player.nowPlaying
     } else {
       throw new Error('No listing provided')
@@ -35,14 +35,14 @@ export class ListingEmbed {
 
     await this.message.reply({
       ...content,
-      ...options,
+      ...options.asMessage(),
     })
   }
 
   async messageOptions(
     context: 'queue' | 'play',
     isPlayNext?: boolean
-  ): Promise<MessageOptions> {
+  ): Promise<GolemMessageOpts> {
     const embed =
       context === 'queue'
         ? await this.queueMessage(isPlayNext)
@@ -57,7 +57,7 @@ export class ListingEmbed {
       `${this.listing.title} generated message embed ${formatForLog(options)}`
     )
 
-    return options
+    return new GolemMessageOpts(options)
   }
 
   private async queueMessage(isPlayNext?: boolean): Promise<MessageEmbed> {
@@ -81,6 +81,10 @@ export class ListingEmbed {
   private async playMessage(): Promise<MessageEmbed> {
     let description: string
     const title = 'Now Playing'
+
+    if (!this.message.player) {
+      throw new Error('Attempting to build ListingEmbed with no player.')
+    }
 
     const timeRemaining = humanReadableTime(
       this.message.player.currentTrackRemaining

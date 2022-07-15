@@ -1,5 +1,6 @@
 import {
   AwaitMessageComponentOptions,
+  CacheType,
   CommandInteraction,
   InteractionReplyOptions,
   Message,
@@ -7,18 +8,21 @@ import {
   MessageOptions,
   SelectMenuInteraction,
 } from 'discord.js'
+import { v4 } from 'uuid'
+import winston from 'winston'
 import { CustomAlias } from '../aliases/custom-alias'
 import { BuiltInAlias, CommandNames } from '../constants'
 import { Golem } from '../golem'
 import { MusicPlayer } from '../player/music-player'
-import { GolemLogger } from '../utils/logger'
+import { GolemLogger, LogSources } from '../utils/logger'
 import { StringUtils } from '../utils/string-utils'
 import { MessageInfo } from './message-info'
 import { ParsedCommand } from './parsed-command'
 import { SelectMenu } from './select-menu'
 
 export type GolemMessageReplyOptions =
-  | (MessageOptions & InteractionReplyOptions)
+  | MessageOptions
+  | InteractionReplyOptions
   | string
 
 export type GolemMessageInteraction =
@@ -26,11 +30,43 @@ export type GolemMessageInteraction =
   | CommandInteraction
   | SelectMenuInteraction
 
+export class GolemMessageOpts {
+  constructor(readonly rawOpts: GolemMessageReplyOptions) {
+    if (typeof rawOpts === 'string') {
+      this.rawOpts = { content: rawOpts }
+    }
+  }
+
+  asInteraction(
+    aux?: Partial<InteractionReplyOptions>
+  ): InteractionReplyOptions {
+    return { ...(this.rawOpts as InteractionReplyOptions), ...aux }
+  }
+
+  asMessage(aux?: Partial<MessageOptions>): MessageOptions {
+    return { ...(this.rawOpts as MessageOptions), ...aux }
+  }
+
+  asObject<T extends MessageOptions | InteractionReplyOptions>(
+    aux?: Partial<T>
+  ): T {
+    return {
+      ...(this.rawOpts as T),
+      ...aux,
+    }
+  }
+}
+
 export class GolemMessage {
-  private static log = GolemLogger.child({ src: 'golem-msg' })
+  private readonly log: winston.Logger
 
   public readonly parsed: ParsedCommand
   public readonly info: MessageInfo
+
+  /**
+   * Internal UUID generated for this message
+   */
+  public readonly traceId: string
 
   private replies: Message[] = []
 
@@ -38,14 +74,20 @@ export class GolemMessage {
     public source: GolemMessageInteraction,
     customAlias?: CustomAlias
   ) {
+    this.traceId = v4()
+    this.log = GolemLogger.child({
+      src: LogSources.GolemMessage,
+      traceId: this.traceId,
+    })
+
     if (this.source instanceof Message) {
-      GolemMessage.log.silly(`got Message`)
+      this.log.silly(`got Message`)
       const raw =
         customAlias?.evaluated ||
-        GolemMessage.ExpandBuiltInAlias(this.source.content) ||
+        this.ExpandBuiltInAlias(this.source.content) ||
         this.source.content
 
-      GolemMessage.log.silly(`parsed raw => ${raw}`)
+      this.log.silly(`parsed raw => ${raw}`)
 
       this.parsed = ParsedCommand.fromRaw(raw)
     } else if (this.source.isCommand()) {
@@ -56,7 +98,7 @@ export class GolemMessage {
       throw new Error(`Invalid Interaction type - Cannot wrap ${this.source}`)
     }
 
-    GolemMessage.log.silly(`parsed => ${this.parsed.toDebug()}`)
+    this.log.silly(`parsed => ${this.parsed.toDebug()}`)
 
     this.info = new MessageInfo(this.source)
   }
@@ -69,7 +111,7 @@ export class GolemMessage {
     return this.parsed.toDebug()
   }
 
-  collector<T extends MessageComponentInteraction>(
+  collector<T extends MessageComponentInteraction<CacheType>>(
     options: AwaitMessageComponentOptions<T>,
     handler: (interaction: T) => Promise<T | void>
   ): Promise<T | void> | undefined {
@@ -77,45 +119,52 @@ export class GolemMessage {
       return this.lastReply
         .awaitMessageComponent({
           ...options,
-          filter: async (interaction: T): Promise<boolean> => {
+          componentType: options.componentType || 'ACTION_ROW',
+          filter: async (interaction): Promise<boolean> => {
+            if (!interaction.isMessageComponent()) {
+              return false
+            }
+
             if (interaction.user.id !== this.info.userId) {
               return false
             }
 
             if (options.filter) {
-              return await options.filter(interaction)
+              return await options.filter(interaction as T)
             }
 
             return true
           },
         })
-        .then(handler)
+        .then((val) => handler(val as T))
     }
 
     return undefined
   }
 
-  async reply(options: GolemMessageReplyOptions): Promise<Message> {
+  async reply(
+    options: GolemMessageReplyOptions | GolemMessageOpts
+  ): Promise<Message | undefined> {
     let message: Message
-    let parsedOptions: MessageOptions
-    if (typeof options === 'string') {
-      parsedOptions = { content: options }
-    } else {
-      parsedOptions = options
-    }
+
+    const opts =
+      options instanceof GolemMessageOpts
+        ? options
+        : new GolemMessageOpts(options)
 
     if (this.source instanceof Message) {
-      message = await this.source.reply(parsedOptions)
+      message = await this.source.reply(opts.asMessage())
     } else {
       const res = await this.source.reply({
-        ...parsedOptions,
+        ...opts.asInteraction(),
         fetchReply: true,
       })
 
       if (res instanceof Message) {
         message = res
       } else {
-        message = new Message(this.source.client, res)
+        // message = new Message(this.source.client, res)
+        return
       }
     }
 
@@ -139,8 +188,11 @@ export class GolemMessage {
     let parsedOptions: MessageOptions
     if (typeof options === 'string') {
       parsedOptions = { content: options }
-    } else {
+    } else if ('reply' in options) {
       parsedOptions = options
+    } else {
+      // Handle interaction I guess?
+      parsedOptions = { ...options, flags: undefined }
     }
 
     const message = await this.lastReply.reply(parsedOptions)
@@ -154,24 +206,28 @@ export class GolemMessage {
     return this.replies.at(-1)
   }
 
-  get player(): MusicPlayer {
+  get player(): MusicPlayer | undefined {
     const player = Golem.playerCache.getOrCreate(this)
 
     if (!player) {
-      throw new Error(`no player for ${this.info.guildId}`)
+      return undefined
     }
 
     return player
   }
 
+  get logMeta(): { traceId: string } {
+    return { traceId: this.traceId }
+  }
+
   // TODO can probs be cleaner
-  static ExpandBuiltInAlias(raw: string): string | undefined {
-    GolemMessage.log.debug(`running ${raw} as Built In Alias`)
+  ExpandBuiltInAlias(raw: string): string | undefined {
+    this.log.debug(`running ${raw} as Built In Alias`)
 
     const parsed = raw.replace(/^\$/, '')
     const aliasName = StringUtils.wordAt(parsed, 0) as BuiltInAlias
 
-    GolemMessage.log.debug(`parsed ${raw} to alias: ${aliasName}`)
+    this.log.debug(`parsed ${raw} to alias: ${aliasName}`)
 
     switch (aliasName) {
       case CommandNames.Aliases.Play:

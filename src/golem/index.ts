@@ -23,6 +23,7 @@ import { GolemLogger, LogSources } from '../utils/logger'
 import { EzProgressBar } from '../utils/progress-bar'
 import { GolemEvent, GolemEventEmitter } from './event-emitter'
 import { PlayerCache } from './player-cache'
+import { PresenceManager } from './presence-manager'
 
 class GolemBot {
   private hasInitialized = false
@@ -38,6 +39,7 @@ class GolemBot {
   public plex!: PlexConnection
   public db!: Db
   public mongo!: MongoClient
+  public presence!: PresenceManager
 
   async initialize(): Promise<void> {
     if (!this.hasInitialized) {
@@ -126,18 +128,21 @@ class GolemBot {
 
         if (!ownerPerms.permissions.has(Permission.Admin)) {
           ownerPerms.permissions.add(Permission.Admin)
-          return ownerPerms.save()
+          await ownerPerms.save()
         }
 
         if (!golemAdminPerms.permissions.has(Permission.Admin)) {
           golemAdminPerms.permissions.add(Permission.Admin)
-          return golemAdminPerms.save()
+          await golemAdminPerms.save()
         }
       })
     )
+
+    this.presence = new PresenceManager()
   }
 
   setPresenceListening(listing: TrackListingInfo): void {
+    this.playerCache.entries
     this.client.user?.setActivity({
       name: listing.title,
       type: 'LISTENING',
@@ -185,15 +190,21 @@ class GolemBot {
       const event: EventHandler<any> = require(`../events/${file}`).default
       this.log.debug(`Event Handler Loaded: ${event.on}`)
       if (event.once) {
-        this.client.once(
-          event.on,
-          async (...args) => await event.execute(...args)
-        )
+        this.client.once(event.on, async (...args) => {
+          try {
+            await event.execute(...args)
+          } catch (error) {
+            GolemLogger.info(`Handler once-${event.on} error: ${error}`)
+          }
+        })
       } else {
-        this.client.on(
-          event.on,
-          async (...args) => await event.execute(...args)
-        )
+        this.client.on(event.on, async (...args) => {
+          try {
+            await event.execute(...args)
+          } catch (error) {
+            GolemLogger.info(`Handler on-${event.on} error: ${error}`)
+          }
+        })
       }
 
       this.log.debug(`Event Handler Registered: ${event.on}`)

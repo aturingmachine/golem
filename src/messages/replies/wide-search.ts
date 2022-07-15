@@ -4,6 +4,7 @@ import {
   MessageOptions,
   SelectMenuInteraction,
 } from 'discord.js'
+import { MessageComponentTypes } from 'discord.js/typings/enums'
 import { CommandBase } from '../../constants'
 import { Golem } from '../../golem'
 import { SelectMenuId } from '../../handlers/button-handler'
@@ -57,7 +58,7 @@ export class WideSearch {
     if (this.interaction.lastReply) {
       await this.interaction.collector(
         {
-          componentType: 'SELECT_MENU',
+          componentType: MessageComponentTypes.SELECT_MENU,
           time: 30_000,
         },
         this.handler.bind(this)
@@ -88,6 +89,7 @@ export class WideSearch {
     await select.update({
       ...messageOptions,
       components: [],
+      flags: undefined,
     })
 
     await this.interaction.player.enqueue(
