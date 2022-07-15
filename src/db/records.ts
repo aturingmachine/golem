@@ -4,7 +4,7 @@ import { PlayRecord } from '../analytics/models/play-record'
 import { LibIndex } from '../library/lib-index'
 import { LocalAlbum } from '../listing/album'
 import { LocalListing } from '../listing/listing'
-import { UserPermission } from '../permissions/permission'
+import { Permission, UserPermission } from '../permissions/permission'
 import { DatabaseRecord } from '.'
 
 export type LocalAlbumRecord = DatabaseRecord<Omit<LocalAlbum, 'art'>> & {
@@ -26,4 +26,6 @@ export type ListingRecord = DatabaseRecord<Omit<LocalListing, 'album'>> & {
   album: ObjectId
 }
 
-export type UserPermissionRecord = DatabaseRecord<UserPermission>
+export type UserPermissionRecord = DatabaseRecord<UserPermission> & {
+  permissions: Permission[]
+}

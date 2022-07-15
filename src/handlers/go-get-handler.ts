@@ -3,7 +3,7 @@ import { Commands } from '../commands/register-commands'
 import { Golem } from '../golem'
 import { GolemMessage, GolemMessageOpts } from '../messages/message-wrapper'
 import { ListingEmbed } from '../messages/replies/listing-embed'
-import { MusicPlayer } from '../player/music-player'
+import { MusicPlayer } from '../music/player/music-player'
 import { GolemLogger, LogSources } from '../utils/logger'
 
 export interface GetOptions {

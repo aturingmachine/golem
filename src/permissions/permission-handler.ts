@@ -1,8 +1,10 @@
+import { Injectable } from '@nestjs/common'
 import { commaLists, inlineLists } from 'common-tags'
-import { Golem } from '../golem'
+import { ClientService } from '../djs/client.service'
+import { LogContexts } from '../logger/constants'
+import { GolemLogger } from '../logger/logger.service'
 import { GolemMessage } from '../messages/message-wrapper'
 import { ArrayUtils } from '../utils/list-utils'
-import { GolemLogger, LogSources } from '../utils/logger'
 import { StringFormat } from '../utils/string-utils'
 import {
   Permission,
@@ -11,11 +13,17 @@ import {
   UserPermission,
 } from './permission'
 
-const log = GolemLogger.child({ src: LogSources.PermissionHandler })
+@Injectable()
+export class PermissionHandler {
+  constructor(
+    private logger: GolemLogger,
+    private clientService: ClientService
+  ) {
+    this.logger.setContext(LogContexts.PermissionHandler)
+  }
 
-export const PermissionHandler = {
   async describe(message: GolemMessage): Promise<void> {
-    log.debug('describing permissions')
+    this.logger.debug('describing permissions')
     const permString = Object.entries(PermissionDescriptions).reduce(
       (prev, curr) => {
         return prev.concat(`\n${curr[0]}: ${curr[1]}`)
@@ -24,11 +32,11 @@ export const PermissionHandler = {
     )
 
     await message.reply(StringFormat.preformatted(permString))
-  },
+  }
 
   async get(message: GolemMessage): Promise<void> {
     const userId = message.parsed.getUser()
-    log.debug(`getting permissions for ${userId}`)
+    this.logger.debug(`getting permissions for ${userId}`)
 
     if (!userId) {
       await message.reply(`parameter - user - is required`)
@@ -36,21 +44,21 @@ export const PermissionHandler = {
     }
 
     const record = await UserPermission.get(userId, message.info.guildId)
-    const user = await Golem.getUser(userId)
+    const user = await this.clientService.getUser(userId)
 
-    log.debug(commaLists`got perms - ${record.permArray}`)
+    this.logger.debug(commaLists`got perms - ${record.permArray}`)
 
     await message.reply(
       StringFormat.preformatted(commaLists`User Permissions For ${user.username}:
       ${record.permArray}`)
     )
-  },
+  }
 
   async set(message: GolemMessage): Promise<void> {
     const userId = message.parsed.getUser()
     const rawPermissions = message.parsed.getString('permissions')
 
-    log.debug(
+    this.logger.debug(
       inlineLists`processing set permissions for ${userId} - ${rawPermissions}`
     )
 
@@ -73,13 +81,13 @@ export const PermissionHandler = {
       return
     }
 
-    const user = await Golem.getUser(userId)
+    const user = await this.clientService.getUser(userId)
     const parsedPermissions = rawPermissions
       .split(/(\s|;|,)/)
       .map(toPermission)
       .filter(ArrayUtils.isDefined)
 
-    log.debug(inlineLists`parsed permissions - ${parsedPermissions}`)
+    this.logger.debug(inlineLists`parsed permissions - ${parsedPermissions}`)
 
     if (
       [Permission.Admin, Permission.Moderator].some((perm) =>
@@ -101,14 +109,14 @@ export const PermissionHandler = {
         inlineLists`Set permissions for ${user.username} to ${parsedPermissions}`
       )
     )
-  },
+  }
 
   async add(message: GolemMessage): Promise<void> {
     const userId = message.parsed.getUser()
     const permToAdd = message.parsed.getString('permission')
     const authorPermissions = await message.info.permissions
 
-    log.debug(`adding ${permToAdd} to user ${userId}`)
+    this.logger.debug(`adding ${permToAdd} to user ${userId}`)
 
     if (!authorPermissions.isAdmin) {
       await message.reply(
@@ -150,14 +158,14 @@ export const PermissionHandler = {
     const addedPerms = userPerms.add(parsedPermission)
     await userPerms.save()
 
-    const user = await Golem.getUser(userId)
+    const user = await this.clientService.getUser(userId)
 
     await message.reply(
       StringFormat.preformatted(
         commaLists`Added Permissions ${addedPerms} for ${user.username}`
       )
     )
-  },
+  }
 
   async remove(message: GolemMessage): Promise<void> {
     const userId = message.parsed.getUser()
@@ -203,11 +211,11 @@ export const PermissionHandler = {
     const removedPerms = userPerms.remove(parsedPermission)
     await userPerms.save()
 
-    const user = await Golem.getUser(userId)
+    const user = await this.clientService.getUser(userId)
 
     await message.reply(
       StringFormat.preformatted(commaLists`Removed Permissions ${removedPerms} for ${user.username}
       `)
     )
-  },
+  }
 }

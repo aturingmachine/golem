@@ -1,5 +1,6 @@
 import { readFileSync } from 'fs'
 import path from 'path'
+import { Injectable } from '@nestjs/common'
 import YAML from 'yaml'
 import { LogLevel } from '../utils/logger'
 import {
@@ -96,140 +97,145 @@ export function logLevel(): LogLevel {
 }
 
 // TODO should probably add some more extendable/complex validation pattern
+@Injectable()
 export class GolemConf {
-  private static values = rawConfig()
-  static enabledModules = [] as GolemModule[]
-  static cliOptions = new CliOptions(new Args(process.argv.slice(2)))
+  private values = rawConfig()
+  enabledModules = [] as GolemModule[]
+  readonly cliOptions: CliOptions
 
-  static init(): void {
+  constructor() {
+    this.cliOptions = new CliOptions(new Args(process.argv.slice(2)))
+  }
+
+  init(): void {
     // kill application if no required config
     if (
-      !GolemConf.values.discord ||
-      !GolemConf.values.discord.clientId ||
-      !GolemConf.values.discord.token
+      !this.values.discord ||
+      !this.values.discord.clientId ||
+      !this.values.discord.token
     ) {
       console.error('No Discord Config found. Terminating.')
       process.exit(1)
     }
 
-    GolemConf.enabledModules.push(GolemModule.Core)
+    this.enabledModules.push(GolemModule.Core)
 
     // check all potential optional modules
-    if (!!GolemConf.values.library) {
-      GolemConf.enabledModules.push(GolemModule.Music)
+    if (!!this.values.library) {
+      this.enabledModules.push(GolemModule.Music)
     }
 
-    if (!!GolemConf.values.plex) {
-      GolemConf.enabledModules.push(GolemModule.Plex)
+    if (!!this.values.plex) {
+      this.enabledModules.push(GolemModule.Plex)
     }
 
-    if (!!GolemConf.values.lastfm) {
-      GolemConf.enabledModules.push(GolemModule.LastFm)
+    if (!!this.values.lastfm) {
+      this.enabledModules.push(GolemModule.LastFm)
     }
 
-    if (!!GolemConf.values.web) {
-      GolemConf.enabledModules.push(GolemModule.Web)
+    if (!!this.values.web) {
+      this.enabledModules.push(GolemModule.Web)
     }
 
-    if (!!GolemConf.values.youtube) {
-      GolemConf.enabledModules.push(GolemModule.Youtube)
+    if (!!this.values.youtube) {
+      this.enabledModules.push(GolemModule.Youtube)
     }
   }
 
-  static get options(): Record<CliOption, boolean> {
-    return GolemConf.cliOptions.options
+  get options(): Record<CliOption, boolean> {
+    return this.cliOptions.options
   }
 
-  static get modules(): Record<GolemModule, boolean> {
+  get modules(): Record<GolemModule, boolean> {
     return {
-      Core: GolemConf.enabledModules.includes(GolemModule.Core),
-      LastFm: GolemConf.enabledModules.includes(GolemModule.LastFm),
-      Music: GolemConf.enabledModules.includes(GolemModule.Music),
-      Plex: GolemConf.enabledModules.includes(GolemModule.Plex),
-      Web: GolemConf.enabledModules.includes(GolemModule.Web),
-      Youtube: GolemConf.enabledModules.includes(GolemModule.Youtube),
+      Core: this.enabledModules.includes(GolemModule.Core),
+      LastFm: this.enabledModules.includes(GolemModule.LastFm),
+      Music: this.enabledModules.includes(GolemModule.Music),
+      Plex: this.enabledModules.includes(GolemModule.Plex),
+      Web: this.enabledModules.includes(GolemModule.Web),
+      Youtube: this.enabledModules.includes(GolemModule.Youtube),
     }
   }
 
-  static get discord(): DiscordConfig {
+  get discord(): DiscordConfig {
     return {
-      token: GolemConf.values.discord?.token || '',
-      clientId: GolemConf.values.discord?.clientId || '',
-      serverIds: GolemConf.values.discord?.serverIds || [],
-      adminId: GolemConf.values.discord?.adminId || '',
+      token: this.values.discord?.token || '',
+      clientId: this.values.discord?.clientId || '',
+      serverIds: this.values.discord?.serverIds || [],
+      adminId: this.values.discord?.adminId || '',
     }
   }
 
-  static get image(): ImageConfig {
+  get image(): ImageConfig {
     return {
-      fallbackPath: GolemConf.values.image?.fallbackPath || '',
+      fallbackPath: this.values.image?.fallbackPath || '',
       avgColorAlgorithm:
-        GolemConf.values.image?.avgColorAlgorithm &&
+        this.values.image?.avgColorAlgorithm &&
         ['sqrt', 'dominant', 'simple'].includes(
-          GolemConf.values.image?.avgColorAlgorithm
+          this.values.image?.avgColorAlgorithm
         )
-          ? GolemConf.values.image.avgColorAlgorithm
+          ? this.values.image.avgColorAlgorithm
           : 'sqrt',
     }
   }
 
-  static get lastfm(): LastFmConfig {
+  get lastfm(): LastFmConfig {
     return {
-      apiKey: GolemConf.values.lastfm?.apiKey || '',
+      apiKey: this.values.lastfm?.apiKey || '',
     }
   }
 
-  static get library(): LibraryConfig {
+  get library(): LibraryConfig {
     return {
-      paths: GolemConf.values.library?.paths || [],
+      paths: this.values.library?.paths || [],
     }
   }
 
-  static get mongo(): MongoConfig {
+  get mongo(): MongoConfig {
     return {
-      uri: GolemConf.values.mongo?.uri || '',
-      dbName: GolemConf.values.mongo?.dbName || 'golem',
+      uri: this.values.mongo?.uri || '',
+      dbName: this.values.mongo?.dbName || 'golem',
     }
   }
 
-  static get plex(): PlexConfig {
+  get plex(): PlexConfig {
     return {
-      uri: GolemConf.values.plex?.uri || '',
-      appId: GolemConf.values.plex?.appId || '',
-      username: GolemConf.values.plex?.username || '',
-      password: GolemConf.values.plex?.password || '',
+      uri: this.values.plex?.uri || '',
+      appId: this.values.plex?.appId || '',
+      username: this.values.plex?.username || '',
+      password: this.values.plex?.password || '',
     }
   }
 
-  static get search(): SearchConfig {
+  get search(): SearchConfig {
     return {
-      forceWeightTerms: GolemConf.values.search?.forceWeightTerms || [
+      forceWeightTerms: this.values.search?.forceWeightTerms || [
         'instrumental',
         'inst.',
         'live',
         'remix',
       ],
-      minimumScore: GolemConf.values.search?.minimumScore || 35,
+      minimumScore: this.values.search?.minimumScore || 35,
     }
   }
 
-  static get youtube(): YoutubeConfig {
+  get youtube(): YoutubeConfig {
     return {
-      ytdlpPath: GolemConf.values.youtube?.ytdlpPath || '',
+      ytdlpPath: this.values.youtube?.ytdlpPath || '',
     }
   }
 
-  static get web(): WebConfig {
+  get web(): WebConfig {
     return {
-      apiPort: GolemConf.values.web?.apiPort || 3000,
+      apiPort: this.values.web?.apiPort || 3000,
     }
   }
 
-  static get crashHandler(): string | undefined {
-    return GolemConf.values.crash?.run
+  get crashHandler(): string | undefined {
+    return this.values.crash?.run
   }
 
-  static get logLevel(): LogLevel {
+  get logLevel(): LogLevel {
     return logLevel()
     // let level = LogLevel.Info
 

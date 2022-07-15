@@ -1,5 +1,5 @@
 import { LocalListing } from '../../src/listing/listing'
-import { TrackAudioResourceMetadata } from '../../src/tracks'
+import { TrackAudioResourceMetadata } from '../../src/music/tracks'
 import {
   MockDiscordJS,
   MockJoinOptions,
@@ -12,7 +12,7 @@ import { MockedTrackQueue, MockTrackQueue } from '../../test-utils/mocks/queue'
 import {
   GolemTrackAudioResource,
   MusicPlayer,
-} from '../../src/player/music-player'
+} from '../../src/music/player/music-player'
 
 describe('Music Player', () => {
   let musicPlayer: MusicPlayer

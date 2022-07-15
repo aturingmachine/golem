@@ -1,4 +1,4 @@
-import { MusicPlayerOptions } from '../../src/player/music-player'
+import { MusicPlayerOptions } from '../../src/music/player/music-player'
 import { MockedLocalListing, MockLocalListing } from './models/listing'
 import { MockLocalTrack } from './models/track'
 

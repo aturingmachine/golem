@@ -1,11 +1,12 @@
+import { Injectable } from '@nestjs/common'
 import chalk from 'chalk'
-import winston from 'winston'
 import { GolemConf } from '../../config'
-import { Golem } from '../../golem'
-import { Youtube } from '../../integrations/youtube/youtils'
-import { GolemLogger, LogSources } from '../logger'
+import { PlayerCache } from '../../golem/player-cache'
+import { GolemLogger } from '../../logger/logger.service'
+import { Youtube } from '../../music/youtube/youtils'
+import { ListingFinder } from '../../search/track-finder'
 import { GolemRepl } from './golem-repl'
-import { MixDebugger } from './mix-debugger'
+// import { MixDebugger } from './mix-debugger'
 /* eslint-disable-next-line @typescript-eslint/no-var-requires */
 const rl = require('serverline')
 
@@ -36,13 +37,18 @@ const debuggerCompletions = [
   'search',
 ]
 
+@Injectable()
 export class Debugger {
-  log: winston.Logger
   state: 'open' | 'closed'
   repl: GolemRepl
 
-  constructor() {
-    this.log = GolemLogger.child({ src: LogSources.Debugger })
+  constructor(
+    private logger: GolemLogger,
+    private config: GolemConf,
+    private YouTube: Youtube,
+    private playerCache: PlayerCache,
+    private trackFinder: ListingFinder // private mixDebugger: MixDebugger
+  ) {
     this.state = 'closed'
     this.repl = new GolemRepl()
   }
@@ -100,10 +106,10 @@ export class Debugger {
 
     switch (cmd.toLowerCase().split(' ')[0]) {
       case DebugCommands.Kill:
-        this.log.verbose('removing an aleph')
+        this.logger.verbose('removing an aleph')
         process.exit(2)
       case DebugCommands.Exit:
-        this.log.verbose('closing debug console')
+        this.logger.verbose('closing debug console')
         this.closePrompt()
         break
       case DebugCommands.Pry:
@@ -111,20 +117,22 @@ export class Debugger {
         rl.resume()
         break
       case DebugCommands.Youtube:
-        const result = await Youtube.search(cmd.split(' ').slice(1).join(' '))
+        const result = await this.YouTube.search(
+          cmd.split(' ').slice(1).join(' ')
+        )
         console.log(result)
         break
 
       case DebugCommands.Inspect:
         console.log(
-          `\n${Object.entries(GolemConf.options)
+          `\n${Object.entries(this.config.options)
             .map(([key, val]) => `${key}=${val}`)
             .join('\n')}`
         )
         break
       case DebugCommands.Connections:
         let conns = ''
-        const it = Golem.playerCache.entries()
+        const it = this.playerCache.entries()
         let next = it.next()
 
         while (!next.done) {
@@ -137,11 +145,11 @@ export class Debugger {
       case DebugCommands.Exec:
         // eval(cmd.split(' ').slice(1).join(' '))
         break
-      case DebugCommands.Similar:
-        MixDebugger.debug(cmd)
-        break
+      // case DebugCommands.Similar:
+      //   this.mixDebugger.debug(cmd)
+      //   break
       case DebugCommands.Search:
-        const res = Golem.trackFinder.search(cmd)
+        const res = this.trackFinder.search(cmd)
         if (res) {
           console.log({ ...res.listing, albumArt: undefined })
         }

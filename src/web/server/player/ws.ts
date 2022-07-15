@@ -5,7 +5,7 @@ import ws from 'ws'
 import { Golem } from '../../../golem'
 import { GolemEvent } from '../../../golem/event-emitter'
 import { AListing, LocalListing } from '../../../listing/listing'
-import { MusicPlayer } from '../../../player/music-player'
+import { MusicPlayer } from '../../../music/player/music-player'
 import { GolemLogger } from '../../../utils/logger'
 import { ImageCache } from '../utils/image-cache'
 

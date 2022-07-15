@@ -1,9 +1,10 @@
 {
   "exclude": [
-    "src/client/**",
+    "src/djs/**",
     "dist/**"
   ],
   "compilerOptions": {
+    "experimentalDecorators": true,
     "target": "esnext",
     "module": "commonjs",
     "strict": true,

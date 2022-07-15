@@ -14,13 +14,14 @@ import {
   VoiceConnectionState,
   VoiceConnectionStatus,
 } from '@discordjs/voice'
+import { Injectable, Scope } from '@nestjs/common'
 import winston from 'winston'
-import { Golem } from '../golem'
-import { GolemEvent } from '../golem/event-emitter'
-import { AListing } from '../listing/listing'
+import { Golem } from '../../golem'
+import { GolemEvent } from '../../golem/event-emitter'
+import { AListing } from '../../listing/listing'
+import { GolemLogger, LogSources } from '../../utils/logger'
+import { humanReadableTime, wait } from '../../utils/time-utils'
 import { Track, TrackAudioResourceMetadata } from '../tracks'
-import { GolemLogger, LogSources } from '../utils/logger'
-import { humanReadableTime, wait } from '../utils/time-utils'
 import { TrackQueue } from './queue'
 
 export type GolemTrackAudioResource = AudioResource & {
@@ -33,6 +34,7 @@ export type MusicPlayerOptions = JoinVoiceChannelOptions &
     channelName: string
   }
 
+@Injectable({ scope: Scope.TRANSIENT })
 export class MusicPlayer {
   static readonly autoDCTime = 300_000
 

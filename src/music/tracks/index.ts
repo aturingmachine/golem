@@ -1,5 +1,5 @@
 import { AudioResource } from '@discordjs/voice'
-import { AListing, TrackListingInfo } from '../listing/listing'
+import { AListing, TrackListingInfo } from '../../listing/listing'
 
 export interface TrackAudioResourceMetadata {
   // title: string

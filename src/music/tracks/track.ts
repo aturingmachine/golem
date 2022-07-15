@@ -1,8 +1,8 @@
 import { AudioResource, createAudioResource } from '@discordjs/voice'
 import winston from 'winston'
-import { Analytics } from '../analytics'
-import { LocalListing, TrackListingInfo } from '../listing/listing'
-import { GolemLogger, LogSources } from '../utils/logger'
+import { Analytics } from '../../analytics'
+import { LocalListing, TrackListingInfo } from '../../listing/listing'
+import { GolemLogger, LogSources } from '../../utils/logger'
 import { Track, TrackAudioResourceMetadata } from '.'
 
 /**

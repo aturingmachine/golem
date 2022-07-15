@@ -1,4 +1,4 @@
-import { TrackQueue } from '../../src/player/queue'
+import { TrackQueue } from '../../src/music/player/queue'
 import { MockLocalTrack } from '../../test-utils/mocks/models/track'
 
 describe('Track Queue', () => {

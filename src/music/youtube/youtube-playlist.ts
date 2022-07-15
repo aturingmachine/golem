@@ -1,6 +1,6 @@
 import { EmbedFieldData, MessageEmbed, MessageOptions } from 'discord.js'
-import { MusicPlayer } from '../../player/music-player'
 import { ImageUtils } from '../../utils/image-utils'
+import { MusicPlayer } from '../player/music-player'
 import { YoutubeListing } from './youtube-listing'
 import { YoutubeTrack } from './youtube-track'
 

@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import axios, { AxiosInstance } from 'axios'
 import { GolemConf } from '../../config'
 import { ListingFinder } from '../../search/track-finder'
@@ -23,21 +24,17 @@ const fixSlashes = (original: string): string => {
   )
 }
 
-const PlexHeaders: Record<string, string> = {
-  'X-Plex-Client-Identifier': GolemConf.plex.appId,
-  'X-Plex-Product': 'Golem',
-  'X-Plex-Version': '1.0.0',
-  Accept: 'application/json',
-}
-
+@Injectable()
 export class PlexConnection {
   private token!: string
   private instance!: AxiosInstance
 
   public playlists: Playlist[] = []
 
+  constructor(private config: GolemConf) {}
+
   async init(trackFinder: ListingFinder): Promise<void> {
-    if (!GolemConf.modules.Plex || !GolemConf.modules.Music) {
+    if (!this.config.modules.Plex || !this.config.modules.Music) {
       log.info('plex module not loaded')
       return
     }
@@ -46,20 +43,20 @@ export class PlexConnection {
     const res = await axios.post(
       'https://plex.tv/api/v2/users/signin',
       {
-        login: GolemConf.plex.username,
-        password: GolemConf.plex.password,
+        login: this.config.plex.username,
+        password: this.config.plex.password,
       },
       {
-        headers: PlexHeaders,
+        headers: this.PlexHeaders,
       }
     )
 
     this.token = res.data.authToken
-    PlexHeaders['X-Plex-Token'] = this.token
+    this.PlexHeaders['X-Plex-Token'] = this.token
 
     this.instance = axios.create({
-      baseURL: GolemConf.plex.uri,
-      headers: PlexHeaders,
+      baseURL: this.config.plex.uri,
+      headers: this.PlexHeaders,
     })
 
     log.info('Plex Connection Initialized')
@@ -133,5 +130,14 @@ export class PlexConnection {
     )
 
     return response?.data
+  }
+
+  private get PlexHeaders(): Record<string, string> {
+    return {
+      'X-Plex-Client-Identifier': this.config.plex.appId,
+      'X-Plex-Product': 'Golem',
+      'X-Plex-Version': '1.0.0',
+      Accept: 'application/json',
+    }
   }
 }

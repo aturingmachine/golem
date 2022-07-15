@@ -10,6 +10,7 @@ import {
   SlashCommandSubcommandBuilder,
   SlashCommandUserOption,
 } from '@discordjs/builders'
+import { ModuleRef } from '@nestjs/core'
 import { GolemConf } from '../config'
 import { GolemModule } from '../config/models'
 import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
@@ -41,6 +42,7 @@ export function expandBuiltInAlias(raw: string): string | undefined {
 }
 
 export type CommandHandlerFn = (
+  module: ModuleRef,
   message: GolemMessage,
   ...args: any[]
 ) => Promise<any>
@@ -190,6 +192,8 @@ export class GolemCommand {
   public readonly slashCommand: SlashCommandBuilder
   public readonly execute: CommandHandlerFn
 
+  public static config: GolemConf
+
   constructor(public options: CommandOptions) {
     this.slashCommand = new SlashCommandBuilder()
     this.slashCommand
@@ -225,12 +229,12 @@ export class GolemCommand {
   get missingRequiredModules(): { all: GolemModule[]; oneOf: GolemModule[] } {
     const missingAllMods =
       this.options.info.requiredModules?.all?.filter((mod) => {
-        return !GolemConf.modules[mod]
+        return !GolemCommand.config.modules[mod]
       }) || []
 
     const missingOneOfMods =
       this.options.info.requiredModules?.oneOf?.filter((mod) => {
-        return !GolemConf.modules[mod]
+        return !GolemCommand.config.modules[mod]
       }) || []
 
     const isMissingOneOfs =
@@ -269,7 +273,7 @@ export class GolemCommand {
     builder: SlashCommandSubcommandBuilder
     info: SubCommand
   }): void {
-    const target = subcommand?.builder || this.slashCommand
+    // const target = subcommand?.builder || this.slashCommand
     const info = subcommand?.info || this.options.info
 
     info.args.forEach((arg) => {
@@ -348,7 +352,7 @@ export class GolemCommand {
   }
 
   private wrapHandler(): CommandHandlerFn {
-    return async (interaction, ...args: any[]) => {
+    return async (module, interaction, ...args: any[]) => {
       if (
         this.missingRequiredModules.all.length ||
         this.missingRequiredModules.oneOf.length
@@ -371,7 +375,7 @@ export class GolemCommand {
       }
 
       try {
-        await this.options.handler(interaction, ...args)
+        await this.options.handler(module, interaction, ...args)
       } catch (error) {
         if (this.options.errorHandler) {
           await this.options.errorHandler(error as Error, interaction, ...args)
@@ -399,7 +403,10 @@ async function baseErrorHandler(
     { src: source }
   )
 
-  if (GolemConf.logLevel !== LogLevel.Info || process.env.NODE_ENV === 'test') {
+  if (
+    GolemCommand.config.logLevel !== LogLevel.Info ||
+    process.env.NODE_ENV === 'test'
+  ) {
     console.error(error.stack)
   }
 

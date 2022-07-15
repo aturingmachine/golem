@@ -11,7 +11,7 @@ import { SelectMenuId } from '../handlers/button-handler'
 import { CustomId } from '../messages/custom-id'
 import { GolemMessage } from '../messages/message-wrapper'
 import { NowPlayingEmbed } from '../messages/now-playing'
-import { LocalTrack } from '../tracks/track'
+import { LocalTrack } from '../music/tracks/track'
 import { GolemLogger, LogSources } from '../utils/logger'
 import { Replier } from '../utils/replies'
 

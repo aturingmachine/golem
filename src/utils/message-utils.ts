@@ -6,7 +6,7 @@ import {
 } from 'discord.js'
 import { Constants, PlexLogo } from '../constants'
 import { LocalListing } from '../listing/listing'
-import { MusicPlayer } from '../player/music-player'
+import { MusicPlayer } from '../music/player/music-player'
 
 export const embedFieldSpacer = {
   name: '\u200B',

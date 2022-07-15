@@ -1,19 +1,27 @@
-import { GolemConf } from '../config'
-import { Golem } from '../golem'
-import { Youtube } from '../integrations/youtube/youtils'
-import { YoutubeTrack } from '../integrations/youtube/youtube-track'
-import { LocalListing } from '../listing/listing'
-import { ParsedMessage } from '../messages/message-info'
-import { GolemMessage } from '../messages/message-wrapper'
-import { ArtistConfirmReply } from '../messages/replies/artist-confirm'
-import { ListingEmbed } from '../messages/replies/listing-embed'
-import { WideSearch } from '../messages/replies/wide-search'
+import { Injectable } from '@nestjs/common'
+import { GolemConf } from '../../config'
+import { LocalListing } from '../../listing/listing'
+import { ParsedMessage } from '../../messages/message-info'
+import { GolemMessage } from '../../messages/message-wrapper'
+import { ArtistConfirmReply } from '../../messages/replies/artist-confirm'
+import { ListingEmbed } from '../../messages/replies/listing-embed'
+import { WideSearch } from '../../messages/replies/wide-search'
+import { ListingFinder } from '../../search/track-finder'
+import { GolemLogger, LogSources } from '../../utils/logger'
 import { LocalTrack } from '../tracks/track'
-import { GolemLogger, LogSources } from '../utils/logger'
+import { Youtube } from '../youtube/youtils'
+import { YoutubeTrack } from '../youtube/youtube-track'
 import { MusicPlayer } from './music-player'
 
+@Injectable()
 export class PlayHandler {
   private log = GolemLogger.child({ src: LogSources.PlayHandler })
+
+  constructor(
+    private config: GolemConf,
+    private trackFinder: ListingFinder,
+    private youtube: Youtube
+  ) {}
 
   async process(
     interaction: GolemMessage,
@@ -61,7 +69,7 @@ export class PlayHandler {
         return
       }
 
-      if (!GolemConf.modules.Music) {
+      if (!this.config.modules.Music) {
         this.log.warn(`cannot execute for local track - missing Music module`)
 
         await interaction.reply(
@@ -71,12 +79,12 @@ export class PlayHandler {
         return
       }
 
-      const res = Golem.trackFinder.search(commandQuery)
+      const res = this.trackFinder.search(commandQuery)
 
       if (!res) {
         this.log.verbose(`No local ResultSet for ${commandQuery}`)
 
-        const url = await Youtube.search(commandQuery)
+        const url = await this.youtube.search(commandQuery)
 
         if (url) {
           this.ytPlay(url, interaction, interaction.player, options.playNext)
@@ -137,7 +145,7 @@ export class PlayHandler {
     player: MusicPlayer,
     playNext = false
   ): Promise<void> {
-    if (!GolemConf.modules.Youtube) {
+    if (!this.config.modules.Youtube) {
       this.log.info('Cannot play youtube resource, Youtube module not enabled')
       await interaction.reply(
         'Cannot play youtube resource, the YouTube module is not enabled.'
@@ -223,7 +231,7 @@ export class PlayHandler {
 
       this.log.verbose(`getting playlist`)
       interaction.reply(`Processing playlist \`${parsed.content}\`...`)
-      const playlist = await Youtube.getPlaylist(
+      const playlist = await this.youtube.getPlaylist(
         parsed.content,
         limit,
         isShuffle

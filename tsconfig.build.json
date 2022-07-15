@@ -6,9 +6,12 @@
     "src/client/**",
     "dist/**",
     "specs/**",
-    "test-utils/**/*.ts"
+    "test-utils/**/*.ts",
+    // TODO Remove
+    "src/web/**"
   ],
   "compilerOptions": {
+    "experimentalDecorators": true,
     "target": "esnext",
     "module": "commonjs",
     "strict": true,

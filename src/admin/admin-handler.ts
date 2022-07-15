@@ -1,23 +1,27 @@
+import { Injectable } from '@nestjs/common'
 import { BugReport } from '../db/bug-report'
-import { Golem } from '../golem'
+import { ListingLoader } from '../listing/listing-loaders'
+import { GolemLogger } from '../logger/logger.service'
 import { GolemMessage } from '../messages/message-wrapper'
 import { RefreshResult } from '../messages/replies/library/refresh-result'
-import { GolemLogger, LogSources } from '../utils/logger'
 import { StringUtils } from '../utils/string-utils'
 
-export const AdminHandler = {
-  log: GolemLogger.child({ src: LogSources.GoAdmin }),
+@Injectable()
+export class AdminHandler {
+  constructor(private logger: GolemLogger, private loader: ListingLoader) {}
 
   async libRefresh(message: GolemMessage): Promise<void> {
-    this.log.debug(`refreshing libraries`)
-    const result = await Golem.loader.refresh()
+    this.logger.debug(`refreshing libraries`)
+
+    const result = await this.loader.refresh()
     const response = new RefreshResult(message, result)
 
     await response.send()
-  },
+  }
 
   async getLatestBugReports(message: GolemMessage): Promise<void> {
-    this.log.debug(`getting bug reports`)
+    this.logger.debug(`getting bug reports`)
+
     const reports = await BugReport.find(
       {},
       { limit: 5, sort: [['timestamp', 'desc']] }
@@ -29,5 +33,5 @@ export const AdminHandler = {
     }
 
     await message.reply(StringUtils.as.preformat(response))
-  },
+  }
 }

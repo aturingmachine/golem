@@ -1,6 +1,5 @@
 import { Collection, Filter, FindOptions, ObjectId } from 'mongodb'
 import { UserPermissionRecord } from '../db/records'
-import { Golem } from '../golem'
 import { GolemMessage } from '../messages/message-wrapper'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemLogger } from '../utils/logger'
@@ -183,29 +182,6 @@ export class UserPermission {
 
   private static get Collection(): Collection<UserPermissionRecord> {
     return Golem.database.permissions
-  }
-}
-
-export class UserPermissionCache {
-  private cache: Map<string, Record<string, UserPermission>>
-
-  constructor() {
-    this.cache = new Map()
-  }
-
-  set(perm: UserPermission): void {
-    const record = this.cache.get(perm.userId)
-
-    if (record) {
-      record[perm.guildId] = perm
-      this.cache.set(perm.userId, record)
-    } else {
-      this.cache.set(perm.userId, { [perm.guildId]: perm })
-    }
-  }
-
-  get(userId: string, guildId: string): UserPermission | undefined {
-    return this.cache.get(userId)?.[guildId]
   }
 }
 

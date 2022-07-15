@@ -1,22 +1,28 @@
+import { Injectable } from '@nestjs/common'
 import { ActivityOptions } from 'discord.js'
-import winston from 'winston'
+import { ClientService } from '../djs/client.service'
+import { LogContexts } from '../logger/constants'
+import { GolemLogger } from '../logger/logger.service'
 import { formatForLog } from '../utils/debug-utils'
 import { ArrayUtils } from '../utils/list-utils'
-import { GolemLogger, LogSources } from '../utils/logger'
-import { Golem } from '.'
+import { PlayerCache } from './player-cache'
 
+@Injectable()
 export class PresenceManager {
   private currentIndex = 0
   private currentId?: string = 'default'
-  private readonly log: winston.Logger
 
-  constructor() {
-    this.log = GolemLogger.child({ src: LogSources.PresenceManager })
+  constructor(
+    private logger: GolemLogger,
+    private clientService: ClientService,
+    private playerCache: PlayerCache
+  ) {
+    this.logger.setContext(LogContexts.PresenceManager)
 
-    this.log.debug('creating new PresenceManager')
+    this.logger.debug('creating new PresenceManager')
 
     setInterval(() => {
-      this.log.silly(
+      this.logger.silly(
         `update interval triggering - length ${this.activities.length} - current ${this.currentIndex}`
       )
       this.update()
@@ -24,7 +30,7 @@ export class PresenceManager {
   }
 
   get activities(): { id: string; activity: ActivityOptions }[] {
-    const listentingActivities = Array.from(Golem.playerCache.entries())
+    const listentingActivities = Array.from(this.playerCache.entries())
       .map(([key, player]) => {
         return player?.nowPlaying
           ? { key, title: player.nowPlaying?.title }
@@ -52,7 +58,7 @@ export class PresenceManager {
 
     // Next index is out of the current list of activities
     if (newIndex > this.activities.length - 1) {
-      this.log.silly('update looping list')
+      this.logger.silly('update looping list')
       // need to loop?
       newIndex = 0
       nextItem = this.activities[newIndex]
@@ -60,8 +66,8 @@ export class PresenceManager {
 
     this.currentId = nextItem.id
     this.currentIndex = newIndex
-    this.log.silly(`setting new with ${formatForLog(nextItem)}`)
+    this.logger.silly(`setting new with ${formatForLog(nextItem)}`)
 
-    Golem.client.user?.setActivity(nextItem.activity)
+    this.clientService.bot?.setActivity(nextItem.activity)
   }
 }

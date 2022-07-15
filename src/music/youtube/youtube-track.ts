@@ -6,9 +6,9 @@ import {
 import winston from 'winston'
 import { getInfo } from 'ytdl-core'
 import { TrackListingInfo } from '../../listing/listing'
-import { Track, TrackAudioResourceMetadata } from '../../tracks'
 import { formatForLog } from '../../utils/debug-utils'
 import { GolemLogger, LogSources } from '../../utils/logger'
+import { Track, TrackAudioResourceMetadata } from '../tracks'
 import { YoutubeListing } from './youtube-listing'
 import { youtubeDownload } from './ytdl'
 

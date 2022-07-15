@@ -1,7 +1,8 @@
+import { ModuleRef } from '@nestjs/core'
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
-import { Handlers } from '../../handlers'
 import { GolemMessage } from '../../messages/message-wrapper'
+import { PermissionHandler } from '../../permissions/permission-handler'
 import { GolemLogger, LogSources } from '../../utils/logger'
 import { StringFormat } from '../../utils/string-utils'
 
@@ -15,25 +16,30 @@ export enum PermissionSubcommand {
   Remove = 'remove',
 }
 
-const execute = async (message: GolemMessage): Promise<void> => {
+const execute = async (
+  module: ModuleRef,
+  message: GolemMessage
+): Promise<void> => {
+  const Permissions = module.get(PermissionHandler)
+
   log.info(`executing - ${message.parsed.subCommand}`)
   log.debug(`${message.toDebug()}`)
 
   switch (message.parsed.subCommand) {
     case PermissionSubcommand.Describe:
-      await Handlers.Permissions.describe(message)
+      await Permissions.describe(message)
       break
     case PermissionSubcommand.Get:
-      await Handlers.Permissions.get(message)
+      await Permissions.get(message)
       break
     case PermissionSubcommand.Set:
-      await Handlers.Permissions.set(message)
+      await Permissions.set(message)
       break
     case PermissionSubcommand.Add:
-      await Handlers.Permissions.add(message)
+      await Permissions.add(message)
       break
     case PermissionSubcommand.Remove:
-      await Handlers.Permissions.remove(message)
+      await Permissions.remove(message)
       break
     default:
       await message.reply(

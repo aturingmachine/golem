@@ -1,19 +1,24 @@
+import { Injectable } from '@nestjs/common'
 import { getAverageColor } from 'fast-average-color-node'
 import sharp, { gravity } from 'sharp'
 import { GolemConf } from '../config'
 import { PlexLogo } from '../constants'
 
-export const ImageUtils = {
+@Injectable()
+export class ImageUtils {
+  constructor(private config: GolemConf) {}
+
   // Genuinely not sure about this any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  averageColor: (img?: Buffer | string): any =>
-    getAverageColor(img || PlexLogo, {
-      algorithm: GolemConf.image.avgColorAlgorithm,
-    }),
+  averageColor(img?: Buffer | string): any {
+    return getAverageColor(img || PlexLogo, {
+      algorithm: this.config.image.avgColorAlgorithm,
+    })
+  }
 
   async resize(img: Buffer = PlexLogo, size = 200): Promise<Buffer> {
     return await sharp(img).resize(size, size).toBuffer()
-  },
+  }
 
   async resizeWithMaxSize(
     img: Buffer = PlexLogo,
@@ -27,9 +32,9 @@ export const ImageUtils = {
     }
 
     return this.resizeWithMaxSize(img, size * 0.9)
-  },
+  }
 
-  fourSquare: async (config: {
+  async fourSquare(config: {
     images: {
       img1?: Buffer
       img2?: Buffer
@@ -37,7 +42,7 @@ export const ImageUtils = {
       img4?: Buffer
     }
     size?: number
-  }): Promise<Buffer> => {
+  }): Promise<Buffer> {
     const logo = PlexLogo
     const dimension = config.size || 200
     const halfDimension = dimension / 2
@@ -83,5 +88,5 @@ export const ImageUtils = {
     }, base)
 
     return f
-  },
+  }
 }

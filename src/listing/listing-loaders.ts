@@ -1,4 +1,5 @@
 import fs from 'fs'
+import { Injectable } from '@nestjs/common'
 import * as mm from 'music-metadata'
 import { GolemConf } from '../config'
 import { LibIndex } from '../library/lib-index'
@@ -12,23 +13,26 @@ const log = GolemLogger.child({ src: LogSources.Loader })
 
 const reg = /.*\.(png|html|pdf|db|jpg|jpeg|xml|js|css|ini)$/
 
+@Injectable()
 export class ListingLoader {
   public readonly listings: LocalListing[] = []
 
+  constructor(private config: GolemConf) {}
+
   async load(): Promise<LocalListing[]> {
-    if (!GolemConf.modules.Music) {
+    if (!this.config.modules.Music) {
       log.verbose('music module disabled - not initializing track loading')
       return []
     }
 
-    if (GolemConf.options.BustCache) {
+    if (this.config.options.BustCache) {
       await this.wipeData('')
     }
 
-    for (const lib of GolemConf.library.paths) {
+    for (const lib of this.config.library.paths) {
       const name = lib.split('/').pop() || 'Library'
 
-      if (GolemConf.options.BustCache) {
+      if (this.config.options.BustCache) {
         await this.loadFromDisk(lib, name)
       } else {
         await this.loadTracksFromDB(lib, name)
@@ -41,7 +45,7 @@ export class ListingLoader {
   async refresh(): Promise<Record<string, number>> {
     const result: Record<string, number> = {}
 
-    for (const lib of GolemConf.library.paths) {
+    for (const lib of this.config.library.paths) {
       const name = lib.split('/').pop() || 'Library'
       log.info(`refreshing library - ${name}@${lib}`)
 

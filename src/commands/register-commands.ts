@@ -1,7 +1,10 @@
 import fs from 'fs'
 import path from 'path'
+import { Injectable } from '@nestjs/common'
 import { Collection } from 'discord.js'
-import { GolemLogger, LogSources } from '../utils/logger'
+import { GolemConf } from '../config'
+import { LogContexts } from '../logger/constants'
+import { GolemLogger } from '../logger/logger.service'
 import goadmin from './implementations/goadmin'
 import goalias from './implementations/goalias'
 import goget from './implementations/goget'
@@ -23,43 +26,6 @@ const implementationPath = path.resolve(__dirname, './implementations')
 
 export const Commands = new Collection<string, GolemCommand>()
 
-export const registerCommands = (): void => {
-  fs.readdirSync(implementationPath)
-    .filter(
-      (file) =>
-        file.endsWith('.js') &&
-        !file.includes('index') &&
-        !file.includes('_wip')
-    )
-    .forEach((file) => {
-      const command: GolemCommand =
-        /* eslint-disable-next-line @typescript-eslint/no-var-requires */
-        require(`${implementationPath}/${file}`).default
-
-      if (
-        command.missingRequiredModules &&
-        (command.missingRequiredModules.all.length > 0 ||
-          command.missingRequiredModules.oneOf.length > 0)
-      ) {
-        GolemLogger.verbose(
-          `skipping registering command ${
-            command.options.info.name
-          }; ${command.missingModulesToString()}`,
-          {
-            src: LogSources.CommandRegister,
-          }
-        )
-      }
-
-      GolemLogger.verbose(`registering command ${command.options.info.name}`, {
-        src: LogSources.CommandRegister,
-      })
-      // Set a new item in the Collection
-      // With the key as the command name and the value as the exported module
-      Commands.set(command.info.name, command)
-    })
-}
-
 export const RegisteredCommands = {
   goadmin,
   goalias,
@@ -76,4 +42,45 @@ export const RegisteredCommands = {
   goshuffle,
   goskip,
   gostop,
+}
+
+@Injectable()
+export class CommandService {
+  constructor(private logger: GolemLogger, private config: GolemConf) {
+    this.logger.setContext(LogContexts.CommandService)
+  }
+
+  registerCommands(): void {
+    GolemCommand.config = this.config
+
+    fs.readdirSync(implementationPath)
+      .filter(
+        (file) =>
+          file.endsWith('.js') &&
+          !file.includes('index') &&
+          !file.includes('_wip')
+      )
+      .forEach((file) => {
+        const command: GolemCommand =
+          /* eslint-disable-next-line @typescript-eslint/no-var-requires */
+          require(`${implementationPath}/${file}`).default
+
+        if (
+          command.missingRequiredModules &&
+          (command.missingRequiredModules.all.length > 0 ||
+            command.missingRequiredModules.oneOf.length > 0)
+        ) {
+          this.logger.verbose(
+            `skipping registering command ${
+              command.options.info.name
+            }; ${command.missingModulesToString()}`
+          )
+        }
+
+        this.logger.verbose(`registering command ${command.options.info.name}`)
+        // Set a new item in the Collection
+        // With the key as the command name and the value as the exported module
+        Commands.set(command.info.name, command)
+      })
+  }
 }

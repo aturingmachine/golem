@@ -1,4 +1,4 @@
-import { LocalTrack } from '../../../src/tracks/track'
+import { LocalTrack } from '../../../src/music/tracks/track'
 import { MockAudioResource } from '../discordjs'
 import { MockedLocalListing, MockLocalListing } from './listing'
 

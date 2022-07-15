@@ -1,6 +1,6 @@
+import { ArrayUtils } from '../../utils/list-utils'
+import { GolemLogger, LogSources } from '../../utils/logger'
 import { Track } from '../tracks'
-import { ArrayUtils } from '../utils/list-utils'
-import { GolemLogger, LogSources } from '../utils/logger'
 
 const log = GolemLogger.child({ src: LogSources.Queue })
 

@@ -1,28 +1,29 @@
 import { DiscordGatewayAdapterCreator } from '@discordjs/voice'
+import { Injectable } from '@nestjs/common'
 import { Interaction, Message, Snowflake } from 'discord.js'
+import { LogContexts } from '../logger/constants'
+import { GolemLogger } from '../logger/logger.service'
 import { GolemMessage } from '../messages/message-wrapper'
-import { MusicPlayer } from '../player/music-player'
-import { GolemLogger, LogSources } from '../utils/logger'
-import { GolemEvent } from './event-emitter'
-import { Golem } from '.'
+import { MusicPlayer } from '../music/player/music-player'
+import { GolemEvent, GolemEventEmitter } from './event-emitter'
 
+@Injectable()
 export class PlayerCache {
-  private log = GolemLogger.child({ src: LogSources.PlayerCache })
-
   /**
    * Map of GuildId - MusicPlayer
    */
   private data: Map<Snowflake, MusicPlayer>
 
-  constructor() {
+  constructor(private logger: GolemLogger, private events: GolemEventEmitter) {
     this.data = new Map()
+    this.logger.setContext(LogContexts.PlayerCache)
   }
 
   get(
     searchVal: [string, string | undefined] | Message | Interaction
   ): MusicPlayer | undefined {
     if (Array.isArray(searchVal)) {
-      this.log.silly(`string get player for: "${searchVal}"`)
+      this.logger.silly(`string get player for: "${searchVal}"`)
       const target = this.data.get(searchVal[0].trim())
 
       if (!searchVal[1]) {
@@ -36,22 +37,22 @@ export class PlayerCache {
       return undefined
     }
 
-    this.log.debug(`interaction get player for: ${searchVal.guild.id}`)
+    this.logger.debug(`interaction get player for: ${searchVal.guild.id}`)
     return this.data.get(searchVal.guild.id)
   }
 
   getOrCreate(interaction: GolemMessage): MusicPlayer | undefined {
-    this.log.debug(
+    this.logger.debug(
       `getting player for: guild=${interaction.info.guild?.name}; member=${interaction.info.member?.user.username}; voiceChannel=${interaction.info.voiceChannel?.id}; voiceChannelName=${interaction.info.voiceChannel?.name}`
     )
 
     if (!interaction.info.guild) {
-      this.log.warn('no guild - cannot get player')
+      this.logger.warn('no guild - cannot get player')
       return undefined
     }
 
     if (!interaction.info.voiceChannel) {
-      this.log.warn('not in a valid voice channel')
+      this.logger.warn('not in a valid voice channel')
       return undefined
     }
 
@@ -64,7 +65,7 @@ export class PlayerCache {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       this.data.get(primaryKey)!.secondaryKey !== secondaryKey
     ) {
-      this.log.verbose(
+      this.logger.verbose(
         `no player for ${primaryKey} - ${secondaryKey} -- creating new`
       )
       const player = new MusicPlayer({
@@ -83,7 +84,7 @@ export class PlayerCache {
   }
 
   delete(primaryKey: Snowflake, secondaryKey?: string): void {
-    this.log.debug(`attempting delete for ${primaryKey} - ${secondaryKey}`)
+    this.logger.debug(`attempting delete for ${primaryKey} - ${secondaryKey}`)
 
     if (
       !this.data.has(primaryKey) ||
@@ -91,18 +92,20 @@ export class PlayerCache {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       (secondaryKey && this.data.get(primaryKey)!.secondaryKey !== secondaryKey)
     ) {
-      this.log.warn(`attemped to delete nonexistent player for ${primaryKey}`)
+      this.logger.warn(
+        `attemped to delete nonexistent player for ${primaryKey}`
+      )
       return
     }
 
     this.data.delete(primaryKey)
 
-    Golem.events.trigger(GolemEvent.Connection, primaryKey)
+    this.events.trigger(GolemEvent.Connection, primaryKey)
   }
 
   disconnectAll(): void {
     this.data.forEach((player) => {
-      Golem.events.trigger(GolemEvent.Connection, player.primaryKey)
+      this.events.trigger(GolemEvent.Connection, player.primaryKey)
       player.disconnect()
     })
   }

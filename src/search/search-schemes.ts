@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common'
 import fuzzy from 'fuzzy'
 import { GolemConf } from '../config'
 import { LocalListing } from '../listing/listing'
@@ -45,38 +46,41 @@ const extractors = {
   },
 }
 
+@Injectable()
 export class SearchSchemes {
-  private static log = GolemLogger.child({ src: LogSources.SearchSchemes })
+  private log = GolemLogger.child({ src: LogSources.SearchSchemes })
 
-  static byTitle(
+  constructor(private config: GolemConf) {}
+
+  byTitle(
     query: string,
     tracks: LocalListing[]
   ): fuzzy.FilterResult<LocalListing>[] {
     return fuzzy.filter(query, tracks, extractors.title)
   }
 
-  static byArtist(
+  byArtist(
     query: string,
     tracks: LocalListing[]
   ): fuzzy.FilterResult<LocalListing>[] {
     return fuzzy.filter(query, tracks, extractors.artist)
   }
 
-  static byArtistWithMb(
+  byArtistWithMb(
     query: string,
     tracks: LocalListing[]
   ): fuzzy.FilterResult<LocalListing>[] {
     return fuzzy.filter(query, tracks, extractors.mbWithArtist)
   }
 
-  static byArtistTrack(
+  byArtistTrack(
     query: string,
     tracks: LocalListing[]
   ): fuzzy.FilterResult<LocalListing>[] {
     return fuzzy.filter(query, tracks, extractors.shortName)
   }
 
-  static cascading(
+  cascading(
     query: string,
     tracks: LocalListing[]
   ): fuzzy.FilterResult<LocalListing>[] {
@@ -127,10 +131,10 @@ export class SearchSchemes {
       result = fuzzy.filter(query, tracks, extractors.baseReverse)
     }
 
-    return result[0]?.score > GolemConf.search.minimumScore ? result : []
+    return result[0]?.score > this.config.search.minimumScore ? result : []
   }
 
-  static composite(
+  composite(
     query: string,
     tracks: LocalListing[]
   ): fuzzy.FilterResult<LocalListing>[] {

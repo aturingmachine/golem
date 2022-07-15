@@ -1,16 +1,17 @@
+import { Injectable } from '@nestjs/common'
 import fuzzy from 'fuzzy'
 import { GolemConf } from '../config'
-import { Golem } from '../golem'
+// import { Golem } from '../golem'
 import {
   SimilarArtistMatch,
   SimilarTrackMatch,
 } from '../integrations/lastfm/models'
 import { LocalListing } from '../listing/listing'
+import { ListingLoader } from '../listing/listing-loaders'
+import { LogContexts } from '../logger/constants'
+import { GolemLogger } from '../logger/logger.service'
 import { ArrayUtils } from '../utils/list-utils'
-import { GolemLogger, LogSources } from '../utils/logger'
 import { SearchSchemes } from './search-schemes'
-
-const log = GolemLogger.child({ src: LogSources.Search })
 
 export enum ResultType {
   Wide = 'wide',
@@ -35,12 +36,22 @@ export class SearchResult {
   }
 }
 
+@Injectable()
 export class ListingFinder {
+  constructor(
+    private config: GolemConf,
+    private searchSchemes: SearchSchemes,
+    private loader: ListingLoader,
+    private logger: GolemLogger
+  ) {
+    this.logger.setContext(LogContexts.ListingFinder)
+  }
+
   private _artistNames!: string[]
 
   private get artistNames(): string[] {
     if (!this._artistNames) {
-      this._artistNames = Golem.loader.listings.map((l) =>
+      this._artistNames = this.loader.listings.map((l) =>
         l.artist.toLowerCase()
       )
     }
@@ -49,20 +60,20 @@ export class ListingFinder {
   }
 
   search(query: string): SearchResult | undefined {
-    log.info(`searching for ${query}`)
-    log.verbose(
-      `using titleSearch over ${Golem.loader.listings.length} listings`
+    this.logger.info(`searching for ${query}`)
+    this.logger.verbose(
+      `using titleSearch over ${this.loader.listings.length} listings`
     )
 
-    const result = SearchSchemes.cascading(query, Golem.loader.listings)
+    const result = this.searchSchemes.cascading(query, this.loader.listings)
 
     const isArtistQuery = this.isArtistQuery(query, result)
     const isWideMatch = this.isWideMatch(result)
 
-    log.verbose(`${query}: ${result.length} Matches`)
+    this.logger.verbose(`${query}: ${result.length} Matches`)
 
     if (result.length) {
-      log.verbose(
+      this.logger.verbose(
         `Pre-weighting\nResult=${result[0].string};\nArtistQuery=${isArtistQuery};\nWideMatch=${isWideMatch}`
       )
 
@@ -71,19 +82,16 @@ export class ListingFinder {
 
       return new SearchResult(
         final,
-        ListingFinder.getResultType(
-          isArtistQuery,
-          isWideMatch && !hasBeenWeighted
-        )
+        this.getResultType(isArtistQuery, isWideMatch && !hasBeenWeighted)
       )
     }
 
-    log.warn(`No Results found for ${query}`)
+    this.logger.warn(`No Results found for ${query}`)
     return undefined
   }
 
   searchMany(query: string): LocalListing[] {
-    const result = SearchSchemes.cascading(query, Golem.loader.listings)
+    const result = this.searchSchemes.cascading(query, this.loader.listings)
 
     return result.map((r) => r.original)
   }
@@ -93,7 +101,7 @@ export class ListingFinder {
     takeArtists = 10,
     takeTracks = 5
   ): LocalListing[] {
-    log.info('get similar artists')
+    this.logger.info('get similar artists')
     const artistNames = similarMatches.map((m) => m.name.toLowerCase())
 
     const availableSimilarArtists = similarMatches.filter((similar) =>
@@ -103,9 +111,9 @@ export class ListingFinder {
     return ArrayUtils.shuffleArray(availableSimilarArtists)
       .slice(0, takeArtists)
       .reduce((prev, curr) => {
-        const res = SearchSchemes.byArtistWithMb(
+        const res = this.searchSchemes.byArtistWithMb(
           curr.name,
-          Golem.loader.listings
+          this.loader.listings
         )
         return prev.concat(
           res
@@ -120,10 +128,10 @@ export class ListingFinder {
     similarMatches: SimilarTrackMatch[],
     takeTracks = 30
   ): LocalListing[] {
-    log.info('get similar tracks')
+    this.logger.info('get similar tracks')
     return ArrayUtils.shuffleArray(
       similarMatches.reduce((prev, curr) => {
-        const res = SearchSchemes.byTitle(curr.name, Golem.loader.listings)
+        const res = this.searchSchemes.byTitle(curr.name, this.loader.listings)
         return res[0] ? prev.concat(res[0].original) : prev
       }, [] as LocalListing[])
     ).slice(0, takeTracks)
@@ -131,7 +139,7 @@ export class ListingFinder {
 
   artistSample(artist: string, count = 1): LocalListing[] {
     const res = []
-    let listings = Golem.loader.listings.filter(
+    let listings = this.loader.listings.filter(
       (l) => l.artist.toLowerCase() === artist.toLowerCase() && l.album
     )
 
@@ -152,7 +160,7 @@ export class ListingFinder {
   }
 
   findIdByPath(path: string): { id: string; name: string } {
-    const listing = Golem.loader.listings.find((l) => l.path === path)
+    const listing = this.loader.listings.find((l) => l.path === path)
 
     return {
       id: listing?.id || '',
@@ -162,12 +170,12 @@ export class ListingFinder {
 
   findListingsByIds<Q extends { id: string }>(params: Q[]): LocalListing[] {
     return params
-      .map((param) => Golem.loader.listings.find((l) => l.id === param.id))
+      .map((param) => this.loader.listings.find((l) => l.id === param.id))
       .filter(ArrayUtils.isDefined)
   }
 
   get trackCount(): number {
-    return Golem.loader.listings.length
+    return this.loader.listings.length
   }
 
   private isArtistQuery(
@@ -194,7 +202,7 @@ export class ListingFinder {
   private weightResult(
     resultSet: fuzzy.FilterResult<LocalListing>[]
   ): fuzzy.FilterResult<LocalListing> {
-    log.verbose(
+    this.logger.verbose(
       `\n${resultSet
         .slice(0, 15)
         .map(
@@ -205,10 +213,12 @@ export class ListingFinder {
     )
     let pref: fuzzy.FilterResult<LocalListing> = resultSet[0]
     const startingScore = pref.score
-    log.verbose(`Weighting: Starting with ${pref.original.longName}`)
+    this.logger.verbose(`Weighting: Starting with ${pref.original.longName}`)
 
     if (this.matchesWeightedTerm(pref)) {
-      log.verbose(`Post-Weight: Pref flagged, searching for alternatives`)
+      this.logger.verbose(
+        `Post-Weight: Pref flagged, searching for alternatives`
+      )
       pref =
         resultSet
           .slice(0, 10)
@@ -216,7 +226,7 @@ export class ListingFinder {
           .find((result) => !this.matchesWeightedTerm(result)) || pref
     }
 
-    log.verbose(`Weighting: Checking near results for close calls`)
+    this.logger.verbose(`Weighting: Checking near results for close calls`)
     const nextValid = resultSet
       .slice(0, 10)
       .filter(
@@ -234,13 +244,13 @@ export class ListingFinder {
       nextValid[0]?.score - nextValid[2]?.score < 5 ||
       nextValid[0]?.score - nextValid[3]?.score < 5
     ) {
-      log.debug(`some valid scores within 5 - weighting on album name`)
+      this.logger.debug(`some valid scores within 5 - weighting on album name`)
       pref =
         nextValid.find((result) => !this.matchesWeightedTerm(result, true)) ||
         pref
     }
 
-    log.verbose(`Returning ${pref.original.title}`)
+    this.logger.verbose(`Returning ${pref.original.title}`)
 
     return pref
   }
@@ -249,11 +259,11 @@ export class ListingFinder {
     result: fuzzy.FilterResult<LocalListing>,
     checkAlbum = false
   ): boolean {
-    log.verbose(
+    this.logger.verbose(
       `Checking force weighting for ${result.original.title.toLowerCase()}`
     )
 
-    return GolemConf.search.forceWeightTerms
+    return this.config.search.forceWeightTerms
       .map((s) => s.toLowerCase())
       .some((s) =>
         checkAlbum
@@ -262,10 +272,7 @@ export class ListingFinder {
       )
   }
 
-  private static getResultType(
-    isArtistQuery: boolean,
-    isWide: boolean
-  ): ResultType {
+  private getResultType(isArtistQuery: boolean, isWide: boolean): ResultType {
     if (isArtistQuery) {
       return ResultType.Artist
     }
