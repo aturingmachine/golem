@@ -1,8 +1,11 @@
 import fs from 'fs'
+import path from 'path'
 import { ColorResolvable } from 'discord.js'
-import { GolemConf } from './config'
+// import { GolemConf } from './config'
 
-export const PlexLogo = fs.readFileSync(GolemConf.image.fallbackPath)
+export const PlexLogo = fs.readFileSync(
+  path.resolve(__dirname, '../golem-logo.png')
+)
 
 export const Constants = {
   baseColor: '#f900d5' as ColorResolvable,

@@ -5,6 +5,7 @@
   ],
   "compilerOptions": {
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "target": "esnext",
     "module": "commonjs",
     "strict": true,

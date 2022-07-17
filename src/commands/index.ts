@@ -11,11 +11,11 @@ import {
   SlashCommandUserOption,
 } from '@discordjs/builders'
 import { ModuleRef } from '@nestjs/core'
-import { StringUtils } from '../../src/utils/string-utils'
+import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
 import { GolemMessage } from '../messages/golem-message'
+import { StringUtils } from '../utils/string-utils'
 // import { GolemConf } from '../config'
-// import { GolemModule } from '../config/models'
-// import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
+// import { any } from '../config/models'
 // import { GolemLogger, LogLevel, LogSources } from '../utils/logger'
 
 export function expandBuiltInAlias(raw: string): string | undefined {
@@ -42,7 +42,7 @@ export function expandBuiltInAlias(raw: string): string | undefined {
 }
 
 export type CommandHandlerFn = (
-  module: ModuleRef,
+  // module: ModuleRef,
   message: GolemMessage,
   ...args: any[]
 ) => Promise<any>
@@ -69,12 +69,12 @@ export type CommandHelp = {
 }
 
 export type CommandParams = {
-  source: LogSources | string
+  source: string
   data: Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
   handler: CommandHandlerFn
   helpInfo: CommandHelp
   errorHandler?: CommandErrorHandlerFn
-  requiredModules?: GolemModule[]
+  requiredModules?: any[]
 }
 
 type CommandInfo = {
@@ -90,7 +90,7 @@ export interface ICommandArg {
   name: string
   description: CommandInfo
   required: boolean
-  requiredModules?: GolemModule[]
+  requiredModules?: any[]
   /**
    * If true, interperet the remainder of the message as the argument
    */
@@ -137,8 +137,8 @@ export type CommandDescription = {
     slashCommand: string[]
   }
   requiredModules?: {
-    all?: GolemModule[]
-    oneOf?: GolemModule[]
+    all?: any[]
+    oneOf?: any[]
   }
   alias?: string
   subcommands?: SubCommand[]
@@ -146,7 +146,7 @@ export type CommandDescription = {
 }
 
 type CommandOptions = {
-  logSource: LogSources | string
+  logSource: string
   handler: CommandHandlerFn
   info: CommandDescription
   errorHandler?: CommandErrorHandlerFn
@@ -192,7 +192,7 @@ export class GolemCommand {
   public readonly slashCommand: SlashCommandBuilder
   public readonly execute: CommandHandlerFn
 
-  public static config: GolemConf
+  public static config: any
 
   constructor(public options: CommandOptions) {
     this.slashCommand = new SlashCommandBuilder()
@@ -226,7 +226,7 @@ export class GolemCommand {
     }`
   }
 
-  get missingRequiredModules(): { all: GolemModule[]; oneOf: GolemModule[] } {
+  get missingRequiredModules(): { all: any[]; oneOf: any[] } {
     const missingAllMods =
       this.options.info.requiredModules?.all?.filter((mod) => {
         return !GolemCommand.config.modules[mod]
@@ -359,18 +359,18 @@ export class GolemCommand {
       ) {
         await interaction.reply(this.missingModulesMsg)
 
-        GolemLogger.warn(
-          `cannot execute command ${
-            this.options.info.name
-          } due to missing modules: All of - ${this.missingRequiredModules.all.join(
-            ', '
-          )}${
-            this.missingRequiredModules.oneOf.length
-              ? `; One of - ${this.missingRequiredModules.oneOf.join(', ')}`
-              : ''
-          }`,
-          { src: this.options.logSource }
-        )
+        // GolemLogger.warn(
+        //   `cannot execute command ${
+        //     this.options.info.name
+        //   } due to missing modules: All of - ${this.missingRequiredModules.all.join(
+        //     ', '
+        //   )}${
+        //     this.missingRequiredModules.oneOf.length
+        //       ? `; One of - ${this.missingRequiredModules.oneOf.join(', ')}`
+        //       : ''
+        //   }`,
+        //   { src: this.options.logSource }
+        // )
         return
       }
 
@@ -393,22 +393,22 @@ export class GolemCommand {
 }
 
 async function baseErrorHandler(
-  source: LogSources | string,
+  source: string,
   error: Error,
   interaction: GolemMessage,
   ...args: any[]
 ): Promise<void> {
-  GolemLogger.error(
-    `unexpected exception: ${error.message}; ARGS=${args.join(', ')}`,
-    { src: source }
-  )
+  // GolemLogger.error(
+  //   `unexpected exception: ${error.message}; ARGS=${args.join(', ')}`,
+  //   { src: source }
+  // )
 
-  if (
-    GolemCommand.config.logLevel !== LogLevel.Info ||
-    process.env.NODE_ENV === 'test'
-  ) {
-    console.error(error.stack)
-  }
+  // if (
+  //   GolemCommand.config.logLevel !== LogLevel.Info ||
+  //   process.env.NODE_ENV === 'test'
+  // ) {
+  //   console.error(error.stack)
+  // }
 
   await interaction.reply('Something went wrong...')
 }

@@ -74,11 +74,8 @@ export class GolemMessage {
     public source: GolemMessageInteraction, // customAlias?: CustomAlias
     private log: LoggerService
   ) {
-    this.traceId = v4()
-    // this.log = GolemLogger.child({
-    //   src: LogSources.GolemMessage,
-    //   traceId: this.traceId,
-    // })
+    this.traceId = v4().split('-').pop()!
+    this.log.setContext(`message-${this.traceId}`)
 
     if (this.source instanceof Message) {
       this.log.silly(`got Message`)

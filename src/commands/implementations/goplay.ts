@@ -5,15 +5,16 @@ import { CommandNames } from '../../constants'
 import { GolemMessage } from '../../messages/golem-message'
 // import { GolemLogger, LogSources } from '../../utils/logger'
 
-const log = GolemLogger.child({ src: LogSources.GoPlay })
+// const log = GolemLogger.child({ src: LogSources.GoPlay })
 
 const execute = async (interaction: GolemMessage): Promise<void> => {
-  log.debug(`executing`, interaction.logMeta)
-  await Handlers.Play.process(interaction, { playNext: false })
+  await interaction.reply('Test reply.')
+  // log.debug(`executing`, interaction.logMeta)
+  // await Handlers.Play.process(interaction, { playNext: false })
 }
 
 const goplay = new GolemCommand({
-  logSource: LogSources.GoPlay,
+  logSource: 'go-play',
   handler: execute,
   info: {
     name: CommandNames.Base.play,
@@ -46,9 +47,9 @@ const goplay = new GolemCommand({
         '/goplay <youtube playlist url>',
       ],
     },
-    requiredModules: {
-      oneOf: [GolemModule.Music, GolemModule.Youtube],
-    },
+    // requiredModules: {
+    //   oneOf: [GolemModule.Music, GolemModule.Youtube],
+    // },
     alias: 'play',
     extendedArgs: [
       {

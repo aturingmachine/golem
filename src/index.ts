@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core'
 import { MicroserviceOptions } from '@nestjs/microservices'
 import { AppModule } from './application.module'
+import { CommandService } from './commands/commands.service'
 import { DiscordBotServer } from './core/discord-transport'
 
 async function bootstrap() {
@@ -10,6 +11,9 @@ async function bootstrap() {
       strategy: new DiscordBotServer(),
     }
   )
+
+  const commandService = app.get(CommandService)
+  commandService.registerCommands()
 
   await app.listen()
   // const app = await NestFactory.createApplicationContext(AppModule)

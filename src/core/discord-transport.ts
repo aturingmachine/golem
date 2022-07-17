@@ -23,10 +23,7 @@ export class DiscordBotServer
   }
 
   login(): Promise<string> {
-    console.log('Logging in')
-    return this.client.login(
-      'OTA3MDgwMzAwMjg1MjY3OTY5.GcnmQh.lOf3xdu1-ctr351JOZyVOWMAQ0jDKbGMq2CgZQ'
-    )
+    return this.client.login('')
   }
 
   /**
