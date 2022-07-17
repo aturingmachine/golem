@@ -89,47 +89,48 @@ export class ParsedCommand {
     const cmd = parsed.slice(0, parsed.indexOf(' ')).trimStart()
 
     switch (cmd) {
-      case CommandBase.admin:
-        return parseString(parsed, RegisteredCommands.goadmin.info)
-      case CommandBase.alias:
-        return parseString(parsed, RegisteredCommands.goalias.info)
-      case BuiltInAlias.NP:
-      case BuiltInAlias.NowPlaying:
-      case CommandBase.get:
-        return parseString(parsed, RegisteredCommands.goget.info)
+      // case CommandBase.admin:
+      //   return parseString(parsed, RegisteredCommands.goadmin.info)
+      // case CommandBase.alias:
+      //   return parseString(parsed, RegisteredCommands.goalias.info)
+      // case BuiltInAlias.NP:
+      // case BuiltInAlias.NowPlaying:
+      // case CommandBase.get:
+      //   return parseString(parsed, RegisteredCommands.goget.info)
       // case CommandBase.help:
       //   return parseString(parsed, gohelp.info)
-      case CommandBase.mix:
-        return parseString(parsed, RegisteredCommands.gomix.info)
-      case BuiltInAlias.Pause:
-      case CommandBase.pause:
-        return parseString(parsed, RegisteredCommands.gopause.info)
-      case CommandBase.peek:
-        return parseString(parsed, RegisteredCommands.gopeek.info)
+      // case CommandBase.mix:
+      //   return parseString(parsed, RegisteredCommands.gomix.info)
+      // case BuiltInAlias.Pause:
+      // case CommandBase.pause:
+      //   return parseString(parsed, RegisteredCommands.gopause.info)
+      // case CommandBase.peek:
+      //   return parseString(parsed, RegisteredCommands.gopeek.info)
       case BuiltInAlias.Play:
       case CommandBase.play:
-        return parseString(parsed, RegisteredCommands.goplay.info)
-      case CommandBase.playlist:
-        return parseString(parsed, RegisteredCommands.goplaylist.info)
-      case BuiltInAlias.PlayNext:
-      case CommandBase.playNext:
-        return parseString(parsed, RegisteredCommands.goplaynext.info)
-      case CommandBase.report:
-        return parseString(parsed, RegisteredCommands.goreport.info)
-      case CommandBase.search:
-        return parseString(parsed, RegisteredCommands.gosearch.info)
-      case CommandBase.shuffle:
-        return parseString(parsed, RegisteredCommands.goshuffle.info)
-      case BuiltInAlias.Skip:
-      case CommandBase.skip:
-        return parseString(parsed, RegisteredCommands.goskip.info)
-      case BuiltInAlias.Stop:
-      case CommandBase.stop:
-        return parseString(parsed, RegisteredCommands.gostop.info)
-      case CommandBase.perms:
-        return parseString(parsed, RegisteredCommands.gopermission.info)
       default:
-        return parseString(parsed, RegisteredCommands.goget.info)
+        return parseString(parsed, RegisteredCommands.goplay.info)
+      // case CommandBase.playlist:
+      //   return parseString(parsed, RegisteredCommands.goplaylist.info)
+      // case BuiltInAlias.PlayNext:
+      // case CommandBase.playNext:
+      //   return parseString(parsed, RegisteredCommands.goplaynext.info)
+      // case CommandBase.report:
+      //   return parseString(parsed, RegisteredCommands.goreport.info)
+      // case CommandBase.search:
+      //   return parseString(parsed, RegisteredCommands.gosearch.info)
+      // case CommandBase.shuffle:
+      //   return parseString(parsed, RegisteredCommands.goshuffle.info)
+      // case BuiltInAlias.Skip:
+      // case CommandBase.skip:
+      //   return parseString(parsed, RegisteredCommands.goskip.info)
+      // case BuiltInAlias.Stop:
+      // case CommandBase.stop:
+      //   return parseString(parsed, RegisteredCommands.gostop.info)
+      // case CommandBase.perms:
+      //   return parseString(parsed, RegisteredCommands.gopermission.info)
+      // default:
+      //   return parseString(parsed, RegisteredCommands.goget.info)
     }
   }
 }

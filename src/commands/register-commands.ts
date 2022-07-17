@@ -2,24 +2,24 @@ import fs from 'fs'
 import path from 'path'
 import { Injectable } from '@nestjs/common'
 import { Collection } from 'discord.js'
-import { GolemConf } from '../config'
-import { LogContexts } from '../logger/constants'
-import { GolemLogger } from '../logger/logger.service'
-import goadmin from './implementations/goadmin'
-import goalias from './implementations/goalias'
-import goget from './implementations/goget'
-import gomix from './implementations/gomix'
-import gopause from './implementations/gopause'
-import gopeek from './implementations/gopeek'
-import gopermission from './implementations/gopermission'
+// import { GolemConf } from '../config'
+// import { LogContexts } from '../logger/constants'
+// import { GolemLogger } from '../logger/logger.service'
+// import goadmin from './implementations/goadmin'
+// import goalias from './implementations/goalias'
+// import goget from './implementations/goget'
+// import gomix from './implementations/gomix'
+// import gopause from './implementations/gopause'
+// import gopeek from './implementations/gopeek'
+// import gopermission from './implementations/gopermission'
 import goplay from './implementations/goplay'
-import goplaylist from './implementations/goplaylist'
-import goplaynext from './implementations/goplaynext'
-import goreport from './implementations/goreport'
-import gosearch from './implementations/gosearch'
-import goshuffle from './implementations/goshuffle'
-import goskip from './implementations/goskip'
-import gostop from './implementations/gostop'
+// import goplaylist from './implementations/goplaylist'
+// import goplaynext from './implementations/goplaynext'
+// import goreport from './implementations/goreport'
+// import gosearch from './implementations/gosearch'
+// import goshuffle from './implementations/goshuffle'
+// import goskip from './implementations/goskip'
+// import gostop from './implementations/gostop'
 import { GolemCommand } from '.'
 
 const implementationPath = path.resolve(__dirname, './implementations')
@@ -27,21 +27,21 @@ const implementationPath = path.resolve(__dirname, './implementations')
 export const Commands = new Collection<string, GolemCommand>()
 
 export const RegisteredCommands = {
-  goadmin,
-  goalias,
-  goget,
-  gomix,
-  gopause,
-  gopeek,
-  gopermission,
+  // goadmin,
+  // goalias,
+  // goget,
+  // gomix,
+  // gopause,
+  // gopeek,
+  // gopermission,
   goplay,
-  goplaylist,
-  goplaynext,
-  goreport,
-  gosearch,
-  goshuffle,
-  goskip,
-  gostop,
+  // goplaylist,
+  // goplaynext,
+  // goreport,
+  // gosearch,
+  // goshuffle,
+  // goskip,
+  // gostop,
 }
 
 @Injectable()

@@ -1,0 +1,10 @@
+import { Module } from '@nestjs/common'
+import { LoggerService } from './logger/logger.service'
+import { MessageController } from './message.controller'
+
+@Module({
+  controllers: [MessageController],
+  providers: [LoggerService],
+  exports: [LoggerService],
+})
+export class CoreModule {}

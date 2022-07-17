@@ -5,12 +5,11 @@ import {
   StageChannel,
   VoiceChannel,
 } from 'discord.js'
-import { Permission, UserPermission } from '../permissions/permission'
-import { formatForLog } from '../utils/debug-utils'
-import { GolemLogger, LogSources } from '../utils/logger'
-import { GolemMessageInteraction } from './message-wrapper'
+// import { Permission, UserPermission } from '../permissions/permission'
+// import { GolemLogger, LogSources } from '../utils/logger'
+import { GolemMessageInteraction } from './golem-message'
 
-const log = GolemLogger.child({ src: LogSources.ParsedMessage })
+// const log = GolemLogger.child({ src: LogSources.ParsedMessage })
 
 /**
  * Parses legacy string commands into content and arguments
@@ -29,7 +28,7 @@ export class ParsedMessage {
 
     const sliceIndex = getSliceIndex(rawContent)
 
-    log.silly(`parsing raw ${formatForLog({ rawContent, sliceIndex })}`)
+    // log.silly(`parsing raw ${formatForLog({ rawContent, sliceIndex })}`)
 
     this.content = sliceIndex > 0 ? rawContent.slice(0, sliceIndex) : rawContent
 
@@ -43,7 +42,7 @@ export class ParsedMessage {
               .map((argPair) => argPair.split('='))
           )
 
-    log.silly(`new - ${formatForLog(this)}`)
+    // log.silly(`new - ${formatForLog(this)}`)
   }
 }
 
@@ -76,21 +75,21 @@ export class MessageInfo {
     return this.member?.voice.channel
   }
 
-  /**
-   * Get the Permissions record for this user in this guild
-   */
-  get permissions(): Promise<UserPermission> {
-    return UserPermission.get(this.userId, this.guildId)
-  }
+  // /**
+  //  * Get the Permissions record for this user in this guild
+  //  */
+  // get permissions(): Promise<UserPermission> {
+  //   return UserPermission.get(this.userId, this.guildId)
+  // }
 
-  /**
-   * Check if this user can do some action in this guild
-   * @param perm
-   * @returns
-   */
-  async can(perm: Permission): Promise<boolean> {
-    return (await this.permissions).can(perm)
-  }
+  // /**
+  //  * Check if this user can do some action in this guild
+  //  * @param perm
+  //  * @returns
+  //  */
+  // async can(perm: Permission): Promise<boolean> {
+  //   return (await this.permissions).can(perm)
+  // }
 }
 
 function getSliceIndex(message: string): number {

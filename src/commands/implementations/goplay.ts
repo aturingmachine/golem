@@ -1,9 +1,9 @@
 import { GolemCommand } from '..'
-import { GolemModule } from '../../config/models'
+// import { GolemModule } from '../../config/models'
 import { CommandNames } from '../../constants'
-import { Handlers } from '../../handlers'
-import { GolemMessage } from '../../messages/message-wrapper'
-import { GolemLogger, LogSources } from '../../utils/logger'
+// import { Handlers } from '../../handlers'
+import { GolemMessage } from '../../messages/golem-message'
+// import { GolemLogger, LogSources } from '../../utils/logger'
 
 const log = GolemLogger.child({ src: LogSources.GoPlay })
 

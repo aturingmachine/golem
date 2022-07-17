@@ -1,9 +1,7 @@
 import { Module } from '@nestjs/common'
-import { GolemBot } from './golem'
-import { PermissionsModule } from './permissions/permissions.module'
+import { CoreModule } from './core/core.module'
 
 @Module({
-  imports: [PermissionsModule],
-  providers: [GolemBot],
+  imports: [CoreModule],
 })
 export class AppModule {}

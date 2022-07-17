@@ -23,3 +23,5 @@ logs/
 todo
 
 commands.json
+
+*.bk

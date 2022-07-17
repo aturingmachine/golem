@@ -11,12 +11,12 @@ import {
   SlashCommandUserOption,
 } from '@discordjs/builders'
 import { ModuleRef } from '@nestjs/core'
-import { GolemConf } from '../config'
-import { GolemModule } from '../config/models'
-import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
-import { GolemMessage } from '../messages/message-wrapper'
-import { GolemLogger, LogLevel, LogSources } from '../utils/logger'
-import { StringUtils } from '../utils/string-utils'
+import { StringUtils } from '../../src/utils/string-utils'
+import { GolemMessage } from '../messages/golem-message'
+// import { GolemConf } from '../config'
+// import { GolemModule } from '../config/models'
+// import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
+// import { GolemLogger, LogLevel, LogSources } from '../utils/logger'
 
 export function expandBuiltInAlias(raw: string): string | undefined {
   const parsed = raw.replace(/^\$/, '')
