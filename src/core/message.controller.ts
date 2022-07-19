@@ -3,6 +3,7 @@ import { ModuleRef } from '@nestjs/core'
 import { CONTEXT, MessagePattern, RequestContext } from '@nestjs/microservices'
 import { Message } from 'discord.js'
 import { GolemMessage } from '../messages/golem-message'
+import { execute } from '../messages/tree'
 import { LoggerService } from './logger/logger.service'
 
 @Controller()
@@ -28,5 +29,9 @@ export class MessageController {
 
     this.logger.info(message.toDebug())
     this.logger.info(message)
+
+    const result = await execute(data.message.content)
+
+    console.log(result)
   }
 }

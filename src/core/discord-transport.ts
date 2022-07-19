@@ -23,7 +23,7 @@ export class DiscordBotServer
   }
 
   login(): Promise<string> {
-    return this.client.login('')
+    return this.client.login(process.env.DISCORD_TOKEN)
   }
 
   /**
