@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { MicroserviceOptions } from '@nestjs/microservices'
 import { AppModule } from './application.module'
@@ -5,14 +6,22 @@ import { CommandService } from './commands/commands.service'
 import { DiscordBotServer } from './core/discord-transport'
 
 async function bootstrap() {
+  const botServer = new DiscordBotServer()
+  botServer.init()
+
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
-      strategy: new DiscordBotServer(),
+      strategy: botServer,
     }
   )
 
+  const config = app.get(ConfigService)
+
+  botServer.login(config.get('discord.token'))
+
   const commandService = app.get(CommandService)
+
   commandService.registerCommands()
 
   await app.listen()

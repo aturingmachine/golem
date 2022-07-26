@@ -226,16 +226,17 @@ export class GolemCommand {
     }`
   }
 
+  // TODO
   get missingRequiredModules(): { all: any[]; oneOf: any[] } {
-    const missingAllMods =
-      this.options.info.requiredModules?.all?.filter((mod) => {
-        return !GolemCommand.config.modules[mod]
-      }) || []
+    const missingAllMods: any[] = []
+    // this.options.info.requiredModules?.all?.filter((mod) => {
+    //   return !GolemCommand.config.modules[mod]
+    // }) || []
 
-    const missingOneOfMods =
-      this.options.info.requiredModules?.oneOf?.filter((mod) => {
-        return !GolemCommand.config.modules[mod]
-      }) || []
+    const missingOneOfMods: any[] = []
+    // this.options.info.requiredModules?.oneOf?.filter((mod) => {
+    //   return !GolemCommand.config.modules[mod]
+    // }) || []
 
     const isMissingOneOfs =
       this.options.info.requiredModules?.oneOf?.length ===

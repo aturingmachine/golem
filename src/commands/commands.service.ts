@@ -2,6 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import { Injectable } from '@nestjs/common'
 import { LoggerService } from '../core/logger/logger.service'
+import { BaseReply } from '../messages/replies/base'
 import { Commands } from './register-commands'
 import { GolemCommand } from '.'
 

@@ -86,7 +86,10 @@ export class ParsedCommand {
 
   static fromRaw(raw: string): ParsedCommand {
     const parsed = raw.replace(/^\$(go )?/, '')
-    const cmd = parsed.slice(0, parsed.indexOf(' ')).trimStart()
+    const cmd = parsed
+      .slice(0, parsed.includes(' ') ? parsed.indexOf(' ') : parsed.length)
+      .trimStart()
+    console.log(parsed, cmd)
 
     switch (cmd) {
       // case CommandBase.admin:

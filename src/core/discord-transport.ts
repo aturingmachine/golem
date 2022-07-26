@@ -9,29 +9,35 @@ export class DiscordBotServer
 
   constructor() {
     super()
-
-    this.client = new Client({
-      allowedMentions: {
-        parse: ['users'],
-      },
-      intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_VOICE_STATES,
-        Intents.FLAGS.GUILD_MESSAGES,
-      ],
-    })
   }
 
-  login(): Promise<string> {
-    return this.client.login(process.env.DISCORD_TOKEN)
+  init(): void {
+    this.client =
+      this.client ||
+      new Client({
+        allowedMentions: {
+          parse: ['users'],
+        },
+        intents: [
+          Intents.FLAGS.GUILDS,
+          Intents.FLAGS.GUILD_VOICE_STATES,
+          Intents.FLAGS.GUILD_MESSAGES,
+        ],
+      })
+  }
+
+  login(token?: string): Promise<string> {
+    if (!token) {
+      throw new Error('No Discord Bot Token provided.')
+    }
+
+    return this.client.login(token)
   }
 
   /**
    * This method is triggered when you run "app.listen()".
    */
   async listen(callback: () => void): Promise<void> {
-    await this.login()
-
     this.client.on('ready', (c) => {
       console.log('Logged in as', c.user.id)
     })

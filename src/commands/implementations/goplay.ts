@@ -1,3 +1,4 @@
+// import { Message } from 'discord.js'
 import { GolemCommand } from '..'
 // import { GolemModule } from '../../config/models'
 import { CommandNames } from '../../constants'
