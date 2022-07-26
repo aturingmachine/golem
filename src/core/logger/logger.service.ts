@@ -1,4 +1,5 @@
 import { ConsoleLogger, Injectable, Scope } from '@nestjs/common'
+import { GolemMessage } from '../../messages/golem-message'
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class LoggerService extends ConsoleLogger {
@@ -13,5 +14,9 @@ export class LoggerService extends ConsoleLogger {
 
   silly(message: any, context?: string): void {
     this.verbose(message, context)
+  }
+
+  setMessageContext(message: GolemMessage, context: string): void {
+    this.setContext(`${context}::${message.traceId}`)
   }
 }

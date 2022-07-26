@@ -18,6 +18,8 @@ import { LoggerService } from '../core/logger/logger.service'
 import { StringUtils } from '../utils/string-utils'
 import { MessageInfo } from './message-info'
 import { ParsedCommand } from './parsed-command'
+import { Reply } from './replies'
+import { Replies } from './replies/types'
 // import { SelectMenu } from './select-menu'
 
 export type GolemMessageReplyOptions =
@@ -61,7 +63,10 @@ export class GolemMessage {
   // private readonly log: winston.Logger
 
   public readonly parsed: ParsedCommand
+  public readonly commands: ParsedCommand[] = []
   public readonly info: MessageInfo
+
+  public readonly _replies: Reply = new Reply()
 
   /**
    * Internal UUID generated for this message
@@ -75,7 +80,7 @@ export class GolemMessage {
     private log: LoggerService
   ) {
     this.traceId = v4().split('-').pop()!
-    this.log.setContext(`message-${this.traceId}`)
+    this.log.setContext(`message::${this.traceId}`)
 
     if (this.source instanceof Message) {
       this.log.silly(`got Message`)

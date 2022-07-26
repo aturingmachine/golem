@@ -1,6 +1,6 @@
 import { CommandInteraction, CommandInteractionOption } from 'discord.js'
-import { CommandDescription } from '../commands'
-import { RegisteredCommands } from '../commands/register-commands'
+import { CommandDescription, GolemCommand } from '../commands'
+import { Commands, RegisteredCommands } from '../commands/register-commands'
 import { BuiltInAlias, CommandBase } from '../constants'
 import { formatForLog } from '../utils/debug-utils'
 import { StringUtils } from '../utils/string-utils'
@@ -23,7 +23,8 @@ export class ParsedCommand {
   constructor(
     public command: CommandBase,
     public params: Record<string, string | number | boolean | undefined>,
-    public subCommand?: string
+    public subCommand?: string,
+    public handler?: GolemCommand
   ) {}
 
   toDebug(): string {
@@ -81,7 +82,12 @@ export class ParsedCommand {
       ...parseCommandInterface(interaction.options.data),
     }
 
-    return new ParsedCommand(data.command, data.params, data.subCommand)
+    return new ParsedCommand(
+      data.command,
+      data.params,
+      data.subCommand,
+      Commands.get(data.command)
+    )
   }
 
   static fromRaw(raw: string): ParsedCommand {
@@ -171,7 +177,12 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
 
   if (meat.trim() === '--help') {
     result.subCommand = '--help'
-    return new ParsedCommand(result.command, result.params, result.subCommand)
+    return new ParsedCommand(
+      result.command,
+      result.params,
+      result.subCommand,
+      Commands.get(result.command)
+    )
   }
 
   if (def.subcommands && !result.subCommand) {
@@ -209,5 +220,10 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
     }
   }
 
-  return new ParsedCommand(result.command, result.params, result.subCommand)
+  return new ParsedCommand(
+    result.command,
+    result.params,
+    result.subCommand,
+    Commands.get(result.command)
+  )
 }

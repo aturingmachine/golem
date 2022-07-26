@@ -45,7 +45,7 @@ export type CommandHandlerFn = (
   // module: ModuleRef,
   message: GolemMessage,
   ...args: any[]
-) => Promise<any>
+) => Promise<boolean>
 
 export type CommandErrorHandlerFn = (
   error: Error,
@@ -372,11 +372,12 @@ export class GolemCommand {
         //   }`,
         //   { src: this.options.logSource }
         // )
-        return
+        return true
       }
 
       try {
         await this.options.handler(module, interaction, ...args)
+        return true
       } catch (error) {
         if (this.options.errorHandler) {
           await this.options.errorHandler(error as Error, interaction, ...args)
@@ -388,6 +389,8 @@ export class GolemCommand {
             ...args
           )
         }
+
+        return false
       }
     }
   }

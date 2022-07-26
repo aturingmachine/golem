@@ -33,9 +33,14 @@ export class MessageController {
 
     const result = await this.treeService.execute(
       data.message.content,
-      this.ref
+      this.ref,
+      message
     )
 
     console.log(result)
+
+    for (const r of message._replies.render()) {
+      await message.reply(r.opts)
+    }
   }
 }

@@ -92,14 +92,15 @@ export class TreeService {
   async runTree(
     innerTree: CommandNodes,
     results: ExecutionResults,
-    ref: ModuleRef
+    ref: ModuleRef,
+    message?: GolemMessage
   ): Promise<boolean | undefined> {
     // console.log('RUNNING TREE', innerTree)
     if (innerTree.type === SEMI) {
       // console.log(SEMI, innerTree)
       // Run one after another ignoring fails
       for (const sub of innerTree.commands) {
-        this.runTree(sub, results, ref)
+        await this.runTree(sub, results, ref, message)
       }
     } else if (innerTree.type === AND) {
       // console.log(AND, innerTree)
@@ -108,7 +109,7 @@ export class TreeService {
 
       for (const sub of innerTree.commands) {
         if (canRun) {
-          canRun = !!(await this.runTree(sub, results, ref))
+          canRun = !!(await this.runTree(sub, results, ref, message))
         } else {
           if (sub.type === RUN) {
             results.unrun.push(sub.command)
@@ -124,8 +125,9 @@ export class TreeService {
       // console.log(RUN, innerTree)
       // Run the command, return the status
       // TODO use real implementation
-      const status = this.run(innerTree.command)
-      // Commands.get()
+      const status = message
+        ? innerTree.instance.handler?.execute(message)
+        : false
 
       if (status) {
         // console.log('runTree ran and passed', innerTree.command)
@@ -144,9 +146,14 @@ export class TreeService {
     }
   }
 
-  async execute(message: string, ref: ModuleRef): Promise<ExecutionResults> {
+  async execute(
+    message: string,
+    ref: ModuleRef,
+    golemMessage: GolemMessage
+  ): Promise<ExecutionResults> {
+    this.logger.setMessageContext(golemMessage, 'tree-service')
+    this.logger.info(`processing message: ${message}`)
     const tree = this.treeify(message)
-
     console.log(JSON.stringify(tree))
 
     const results: ExecutionResults = {
@@ -156,15 +163,15 @@ export class TreeService {
       timeline: [],
     }
 
-    await this.runTree(tree, results, ref)
-
-    console.log(JSON.stringify(Commands))
+    await this.runTree(tree, results, ref, golemMessage)
 
     results.timeline.forEach((i) => {
       const c = Commands.get(i.command)
 
       console.log(c?.info.name)
     })
+
+    this.logger.setContext('tree-service')
 
     return results
   }

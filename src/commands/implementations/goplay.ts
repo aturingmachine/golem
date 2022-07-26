@@ -4,12 +4,20 @@ import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 // import { Handlers } from '../../handlers'
 import { GolemMessage } from '../../messages/golem-message'
+import { RawReply } from '../../messages/replies/raw'
 // import { GolemLogger, LogSources } from '../../utils/logger'
 
 // const log = GolemLogger.child({ src: LogSources.GoPlay })
 
-const execute = async (interaction: GolemMessage): Promise<void> => {
-  await interaction.reply('Test reply.')
+const execute = async (interaction: GolemMessage): Promise<boolean> => {
+  try {
+    interaction._replies.add(new RawReply('This is a test reply.'))
+
+    return true
+  } catch (error) {
+    return false
+  }
+
   // log.debug(`executing`, interaction.logMeta)
   // await Handlers.Play.process(interaction, { playNext: false })
 }
