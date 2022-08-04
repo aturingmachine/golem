@@ -37,8 +37,6 @@ export class MessageController {
       message
     )
 
-    console.log(result)
-
     for (const r of message._replies.render()) {
       await message.reply(r.opts)
     }

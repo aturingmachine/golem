@@ -19,7 +19,7 @@ import { StringUtils } from '../utils/string-utils'
 import { MessageInfo } from './message-info'
 import { ParsedCommand } from './parsed-command'
 import { Reply } from './replies'
-import { Replies } from './replies/types'
+// import { Replies } from './replies/types'
 // import { SelectMenu } from './select-menu'
 
 export type GolemMessageReplyOptions =
@@ -77,7 +77,7 @@ export class GolemMessage {
 
   constructor(
     public source: GolemMessageInteraction, // customAlias?: CustomAlias
-    private log: LoggerService
+    public log: LoggerService
   ) {
     this.traceId = v4().split('-').pop()!
     this.log.setContext(`message::${this.traceId}`)

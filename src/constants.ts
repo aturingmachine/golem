@@ -7,6 +7,12 @@ export const PlexLogo = fs.readFileSync(
   path.resolve(__dirname, '../golem-logo.png')
 )
 
+export const embedFieldSpacer = {
+  name: '\u200B',
+  value: '\u200B',
+  inline: true,
+}
+
 export const Constants = {
   baseColor: '#f900d5' as ColorResolvable,
 }

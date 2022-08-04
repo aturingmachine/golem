@@ -2,7 +2,6 @@ import fs from 'fs'
 import path from 'path'
 import { Injectable } from '@nestjs/common'
 import { LoggerService } from '../core/logger/logger.service'
-import { BaseReply } from '../messages/replies/base'
 import { Commands } from './register-commands'
 import { GolemCommand } from '.'
 
@@ -11,7 +10,7 @@ const implementationPath = path.resolve(__dirname, './implementations')
 @Injectable()
 export class CommandService {
   constructor(private logger: LoggerService) {
-    this.logger.setContext('command-service')
+    this.logger.setContext('CommandService')
   }
 
   registerCommands(): void {

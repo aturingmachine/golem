@@ -95,7 +95,6 @@ export class ParsedCommand {
     const cmd = parsed
       .slice(0, parsed.includes(' ') ? parsed.indexOf(' ') : parsed.length)
       .trimStart()
-    console.log(parsed, cmd)
 
     switch (cmd) {
       // case CommandBase.admin:
@@ -126,8 +125,8 @@ export class ParsedCommand {
       //   return parseString(parsed, RegisteredCommands.goplaynext.info)
       // case CommandBase.report:
       //   return parseString(parsed, RegisteredCommands.goreport.info)
-      // case CommandBase.search:
-      //   return parseString(parsed, RegisteredCommands.gosearch.info)
+      case CommandBase.search:
+        return parseString(parsed, RegisteredCommands.gosearch.info)
       // case CommandBase.shuffle:
       //   return parseString(parsed, RegisteredCommands.goshuffle.info)
       // case BuiltInAlias.Skip:

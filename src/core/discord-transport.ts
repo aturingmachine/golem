@@ -38,8 +38,8 @@ export class DiscordBotServer
    * This method is triggered when you run "app.listen()".
    */
   async listen(callback: () => void): Promise<void> {
-    this.client.on('ready', (c) => {
-      console.log('Logged in as', c.user.id)
+    this.client.on('ready', (_c) => {
+      // console.log('Logged in as', c.user.id)
     })
 
     this.client.on('messageCreate', (message) => {

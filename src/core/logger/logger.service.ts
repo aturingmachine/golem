@@ -8,12 +8,12 @@ export class LoggerService extends ConsoleLogger {
    * @param message
    * @param context
    */
-  info(message: any, context?: string): void {
-    this.log(message, context)
+  info(message: any): void {
+    this.log(message)
   }
 
-  silly(message: any, context?: string): void {
-    this.verbose(message, context)
+  silly(message: any): void {
+    this.verbose(message)
   }
 
   setMessageContext(message: GolemMessage, context: string): void {

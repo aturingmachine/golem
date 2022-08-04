@@ -3,7 +3,10 @@ import { NestFactory } from '@nestjs/core'
 import { MicroserviceOptions } from '@nestjs/microservices'
 import { AppModule } from './application.module'
 import { CommandService } from './commands/commands.service'
+import { ClientService } from './core/client.service'
 import { DiscordBotServer } from './core/discord-transport'
+import { LoggerService } from './core/logger/logger.service'
+import { ListingLoaderService } from './music/library/loader.service'
 
 async function bootstrap() {
   const botServer = new DiscordBotServer()
@@ -15,10 +18,21 @@ async function bootstrap() {
       strategy: botServer,
     }
   )
+  const log = await app.resolve(LoggerService)
+  log.setContext('Bootstrap')
 
   const config = app.get(ConfigService)
+  const clientService = app.get(ClientService)
+  const loader = app.get(ListingLoaderService)
+  await loader.load()
 
-  botServer.login(config.get('discord.token'))
+  log.info('Logging in...')
+  const id = await botServer.login(config.get('discord.token'))
+  log.info(`Logged in as ${id}`)
+
+  log.debug('Injecting client instance to container')
+  clientService.client = botServer.client
+  log.debug('Client instance injected')
 
   const commandService = app.get(CommandService)
 

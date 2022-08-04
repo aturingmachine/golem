@@ -26,6 +26,8 @@ export type LibraryConfig = {
 export type MongoConfig = {
   uri: string
   dbName: string
+  host: string
+  port: number
 }
 
 export type PlexConfig = {
@@ -114,6 +116,8 @@ export default (): ConfigurationOptions => {
   const mongo = {
     uri: raw.mongo?.uri || '',
     dbName: raw.mongo?.dbName || 'golem',
+    host: raw.mongo?.host || 'localhost',
+    port: raw.mongo?.port || 27017,
   }
 
   const plex = {
@@ -130,7 +134,7 @@ export default (): ConfigurationOptions => {
       'live',
       'remix',
     ],
-    minimumScore: raw.search?.minimumScore || 35,
+    minimumScore: raw.search?.['minimum-score'] || 35,
   }
 
   const youtube = {

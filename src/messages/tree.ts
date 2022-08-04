@@ -52,20 +52,6 @@ export class TreeService {
     this.logger.setContext('tree-service')
   }
 
-  // This is for testing this shit
-  run(command: string): boolean {
-    // console.log('Running command:', command)
-    const pass = Math.random() <= 0.7
-
-    if (!pass) {
-      // console.log('Failing command:', command)
-    } // else {
-    //   console.log('Passing command', command)
-    // }
-
-    return pass
-  }
-
   treeify(msg: string): CommandNodes {
     if (msg.includes(SEMI)) {
       // console.log(SEMI, msg)
@@ -80,7 +66,7 @@ export class TreeService {
         commands: msg.split(AND).map((m) => this.treeify(m.trim()) as any),
       }
     } else {
-      // console.log(RUN, msg)
+      console.log('CREATING RUN > ', msg)
       return {
         type: RUN,
         command: msg,
@@ -125,8 +111,9 @@ export class TreeService {
       // console.log(RUN, innerTree)
       // Run the command, return the status
       // TODO use real implementation
+      console.log('Should be running using:', innerTree.instance.toDebug())
       const status = message
-        ? innerTree.instance.handler?.execute(message)
+        ? innerTree.instance.handler?.execute(ref, message, innerTree.instance)
         : false
 
       if (status) {

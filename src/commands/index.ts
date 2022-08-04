@@ -13,6 +13,8 @@ import {
 import { ModuleRef } from '@nestjs/core'
 import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
 import { GolemMessage } from '../messages/golem-message'
+import { ParsedCommand } from '../messages/parsed-command'
+import { RawReply } from '../messages/replies/raw'
 import { StringUtils } from '../utils/string-utils'
 // import { GolemConf } from '../config'
 // import { any } from '../config/models'
@@ -42,8 +44,9 @@ export function expandBuiltInAlias(raw: string): string | undefined {
 }
 
 export type CommandHandlerFn = (
-  // module: ModuleRef,
+  module: ModuleRef,
   message: GolemMessage,
+  source: ParsedCommand,
   ...args: any[]
 ) => Promise<boolean>
 
@@ -353,7 +356,7 @@ export class GolemCommand {
   }
 
   private wrapHandler(): CommandHandlerFn {
-    return async (module, interaction, ...args: any[]) => {
+    return async (module, interaction, source, ...args: any[]) => {
       if (
         this.missingRequiredModules.all.length ||
         this.missingRequiredModules.oneOf.length
@@ -376,7 +379,8 @@ export class GolemCommand {
       }
 
       try {
-        await this.options.handler(module, interaction, ...args)
+        // TODO?
+        await this.options.handler(module, interaction, source, ...args)
         return true
       } catch (error) {
         if (this.options.errorHandler) {
@@ -400,13 +404,12 @@ async function baseErrorHandler(
   source: string,
   error: Error,
   interaction: GolemMessage,
-  ...args: any[]
+  ..._args: any[]
 ): Promise<void> {
   // GolemLogger.error(
   //   `unexpected exception: ${error.message}; ARGS=${args.join(', ')}`,
   //   { src: source }
   // )
-
   // if (
   //   GolemCommand.config.logLevel !== LogLevel.Info ||
   //   process.env.NODE_ENV === 'test'
@@ -414,5 +417,6 @@ async function baseErrorHandler(
   //   console.error(error.stack)
   // }
 
-  await interaction.reply('Something went wrong...')
+  interaction.log.error(error)
+  interaction._replies.add(new RawReply('Something Went Wrong'))
 }
