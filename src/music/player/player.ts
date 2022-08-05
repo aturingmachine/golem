@@ -14,7 +14,6 @@ import {
   VoiceConnectionState,
   VoiceConnectionStatus,
 } from '@discordjs/voice'
-import { Injectable, Scope } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
 import { ClientService } from '../../core/client.service'
 import { LoggerService } from '../../core/logger/logger.service'
@@ -33,14 +32,14 @@ export type MusicPlayerOptions = JoinVoiceChannelOptions &
     channelName: string
   }
 
-@Injectable({ scope: Scope.TRANSIENT })
 export class MusicPlayer {
   static readonly autoDCTime = 300_000
 
+  private leaveTimeout!: NodeJS.Timeout
   private queue!: TrackQueue
   private log!: LoggerService
 
-  private leaveTimeout!: NodeJS.Timeout
+  private readonly clientService: ClientService
 
   public queueLock = false
   public readyLock = false
@@ -54,9 +53,9 @@ export class MusicPlayer {
 
   public constructor(
     private ref: ModuleRef,
-    private options: MusicPlayerOptions,
-    private clientService: ClientService
+    private options: MusicPlayerOptions
   ) {
+    this.clientService = ref.get(ClientService, { strict: false })
     this.guildName = options.guildName
     this.channelName = options.channelName
     this.channelId = options.channelId

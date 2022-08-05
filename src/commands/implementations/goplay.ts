@@ -4,15 +4,24 @@ import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
 import { GolemMessage } from '../../messages/golem-message'
 import { RawReply } from '../../messages/replies/raw'
+import { PlayerService } from '../../music/player/player.service'
 
 const execute = async (
   ref: ModuleRef,
   interaction: GolemMessage
 ): Promise<boolean> => {
   const log = await ref.resolve(LoggerService)
+  const playerService = await ref.resolve(PlayerService, undefined, {
+    strict: false,
+  })
+
   log.setMessageContext(interaction, 'GoPlay')
 
   try {
+    log.info('Attempting to get player')
+    playerService.getOrCreate(interaction)
+    log.info('Got player?')
+
     interaction._replies.add(new RawReply('This is a test reply.'))
 
     return true
