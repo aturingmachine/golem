@@ -18,8 +18,10 @@ async function bootstrap() {
       strategy: botServer,
     }
   )
+  console.log('Have App')
   const log = await app.resolve(LoggerService)
   log.setContext('Bootstrap')
+  log.info('Bootstrapping Golem...')
 
   const config = app.get(ConfigService)
   const clientService = app.get(ClientService)

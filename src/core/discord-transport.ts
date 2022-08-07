@@ -12,6 +12,7 @@ export class DiscordBotServer
   }
 
   init(): void {
+    console.log('Init Bot Server')
     this.client =
       this.client ||
       new Client({

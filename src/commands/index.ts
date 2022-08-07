@@ -10,11 +10,12 @@ import {
   SlashCommandSubcommandBuilder,
   SlashCommandUserOption,
 } from '@discordjs/builders'
+import { InjectionToken } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
+import { Constructable } from 'discord.js'
 import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
 import { GolemMessage } from '../messages/golem-message'
 import { ParsedCommand } from '../messages/parsed-command'
-import { RawReply } from '../messages/replies/raw'
 import { StringUtils } from '../utils/string-utils'
 // import { GolemConf } from '../config'
 // import { any } from '../config/models'
@@ -43,7 +44,8 @@ export function expandBuiltInAlias(raw: string): string | undefined {
   }
 }
 
-export type CommandHandlerFn = (
+export type CommandHandlerFn<T extends ServiceReqs> = (
+  this: GolemCommand<T>,
   module: ModuleRef,
   message: GolemMessage,
   source: ParsedCommand,
@@ -71,14 +73,14 @@ export type CommandHelp = {
   alias?: string
 }
 
-export type CommandParams = {
-  source: string
-  data: Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
-  handler: CommandHandlerFn
-  helpInfo: CommandHelp
-  errorHandler?: CommandErrorHandlerFn
-  requiredModules?: any[]
-}
+// export type CommandParams = {
+//   source: string
+//   data: Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
+//   handler: CommandHandlerFn<T>
+//   helpInfo: CommandHelp
+//   errorHandler?: CommandErrorHandlerFn
+//   requiredModules?: any[]
+// }
 
 type CommandInfo = {
   short: string
@@ -88,6 +90,8 @@ type CommandInfo = {
 type OptionType = 'boolean' | 'user' | 'channel' | 'role' | 'mentionable'
 
 type ArgChoice<T = string | number> = { name: string; value: T }
+
+type ServiceReqs = Record<string, InjectionToken>
 
 export interface ICommandArg {
   name: string
@@ -148,10 +152,11 @@ export type CommandDescription = {
   extendedArgs?: ExtendedArg[]
 }
 
-type CommandOptions = {
+type CommandOptions<T extends ServiceReqs> = {
   logSource: string
-  handler: CommandHandlerFn
+  handler: CommandHandlerFn<T>
   info: CommandDescription
+  services: T
   errorHandler?: CommandErrorHandlerFn
 }
 
@@ -191,13 +196,17 @@ type ValidOptions =
   | SlashCommandStringOption
   | SlashCommandUserOption
 
-export class GolemCommand {
+export class GolemCommand<T extends ServiceReqs = {}> {
   public readonly slashCommand: SlashCommandBuilder
-  public readonly execute: CommandHandlerFn
+  public readonly execute: CommandHandlerFn<T>
 
   public static config: any
 
-  constructor(public options: CommandOptions) {
+  public services!: {
+    [K in keyof T]: T[K] extends Constructable<any> ? InstanceType<T[K]> : never
+  }
+
+  constructor(public options: CommandOptions<T>) {
     this.slashCommand = new SlashCommandBuilder()
     this.slashCommand
       .setName(CommandNames.Slash(this.options.info.name))
@@ -206,7 +215,36 @@ export class GolemCommand {
     this.addOptions()
     this.addSubCommands()
 
-    this.execute = this.wrapHandler()
+    this.execute = this.options.handler
+  }
+
+  async init(moduleRef: ModuleRef): Promise<void> {
+    console.log('Init Command', this.options.info.name)
+
+    if (!this.services) {
+      this.services = {} as typeof this['services']
+    }
+
+    for (const property in this.options.services) {
+      try {
+        this.services[property] = await moduleRef.resolve(
+          this.options.services[property],
+          undefined,
+          { strict: false }
+        )
+      } catch (error) {
+        console.error(error)
+
+        try {
+          this.services[property] = moduleRef.get(
+            this.options.services[property],
+            { strict: false }
+          )
+        } catch (error) {
+          console.error(error)
+        }
+      }
+    }
   }
 
   get info(): CommandDescription {
@@ -355,68 +393,70 @@ export class GolemCommand {
     }
   }
 
-  private wrapHandler(): CommandHandlerFn {
-    return async (module, interaction, source, ...args: any[]) => {
-      if (
-        this.missingRequiredModules.all.length ||
-        this.missingRequiredModules.oneOf.length
-      ) {
-        await interaction.reply(this.missingModulesMsg)
+  private wrapHandler(): CommandHandlerFn<T> {
+    return this.execute
 
-        // GolemLogger.warn(
-        //   `cannot execute command ${
-        //     this.options.info.name
-        //   } due to missing modules: All of - ${this.missingRequiredModules.all.join(
-        //     ', '
-        //   )}${
-        //     this.missingRequiredModules.oneOf.length
-        //       ? `; One of - ${this.missingRequiredModules.oneOf.join(', ')}`
-        //       : ''
-        //   }`,
-        //   { src: this.options.logSource }
-        // )
-        return true
-      }
+    // return async function (this, module, interaction, source, ...args: any[]) {
+    //   if (
+    //     this.missingRequiredModules.all.length ||
+    //     this.missingRequiredModules.oneOf.length
+    //   ) {
+    //     await interaction.reply(this.missingModulesMsg)
 
-      try {
-        // TODO?
-        await this.options.handler(module, interaction, source, ...args)
-        return true
-      } catch (error) {
-        if (this.options.errorHandler) {
-          await this.options.errorHandler(error as Error, interaction, ...args)
-        } else {
-          await baseErrorHandler(
-            this.options.logSource,
-            error as Error,
-            interaction,
-            ...args
-          )
-        }
+    //     // GolemLogger.warn(
+    //     //   `cannot execute command ${
+    //     //     this.options.info.name
+    //     //   } due to missing modules: All of - ${this.missingRequiredModules.all.join(
+    //     //     ', '
+    //     //   )}${
+    //     //     this.missingRequiredModules.oneOf.length
+    //     //       ? `; One of - ${this.missingRequiredModules.oneOf.join(', ')}`
+    //     //       : ''
+    //     //   }`,
+    //     //   { src: this.options.logSource }
+    //     // )
+    //     return true
+    //   }
 
-        return false
-      }
-    }
+    //   // try {
+    //   //   // TODO?
+    //   //   await this.options.handler(this, module, interaction, source, ...args)
+    //   //   return true
+    //   // } catch (error) {
+    //   //   if (this.options.errorHandler) {
+    //   //     await this.options.errorHandler(error as Error, interaction, ...args)
+    //   //   } else {
+    //   //     await baseErrorHandler(
+    //   //       this.options.logSource,
+    //   //       error as Error,
+    //   //       interaction,
+    //   //       ...args
+    //   //     )
+    //   //   }
+
+    //   //   return false
+    //   // }
+    // }
   }
 }
 
-async function baseErrorHandler(
-  source: string,
-  error: Error,
-  interaction: GolemMessage,
-  ..._args: any[]
-): Promise<void> {
-  // GolemLogger.error(
-  //   `unexpected exception: ${error.message}; ARGS=${args.join(', ')}`,
-  //   { src: source }
-  // )
-  // if (
-  //   GolemCommand.config.logLevel !== LogLevel.Info ||
-  //   process.env.NODE_ENV === 'test'
-  // ) {
-  //   console.error(error.stack)
-  // }
+// async function baseErrorHandler(
+//   source: string,
+//   error: Error,
+//   interaction: GolemMessage,
+//   ..._args: any[]
+// ): Promise<void> {
+//   // GolemLogger.error(
+//   //   `unexpected exception: ${error.message}; ARGS=${args.join(', ')}`,
+//   //   { src: source }
+//   // )
+//   // if (
+//   //   GolemCommand.config.logLevel !== LogLevel.Info ||
+//   //   process.env.NODE_ENV === 'test'
+//   // ) {
+//   //   console.error(error.stack)
+//   // }
 
-  interaction.log.error(error)
-  interaction._replies.add(new RawReply('Something Went Wrong'))
-}
+//   interaction.log.error(error)
+//   interaction._replies.add(new RawReply('Something Went Wrong'))
+// }

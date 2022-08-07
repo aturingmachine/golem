@@ -6,33 +6,24 @@ import { GolemMessage } from '../../messages/golem-message'
 import { RawReply } from '../../messages/replies/raw'
 import { PlayerService } from '../../music/player/player.service'
 
-const execute = async (
-  ref: ModuleRef,
-  interaction: GolemMessage
-): Promise<boolean> => {
-  const log = await ref.resolve(LoggerService)
-  const playerService = await ref.resolve(PlayerService, undefined, {
-    strict: false,
-  })
-
-  log.setMessageContext(interaction, 'GoPlay')
-
-  try {
-    log.info('Attempting to get player')
-    playerService.getOrCreate(interaction)
-    log.info('Got player?')
-
-    interaction._replies.add(new RawReply('This is a test reply.'))
-
-    return true
-  } catch (error) {
-    return false
-  }
-}
-
 const goplay = new GolemCommand({
+  services: { log: LoggerService, playerService: PlayerService },
   logSource: 'go-play',
-  handler: execute,
+  async handler(ref: ModuleRef, interaction: GolemMessage): Promise<boolean> {
+    this.services.log.setMessageContext(interaction, 'GoPlay')
+
+    try {
+      this.services.log.info('Attempting to get player')
+      this.services.playerService.getOrCreate(interaction)
+      this.services.log.info('Got player?')
+
+      interaction._replies.add(new RawReply('This is a test reply.'))
+
+      return true
+    } catch (error) {
+      return false
+    }
+  },
   info: {
     name: CommandNames.Base.play,
     description: {

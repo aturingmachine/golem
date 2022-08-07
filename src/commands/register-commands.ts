@@ -19,7 +19,7 @@ import gosearch from './implementations/gosearch'
 // import gostop from './implementations/gostop'
 import { GolemCommand } from '.'
 
-export const Commands = new Collection<string, GolemCommand>()
+export const Commands = new Collection<string, GolemCommand<any>>()
 
 export const RegisteredCommands = {
   // goadmin,

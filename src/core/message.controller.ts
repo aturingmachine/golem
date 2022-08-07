@@ -28,14 +28,10 @@ export class MessageController {
     const messageLogger = await this.ref.resolve(LoggerService)
     const message = new GolemMessage(data.message, messageLogger)
 
-    this.logger.info(message.toDebug())
-    this.logger.info(message)
+    // this.logger.info(message.toDebug())
+    // this.logger.info(message)
 
-    const result = await this.treeService.execute(
-      data.message.content,
-      this.ref,
-      message
-    )
+    await this.treeService.execute(data.message.content, this.ref, message)
 
     for (const r of message._replies.render()) {
       await message.reply(r.opts)

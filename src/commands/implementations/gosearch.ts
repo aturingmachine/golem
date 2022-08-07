@@ -8,58 +8,59 @@ import { RawReply } from '../../messages/replies/raw'
 import { SearchReply } from '../../messages/replies/search-reply'
 import { ListingSearcher } from '../../music/library/searcher.service'
 
-const execute = async (
-  ref: ModuleRef,
-  interaction: GolemMessage,
-  source: ParsedCommand
-): Promise<boolean> => {
-  try {
-    const log = await ref.resolve(LoggerService)
-    log.setMessageContext(interaction, 'GoSearch')
-    const searchService = await ref.resolve(ListingSearcher, undefined, {
-      strict: false,
-    })
-
-    console.log('Running GoSearch Using Source:', source.toDebug())
-
-    const searchQuery = source.getDefault('query', '').trim()
-    let searchCount = source.getDefault('count', 5)
-
-    log.verbose(`executing Query=${searchQuery}; Count=${searchCount}`)
-
-    searchCount = searchCount > 10 ? 10 : searchCount
-
-    if (!searchQuery.length) {
-      log.warn(`No query provided by ${interaction.info.member?.user.username}`)
-      await interaction.reply('No search string provided.')
-    } else {
-      const results = searchService.searchMany(searchQuery)
-      console.log('GOSEARCH DEBUG>', results.length, results)
-
-      if (results.length === 0) {
-        log.warn(`No results for ${searchQuery}`)
-        await interaction.reply(`No results found for ${searchQuery}`)
-      }
-      log.verbose(`Found ${results.length} results for ${searchQuery}`)
-
-      const trimmedResults = results.slice(0, searchCount)
-
-      interaction._replies.add(
-        new SearchReply(searchQuery, trimmedResults, results.length)
-      )
-    }
-
-    return true
-  } catch (error: any) {
-    console.log(error)
-    interaction._replies.add(new RawReply(error.message))
-    return false
-  }
-}
-
 const gosearch = new GolemCommand({
+  services: { log: LoggerService, search: ListingSearcher },
   logSource: 'go-search',
-  handler: execute,
+  async handler(
+    ref: ModuleRef,
+    interaction: GolemMessage,
+    source: ParsedCommand
+  ): Promise<boolean> {
+    try {
+      this.services.log.setMessageContext(interaction, 'GoSearch')
+
+      console.log('Running GoSearch Using Source:', source.toDebug())
+
+      const searchQuery = source.getDefault('query', '').trim()
+      let searchCount = source.getDefault('count', 5)
+
+      this.services.log.verbose(
+        `executing Query=${searchQuery}; Count=${searchCount}`
+      )
+
+      searchCount = searchCount > 10 ? 10 : searchCount
+
+      if (!searchQuery.length) {
+        this.services.log.warn(
+          `No query provided by ${interaction.info.member?.user.username}`
+        )
+        await interaction.reply('No search string provided.')
+      } else {
+        const results = this.services.search.searchMany(searchQuery)
+        console.log('GOSEARCH DEBUG>', results.length, results)
+
+        if (results.length === 0) {
+          this.services.log.warn(`No results for ${searchQuery}`)
+          await interaction.reply(`No results found for ${searchQuery}`)
+        }
+        this.services.log.verbose(
+          `Found ${results.length} results for ${searchQuery}`
+        )
+
+        const trimmedResults = results.slice(0, searchCount)
+
+        interaction._replies.add(
+          new SearchReply(searchQuery, trimmedResults, results.length)
+        )
+      }
+
+      return true
+    } catch (error: any) {
+      console.log(error)
+      interaction._replies.add(new RawReply(error.message))
+      return false
+    }
+  },
   info: {
     name: CommandNames.Base.search,
     description: {

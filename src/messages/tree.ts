@@ -112,6 +112,7 @@ export class TreeService {
       // Run the command, return the status
       // TODO use real implementation
       console.log('Should be running using:', innerTree.instance.toDebug())
+      console.log(innerTree.instance.handler)
       const status = message
         ? innerTree.instance.handler?.execute(ref, message, innerTree.instance)
         : false
@@ -141,7 +142,7 @@ export class TreeService {
     this.logger.setMessageContext(golemMessage, 'tree-service')
     this.logger.info(`processing message: ${message}`)
     const tree = this.treeify(message)
-    console.log(JSON.stringify(tree))
+    // console.log(JSON.stringify(tree))
 
     const results: ExecutionResults = {
       fail: [],
