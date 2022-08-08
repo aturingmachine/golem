@@ -69,10 +69,19 @@ export class MusicPlayer {
   }
 
   async init(): Promise<void> {
-    const queueLogger = await this.ref.resolve(LoggerService)
+    console.log('Trying to resolve a LoggerService for the queue')
+    const queueLogger = await this.ref.resolve(LoggerService, undefined, {
+      strict: false,
+    })
+    console.log('Resolved a LoggerService for the Queue')
 
-    this.log = await this.ref.resolve(LoggerService)
+    console.log('Trying to resolve a logger for the Player')
+    this.log = await this.ref.resolve(LoggerService, undefined, {
+      strict: false,
+    })
+    console.log('Logger resolved for the Player')
     this.queue = new TrackQueue(queueLogger)
+    console.log('Should be done with the init')
   }
 
   /**
@@ -136,7 +145,9 @@ export class MusicPlayer {
   }
 
   public async enqueue(track: Track, enqueueAsNext = false): Promise<void> {
-    this.log.silly(`enqueue - VC Status = ${this.voiceConnection.state.status}`)
+    this.log.verbose(
+      `enqueue - VC Status = ${this.voiceConnection.state.status}`
+    )
     this.log.info(`queueing${enqueueAsNext ? ' as next ' : ' '}${track.name}`)
 
     if (enqueueAsNext) {
@@ -179,7 +190,7 @@ export class MusicPlayer {
   }
 
   public async destroy(): Promise<void> {
-    this.log.silly(
+    this.log.verbose(
       `attempt destroy voice connection for ${this.primaryKey} - ${this.secondaryKey} - state=${this.voiceConnection.state.status}`
     )
     if (
@@ -307,7 +318,7 @@ export class MusicPlayer {
 
   private async processQueue(force = false): Promise<void> {
     this.log.verbose(`processing queue${force ? ' - forcing next' : ''}`)
-    this.log.silly(
+    this.log.verbose(
       `processing queue - VC Status = ${this.voiceConnection.state.status}`
     )
 
@@ -347,7 +358,7 @@ export class MusicPlayer {
 
     // Be careful in case the skip is forced and the last run
     if (nextTrack) {
-      this.log.silly(`process has next track, attempting play`)
+      this.log.verbose(`process has next track, attempting play`)
       try {
         const next = await nextTrack.toAudioResource()
         this.log.debug(`audio resouce generated`)
@@ -365,7 +376,7 @@ export class MusicPlayer {
         this.skip()
       }
     } else {
-      this.log.silly(`process has no next track, stopping out of caution`)
+      this.log.verbose(`process has no next track, stopping out of caution`)
       this.stop()
       // Golem.events.trigger(
       //   GolemEvent.Queue,

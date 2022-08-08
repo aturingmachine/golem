@@ -32,6 +32,8 @@ export class PlayerService {
 
     this._cache.set(message.info.guildId, player)
 
+    await player.init()
+
     return player
   }
 

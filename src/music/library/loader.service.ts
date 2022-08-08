@@ -29,7 +29,12 @@ export class ListingLoaderService {
   }
 
   async load(): Promise<void> {
+    if (this.config.get('args.bust-cache')) {
+      await this.wipeData()
+    }
+
     for (const library of this.config.get('library.paths')) {
+      this.log.info(`processing library ${library}`)
       const name = library.split('/').pop() || 'Library'
 
       if (this.config.get('args.bust-cache')) {
@@ -72,8 +77,6 @@ export class ListingLoaderService {
     path: string,
     name: string
   ): Promise<LocalListing[]> {
-    await this.wipeData()
-
     const listings: LocalListing[] = []
 
     this.log.verbose('Loading library from filesystem')
@@ -82,8 +85,8 @@ export class ListingLoaderService {
 
     // EzProgressBar.start(paths.length)
 
-    const newListings = await this.listingsFromPaths(paths, (listing) => {
-      this.log.verbose(`saved ${listing.shortName}`)
+    const newListings = await this.listingsFromPaths(paths, (_listing) => {
+      // this.log.verbose(`saved ${listing.shortName}`)
       // EzProgressBar.add(1 / paths.length, `${listing.path.split('/').pop()}`)
     })
 

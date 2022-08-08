@@ -9,18 +9,12 @@ import {
   SelectMenuInteraction,
 } from 'discord.js'
 import { v4 } from 'uuid'
-// import { CustomAlias } from '../aliases/custom-alias'
 import { BuiltInAlias, CommandNames } from '../constants'
 import { LoggerService } from '../core/logger/logger.service'
-// import { Golem } from '../golem'
-// import { MusicPlayer } from '../music/player/music-player'
-// import { GolemLogger, LogSources } from '../utils/logger'
 import { StringUtils } from '../utils/string-utils'
 import { MessageInfo } from './message-info'
 import { ParsedCommand } from './parsed-command'
 import { Reply } from './replies'
-// import { Replies } from './replies/types'
-// import { SelectMenu } from './select-menu'
 
 export type GolemMessageReplyOptions =
   | MessageOptions
@@ -60,8 +54,6 @@ export class GolemMessageOpts {
 }
 
 export class GolemMessage {
-  // private readonly log: winston.Logger
-
   public readonly parsed: ParsedCommand
   public readonly commands: ParsedCommand[] = []
   public readonly info: MessageInfo

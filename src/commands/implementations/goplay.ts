@@ -3,21 +3,60 @@ import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
 import { GolemMessage } from '../../messages/golem-message'
+import { ParsedCommand } from '../../messages/parsed-command'
 import { RawReply } from '../../messages/replies/raw'
+import { ListingSearcher } from '../../music/library/searcher.service'
 import { PlayerService } from '../../music/player/player.service'
+import { LocalTrack } from '../../music/tracks/track'
 
 const goplay = new GolemCommand({
-  services: { log: LoggerService, playerService: PlayerService },
+  services: {
+    log: LoggerService,
+    playerService: PlayerService,
+    search: ListingSearcher,
+  },
   logSource: 'go-play',
-  async handler(ref: ModuleRef, interaction: GolemMessage): Promise<boolean> {
+  async handler(
+    ref: ModuleRef,
+    interaction: GolemMessage,
+    source: ParsedCommand
+  ): Promise<boolean> {
     this.services.log.setMessageContext(interaction, 'GoPlay')
 
     try {
       this.services.log.info('Attempting to get player')
-      this.services.playerService.getOrCreate(interaction)
+      const player = await this.services.playerService.getOrCreate(interaction)
       this.services.log.info('Got player?')
 
-      interaction._replies.add(new RawReply('This is a test reply.'))
+      if (!player) {
+        this.services.log.warn(
+          `unable to create player for guild: ${interaction.info.guild?.name} channel: ${interaction.info.voiceChannel?.name}`
+        )
+        return false
+      }
+
+      const query = source.getString('query')
+
+      if (!query) {
+        player?.unpause()
+        interaction._replies.add(new RawReply('Unpausing!'))
+        return true
+      }
+
+      // TODO handle YT Plays
+      // TODO handle wide and artist queries
+
+      const searchResult = this.services.search.search(query)
+
+      if (!searchResult) {
+        return true
+      }
+
+      player.enqueue(
+        new LocalTrack(searchResult.listing, interaction.info.userId)
+      )
+
+      interaction._replies.add(new RawReply('Should have played?'))
 
       return true
     } catch (error) {
