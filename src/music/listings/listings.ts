@@ -66,6 +66,7 @@ export type ListingInfo = {
   key: string
   mb: MusicBrainzData
   addedAt: number
+  albumArtist: string
   // album: LocalAlbum
   bpm?: number
   id?: string
@@ -95,6 +96,12 @@ export class LocalListing {
   public artist: string
   @Column()
   public albumName: string
+
+  @Column()
+  public albumArtist: string
+
+  @ObjectIdColumn()
+  public albumId!: ObjectID
 
   /**
    * An attempt at a consistent unique id made by md5 hashing
@@ -142,7 +149,12 @@ export class LocalListing {
     this.moods = info?.moods
     this.bpm = info?.bpm
     this.addedAt = info?.addedAt
+    this.albumArtist = info?.albumArtist
     this.mb = info?.mb
+  }
+
+  setAlbum(id: ObjectID): void {
+    this.albumId = id
   }
 
   /**
@@ -246,12 +258,12 @@ export class LocalListing {
     }
   }
 
-  static async fromMeta(
+  static fromMeta(
     meta: IAudioMetadata,
     path: string,
     birthTime: number,
     libraries: string[]
-  ): Promise<LocalListing> {
+  ): LocalListing {
     const targetConfig = libraries.find((p) => path.includes(p))
 
     const split =
@@ -278,15 +290,11 @@ export class LocalListing {
       .map((t) => t.value)
     const artistMBId = meta.common.musicbrainz_artistid?.[0] || ''
     const trackMbId = meta.common.musicbrainz_trackid || ''
-    // const art = meta.common.picture
-    //   ? await sharp(meta.common.picture[0].data).toFormat('png').toBuffer()
-    //   : undefined
-
-    // const album = await LocalAlbum.generate(albumName, artist, art || PlexLogo)
 
     return new LocalListing({
       listingId: id,
       artist,
+      albumArtist: meta.common.albumartist || artist,
       albumName,
       title: track,
       duration: meta.format.duration || 160,

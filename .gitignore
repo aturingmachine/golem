@@ -16,6 +16,7 @@ dist/
 data-out.json
 list-out.json
 out.put
+data/*
 
 logs/
 

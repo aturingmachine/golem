@@ -15,6 +15,17 @@ export const StringUtils = {
     )
   },
 
+  slugify(str: string): string {
+    return str
+      ? str
+          .replace(/^\s+|\s+$/g, '')
+          .toLowerCase()
+          .replace(/[^a-z0-9 -]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+      : ''
+  },
+
   dropWords(str: string, count: number): string {
     let index = 0
 

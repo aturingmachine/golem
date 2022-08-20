@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm'
 import configuration from './core/configuration'
 import { CoreModule } from './core/core.module'
 import { Library } from './music/library/library'
+import { Album } from './music/listings/album'
 import { LocalListing } from './music/listings/listings'
 import { MusicModule } from './music/music.module'
 
@@ -19,7 +20,10 @@ import { MusicModule } from './music/music.module'
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => {
+        console.log('Processing Config for Database Connection...')
+
         return {
+          connectTimeoutMS: 5000,
           ssl: false,
           useUnifiedTopology: true,
           useNewUrlParser: true,
@@ -28,7 +32,7 @@ import { MusicModule } from './music/music.module'
           synchronize: true,
           logging: true,
           database: config.get('mongo.dbName'),
-          entities: [Library, LocalListing],
+          entities: [Library, LocalListing, Album],
         }
       },
       inject: [ConfigService],

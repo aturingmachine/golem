@@ -7,8 +7,10 @@ import { ClientService } from './core/client.service'
 import { DiscordBotServer } from './core/discord-transport'
 import { LoggerService } from './core/logger/logger.service'
 import { ListingLoaderService } from './music/library/loader.service'
+import { humanReadableDuration } from './utils/time-utils'
 
 async function bootstrap() {
+  const start = Date.now()
   const botServer = new DiscordBotServer()
   botServer.init()
 
@@ -16,8 +18,10 @@ async function bootstrap() {
     AppModule,
     {
       strategy: botServer,
+      logger: ['verbose'],
     }
   )
+
   console.log('Have App')
   const log = await app.resolve(LoggerService)
   log.setContext('Bootstrap')
@@ -38,7 +42,10 @@ async function bootstrap() {
 
   const commandService = app.get(CommandService)
 
-  commandService.registerCommands()
+  await commandService.registerCommands()
+
+  const end = Date.now()
+  log.debug(`bootstrap lasted ${humanReadableDuration((end - start) / 1000)}`)
 
   await app.listen()
   // const app = await NestFactory.createApplicationContext(AppModule)

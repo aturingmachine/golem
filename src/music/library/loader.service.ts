@@ -3,10 +3,12 @@ import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import * as mm from 'music-metadata'
+import sharp from 'sharp'
 import { MongoRepository } from 'typeorm'
 import { LoggerService } from '../../core/logger/logger.service'
 import { getAllFiles } from '../../utils/filesystem'
 import { LocalListing } from '../listings/listings'
+import { AlbumService } from './album.service'
 import { Library } from './library'
 
 const reg = /.*\.(png|html|pdf|db|jpg|jpeg|xml|js|css|ini)$/
@@ -18,6 +20,7 @@ export class ListingLoaderService {
   constructor(
     private log: LoggerService,
     private config: ConfigService,
+    private albumService: AlbumService,
 
     @InjectRepository(LocalListing)
     private listings: MongoRepository<LocalListing>,
@@ -25,6 +28,7 @@ export class ListingLoaderService {
     @InjectRepository(Library)
     private libraries: MongoRepository<Library>
   ) {
+    console.log('INside loader constructor')
     this.log.setContext('ListingLoader')
   }
 
@@ -165,12 +169,24 @@ export class ListingLoaderService {
     try {
       const birthTime = fs.statSync(path).birthtimeMs
       const meta = await mm.parseFile(path)
-      const listing = await LocalListing.fromMeta(
+      const albumArt = meta.common.picture
+        ? await sharp(meta.common.picture[0].data).toFormat('png').toBuffer()
+        : undefined
+
+      const listing = LocalListing.fromMeta(
         meta,
         path,
         birthTime,
         this.config.get('library.paths', [])
       )
+
+      const albumId = await this.albumService.create(
+        listing.albumName,
+        listing.albumArtist,
+        albumArt
+      )
+
+      listing.setAlbum(albumId)
 
       this.log.silly(`attempting to save ${listing.names.short.dashed}`)
       await this.listings.save(listing)
