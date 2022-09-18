@@ -3,8 +3,8 @@ import { Replies } from './types'
 export class Reply {
   children: Replies[] = []
 
-  add(child: Replies): Replies[] {
-    this.children.push(child)
+  async add(child: Replies | Promise<Replies>): Promise<Replies[]> {
+    this.children.push(await child)
 
     return this.children
   }

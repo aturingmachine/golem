@@ -8,6 +8,7 @@ import { embedFieldSpacer, PlexLogo } from '../../constants'
 import { formatForLog } from '../../utils/debug-utils'
 import { ImageUtils } from '../../utils/image-utils'
 import { humanReadableDuration } from '../../utils/time-utils'
+import { Album } from './album'
 
 export type ListingEmbedData = {
   fields: EmbedFieldData[]
@@ -103,6 +104,9 @@ export class LocalListing {
   @ObjectIdColumn()
   public albumId!: ObjectID
 
+  @Column(() => Album)
+  public album!: Album
+
   /**
    * An attempt at a consistent unique id made by md5 hashing
    * some info of the listing
@@ -153,8 +157,9 @@ export class LocalListing {
     this.mb = info?.mb
   }
 
-  setAlbum(id: ObjectID): void {
-    this.albumId = id
+  setAlbum(album: Album): void {
+    this.albumId = album._id
+    this.album = new Album(album.name, album.artist)
   }
 
   /**
@@ -213,8 +218,7 @@ export class LocalListing {
   }
 
   async toEmbed(): Promise<ListingEmbedData> {
-    // const artBuffer = (await this.album.getArt(200)) || PlexLogo
-    const artBuffer = PlexLogo
+    const artBuffer = this.album.covers.med.get() || PlexLogo
     const image = new MessageAttachment(artBuffer, 'cover.png')
     const color = await ImageUtils.averageColor(artBuffer)
 

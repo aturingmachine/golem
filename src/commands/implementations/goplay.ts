@@ -3,6 +3,7 @@ import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
 import { GolemMessage } from '../../messages/golem-message'
+import { MessageBuilderService } from '../../messages/message-builder.service'
 import { ParsedCommand } from '../../messages/parsed-command'
 import { RawReply } from '../../messages/replies/raw'
 import { ListingSearcher } from '../../music/library/searcher.service'
@@ -14,6 +15,7 @@ const goplay = new GolemCommand({
     log: LoggerService,
     playerService: PlayerService,
     search: ListingSearcher,
+    builder: MessageBuilderService,
   },
   logSource: 'go-play',
   async handler(
@@ -56,7 +58,9 @@ const goplay = new GolemCommand({
         new LocalTrack(searchResult.listing, interaction.info.userId)
       )
 
-      interaction._replies.add(new RawReply('Should have played?'))
+      await interaction._replies.add(
+        this.services.builder.nowPlaying(interaction, searchResult.listing)
+      )
 
       return true
     } catch (error) {

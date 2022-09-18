@@ -20,8 +20,6 @@ import { MusicModule } from './music/music.module'
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => {
-        console.log('Processing Config for Database Connection...')
-
         return {
           connectTimeoutMS: 5000,
           ssl: false,

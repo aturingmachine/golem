@@ -22,7 +22,6 @@ async function bootstrap() {
     }
   )
 
-  console.log('Have App')
   const log = await app.resolve(LoggerService)
   log.setContext('Bootstrap')
   log.info('Bootstrapping Golem...')

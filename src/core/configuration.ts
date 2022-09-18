@@ -8,6 +8,7 @@ export type DiscordConfig = {
   clientId: string
   serverIds: string[]
   adminId: string
+  debugServerId?: string
 }
 
 export type ImageConfig = {
@@ -94,6 +95,12 @@ export default (): ConfigurationOptions => {
     clientId: raw.discord?.clientId || '',
     serverIds: raw.discord?.serverIds || [],
     adminId: raw.discord?.adminId || '',
+    debug: {
+      channelId: raw.discord?.debug.channel_id,
+      channelName: raw.discord?.debug.channel_name,
+      guildId: raw.discord?.debug.guild_id,
+      guildName: raw.discord?.debug.guild_name,
+    },
   }
 
   const image = {

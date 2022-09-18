@@ -6,6 +6,7 @@ import { LoggerService } from '../../core/logger/logger.service'
 import { pathExists } from '../../utils/filesystem'
 import { ImageUtils } from '../../utils/image-utils'
 import { Album } from '../listings/album'
+import { LocalListing } from '../listings/listings'
 
 @Injectable()
 export class AlbumService {
@@ -19,18 +20,20 @@ export class AlbumService {
     this.log.setContext('AlbumService')
   }
 
+  async for(query: ObjectID | LocalListing): Promise<Album | null> {
+    const parsedQuery = query instanceof LocalListing ? query.albumId : query
+    const record = await this.albums.findOne({ where: { _id: parsedQuery } })
+
+    return record
+  }
+
   async create(
     albumName: string,
     artist: string,
     cover?: Buffer
-  ): Promise<ObjectID> {
-    let id: ObjectID | undefined
+  ): Promise<Album> {
     let record: Album | undefined = undefined
     const existing = await this.albums.findOne({ where: { name: albumName } })
-
-    if (existing) {
-      id = existing._id
-    }
 
     const sizes: [number, string][] = [
       [200, '_small'],
@@ -63,12 +66,10 @@ export class AlbumService {
       record = await this.albums.save(album)
     }
 
-    id = record?._id || existing?._id
-
-    if (!id) {
+    if (!record && !existing) {
       throw new Error(`Couldnt get an id for album ${albumName}`)
     }
 
-    return id
+    return existing || record!
   }
 }

@@ -66,6 +66,18 @@ export class ListingLoaderService {
           _id: { $in: library.listingIds },
         })
 
+        // for (const listingRecord of listingRecords) {
+        //   console.log('Checking', listingRecord.title, listingRecord.albumId)
+        //   const album = await this.albumService.for(listingRecord.albumId)
+
+        //   if (album) {
+        //     console.log('Got album for', listingRecord.title)
+        //     listingRecord.setAlbum(album)
+        //   } else {
+        //     console.log('Did not find an album...')
+        //   }
+        // }
+
         this.records.push(...listingRecords)
         console.log(listingRecords[0])
         this.log.debug(
@@ -180,13 +192,13 @@ export class ListingLoaderService {
         this.config.get('library.paths', [])
       )
 
-      const albumId = await this.albumService.create(
+      const album = await this.albumService.create(
         listing.albumName,
         listing.albumArtist,
         albumArt
       )
 
-      listing.setAlbum(albumId)
+      listing.setAlbum(album)
 
       this.log.silly(`attempting to save ${listing.names.short.dashed}`)
       await this.listings.save(listing)

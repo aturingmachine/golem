@@ -3,13 +3,18 @@ import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
 import { GolemMessage } from '../../messages/golem-message'
+import { MessageBuilderService } from '../../messages/message-builder.service'
 import { ParsedCommand } from '../../messages/parsed-command'
 import { RawReply } from '../../messages/replies/raw'
 import { SearchReply } from '../../messages/replies/search-reply'
 import { ListingSearcher } from '../../music/library/searcher.service'
 
 const gosearch = new GolemCommand({
-  services: { log: LoggerService, search: ListingSearcher },
+  services: {
+    log: LoggerService,
+    search: ListingSearcher,
+    builder: MessageBuilderService,
+  },
   logSource: 'go-search',
   async handler(
     ref: ModuleRef,
@@ -18,8 +23,6 @@ const gosearch = new GolemCommand({
   ): Promise<boolean> {
     try {
       this.services.log.setMessageContext(interaction, 'GoSearch')
-
-      console.log('Running GoSearch Using Source:', source.toDebug())
 
       const searchQuery = source.getDefault('query', '').trim()
       let searchCount = source.getDefault('count', 5)
@@ -37,7 +40,6 @@ const gosearch = new GolemCommand({
         await interaction.reply('No search string provided.')
       } else {
         const results = this.services.search.searchMany(searchQuery)
-        console.log('GOSEARCH DEBUG>', results.length, results)
 
         if (results.length === 0) {
           this.services.log.warn(`No results for ${searchQuery}`)
@@ -49,14 +51,14 @@ const gosearch = new GolemCommand({
 
         const trimmedResults = results.slice(0, searchCount)
 
-        interaction._replies.add(
+        await interaction._replies.add(
           new SearchReply(searchQuery, trimmedResults, results.length)
         )
       }
 
       return true
     } catch (error: any) {
-      console.log(error)
+      this.services.log.error(error)
       interaction._replies.add(new RawReply(error.message))
       return false
     }

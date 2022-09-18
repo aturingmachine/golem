@@ -3,7 +3,7 @@ import { ModuleRef } from '@nestjs/core'
 import { CONTEXT, MessagePattern, RequestContext } from '@nestjs/microservices'
 import { Message } from 'discord.js'
 import { GolemMessage } from '../messages/golem-message'
-import { TreeService } from '../messages/tree'
+import { ProcessingTree } from '../messages/tree'
 import { LoggerService } from './logger/logger.service'
 
 @Controller()
@@ -12,7 +12,7 @@ export class MessageController {
     @Inject(CONTEXT) private ctx: RequestContext,
     private logger: LoggerService,
     private ref: ModuleRef,
-    private treeService: TreeService
+    private treeService: ProcessingTree
   ) {
     this.logger.setContext('message-controller')
   }
@@ -33,8 +33,19 @@ export class MessageController {
 
     await this.treeService.execute(data.message.content, this.ref, message)
 
-    for (const r of message._replies.render()) {
-      await message.reply(r.opts)
+    const replies = message._replies.render()
+
+    this.logger.debug(
+      `message comamand execute finished, generated replies: ${replies.length}`
+    )
+
+    for (const reply of replies) {
+      this.logger.debug(`rendering ${reply.type}`)
+      try {
+        await message.reply(reply.opts)
+      } catch (error) {
+        this.logger.error(`unable to render ${reply.type}`)
+      }
     }
   }
 }

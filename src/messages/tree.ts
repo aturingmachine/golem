@@ -47,26 +47,23 @@ export type ExecutionResults = {
 }
 
 @Injectable()
-export class TreeService {
+export class ProcessingTree {
   constructor(private logger: LoggerService) {
     this.logger.setContext('tree-service')
   }
 
   treeify(msg: string): CommandNodes {
     if (msg.includes(SEMI)) {
-      // console.log(SEMI, msg)
       return {
         type: SEMI,
         commands: msg.split(SEMI).map((m) => this.treeify(m.trim())),
       }
     } else if (msg.includes(AND)) {
-      // console.log(AND, msg)
       return {
         type: AND,
         commands: msg.split(AND).map((m) => this.treeify(m.trim()) as any),
       }
     } else {
-      console.log('CREATING RUN > ', msg)
       return {
         type: RUN,
         command: msg,
@@ -81,15 +78,12 @@ export class TreeService {
     ref: ModuleRef,
     message?: GolemMessage
   ): Promise<boolean | undefined> {
-    // console.log('RUNNING TREE', innerTree)
     if (innerTree.type === SEMI) {
-      // console.log(SEMI, innerTree)
       // Run one after another ignoring fails
       for (const sub of innerTree.commands) {
         await this.runTree(sub, results, ref, message)
       }
     } else if (innerTree.type === AND) {
-      // console.log(AND, innerTree)
       // Run one after its prev does not fail
       let canRun = true
 
@@ -108,9 +102,7 @@ export class TreeService {
         }
       }
     } else if (innerTree.type === RUN) {
-      // console.log(RUN, innerTree)
       // Run the command, return the status
-      // TODO use real implementation
       console.log('Should be running using:', innerTree.instance.toDebug())
       console.log(innerTree.instance.handler)
       const status = message
@@ -118,7 +110,6 @@ export class TreeService {
         : false
 
       if (status) {
-        // console.log('runTree ran and passed', innerTree.command)
         results.success.push(innerTree.command)
       } else {
         results.fail.push(innerTree.command)
@@ -139,7 +130,7 @@ export class TreeService {
     ref: ModuleRef,
     golemMessage: GolemMessage
   ): Promise<ExecutionResults> {
-    this.logger.setMessageContext(golemMessage, 'tree-service')
+    this.logger.setMessageContext(golemMessage, 'ProcessingTree')
     this.logger.info(`processing message: ${message}`)
     const tree = this.treeify(message)
     // console.log(JSON.stringify(tree))
