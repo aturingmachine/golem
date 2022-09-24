@@ -22,7 +22,6 @@ export class PlayerService {
     return this._cache.get(guildId)
   }
 
-  // 884553372491984910
   async create(message: GolemMessage): Promise<MusicPlayer | undefined> {
     const debugServer = this.config.get('discord.debug')
 
