@@ -1,17 +1,19 @@
 import { LoggerService } from '../../core/logger/logger.service'
 import { ArrayUtils } from '../../utils/list-utils'
-import { Track } from '../tracks'
+import { AudioResourceDefinition } from './player.service'
 
 interface QueuedTrack {
   queuedBy: string
-  track: Track
+  audioResource: AudioResourceDefinition
 }
 
 export class TrackQueue {
   private explicitQueue!: QueuedTrack[]
   private passiveQueue!: QueuedTrack[]
 
-  constructor(readonly log: LoggerService) {
+  constructor(readonly log: LoggerService, readonly guildName: string) {
+    this.log.setContext(`TrackQueue`, guildName)
+
     this.explicitQueue = []
     this.passiveQueue = []
   }
@@ -21,19 +23,24 @@ export class TrackQueue {
    * @param userId
    * @param track
    */
-  addNext(userId: string, track: Track): void {
-    // this.log.verbose(`${userId} Adding Next ${track.listing.shortName}`)
-    this.explicitQueue.push({ track, queuedBy: userId })
+  addNext(userId: string, audioResource: AudioResourceDefinition): void {
+    this.log.verbose(
+      `${userId} - Explicit Queue: Adding Next ${audioResource.track.listing.artist} - ${audioResource.track.listing.title}`
+    )
+    this.explicitQueue.push({ audioResource, queuedBy: userId })
   }
 
   /**
    * Adds a track to the passive queue
    * @param userId
-   * @param track
+   * @param audioResource
    */
-  add(userId: string, track: Track): void {
-    // this.log.verbose(`${userId} Adding ${track.listing.shortName}`)
-    this.passiveQueue.push({ track, queuedBy: userId })
+  add(userId: string, audioResource: AudioResourceDefinition): void {
+    this.log.verbose(
+      `${userId} - Passive Queue: Adding ${audioResource.track.listing.artist} - ${audioResource.track.listing.title}`
+    )
+
+    this.passiveQueue.push({ audioResource, queuedBy: userId })
   }
 
   /**
@@ -41,10 +48,16 @@ export class TrackQueue {
    * @param userId
    * @param tracks
    */
-  addMany(userId: string, tracks: Track[]): void {
-    this.log.verbose(`Adding many - ${tracks.length} tracks`)
+  addMany(userId: string, tracks: AudioResourceDefinition[]): void {
+    this.log.verbose(
+      `${userId} - Passive Queue: Adding many - ${tracks.length} tracks`
+    )
+
     this.passiveQueue.push(
-      ...tracks.map((track) => ({ track, queuedBy: userId }))
+      ...tracks.map((audioResource) => ({
+        audioResource,
+        queuedBy: userId,
+      }))
     )
   }
 
@@ -72,26 +85,35 @@ export class TrackQueue {
     this.passiveQueue = []
   }
 
-  peek(): Track | undefined {
+  peek(): AudioResourceDefinition | undefined {
     this.log.verbose('Peeking')
-    return this.queue[0]?.track
+    return this.queue[0]?.audioResource
   }
 
-  peekDeep(depth = 5): Track[] {
+  peekDeep(depth = 5): AudioResourceDefinition[] {
     this.log.verbose('Deep Peeking')
+    console.log(this.queue)
+    console.log(this.queue.length)
+    console.log(
+      '---RAW QUEUE---',
+      this.explicitQueue,
+      this.passiveQueue,
+      '---END RAW QUEUE---'
+    )
+
     return depth > 0
-      ? this.queue.slice(0, depth).map((i) => i.track)
-      : this.queue.map((i) => i.track)
+      ? this.queue.slice(0, depth).map((i) => i.audioResource)
+      : this.queue.map((i) => i.audioResource)
   }
 
-  pop(): Track | undefined {
+  pop(): AudioResourceDefinition | undefined {
     this.log.verbose('Popping Next track')
 
     if (this.explicitQueue.length > 0) {
-      return this.explicitQueue.shift()?.track
+      return this.explicitQueue.shift()?.audioResource
     }
 
-    return this.passiveQueue.shift()?.track
+    return this.passiveQueue.shift()?.audioResource
   }
 
   shuffle(): void {
@@ -109,7 +131,7 @@ export class TrackQueue {
    */
   get runTime(): number {
     const estRunTime = this.queue.reduce((prev, curr) => {
-      return prev + curr.track.metadata.duration
+      return prev + curr.audioResource.track.metadata.duration
     }, 0)
 
     this.log.silly(`Estimated Runtime ${estRunTime}`)
@@ -119,7 +141,7 @@ export class TrackQueue {
 
   get explicitQueueRunTime(): number {
     const estRunTime = this.explicitQueue.reduce((prev, curr) => {
-      return prev + curr.track.metadata.duration
+      return prev + curr.audioResource.track.metadata.duration
     }, 0)
 
     this.log.silly(`Estimated Explicit Runtime ${estRunTime}`)

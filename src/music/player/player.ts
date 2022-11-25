@@ -18,8 +18,9 @@ import { ModuleRef } from '@nestjs/core'
 import { ClientService } from '../../core/client.service'
 import { LoggerService } from '../../core/logger/logger.service'
 import { humanReadableTime, wait } from '../../utils/time-utils'
-import { AListing } from '../listings/listings'
-import { Track, TrackAudioResourceMetadata } from '../tracks'
+import { AListing } from '../local/listings/listings'
+import { TrackAudioResourceMetadata } from '../tracks'
+import { AudioResourceDefinition } from './player.service'
 import { TrackQueue } from './queue'
 
 export type GolemTrackAudioResource = AudioResource & {
@@ -69,19 +70,20 @@ export class MusicPlayer {
   }
 
   async init(): Promise<void> {
-    console.log('Trying to resolve a LoggerService for the queue')
-    const queueLogger = await this.ref.resolve(LoggerService, undefined, {
-      strict: false,
-    })
-    console.log('Resolved a LoggerService for the Queue')
-
-    console.log('Trying to resolve a logger for the Player')
     this.log = await this.ref.resolve(LoggerService, undefined, {
       strict: false,
     })
-    console.log('Logger resolved for the Player')
-    this.queue = new TrackQueue(queueLogger)
-    console.log('Should be done with the init')
+    this.log.setContext('MusicPlayer', this.guildName)
+    this.log.debug('Logger resolved for the Player')
+
+    this.log.debug('Trying to resolve a LoggerService for the queue')
+    const queueLogger = await this.ref.resolve(LoggerService, undefined, {
+      strict: false,
+    })
+    this.log.debug('Resolved a LoggerService for the Queue')
+
+    this.queue = new TrackQueue(queueLogger, this.guildName)
+    this.log.debug('Should be done with the init')
   }
 
   /**
@@ -144,20 +146,25 @@ export class MusicPlayer {
     return this.voiceConnection.state.status === VoiceConnectionStatus.Destroyed
   }
 
-  public async enqueue(track: Track, enqueueAsNext = false): Promise<void> {
+  public async enqueue(
+    resource: AudioResourceDefinition,
+    enqueueAsNext = false
+  ): Promise<void> {
     this.log.verbose(
       `enqueue - VC Status = ${this.voiceConnection.state.status}`
     )
-    this.log.info(`queueing${enqueueAsNext ? ' as next ' : ' '}${track.name}`)
+    this.log.info(
+      `queueing${enqueueAsNext ? ' as next ' : ' '}${resource.track.name}`
+    )
 
     if (enqueueAsNext) {
-      this.queue.addNext(track.userId, track)
+      this.queue.addNext(resource.userId, resource)
     } else {
-      this.queue.add(track.userId, track)
+      this.queue.add(resource.userId, resource)
     }
 
     // TODO thinking these should be moved into the process queue function?
-    track.onPlay()
+    // resource.onPlay()
 
     void (await this.processQueue())
 
@@ -167,7 +174,10 @@ export class MusicPlayer {
     // )
   }
 
-  public async enqueueMany(userId: string, tracks: Track[]): Promise<void> {
+  public async enqueueMany(
+    userId: string,
+    tracks: AudioResourceDefinition[]
+  ): Promise<void> {
     this.log.info(`enqueueing ${tracks.length} listings`)
     this.queue.addMany(userId, tracks)
     // TODO handle this properly
@@ -239,7 +249,7 @@ export class MusicPlayer {
     this.queue.shuffle()
   }
 
-  public peek(depth = 5): Track[] {
+  public peek(depth = 5): AudioResourceDefinition[] {
     this.log.info('peeking')
     return this.queue.peekDeep(depth)
   }
@@ -360,7 +370,7 @@ export class MusicPlayer {
     if (nextTrack) {
       this.log.verbose(`process has next track, attempting play`)
       try {
-        const next = await nextTrack.toAudioResource()
+        const next = await nextTrack.factory()
         this.log.debug(`audio resouce generated`)
         this.currentResource = next
         this.currentResource.volume?.setVolume(0.35)

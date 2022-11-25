@@ -3,6 +3,7 @@ import path from 'path'
 import { Injectable } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
 import { LoggerService } from '../core/logger/logger.service'
+import { RawConfig } from '../utils/raw-config'
 import { Commands } from './register-commands'
 import { GolemCommand } from '.'
 
@@ -29,16 +30,28 @@ export class CommandService {
         /* eslint-disable-next-line @typescript-eslint/no-var-requires */
         require(`${implementationPath}/${file}`).default
 
+      if (!command) {
+        this.logger.warn(`No command found for ${file}`)
+        continue
+      }
+
+      const missingModules = command.missingRequiredModules(RawConfig.modules)
+
       if (
-        command.missingRequiredModules &&
-        (command.missingRequiredModules.all.length > 0 ||
-          command.missingRequiredModules.oneOf.length > 0)
+        missingModules &&
+        (missingModules.all.length > 0 || missingModules.oneOf.length > 0)
       ) {
+        const errorMsg = `${missingModules.all.join(', ')}${
+          missingModules.oneOf.length
+            ? `; One of:${missingModules.oneOf.join(', ')}`
+            : ''
+        }`
+
         this.logger.verbose(
-          `skipping registering command ${
-            command.options.info.name
-          }; ${command.missingModulesToString()}`
+          `skipping registering command ${command.options.info.name}; ${errorMsg}`
         )
+
+        continue
       }
 
       this.logger.verbose(`registering command ${command.options.info.name}`)

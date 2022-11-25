@@ -1,10 +1,15 @@
 import { readFileSync } from 'fs'
 import path from 'path'
 import { Column, Entity, ObjectID, ObjectIdColumn } from 'typeorm'
-import { StringUtils } from '../../utils/string-utils'
+import { StringUtils } from '../../../utils/string-utils'
+
+export abstract class AAlbum {
+  //
+  abstract attachmentUrl: string
+}
 
 @Entity()
-export class Album {
+export class Album extends AAlbum {
   static readonly baseArtPath = '/home/turing/dev/golem/data/albums'
 
   @ObjectIdColumn()
@@ -28,6 +33,8 @@ export class Album {
   >
 
   constructor(name: string, artist: string) {
+    super()
+
     this.name = name
     this.artist = artist
     this.path = path.resolve(
@@ -56,6 +63,10 @@ export class Album {
         get: () => Album.getCover(this.fileRoot + '_xl'),
       },
     }
+  }
+
+  get attachmentUrl(): string {
+    return 'attachment://cover.png'
   }
 
   // get fileRoot(): string {
@@ -87,7 +98,6 @@ export class Album {
   // }
 
   private static getCover(path: string): Buffer {
-    console.log(`Getting album art at: ${path}`)
     return readFileSync(path)
   }
 }

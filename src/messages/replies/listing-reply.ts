@@ -1,6 +1,5 @@
 import { MessageEmbed, HexColorString } from 'discord.js'
-import { AListing } from '../../music/listings/listings'
-import { GolemMessage } from '../golem-message'
+import { AListing } from '../../music/local/listings/listings'
 import { BaseReply } from './base'
 import { ReplyType } from './types'
 
@@ -8,10 +7,7 @@ export class ListingReply extends BaseReply {
   type = ReplyType.Listing
   isUnique = false
 
-  static async fromListing(
-    message: GolemMessage,
-    listing: AListing
-  ): Promise<ListingReply> {
+  static async fromListing(listing: AListing): Promise<ListingReply> {
     const listingEmbed = await listing.toEmbed()
 
     const title = listing.title

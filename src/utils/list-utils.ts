@@ -14,7 +14,24 @@ const isDefined = <T>(input: T | undefined | null): input is T => {
   return typeof input !== 'undefined' && input !== null
 }
 
+const setFrom = <T>(list: T[]): T[] => {
+  return Array.from(new Set(list))
+}
+
+const remove = <T>(list: T[], target: T): T[] => {
+  const index = list.findIndex((item) => item === target)
+
+  if (index > -1) {
+    // only splice array when item is found
+    list.splice(index, 1) // 2nd parameter means remove one item only
+  }
+
+  return list
+}
+
 export const ArrayUtils = {
   shuffleArray,
   isDefined,
+  setFrom,
+  remove,
 }

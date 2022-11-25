@@ -1,12 +1,14 @@
 import { AudioResource, createAudioResource } from '@discordjs/voice'
-import { LocalListing, TrackListingInfo } from '../listings/listings'
-import { Track, TrackAudioResourceMetadata } from '.'
+import { LocalListing, TrackListingInfo } from '../local/listings/listings'
+import { Track, TrackAudioResourceMetadata, TrackType } from '.'
 
 /**
  * A Track created from a Listing of a locally
  * stored audio file.
  */
 export class LocalTrack extends Track {
+  readonly type = TrackType.Local
+
   internalId!: string
 
   constructor(public readonly listing: LocalListing, userId: string) {

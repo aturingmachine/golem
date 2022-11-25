@@ -2,9 +2,9 @@ import { writeFileSync, mkdirSync } from 'fs'
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { MongoRepository, ObjectID } from 'typeorm'
-import { LoggerService } from '../../core/logger/logger.service'
-import { pathExists } from '../../utils/filesystem'
-import { ImageUtils } from '../../utils/image-utils'
+import { LoggerService } from '../../../core/logger/logger.service'
+import { pathExists } from '../../../utils/filesystem'
+import { ImageUtils } from '../../../utils/image-utils'
 import { Album } from '../listings/album'
 import { LocalListing } from '../listings/listings'
 
@@ -16,7 +16,6 @@ export class AlbumService {
     @InjectRepository(Album)
     private albums: MongoRepository<Album>
   ) {
-    console.log('Inside album service constructor')
     this.log.setContext('AlbumService')
   }
 

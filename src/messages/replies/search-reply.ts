@@ -1,6 +1,6 @@
 import { EmbedFieldData, MessageEmbed, MessageOptions } from 'discord.js'
 import { Constants, embedFieldSpacer } from '../../constants'
-import { LocalListing } from '../../music/listings/listings'
+import { LocalListing } from '../../music/local/listings/listings'
 import { BaseReply } from './base'
 import { ReplyType } from './types'
 

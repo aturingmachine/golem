@@ -52,6 +52,7 @@ export class ProcessingTree {
     this.logger.setContext('tree-service')
   }
 
+  // TODO make this work with Slash Commands probably?
   treeify(msg: string): CommandNodes {
     if (msg.includes(SEMI)) {
       return {
@@ -105,8 +106,13 @@ export class ProcessingTree {
       // Run the command, return the status
       console.log('Should be running using:', innerTree.instance.toDebug())
       console.log(innerTree.instance.handler)
+
       const status = message
-        ? innerTree.instance.handler?.execute(ref, message, innerTree.instance)
+        ? innerTree.instance.handler?.execute({
+            module: ref,
+            message: message,
+            source: innerTree.instance,
+          })
         : false
 
       if (status) {
@@ -133,7 +139,6 @@ export class ProcessingTree {
     this.logger.setMessageContext(golemMessage, 'ProcessingTree')
     this.logger.info(`processing message: ${message}`)
     const tree = this.treeify(message)
-    // console.log(JSON.stringify(tree))
 
     const results: ExecutionResults = {
       fail: [],

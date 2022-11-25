@@ -4,11 +4,11 @@ import md5 from 'md5'
 import { IAudioMetadata } from 'music-metadata'
 // import { Album, LocalAlbum } from './album'
 import { Entity, ObjectID, ObjectIdColumn, Column } from 'typeorm'
-import { embedFieldSpacer, PlexLogo } from '../../constants'
-import { formatForLog } from '../../utils/debug-utils'
-import { ImageUtils } from '../../utils/image-utils'
-import { humanReadableDuration } from '../../utils/time-utils'
-import { Album } from './album'
+import { PlexLogo, embedFieldSpacer } from '../../../constants'
+import { formatForLog } from '../../../utils/debug-utils'
+import { ImageUtils } from '../../../utils/image-utils'
+import { humanReadableDuration } from '../../../utils/time-utils'
+import { AAlbum, Album } from './album'
 
 export type ListingEmbedData = {
   fields: EmbedFieldData[]
@@ -17,13 +17,13 @@ export type ListingEmbedData = {
 }
 
 export abstract class AListing {
-  constructor(
-    public listingId: string,
-    public title: string,
-    public duration: number,
-    public artist: string,
-    public albumName: string // public album: Album
-  ) {}
+  abstract readonly listingId: string
+  abstract readonly title: string
+  abstract readonly duration: number
+  abstract readonly artist: string
+  abstract readonly albumName: string
+  abstract albumArtUrl: string
+  abstract album: AAlbum
 
   abstract toEmbed(): Promise<ListingEmbedData> | ListingEmbedData
 }
@@ -68,7 +68,6 @@ export type ListingInfo = {
   mb: MusicBrainzData
   addedAt: number
   albumArtist: string
-  // album: LocalAlbum
   bpm?: number
   id?: string
 }
@@ -83,7 +82,7 @@ export type ListingInfo = {
  * Listing should just be for reading from file and db.
  */
 @Entity()
-export class LocalListing {
+export class LocalListing extends AListing {
   static collectionName = 'listings'
 
   @ObjectIdColumn()
@@ -133,14 +132,7 @@ export class LocalListing {
   // declare album: LocalAlbum
 
   constructor(info: ListingInfo) {
-    // super(
-    //   info?.listingId || '',
-    //   info?.title,
-    //   info?.duration,
-    //   info?.artist,
-    //   info?.albumName
-    //   // info.album
-    // )
+    super()
 
     this.title = info?.title
     this.duration = info?.duration
@@ -160,6 +152,10 @@ export class LocalListing {
   setAlbum(album: Album): void {
     this.albumId = album._id
     this.album = new Album(album.name, album.artist)
+  }
+
+  get albumArtUrl(): string {
+    return this.album.attachmentUrl
   }
 
   /**

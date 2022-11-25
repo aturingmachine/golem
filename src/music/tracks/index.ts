@@ -1,19 +1,25 @@
-import { AudioResource } from '@discordjs/voice'
-import { AListing, TrackListingInfo } from '../listings/listings'
+import { AListing, TrackListingInfo } from '../local/listings/listings'
 
 export interface TrackAudioResourceMetadata {
   track: Track
   listing: AListing
 }
 
+export enum TrackType {
+  Local = 'Local',
+  Youtube = 'Youtube',
+}
+
 export abstract class Track {
+  abstract readonly type: TrackType
+
   listing!: AListing
 
   constructor(public userId: string) {}
 
-  abstract toAudioResource():
-    | AudioResource<TrackAudioResourceMetadata>
-    | Promise<AudioResource<TrackAudioResourceMetadata>>
+  // abstract toAudioResource():
+  // | AudioResource<TrackAudioResourceMetadata>
+  // | Promise<AudioResource<TrackAudioResourceMetadata>>
 
   abstract get metadata(): TrackListingInfo
 

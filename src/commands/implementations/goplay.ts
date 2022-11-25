@@ -1,66 +1,81 @@
-import { ModuleRef } from '@nestjs/core'
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
-import { GolemMessage } from '../../messages/golem-message'
-import { MessageBuilderService } from '../../messages/message-builder.service'
-import { ParsedCommand } from '../../messages/parsed-command'
 import { RawReply } from '../../messages/replies/raw'
-import { ListingSearcher } from '../../music/library/searcher.service'
+import { PlayQueryService } from '../../music/player/play-query.service'
 import { PlayerService } from '../../music/player/player.service'
-import { LocalTrack } from '../../music/tracks/track'
+import { formatForLog } from '../../utils/debug-utils'
+import { GolemModule } from '../../utils/raw-config'
 
-const goplay = new GolemCommand({
+export default new GolemCommand({
   services: {
     log: LoggerService,
     playerService: PlayerService,
-    search: ListingSearcher,
-    builder: MessageBuilderService,
+    queryService: PlayQueryService,
   },
-  logSource: 'go-play',
-  async handler(
-    ref: ModuleRef,
-    interaction: GolemMessage,
-    source: ParsedCommand
-  ): Promise<boolean> {
-    this.services.log.setMessageContext(interaction, 'GoPlay')
+  logSource: 'GoPlay',
+  async handler({ message, source }): Promise<boolean> {
+    this.services.log.setMessageContext(message, 'GoPlay')
+
+    const query = source.getString('query')
+    this.services.log.info(`executing play with query ${query}`)
 
     try {
-      this.services.log.info('Attempting to get player')
-      const player = await this.services.playerService.getOrCreate(interaction)
-      this.services.log.info('Got player?')
+      const player = await this.services.playerService.getOrCreate(message)
 
       if (!player) {
         this.services.log.warn(
-          `unable to create player for guild: ${interaction.info.guild?.name} channel: ${interaction.info.voiceChannel?.name}`
+          `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
         )
         return false
       }
 
-      const query = source.getString('query')
-
       if (!query) {
+        // If we are doing an "unpause" and nothing is playing
+        // then we have errored...
+        if (!player.isPlaying) {
+          await message.addReply(
+            new RawReply(
+              'No search query to play and nothing playing to unpause...'
+            )
+          )
+
+          return false
+        }
+
         player?.unpause()
-        interaction._replies.add(new RawReply('Unpausing!'))
+        await message.addReply(new RawReply('Unpausing!'))
         return true
       }
 
-      // TODO handle YT Plays
-      // TODO handle wide and artist queries
+      const queryResult = await this.services.queryService.process(
+        message,
+        query
+      )
 
-      const searchResult = this.services.search.search(query)
+      // Handle a processed result that does not have a supported module
+      if (!('tracks' in queryResult)) {
+        const errMsg = queryResult.missingModule
+          ? `Cannot process request. Module \`${queryResult.missingModule}\` not loaded. Contact Golem's Administrator.`
+          : queryResult.message || 'unable to process request.'
 
-      if (!searchResult) {
-        return true
+        this.services.log.warn(`query "${query}" failed: "${errMsg}"`)
+
+        await message.addReply(new RawReply(errMsg))
+
+        return false
       }
 
-      player.enqueue(
-        new LocalTrack(searchResult.listing, interaction.info.userId)
+      this.services.playerService.play(
+        message,
+        player,
+        queryResult.tracks,
+        'queue'
       )
 
-      await interaction._replies.add(
-        this.services.builder.nowPlaying(interaction, searchResult.listing)
-      )
+      this.services.log.debug(`query returned as: ${formatForLog(queryResult)}`)
+
+      await message.addReply(queryResult.replies)
 
       return true
     } catch (error) {
@@ -98,9 +113,9 @@ const goplay = new GolemCommand({
         '/goplay <youtube playlist url>',
       ],
     },
-    // requiredModules: {
-    //   oneOf: [GolemModule.Music, GolemModule.Youtube],
-    // },
+    requiredModules: {
+      oneOf: [GolemModule.LocalMusic, GolemModule.Youtube],
+    },
     alias: 'play',
     extendedArgs: [
       {
@@ -118,5 +133,3 @@ const goplay = new GolemCommand({
     ],
   },
 })
-
-export default goplay

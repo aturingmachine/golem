@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import fuzzy from 'fuzzy'
-import { LoggerService } from '../../core/logger/logger.service'
+import { LoggerService } from '../../../core/logger/logger.service'
 import { LocalListing } from '../listings/listings'
 
 const extractors = {

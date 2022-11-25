@@ -3,17 +3,20 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import configuration from './core/configuration'
 import { CoreModule } from './core/core.module'
-import { Library } from './music/library/library'
-import { Album } from './music/listings/album'
-import { LocalListing } from './music/listings/listings'
+import { IntegrationsModule } from './integrations/integration.module'
+import { Library } from './music/local/library/library'
+import { Album } from './music/local/listings/album'
+import { LocalListing } from './music/local/listings/listings'
 import { MusicModule } from './music/music.module'
 
 @Module({
   imports: [
     CoreModule,
     MusicModule,
+    IntegrationsModule,
 
     ConfigModule.forRoot({
+      isGlobal: true,
       load: [configuration],
     }),
 

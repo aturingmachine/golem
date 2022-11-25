@@ -5,8 +5,8 @@ import { InjectRepository } from '@nestjs/typeorm'
 import * as mm from 'music-metadata'
 import sharp from 'sharp'
 import { MongoRepository } from 'typeorm'
-import { LoggerService } from '../../core/logger/logger.service'
-import { getAllFiles } from '../../utils/filesystem'
+import { LoggerService } from '../../../core/logger/logger.service'
+import { getAllFiles } from '../../../utils/filesystem'
 import { LocalListing } from '../listings/listings'
 import { AlbumService } from './album.service'
 import { Library } from './library'
@@ -28,7 +28,6 @@ export class ListingLoaderService {
     @InjectRepository(Library)
     private libraries: MongoRepository<Library>
   ) {
-    console.log('INside loader constructor')
     this.log.setContext('ListingLoader')
   }
 
@@ -37,7 +36,7 @@ export class ListingLoaderService {
       await this.wipeData()
     }
 
-    for (const library of this.config.get('library.paths')) {
+    for (const library of this.config.get('library').paths) {
       this.log.info(`processing library ${library}`)
       const name = library.split('/').pop() || 'Library'
 
@@ -79,7 +78,6 @@ export class ListingLoaderService {
         // }
 
         this.records.push(...listingRecords)
-        console.log(listingRecords[0])
         this.log.debug(
           `Library ${name} loaded. Included ${listingRecords.length} listings.`
         )
@@ -136,6 +134,63 @@ export class ListingLoaderService {
     this.log.debug('Deleting Listings.')
     const listingResults = await this.listings.deleteMany({})
     this.log.debug(`${listingResults.deletedCount} Listings Deleted.`)
+  }
+
+  async refresh(): Promise<Record<string, number>> {
+    const result: Record<string, number> = {}
+
+    for (const lib of this.config.get('library').paths) {
+      const name = lib.split('/').pop() || 'Library'
+      this.log.info(`refreshing library - ${name}@${lib}`)
+
+      const record = await this.libraries.findOneBy({ name })
+
+      this.log.silly(`library - ${name}@${lib} mongoId: ${record?.id}`)
+
+      if (!record) {
+        this.log.info(`no record found for library - ${name}@${lib}`)
+        continue
+      }
+
+      // Get all paths for the library
+      const paths = this.getPaths(lib)
+      const newPathCount = paths.length - record.count
+
+      if (newPathCount === 0) {
+        this.log.info(`no new listings in library - ${name}@${lib}`)
+        continue
+      }
+
+      this.log.debug(
+        `found ${newPathCount} new listings for library - ${name}@${lib}`
+      )
+
+      const listingPaths = (
+        await this.listings.findBy({
+          _id: { $in: record.listingIds },
+        })
+      ).map((l) => l.path)
+
+      const newListings = await this.listingsFromPaths(
+        paths.filter((path) => !listingPaths.includes(path)),
+        (listing) => {
+          record.listingIds.push(listing._id)
+          this.records.push(listing)
+        }
+      )
+
+      result[name] = newListings.listings.length
+
+      this.log.verbose(`saving library - ${name}@${lib}`)
+      this.log.verbose(
+        `added ${newListings.listings.length} listings to - ${name}@${lib}`
+      )
+      this.log.warn(`encountered ${newListings.errors.length} errors`)
+
+      await this.libraries.updateOne({ name: record.name }, record)
+    }
+
+    return result
   }
 
   /**

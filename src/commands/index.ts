@@ -14,8 +14,10 @@ import { InjectionToken } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
 import { Constructable } from 'discord.js'
 import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
+import { LoggerService } from '../core/logger/logger.service'
 import { GolemMessage } from '../messages/golem-message'
 import { ParsedCommand } from '../messages/parsed-command'
+import { GolemModule } from '../utils/raw-config'
 import { StringUtils } from '../utils/string-utils'
 // import { GolemConf } from '../config'
 // import { any } from '../config/models'
@@ -46,9 +48,7 @@ export function expandBuiltInAlias(raw: string): string | undefined {
 
 export type CommandHandlerFn<T extends ServiceReqs> = (
   this: GolemCommand<T>,
-  module: ModuleRef,
-  message: GolemMessage,
-  source: ParsedCommand,
+  props: { module: ModuleRef; message: GolemMessage; source: ParsedCommand },
   ...args: any[]
 ) => Promise<boolean>
 
@@ -219,29 +219,42 @@ export class GolemCommand<T extends ServiceReqs = {}> {
   }
 
   async init(moduleRef: ModuleRef): Promise<void> {
-    console.log('Init Command', this.options.info.name)
+    const initLog = await moduleRef.resolve(LoggerService, undefined, {
+      strict: false,
+    })
+    initLog.setContext(this.options.logSource, 'init')
+
+    initLog.debug('running init command', this.options.logSource)
 
     if (!this.services) {
       this.services = {} as typeof this['services']
     }
 
     for (const property in this.options.services) {
+      const serviceToken = this.options.services[property]
+
+      initLog.silly(`Attempting to load module for ${property}`)
+
       try {
         this.services[property] = await moduleRef.resolve(
-          this.options.services[property],
+          serviceToken,
           undefined,
           { strict: false }
         )
+
+        initLog.silly(`Module for ${property} Loaded.`)
       } catch (error) {
-        console.error(error)
+        initLog.warn(
+          `Module for ${property} failed to async loaded - attempting sync load...`
+        )
 
         try {
-          this.services[property] = moduleRef.get(
-            this.options.services[property],
-            { strict: false }
-          )
+          this.services[property] = moduleRef.get(serviceToken, {
+            strict: false,
+          })
         } catch (error) {
-          console.error(error)
+          initLog.warn(error)
+          initLog.warn(`Unable to load module for ${property}`)
         }
       }
     }
@@ -268,16 +281,19 @@ export class GolemCommand<T extends ServiceReqs = {}> {
   }
 
   // TODO
-  get missingRequiredModules(): { all: any[]; oneOf: any[] } {
-    const missingAllMods: any[] = []
-    // this.options.info.requiredModules?.all?.filter((mod) => {
-    //   return !GolemCommand.config.modules[mod]
-    // }) || []
+  missingRequiredModules(activeModules: GolemModule[]): {
+    all: any[]
+    oneOf: any[]
+  } {
+    const missingAllMods =
+      this.options.info.requiredModules?.all?.filter((mod) => {
+        return !activeModules.includes(mod)
+      }) || []
 
-    const missingOneOfMods: any[] = []
-    // this.options.info.requiredModules?.oneOf?.filter((mod) => {
-    //   return !GolemCommand.config.modules[mod]
-    // }) || []
+    const missingOneOfMods =
+      this.options.info.requiredModules?.oneOf?.filter((mod) => {
+        return activeModules.length < 1 || !activeModules.includes(mod)
+      }) || []
 
     const isMissingOneOfs =
       this.options.info.requiredModules?.oneOf?.length ===
@@ -289,27 +305,27 @@ export class GolemCommand<T extends ServiceReqs = {}> {
     }
   }
 
-  missingModulesToString(): string {
-    return `${this.missingRequiredModules.all.join(', ')}${
-      this.missingRequiredModules.oneOf.length
-        ? `; One of:${this.missingRequiredModules.oneOf.join(', ')}`
-        : ''
-    }`
-  }
+  // missingModulesToString(): string {
+  //   return `${this.missingRequiredModules.all.join(', ')}${
+  //     this.missingRequiredModules.oneOf.length
+  //       ? `; One of:${this.missingRequiredModules.oneOf.join(', ')}`
+  //       : ''
+  //   }`
+  // }
 
-  private get missingModulesMsg(): string {
-    return `cannot execute command \`${this.options.info.name}\`. ${
-      this.missingRequiredModules.all.length
-        ? `missing required modules: **All of: ${this.missingRequiredModules.all.join(
-            ', '
-          )}`
-        : ''
-    }${
-      this.missingRequiredModules.oneOf.length
-        ? `; One of:${this.missingRequiredModules.oneOf.join(', ')}`
-        : ''
-    }**`
-  }
+  // private get missingModulesMsg(): string {
+  //   return `cannot execute command \`${this.options.info.name}\`. ${
+  //     this.missingRequiredModules.all.length
+  //       ? `missing required modules: **All of: ${this.missingRequiredModules.all.join(
+  //           ', '
+  //         )}`
+  //       : ''
+  //   }${
+  //     this.missingRequiredModules.oneOf.length
+  //       ? `; One of:${this.missingRequiredModules.oneOf.join(', ')}`
+  //       : ''
+  //   }**`
+  // }
 
   private addOptions(subcommand?: {
     builder: SlashCommandSubcommandBuilder

@@ -1,6 +1,6 @@
 import { TemplateTag } from 'common-tags'
 
-const smartSplitRegex = /"([^"]*)"|(\S+)/g
+const smartSplitRegex = /"([^"]*)"|(\S+)|( \-\-[A-z\-]+)/g
 
 export const StringUtils = {
   /**
@@ -10,9 +10,9 @@ export const StringUtils = {
    * @returns
    */
   smartSplit(str: string): string[] {
-    return (str.match(smartSplitRegex) || []).map((m) =>
-      m.replace(smartSplitRegex, '$1$2').replace('"', '')
-    )
+    return (str.match(smartSplitRegex) || [])
+      .map((m) => m.replace(smartSplitRegex, '$1$2').replace('"', ''))
+      .filter(Boolean)
   },
 
   slugify(str: string): string {

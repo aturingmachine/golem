@@ -2,6 +2,7 @@ import {
   AwaitMessageComponentOptions,
   CacheType,
   CommandInteraction,
+  GuildMember,
   InteractionReplyOptions,
   Message,
   MessageComponentInteraction,
@@ -15,6 +16,8 @@ import { StringUtils } from '../utils/string-utils'
 import { MessageInfo } from './message-info'
 import { ParsedCommand } from './parsed-command'
 import { Reply } from './replies'
+import { RawReply } from './replies/raw'
+import { Replies } from './replies/types'
 
 export type GolemMessageReplyOptions =
   | MessageOptions
@@ -69,10 +72,11 @@ export class GolemMessage {
 
   constructor(
     public source: GolemMessageInteraction, // customAlias?: CustomAlias
-    public log: LoggerService
+    public log: LoggerService,
+    logs: [LoggerService, LoggerService]
   ) {
-    this.traceId = v4().split('-').pop()!
-    this.log.setContext(`message::${this.traceId}`)
+    this.traceId = v4().split('-')[0]
+    this.log.setContext(`message`, this.traceId)
 
     if (this.source instanceof Message) {
       this.log.silly(`got Message`)
@@ -95,7 +99,11 @@ export class GolemMessage {
 
     this.log.silly(`parsed => ${this.parsed.toDebug()}`)
 
-    this.info = new MessageInfo(this.source)
+    this.info = new MessageInfo(this.source, logs[0], logs[1])
+  }
+
+  getUserById(userId: string): GuildMember | undefined {
+    return this.source.guild?.members.cache.get(userId)
   }
 
   toString(): string {
@@ -135,6 +143,16 @@ export class GolemMessage {
     }
 
     return undefined
+  }
+
+  addReply(
+    reply: Replies | Promise<Replies> | (Replies | Promise<Replies>)[] | string
+  ): Promise<Replies[]> {
+    if (typeof reply === 'string') {
+      return this._replies.add(new RawReply(reply))
+    }
+
+    return this._replies.add(reply)
   }
 
   async reply(

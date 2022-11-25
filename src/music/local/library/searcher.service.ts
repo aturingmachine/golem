@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import fuzzy from 'fuzzy'
-import { LoggerService } from '../../core/logger/logger.service'
+import { LoggerService } from '../../../core/logger/logger.service'
 import { LocalListing } from '../listings/listings'
 import { ListingLoaderService } from './loader.service'
 import { SearchSchemes } from './search-schemes'
@@ -63,6 +63,17 @@ export class ListingSearcher {
     const result = this.searchSchemes.cascading(query, this.listings.records)
 
     return result.map((r) => r.original)
+  }
+
+  findByPath(path: string): Record<'id' | 'name', string> | undefined {
+    const listing = this.listings.records.find((l) => l.path === path)
+
+    return listing
+      ? {
+          id: listing?._id?.toString() || '',
+          name: listing?.shortName || 'Not found',
+        }
+      : undefined
   }
 
   private isWideMatch(result: fuzzy.FilterResult<LocalListing>[]): boolean {

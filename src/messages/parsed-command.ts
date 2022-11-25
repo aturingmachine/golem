@@ -4,6 +4,7 @@ import { Commands, RegisteredCommands } from '../commands/register-commands'
 import { BuiltInAlias, CommandBase } from '../constants'
 import { formatForLog } from '../utils/debug-utils'
 import { StringUtils } from '../utils/string-utils'
+import { CommandInvocation, ExtendedArgRegex } from './message-info'
 
 export interface IParsedCommand {
   command: CommandBase
@@ -23,9 +24,20 @@ export class ParsedCommand {
   constructor(
     public command: CommandBase,
     public params: Record<string, string | number | boolean | undefined>,
+    public extendedArgs: Record<string, string | number | boolean | undefined>,
     public subCommand?: string,
     public handler?: GolemCommand
   ) {}
+
+  static fromInvocation(invocation: CommandInvocation): ParsedCommand {
+    return new ParsedCommand(
+      invocation.command as CommandBase,
+      {},
+      {},
+      '',
+      Commands.get(invocation.command)
+    )
+  }
 
   toDebug(): string {
     return formatForLog({
@@ -85,6 +97,8 @@ export class ParsedCommand {
     return new ParsedCommand(
       data.command,
       data.params,
+      // TODO
+      {},
       data.subCommand,
       Commands.get(data.command)
     )
@@ -97,8 +111,8 @@ export class ParsedCommand {
       .trimStart()
 
     switch (cmd) {
-      // case CommandBase.admin:
-      //   return parseString(parsed, RegisteredCommands.goadmin.info)
+      case CommandBase.admin:
+        return parseString(parsed, RegisteredCommands.goadmin.info)
       // case CommandBase.alias:
       //   return parseString(parsed, RegisteredCommands.goalias.info)
       // case BuiltInAlias.NP:
@@ -109,34 +123,34 @@ export class ParsedCommand {
       //   return parseString(parsed, gohelp.info)
       // case CommandBase.mix:
       //   return parseString(parsed, RegisteredCommands.gomix.info)
-      // case BuiltInAlias.Pause:
-      // case CommandBase.pause:
-      //   return parseString(parsed, RegisteredCommands.gopause.info)
-      // case CommandBase.peek:
-      //   return parseString(parsed, RegisteredCommands.gopeek.info)
+      case BuiltInAlias.Pause:
+      case CommandBase.pause:
+        return parseString(parsed, RegisteredCommands.gopause.info)
+      case CommandBase.peek:
+        return parseString(parsed, RegisteredCommands.gopeek.info)
       case BuiltInAlias.Play:
       case CommandBase.play:
       default:
         return parseString(parsed, RegisteredCommands.goplay.info)
-      // case CommandBase.playlist:
-      //   return parseString(parsed, RegisteredCommands.goplaylist.info)
-      // case BuiltInAlias.PlayNext:
-      // case CommandBase.playNext:
-      //   return parseString(parsed, RegisteredCommands.goplaynext.info)
+      case CommandBase.playlist:
+        return parseString(parsed, RegisteredCommands.goplaylist.info)
+      case BuiltInAlias.PlayNext:
+      case CommandBase.playNext:
+        return parseString(parsed, RegisteredCommands.goplaynext.info)
       // case CommandBase.report:
       //   return parseString(parsed, RegisteredCommands.goreport.info)
       case CommandBase.search:
         return parseString(parsed, RegisteredCommands.gosearch.info)
       // case CommandBase.shuffle:
       //   return parseString(parsed, RegisteredCommands.goshuffle.info)
-      // case BuiltInAlias.Skip:
-      // case CommandBase.skip:
-      //   return parseString(parsed, RegisteredCommands.goskip.info)
-      // case BuiltInAlias.Stop:
-      // case CommandBase.stop:
-      //   return parseString(parsed, RegisteredCommands.gostop.info)
-      // case CommandBase.perms:
-      //   return parseString(parsed, RegisteredCommands.gopermission.info)
+      case BuiltInAlias.Skip:
+      case CommandBase.skip:
+        return parseString(parsed, RegisteredCommands.goskip.info)
+      case BuiltInAlias.Stop:
+      case CommandBase.stop:
+        return parseString(parsed, RegisteredCommands.gostop.info)
+      case CommandBase.perms:
+        return parseString(parsed, RegisteredCommands.gopermission.info)
       // default:
       //   return parseString(parsed, RegisteredCommands.goget.info)
     }
@@ -168,7 +182,9 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
   const parsedContent = /^\$/.test(content)
     ? content.replace(/^\$(go )?/, '')
     : content
+
   const meat = StringUtils.dropWords(parsedContent, 1)
+
   const result: IParsedCommand = {
     command: StringUtils.wordAt(parsedContent, 0) as CommandBase,
     params: {},
@@ -179,6 +195,8 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
     return new ParsedCommand(
       result.command,
       result.params,
+      // TODO
+      {},
       result.subCommand,
       Commands.get(result.command)
     )
@@ -206,7 +224,7 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
       })
   } else {
     if (def.args?.length) {
-      if (def.args?.length > 1) {
+      if (def.args?.length > 1 || /( \-\-[A-z\- ]+ ?)+/g.test(meat)) {
         const args = StringUtils.smartSplit(meat)
         def.args.forEach((arg, index) => {
           result.params[arg.name] = arg.rest
@@ -219,9 +237,25 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
     }
   }
 
+  const extended = Object.fromEntries(
+    Array.from(meat.matchAll(ExtendedArgRegex)).map((match) => {
+      const [arg, value] = match.slice(0, 2)
+
+      if (!arg.includes('=')) {
+        return [arg.replace(/^--/, ''), true]
+      }
+
+      const splits = arg.split('=')
+
+      return [splits[0].replace(/^--/, ''), value.replace('=', '')]
+    })
+  )
+
   return new ParsedCommand(
     result.command,
     result.params,
+    // TODO
+    extended,
     result.subCommand,
     Commands.get(result.command)
   )

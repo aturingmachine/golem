@@ -4,9 +4,13 @@ import { MicroserviceOptions } from '@nestjs/microservices'
 import { AppModule } from './application.module'
 import { CommandService } from './commands/commands.service'
 import { ClientService } from './core/client.service'
+import configuration from './core/configuration'
 import { DiscordBotServer } from './core/discord-transport'
 import { LoggerService } from './core/logger/logger.service'
-import { ListingLoaderService } from './music/library/loader.service'
+import { PlexService } from './integrations/plex/plex.service'
+import { ListingLoaderService } from './music/local/library/loader.service'
+import { GolemModule } from './utils/raw-config'
+import { RawConfig } from './utils/raw-config'
 import { humanReadableDuration } from './utils/time-utils'
 
 async function bootstrap() {
@@ -14,11 +18,13 @@ async function bootstrap() {
   const botServer = new DiscordBotServer()
   botServer.init()
 
+  console.log(configuration().logLevels)
+
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
       strategy: botServer,
-      logger: ['verbose'],
+      logger: configuration().logLevels,
     }
   )
 
@@ -26,10 +32,29 @@ async function bootstrap() {
   log.setContext('Bootstrap')
   log.info('Bootstrapping Golem...')
 
+  log.info('Getting ConfigService')
   const config = app.get(ConfigService)
+  log.info('Getting ClientService')
   const clientService = app.get(ClientService)
-  const loader = app.get(ListingLoaderService)
-  await loader.load()
+
+  if (RawConfig.hasLocalMusicModule) {
+    log.info('Getting ListingLoaderService')
+    const loader = app.get(ListingLoaderService)
+    log.info('Loading Listings')
+    await loader.load()
+  } else {
+    log.info('LocalMusicModule not enabled.')
+  }
+
+  if (RawConfig.modules.includes(GolemModule.Plex)) {
+    log.info('Getting PlexService')
+    const plexService = app.get(PlexService)
+    log.info('Got PlexService')
+
+    await plexService.loadPlaylists()
+  } else {
+    log.info('PlexModule not loaded.')
+  }
 
   log.info('Logging in...')
   const id = await botServer.login(config.get('discord.token'))

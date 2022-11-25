@@ -1,7 +1,9 @@
 import { readFileSync } from 'fs'
 import path from 'path'
+import { LogLevel } from '@nestjs/common'
 import minimist, { ParsedArgs } from 'minimist'
 import YAML from 'yaml'
+import { ArrayUtils } from '../utils/list-utils'
 
 export type DiscordConfig = {
   token: string
@@ -55,6 +57,7 @@ export type GolemArgs = {
   tty: boolean
   'bust-cache': boolean
   verbose: boolean
+  debug: boolean
 }
 
 export type ConfigurationOptions = {
@@ -68,6 +71,7 @@ export type ConfigurationOptions = {
   search?: SearchConfig
   web?: WebConfig
   youtube?: YoutubeConfig
+  logLevels: LogLevel[]
   crash?: {
     run: string
   }
@@ -152,6 +156,22 @@ export default (): ConfigurationOptions => {
     apiPort: raw.web?.apiPort || 3000,
   }
 
+  let logLevels: LogLevel[] = ['error', 'warn', 'log']
+
+  if (args.verbose) {
+    logLevels.push('verbose')
+  }
+
+  if (args.debug) {
+    logLevels.push('verbose', 'debug')
+  }
+
+  if (args.silly) {
+    logLevels.push('verbose', 'debug', 'silly' as LogLevel)
+  }
+
+  logLevels = ArrayUtils.setFrom(logLevels)
+
   return {
     args,
     discord,
@@ -163,5 +183,6 @@ export default (): ConfigurationOptions => {
     search,
     youtube,
     web,
+    logLevels,
   }
 }
