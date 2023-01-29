@@ -146,11 +146,19 @@ export class AliasService {
    */
   injectHits(source: string, hits: CustomAliasHit[]): string {
     const dividers = Array.from(source.matchAll(/;|(?:&&)/gi))
+    const splitSource = source.split(/;|(?:&&)/gi)
 
-    return hits
-      .map((hit) => {
-        this.log.debug(`injecting ${hit.alias.source}`)
-        return `${hit.alias.source} ${dividers.shift()?.[0] || ''}`
+    return splitSource
+      .map((seg, index) => {
+        const hit = hits.find((hit) => hit.index === index)
+        // If a hit is at this index, inject it
+        if (hit) {
+          return `${seg.replace('$' + hit.alias.name, hit.alias.source)} ${
+            dividers.shift()?.[0] || ''
+          }`
+        }
+
+        return seg
       })
       .join(' ')
   }

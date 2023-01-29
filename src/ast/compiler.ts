@@ -98,11 +98,25 @@ export class GSCompiler {
       return this.compileLeaf(token, index)
     })
 
+    let prevDelayed = this.delayedEval.map((delayed) => ({ ...delayed }))
+    let delayedEvalLoops = 0
+
     if (this.delayedEval.length) {
       while (this.delayedEval.length > 0) {
         const next = this.delayedEval.pop()
 
-        if (!next) {
+        const isLooping = prevDelayed.every((prev) => {
+          return !!this.delayedEval.find((delayed) => {
+            return (
+              prev.index === delayed.index &&
+              Object.entries(delayed.token).every(
+                ([key, val]) => prev.token[key as keyof AstTokens] === val
+              )
+            )
+          })
+        })
+
+        if (!next || isLooping || delayedEvalLoops > 5) {
           continue
         }
 
@@ -111,6 +125,9 @@ export class GSCompiler {
         if (resolved) {
           compiled[next.index] = resolved
         }
+
+        prevDelayed = this.delayedEval.map((delayed) => ({ ...delayed }))
+        delayedEvalLoops++
       }
     }
 
