@@ -1,4 +1,3 @@
-import { debugDump } from '..'
 import { GolemScriptFunctions } from '../golem-script/functions'
 import { ParsedCommand } from '../messages/parsed-command'
 import { formatForLog } from '../utils/debug-utils'
@@ -67,7 +66,6 @@ export class GSCompiler {
   }
 
   compile(): CompiledGolemScript {
-    debugDump(this.ast)
     console.debug(`GS::compile processing ast.raw="${this.ast.raw}"`)
 
     const raw = this.ast.blocks

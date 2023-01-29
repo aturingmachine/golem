@@ -133,9 +133,12 @@ export class AliasService {
   async listForGuild(guildId: string): Promise<string> {
     const guildAliases = await this.forGuild(guildId)
 
-    return guildAliases.reduce((prev, curr, index) => {
-      return prev.concat(`${index + 1}: ${curr}`)
-    }, '')
+    return guildAliases
+      .map((alias, index) => {
+        const desc = alias.description ? `\n\t"${alias.description}"` : ''
+        return `${index + 1}: ${alias.name} - ${alias.source}${desc}`
+      })
+      .join('\n')
   }
 
   async hasCustomAlias(guildId: string, source: string): Promise<boolean> {

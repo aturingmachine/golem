@@ -3,7 +3,6 @@ import { ModuleRef } from '@nestjs/core'
 import { CONTEXT, MessagePattern, RequestContext } from '@nestjs/microservices'
 import { Message } from 'discord.js'
 import { GSCompiler } from '../ast/compiler'
-import { Parser } from '../ast/parser'
 import { GolemMessage } from '../messages/golem-message'
 import { MessageId } from '../messages/message-id.model'
 import { ReplyType } from '../messages/replies/types'
@@ -76,7 +75,7 @@ export class MessageController {
       extraLogs
     )
 
-    const result = await this.treeService._execute(compiled, message, this.ref)
+    await this.treeService._execute(compiled, message, this.ref)
 
     const replies = message._replies.render()
 
