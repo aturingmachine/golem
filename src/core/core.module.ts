@@ -5,7 +5,7 @@ import { ProcessingTree } from '../messages/tree'
 import { MusicModule } from '../music/music.module'
 import { AdminModule } from './admin/admin.module'
 import { AliasModule } from './alias/alias.module'
-import { ClientService } from './client.service'
+import { ClientModule } from './client.module'
 import { InfoService } from './info/info.service'
 import { LoggerModule } from './logger/logger.module'
 import { LoggerService } from './logger/logger.service'
@@ -19,6 +19,7 @@ import { PermissionsModule } from './permissions/permissions.module'
     PermissionsModule,
     AdminModule,
     AliasModule,
+    ClientModule,
   ],
 
   controllers: [MessageController],
@@ -26,18 +27,11 @@ import { PermissionsModule } from './permissions/permissions.module'
   providers: [
     CommandService,
     ProcessingTree,
-    ClientService,
     LoggerService,
     MessageBuilderService,
     InfoService,
   ],
 
-  exports: [
-    CommandService,
-    ClientService,
-    MessageBuilderService,
-    InfoService,
-    AdminModule,
-  ],
+  exports: [CommandService, MessageBuilderService, InfoService, AdminModule],
 })
 export class CoreModule {}

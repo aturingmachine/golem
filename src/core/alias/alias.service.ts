@@ -4,11 +4,12 @@ import { MongoRepository } from 'typeorm'
 import { ParsedCommand } from '../../messages/parsed-command'
 import { formatForLog } from '../../utils/debug-utils'
 import { LoggerService } from '../logger/logger.service'
+import { PermissionCode } from '../permissions/permissions'
+import { PermissionsService } from '../permissions/permissions.service'
 import { CustomAlias } from './alias.model'
 
 interface CustomAliasHit {
   index: number
-  // divider:
   alias: CustomAlias
 }
 
@@ -16,11 +17,65 @@ interface CustomAliasHit {
 export class AliasService {
   constructor(
     private log: LoggerService,
+    private permissionsService: PermissionsService,
 
     @InjectRepository(CustomAlias)
     private aliases: MongoRepository<CustomAlias>
   ) {
     this.log.setContext('AliasService')
+  }
+
+  async delete(query: {
+    userId: string
+    guildId: string
+    aliasName: string
+  }): Promise<number> {
+    const isAdmin = await this.permissionsService.isAdmin(query)
+
+    const canDelete = await this.permissionsService.can(
+      {
+        userId: query.userId,
+        guildId: query.guildId,
+      },
+      [PermissionCode.AliasDelete]
+    )
+
+    this.log.debug(
+      `Attemping to delete with lookup ${formatForLog(
+        query
+      )}; resolved permissions isAdmin=${isAdmin} canDelete=${canDelete}`
+    )
+
+    if (!canDelete) {
+      return 3
+    }
+
+    const records = await this.aliases.findBy({
+      authorId: query.userId,
+      guildId: query.guildId,
+      name: query.aliasName,
+    })
+
+    if (!records.length) {
+      return 2
+    }
+
+    if (records[0].authorId !== query.userId && !isAdmin) {
+      return 1
+    }
+
+    try {
+      const result = await this.aliases.deleteOne(records[0])
+
+      if (!result.deletedCount) {
+        throw new Error("Couldn't delete alias...")
+      }
+
+      return 0
+    } catch (error) {
+      this.log.error('could not delete alias', error)
+      return 4
+    }
   }
 
   async create(
@@ -118,12 +173,13 @@ export class AliasService {
     blocks.forEach((block, index) => {
       console.log(`Checking block "${block}" for alias hits`)
       const match = guildAliases.find((alias) => {
+        const testBlockFormat = block.trim() + ' '
         console.log(
           `Checking alias "${formatForLog(alias)}" [block.startsWith(${
             alias.name
-          })] ? ${block.startsWith('$' + alias.name)}`
+          })] ? ${testBlockFormat.startsWith('$' + alias.name)}`
         )
-        return block.startsWith(`$${alias.name}`)
+        return testBlockFormat.startsWith(`$${alias.name} `)
       })
 
       // If we got a match, push its info into hits

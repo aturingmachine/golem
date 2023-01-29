@@ -68,7 +68,9 @@ export class Permissions {
     return perm
   }
 
-  static baseRecord(info: MessageInfo): Permissions {
+  static baseRecord(
+    info: MessageInfo | { userId: string; guildId: string }
+  ): Permissions {
     const perm = new Permissions()
     perm.userId = info.userId
     perm.guildId = info.guildId

@@ -1,7 +1,6 @@
 import { Commands } from '../commands/register-commands'
 import { CommandBase } from '../constants'
 import { GolemScriptFunctions } from '../golem-script/functions'
-import { formatForLog, logfile } from '../utils/debug-utils'
 import { ArrayUtils } from '../utils/list-utils'
 import { ASTUnterminatedQuoteError } from './ast-parse-error'
 import { InputStream } from './input-stream'
@@ -330,19 +329,6 @@ export class Tokenizer {
     }
 
     while (!this.eoc()) {
-      logfile(
-        '[COMPILER] Tokenizer::read_string > ',
-        `${formatForLog({
-          str,
-          end,
-          skip,
-          skips,
-          escaped,
-          insideQuote,
-          insideContainer,
-          container_state,
-        })}`
-      )
       if (look_aheads.includes(this.stream.peek() + this.stream.peek_next())) {
         break
       }
@@ -425,8 +411,6 @@ export class Tokenizer {
   }
 
   read_string(): AstToken {
-    logfile('[COMPILER] Tokenizer::read_string')
-
     return {
       type: 'str',
       value: this.read_escaped(['', ';'], [], ['--', ' :', '=>']).trim(),

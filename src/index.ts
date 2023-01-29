@@ -7,14 +7,13 @@ import { NestFactory } from '@nestjs/core'
 import { MicroserviceOptions } from '@nestjs/microservices'
 import minimist from 'minimist'
 import { AppModule } from './application.module'
-import { GSCompiler } from './ast/compiler'
 import { CommandService } from './commands/commands.service'
 import { ClientService } from './core/client.service'
 import configuration from './core/configuration'
 import { DiscordBotServer } from './core/discord-transport'
 import { LoggerService } from './core/logger/logger.service'
+import { PermissionsService } from './core/permissions/permissions.service'
 import { PlexService } from './integrations/plex/plex.service'
-import { ParsedCommand } from './messages/parsed-command'
 import { ListingLoaderService } from './music/local/library/loader.service'
 import { GolemModule } from './utils/raw-config'
 import { RawConfig } from './utils/raw-config'
@@ -93,6 +92,11 @@ async function bootstrap() {
   const commandService = app.get(CommandService)
 
   await commandService.registerCommands()
+
+  log.debug(`Setting base permissions.`)
+  const permissionService = app.get(PermissionsService)
+  await permissionService.setInitial()
+  log.debug(`Done setting base permissions.`)
 
   const end = Date.now()
   log.debug(`bootstrap lasted ${humanReadableDuration((end - start) / 1000)}`)

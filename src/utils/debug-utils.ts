@@ -29,11 +29,3 @@ const processMissing = (val: unknown): string | undefined => {
     return 'UNDEFINED '
   }
 }
-
-export function logfile(message: string, ...optionalParams: any[]): void {
-  appendFileSync(
-    './logfile',
-    [message].concat(...optionalParams).join(' ') + '\n',
-    { encoding: 'utf-8' }
-  )
-}

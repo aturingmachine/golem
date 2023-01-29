@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common'
-import { ChannelManager, Client } from 'discord.js'
+import {
+  ChannelManager,
+  Client,
+  Collection,
+  Guild,
+  GuildManager,
+} from 'discord.js'
 import { LoggerService } from './logger/logger.service'
 
 @Injectable()
@@ -27,5 +33,25 @@ export class ClientService {
     }
 
     return this.client?.channels
+  }
+
+  get guildManager(): GuildManager {
+    if (!this.client) {
+      throw new Error('Attempting to access undefined client.')
+    }
+
+    return this.client.guilds
+  }
+
+  get guilds(): Collection<string, Guild> {
+    if (!this.client) {
+      throw new Error('Attempting to access undefined client.')
+    }
+
+    return this.client.guilds.cache
+  }
+
+  get guildIds(): string[] {
+    return Object.keys(this.guildManager.cache)
   }
 }
