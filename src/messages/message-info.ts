@@ -31,13 +31,7 @@ export class CommandInvocation {
     source.tokens
       .filter((token): token is OptAstToken => token.type === 'opt')
       .map((token) => {
-        console.debug(
-          `CommandInvocation::constructor mapping token="${token.value}"`
-        )
-
         let val: string | boolean | number | FuncAstToken = token.opt_val
-
-        console.debug(`CommandInvocation::constructor mapping val="${val}"`)
 
         // Handle nested Function Call
         if (typeof val === 'object') {
@@ -45,12 +39,7 @@ export class CommandInvocation {
 
           const def = GolemScriptFunctions.get(val.name)
 
-          console.debug(
-            'MessageInfo:constructor > Evaluating golem function',
-            def?.name
-          )
           const evaled = def?.implementation(...val.params.map((p) => p.value))
-          console.debug('MessageInfo:constructor > Evaluated', evaled)
 
           this.options[token.name] = evaled
 
@@ -216,11 +205,7 @@ export class MessageInfo {
 
 function getSliceIndex(message: string): number {
   const isAliasCommand = message.includes(' => ')
-  console.debug(`"${message}" isAliasCommand??? ${isAliasCommand}`)
-
   const matches = message.match(ParsedMessage.argSeparatorRegexGlobal) || []
-
-  console.debug(`"${message}" matches: "${matches.join(', ')}"`)
 
   if (isAliasCommand) {
     return matches.length > 1

@@ -177,17 +177,12 @@ export class ProcessingTree {
 
     for (const segment of script.segments) {
       const index = segment.index
-      console.debug(`Running Segment at index ${index}`)
 
       // A solo segment can always run so we will reset
       if (
         segment.block_type === 'solo' ||
         (segment.block_type === 'and_block' && lastSegment[1] === 'solo')
       ) {
-        console.debug(
-          `Running Block Segment type=${segment.block_type}; last segment=[${lastSegment[0]}${lastSegment[1]}]`
-        )
-
         canRun = await this.runOne(segment, {
           message,
           module: ref,
@@ -202,8 +197,6 @@ export class ProcessingTree {
         lastSegment[0] === index &&
         lastSegment[1] === 'and_block'
       ) {
-        console.debug(`Inner AND BLOCK; canRun=${canRun}`)
-
         // Check canRun
         if (canRun) {
           canRun = await this.runOne(segment, {

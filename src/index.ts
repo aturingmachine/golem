@@ -1,7 +1,5 @@
 import { writeFileSync } from 'fs'
-import { appendFileSync } from 'fs'
 import path from 'path'
-import { format } from 'util'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { MicroserviceOptions } from '@nestjs/microservices'

@@ -54,9 +54,6 @@ export class MessageController {
 
     // If we have an alias we want to expand it into a "raw" message string
     if (aliasHits && aliasHits.length > 0) {
-      console.debug(
-        `${messageContent} got an alias hit ${aliasHits.join(', ')}`
-      )
       // Now we want to inject an expanded version of each hit into the stack
       messageContent = this.aliasService.injectHits(messageContent, aliasHits)
     }

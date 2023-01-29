@@ -349,11 +349,7 @@ function parseSegment(
     // Remove all option flags from the raw compiled string
     .replaceAll(/(?:--[A-z_]+=((['"]).*?\2|[^s]*))/gi, '')
 
-  console.debug('content', content)
-  console.debug('parsedContent', parsedContent)
-
   const meat = StringUtils.dropWords(parsedContent, 1)
-  console.debug('meat', meat)
 
   const result: IParsedCommand = {
     command: StringUtils.wordAt(parsedContent, 0) as CommandBase,
@@ -407,8 +403,6 @@ function parseSegment(
       }
     }
   }
-
-  console.debug('result', formatForLog(result))
 
   return new ParsedCommand(
     result.command,

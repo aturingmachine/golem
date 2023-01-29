@@ -66,8 +66,6 @@ export class GSCompiler {
   }
 
   compile(): CompiledGolemScript {
-    console.debug(`GS::compile processing ast.raw="${this.ast.raw}"`)
-
     const raw = this.ast.blocks
       .flatMap((block, blockIndex) => {
         return Object.values(block.commands).flatMap((leaf, _index) => {
@@ -141,8 +139,6 @@ export class GSCompiler {
     index: number
   ): CompileTokenResult | undefined {
     let result: CompileTokenResult | undefined
-    console.debug(`GS::compileLeaf > compiling leaf ${formatForLog(token)}`)
-
     switch (token.type) {
       case 'cmd':
         this.updateCurrentSegment('command', token.value)
@@ -165,9 +161,6 @@ export class GSCompiler {
         result = this.compileVarLeaf(token, index)
 
         if (result) {
-          console.debug(
-            `token ${token.value} using value ${result.resolved_value}`
-          )
           this.updateCurrentSegment('variables', {
             [result.name]: result.resolved_value,
           })
@@ -202,9 +195,6 @@ export class GSCompiler {
     const existing = this.tokens[token.name]
 
     if (existing) {
-      console.debug(
-        `token ${token.value} found existing ${existing.toString()}`
-      )
       return {
         raw: token.value.toString(),
         name: token.name,
@@ -216,16 +206,11 @@ export class GSCompiler {
   }
 
   private compileFunctionLeaf(token: FuncAstToken): CompileTokenResult {
-    console.debug(
-      `GS:compileFunctionLeaf > compiling token "${formatForLog(token)}"`
-    )
     const def = GolemScriptFunctions.get(token.name)
     let evaled = token.value
 
     if (!token.insideAlias) {
-      console.debug(`GS:compileFunctionLeaf > evaling GS function ${def?.name}`)
       evaled = def?.implementation(...token.params.map((p) => p.value))
-      console.debug(`GS:compileFunctionLeaf > evaled to ${evaled}`)
     } else {
       console.debug(
         `GS:compileFunctionLeaf > inside alias, no eval "${evaled}"`
@@ -241,8 +226,6 @@ export class GSCompiler {
 
   private compileOptLeaf(token: OptAstToken): CompileTokenResult {
     const val: string | boolean | number | FuncAstToken = token.opt_val
-
-    console.debug(`CommandInvocation::constructor mapping val="${val}"`)
 
     // Handle nested Function Call
     if (typeof val === 'object') {

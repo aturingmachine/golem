@@ -8,7 +8,6 @@ type GolemFunctionDef = {
 }
 
 function random<T>(...args: T[]): T {
-  console.debug('GS:RANDOM', ...args)
   return ArrayUtils.shuffleArray(args)[0]
 }
 

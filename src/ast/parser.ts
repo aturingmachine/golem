@@ -52,7 +52,6 @@ export class Parser {
       })
       .filter(ArrayUtils.isDefined)
       .filter((x) => {
-        console.debug(`Parser::parse block final filter x.raw="${x.raw}"`)
         const honk = Object.values(x.commands).flatMap((s) => s.tokens)
 
         return honk.some((t) => t.type === 'cmd')
@@ -62,8 +61,6 @@ export class Parser {
   }
 
   parseOne(section: string): AstBlock {
-    console.debug(`Parser::parseOne section="${section}"`)
-
     const tokenizer = new Tokenizer(section)
     const type = section.includes('&&') ? 'and_block' : 'solo'
     const prog: AstTokenTree = {}
@@ -81,9 +78,6 @@ export class Parser {
         try {
           const next = tokenizer.read_next()
           cmd.push(next)
-          console.debug(
-            `Parser::parseOne pushed next="${next?.type}-${next?.value}"`
-          )
         } catch (error) {
           console.error(error)
           throw error
