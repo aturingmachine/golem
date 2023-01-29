@@ -10,6 +10,8 @@ import {
   SelectMenuInteraction,
 } from 'discord.js'
 import { v4 } from 'uuid'
+import { CompiledGolemScript } from '../ast/compiler'
+import { AstParseResult } from '../ast/parser'
 import { BuiltInAlias, CommandNames } from '../constants'
 import { LoggerService } from '../core/logger/logger.service'
 import { StringUtils } from '../utils/string-utils'
@@ -57,9 +59,10 @@ export class GolemMessageOpts {
 }
 
 export class GolemMessage {
-  public readonly parsed: ParsedCommand
+  // public readonly parsed: ParsedCommand
   public readonly commands: ParsedCommand[] = []
   public readonly info: MessageInfo
+  // public readonly invocation: CommandInvocation
 
   public readonly _replies: Reply = new Reply()
 
@@ -71,35 +74,22 @@ export class GolemMessage {
   private replies: Message[] = []
 
   constructor(
-    public source: GolemMessageInteraction, // customAlias?: CustomAlias
+    public source: GolemMessageInteraction,
+    public messageContent: CompiledGolemScript,
+    public ast: AstParseResult,
     public log: LoggerService,
     logs: [LoggerService, LoggerService]
   ) {
     this.traceId = v4().split('-')[0]
     this.log.setContext(`message`, this.traceId)
 
-    if (this.source instanceof Message) {
-      this.log.silly(`got Message`)
-      const raw =
-        // customAlias?.evaluated ||
-        this.ExpandBuiltInAlias(this.source.content) || this.source.content
+    this.commands = this.messageContent.segments.map((segment) => {
+      return ParsedCommand.fromSegment(segment)
+    })
 
-      this.log.silly(`parsed raw => ${raw}`)
+    this.log.debug(`rendered ${this.commands.length} commands.`)
 
-      this.parsed = ParsedCommand.fromRaw(raw)
-    } else if (this.source.isCommand()) {
-      this.parsed = ParsedCommand.fromCommandInteraction(this.source)
-    } else if (this.source.isSelectMenu()) {
-      throw new Error('Not Implemented.')
-      // TODO
-      // this.parsed = SelectMenu.fromId(this.source.customId).toParsedCommand()
-    } else {
-      throw new Error(`Invalid Interaction type - Cannot wrap ${this.source}`)
-    }
-
-    this.log.silly(`parsed => ${this.parsed.toDebug()}`)
-
-    this.info = new MessageInfo(this.source, logs[0], logs[1])
+    this.info = new MessageInfo(this.source, logs[0], logs[1], this.traceId)
   }
 
   getUserById(userId: string): GuildMember | undefined {
@@ -111,7 +101,7 @@ export class GolemMessage {
   }
 
   toDebug(): string {
-    return this.parsed.toDebug()
+    return this.commands.map((c) => c.toDebug()).join(', ')
   }
 
   collector<T extends MessageComponentInteraction<CacheType>>(

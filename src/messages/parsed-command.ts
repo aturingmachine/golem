@@ -1,4 +1,5 @@
 import { CommandInteraction, CommandInteractionOption } from 'discord.js'
+import { RawScriptSegment } from '../ast/compiler'
 import { CommandDescription, GolemCommand } from '../commands'
 import { Commands, RegisteredCommands } from '../commands/register-commands'
 import { BuiltInAlias, CommandBase } from '../constants'
@@ -22,10 +23,26 @@ type ObjectType<T> = T extends string
 
 export class ParsedCommand {
   constructor(
+    /**
+     * The Command Name
+     */
     public command: CommandBase,
+    /**
+     * The Params for the command
+     */
     public params: Record<string, string | number | boolean | undefined>,
+    /**
+     * Extra Options
+     */
     public extendedArgs: Record<string, string | number | boolean | undefined>,
+    public source: string,
+    /**
+     * Sub-Command name; if any
+     */
     public subCommand?: string,
+    /**
+     * Actual implementation for the command.
+     */
     public handler?: GolemCommand
   ) {}
 
@@ -34,6 +51,7 @@ export class ParsedCommand {
       invocation.command as CommandBase,
       {},
       {},
+      '',
       '',
       Commands.get(invocation.command)
     )
@@ -45,6 +63,15 @@ export class ParsedCommand {
       params: this.params,
       subCommand: this.subCommand,
     })
+  }
+
+  toJSON(): unknown {
+    return {
+      command: this.command,
+      params: this.params,
+      subCommand: this.subCommand,
+      extendedArgs: this.extendedArgs,
+    }
   }
 
   getDefault<T extends string | number | boolean>(
@@ -99,9 +126,57 @@ export class ParsedCommand {
       data.params,
       // TODO
       {},
+      '',
       data.subCommand,
       Commands.get(data.command)
     )
+  }
+
+  static fromSegment(segment: RawScriptSegment): ParsedCommand {
+    switch (segment.command) {
+      case CommandBase.admin:
+        return parseSegment(segment, RegisteredCommands.goadmin.info)
+      case CommandBase.alias:
+        return parseSegment(segment, RegisteredCommands.goalias.info)
+      // case BuiltInAlias.NP:
+      // case BuiltInAlias.NowPlaying:
+      // case CommandBase.get:
+      //   return parseSegment(segment, RegisteredCommands.goget.info)
+      // case CommandBase.help:
+      //   return parseSegment(segment, gohelp.info)
+      // case CommandBase.mix:
+      //   return parseSegment(segment, RegisteredCommands.gomix.info)
+      case BuiltInAlias.Pause:
+      case CommandBase.pause:
+        return parseSegment(segment, RegisteredCommands.gopause.info)
+      case CommandBase.peek:
+        return parseSegment(segment, RegisteredCommands.gopeek.info)
+      case BuiltInAlias.Play:
+      case CommandBase.play:
+      default:
+        return parseSegment(segment, RegisteredCommands.goplay.info)
+      case CommandBase.playlist:
+        return parseSegment(segment, RegisteredCommands.goplaylist.info)
+      case BuiltInAlias.PlayNext:
+      case CommandBase.playNext:
+        return parseSegment(segment, RegisteredCommands.goplaynext.info)
+      // case CommandBase.report:
+      //   return parseSegment(segment, RegisteredCommands.goreport.info)
+      case CommandBase.search:
+        return parseSegment(segment, RegisteredCommands.gosearch.info)
+      // case CommandBase.shuffle:
+      //   return parseSegment(segment, RegisteredCommands.goshuffle.info)
+      case BuiltInAlias.Skip:
+      case CommandBase.skip:
+        return parseSegment(segment, RegisteredCommands.goskip.info)
+      case BuiltInAlias.Stop:
+      case CommandBase.stop:
+        return parseSegment(segment, RegisteredCommands.gostop.info)
+      case CommandBase.perms:
+        return parseSegment(segment, RegisteredCommands.gopermission.info)
+      // default:
+      //   return parseSegment(segment, RegisteredCommands.goget.info)
+    }
   }
 
   static fromRaw(raw: string): ParsedCommand {
@@ -197,6 +272,7 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
       result.params,
       // TODO
       {},
+      '',
       result.subCommand,
       Commands.get(result.command)
     )
@@ -256,6 +332,89 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
     result.params,
     // TODO
     extended,
+    '',
+    result.subCommand,
+    Commands.get(result.command)
+  )
+}
+
+function parseSegment(
+  segment: RawScriptSegment,
+  def: CommandDescription
+): ParsedCommand {
+  const content = segment.compiled
+  const parsedContent = (
+    /^\$/.test(content) ? content.replace(/^\$(go )?/, '') : content
+  )
+    // Remove all option flags from the raw compiled string
+    .replaceAll(/(?:--[A-z_]+=((['"]).*?\2|[^s]*))/gi, '')
+
+  console.debug('content', content)
+  console.debug('parsedContent', parsedContent)
+
+  const meat = StringUtils.dropWords(parsedContent, 1)
+  console.debug('meat', meat)
+
+  const result: IParsedCommand = {
+    command: StringUtils.wordAt(parsedContent, 0) as CommandBase,
+    params: {},
+  }
+
+  if (meat.trim() === '--help') {
+    result.subCommand = '--help'
+    return new ParsedCommand(
+      result.command,
+      result.params,
+      // TODO
+      {},
+      '',
+      result.subCommand,
+      Commands.get(result.command)
+    )
+  }
+
+  if (def.subcommands && !result.subCommand) {
+    result.subCommand = meat.split(' ')[0]
+
+    def.subcommands
+      .filter((subc) => subc.name === meat.split(' ')[0])
+      .forEach((subc) => {
+        if (subc.args?.length) {
+          const argString = StringUtils.dropWords(meat, 1)
+          if (subc.args?.length > 1) {
+            const args = StringUtils.smartSplit(argString)
+            subc.args.forEach((arg, index) => {
+              result.params[arg.name] = arg.rest
+                ? args.slice(index, args.indexOf(' -- ')).join(' ')
+                : args[index]
+            })
+          } else {
+            result.params[subc.args[0].name] = argString
+          }
+        }
+      })
+  } else {
+    if (def.args?.length) {
+      if (def.args?.length > 1 || /( \-\-[A-z\- ]+ ?)+/g.test(meat)) {
+        const args = StringUtils.smartSplit(meat)
+        def.args.forEach((arg, index) => {
+          result.params[arg.name] = arg.rest
+            ? args.slice(index, args.indexOf(' -- ')).join(' ')
+            : args[index]
+        })
+      } else {
+        result.params[def.args[0].name] = meat
+      }
+    }
+  }
+
+  console.debug('result', formatForLog(result))
+
+  return new ParsedCommand(
+    result.command,
+    result.params,
+    segment.options,
+    segment.compiled,
     result.subCommand,
     Commands.get(result.command)
   )

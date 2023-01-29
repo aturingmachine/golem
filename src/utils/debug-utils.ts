@@ -1,3 +1,5 @@
+import { appendFileSync } from 'fs'
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const formatForLog = (obj: Record<string, any>): string => {
   const missing = processMissing(obj)
@@ -26,4 +28,12 @@ const processMissing = (val: unknown): string | undefined => {
   if (val === undefined) {
     return 'UNDEFINED '
   }
+}
+
+export function logfile(message: string, ...optionalParams: any[]): void {
+  appendFileSync(
+    './logfile',
+    [message].concat(...optionalParams).join(' ') + '\n',
+    { encoding: 'utf-8' }
+  )
 }

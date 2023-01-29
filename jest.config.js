@@ -7,5 +7,6 @@ module.exports = {
     // '<rootDir>/test-utils/mocks/logger.ts',
     // '<rootDir>/test-utils/mocks/golem.ts',
     // '<rootDir>/test-utils/mocks/handlers/handlers.ts',
+    '<rootDir>/reg-test-command.ts',
   ],
 }

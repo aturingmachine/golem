@@ -6,8 +6,10 @@ import {
   VoiceChannel,
 } from 'discord.js'
 import { AstTokenLeaf } from '../ast/parser'
-import { OptAstToken, VarAstToken } from '../ast/tokenizer'
+import { FuncAstToken, OptAstToken, VarAstToken } from '../ast/tokenizer'
+import { CommandBase } from '../constants'
 import { LoggerService } from '../core/logger/logger.service'
+import { GolemScriptFunctions } from '../golem-script/functions'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemMessageInteraction } from './golem-message'
 
@@ -23,29 +25,86 @@ export class CommandInvocation {
 
   readonly info!: string
 
-  constructor(readonly leaf: AstTokenLeaf) {
-    this.command =
-      leaf.tokens.find((leaf) => leaf.type === 'cmd')?.value?.toString() ||
-      'UNKNOWN'
+  constructor(readonly source: AstTokenLeaf) {
+    this.command = (source.command?.value as CommandBase) || 'UNKNOWN'
 
-    leaf.tokens
+    source.tokens
       .filter((token): token is OptAstToken => token.type === 'opt')
       .map((token) => {
-        this.options[token.name] = token.opt_val
+        console.debug(
+          `CommandInvocation::constructor mapping token="${token.value}"`
+        )
+
+        let val: string | boolean | number | FuncAstToken = token.opt_val
+
+        console.debug(`CommandInvocation::constructor mapping val="${val}"`)
+
+        // Handle nested Function Call
+        if (typeof val === 'object') {
+          console.log('val >', val)
+
+          const def = GolemScriptFunctions.get(val.name)
+
+          console.debug(
+            'MessageInfo:constructor > Evaluating golem function',
+            def?.name
+          )
+          const evaled = def?.implementation(...val.params.map((p) => p.value))
+          console.debug('MessageInfo:constructor > Evaluated', evaled)
+
+          this.options[token.name] = evaled
+
+          return
+        }
+
+        const isBool = ['false', 'true'].includes(val)
+        const isNumber = !isNaN(parseInt(val))
+
+        if (isBool) {
+          val = token.opt_val === 'true'
+        } else if (isNumber) {
+          val = parseInt(val)
+        }
+
+        this.options[token.name] = val
       })
 
     // TODO idk about this
-    leaf.tokens
+    source.tokens
       .filter((token): token is VarAstToken => token.type === 'var')
       .map((token) => {
-        this.options[token.name] = token.value
+        this.variables[token.name] = this.options[token.name]
       })
   }
 
   toString(): string {
-    return this.leaf.tokens
-      .reduce((prev, curr) => prev.concat(curr.value + ' '), '')
-      .trim()
+    return 'UNIMPLEMENTED'
+    // return this.leaf.tokens
+    //   .reduce((prev, curr) => prev.concat(curr.value + ' '), '')
+    //   .trim()
+  }
+
+  get asRaw(): string {
+    return this.source.tokens
+      .map((token) => {
+        switch (token.type) {
+          case 'num':
+          case 'str':
+          case 'cmd':
+            return token.value
+          case 'opt':
+            if (typeof (token as OptAstToken).opt_val === 'object') {
+              return ''
+            }
+
+            return token.value
+          case 'var':
+            return this.variables[token.name]
+          default:
+            return ''
+        }
+      })
+      .join(' ')
   }
 }
 
@@ -61,7 +120,12 @@ export class ParsedMessage {
   public args: Record<string, string | boolean | number>
   public content: string
 
-  constructor(message: Message | string, private log: LoggerService) {
+  constructor(
+    message: Message | string,
+    private log: LoggerService,
+    private uid?: string
+  ) {
+    this.log.setContext(`message-info${uid ? '::' + uid : ''}`)
     const rawContent = typeof message === 'string' ? message : message.content
 
     const sliceIndex = getSliceIndex(rawContent)
@@ -108,14 +172,16 @@ export class MessageInfo {
   constructor(
     public interaction: GolemMessageInteraction,
     private logger: LoggerService,
-    parasedLogger: LoggerService
+    parasedLogger: LoggerService,
+    private uid?: string
   ) {
     this.member = this.interaction.member as GuildMember
     this.guild = this.interaction.guild
 
     this.parsed = new ParsedMessage(
       '' + this.interaction.toString(),
-      parasedLogger
+      parasedLogger,
+      this.uid
     )
   }
 
@@ -149,9 +215,12 @@ export class MessageInfo {
 }
 
 function getSliceIndex(message: string): number {
-  // this.log.debug(`getting slice index for message: "${message}"`)
   const isAliasCommand = message.includes(' => ')
+  console.debug(`"${message}" isAliasCommand??? ${isAliasCommand}`)
+
   const matches = message.match(ParsedMessage.argSeparatorRegexGlobal) || []
+
+  console.debug(`"${message}" matches: "${matches.join(', ')}"`)
 
   if (isAliasCommand) {
     return matches.length > 1

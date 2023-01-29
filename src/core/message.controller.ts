@@ -2,9 +2,13 @@ import { Controller, Inject } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
 import { CONTEXT, MessagePattern, RequestContext } from '@nestjs/microservices'
 import { Message } from 'discord.js'
+import { GSCompiler } from '../ast/compiler'
+import { Parser } from '../ast/parser'
 import { GolemMessage } from '../messages/golem-message'
+import { MessageId } from '../messages/message-id.model'
 import { ReplyType } from '../messages/replies/types'
 import { ProcessingTree } from '../messages/tree'
+import { AliasService } from './alias/alias.service'
 import { LoggerService } from './logger/logger.service'
 
 @Controller()
@@ -13,18 +17,24 @@ export class MessageController {
     @Inject(CONTEXT) private ctx: RequestContext,
     private logger: LoggerService,
     private ref: ModuleRef,
-    private treeService: ProcessingTree
+    private treeService: ProcessingTree,
+    private aliasService: AliasService
   ) {
     this.logger.setContext('MessageController')
   }
 
   @MessagePattern('messageCreate')
   async handleMessage(data: { message: Message }): Promise<void> {
-    this.logger.info(data.message.content)
+    this.logger.info(`raw message="${data.message.content}"`)
 
+    // If we don't start with a buck then we can assume the message is not for us
     if (!data.message.content.startsWith('$')) {
       return
     }
+
+    let messageContent = data.message.content
+
+    const messageInfo = new MessageId(data.message)
 
     const messageLogger = await this.ref.resolve(LoggerService)
     // TODO this seems wrong on many levels.
@@ -32,9 +42,41 @@ export class MessageController {
       this.ref.resolve(LoggerService),
       this.ref.resolve(LoggerService),
     ])
-    const message = new GolemMessage(data.message, messageLogger, extraLogs)
 
-    await this.treeService.execute(data.message.content, this.ref, message)
+    // Check if we have any hits for custom aliases
+    const aliasHits = await this.aliasService.findAliases(
+      messageInfo.guildId,
+      data.message.content
+    )
+
+    this.logger.debug(
+      `pre alias injection - messageContent="${messageContent}"`
+    )
+
+    // If we have an alias we want to expand it into a "raw" message string
+    if (aliasHits && aliasHits.length > 0) {
+      console.debug(
+        `${messageContent} got an alias hit ${aliasHits.join(', ')}`
+      )
+      // Now we want to inject an expanded version of each hit into the stack
+      messageContent = this.aliasService.injectHits(messageContent, aliasHits)
+    }
+
+    this.logger.debug(
+      `post alias injection - messageContent="${messageContent}"`
+    )
+
+    const { ast, compiled } = GSCompiler.fromString(messageContent)
+
+    const message = new GolemMessage(
+      data.message,
+      compiled,
+      ast,
+      messageLogger,
+      extraLogs
+    )
+
+    const result = await this.treeService._execute(compiled, message, this.ref)
 
     const replies = message._replies.render()
 

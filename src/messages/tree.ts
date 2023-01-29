@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
+import { CompiledGolemScript, CompiledScriptSegment } from '../ast/compiler'
+import { AstParseResult, Parser } from '../ast/parser'
+import { CommandHandlerFnProps } from '../commands'
 import { Commands } from '../commands/register-commands'
 import { LoggerService } from '../core/logger/logger.service'
+import { formatForLog } from '../utils/debug-utils'
 import { GolemMessage } from './golem-message'
 import { ParsedCommand } from './parsed-command'
 
@@ -53,22 +57,22 @@ export class ProcessingTree {
   }
 
   // TODO make this work with Slash Commands probably?
-  treeify(msg: string): CommandNodes {
-    if (msg.includes(SEMI)) {
+  treeify(parsed: string): CommandNodes {
+    if (parsed.includes(SEMI)) {
       return {
         type: SEMI,
-        commands: msg.split(SEMI).map((m) => this.treeify(m.trim())),
+        commands: parsed.split(SEMI).map((m) => this.treeify(m.trim())),
       }
-    } else if (msg.includes(AND)) {
+    } else if (parsed.includes(AND)) {
       return {
         type: AND,
-        commands: msg.split(AND).map((m) => this.treeify(m.trim()) as any),
+        commands: parsed.split(AND).map((m) => this.treeify(m.trim()) as any),
       }
     } else {
       return {
         type: RUN,
-        command: msg,
-        instance: ParsedCommand.fromRaw(msg),
+        command: parsed,
+        instance: ParsedCommand.fromRaw(parsed),
       }
     }
   }
@@ -131,14 +135,127 @@ export class ProcessingTree {
     }
   }
 
+  // async _runTree(
+  //   script: CompiledGolemScript,
+  //   results: ExecutionResults,
+  //   ref: ModuleRef,
+  //   message?: GolemMessage
+  // ): Promise<boolean | undefined> {
+  //   //
+  // }
+
+  async runOne(
+    segment: CompiledScriptSegment,
+    fnProps: CommandHandlerFnProps
+  ): Promise<boolean> {
+    if (segment.instance.handler) {
+      return segment.instance.handler.execute(fnProps)
+    } else {
+      return false
+    }
+  }
+
+  async _execute(
+    script: CompiledGolemScript,
+    message: GolemMessage,
+    ref: ModuleRef
+  ): Promise<ExecutionResults> {
+    const results: ExecutionResults = {
+      fail: [],
+      success: [],
+      unrun: [],
+      timeline: [],
+    }
+
+    this.logger.debug(`executing segment[0] ${formatForLog(script)}`)
+
+    let lastSegment: [number, 'and_block' | 'solo'] = [
+      0,
+      script.segments[0].block_type,
+    ]
+    let canRun = true
+
+    for (const segment of script.segments) {
+      const index = segment.index
+      console.debug(`Running Segment at index ${index}`)
+
+      // A solo segment can always run so we will reset
+      if (
+        segment.block_type === 'solo' ||
+        (segment.block_type === 'and_block' && lastSegment[1] === 'solo')
+      ) {
+        console.debug(
+          `Running Block Segment type=${segment.block_type}; last segment=[${lastSegment[0]}${lastSegment[1]}]`
+        )
+
+        canRun = await this.runOne(segment, {
+          message,
+          module: ref,
+          source: segment.instance,
+        })
+      }
+
+      // If we are "inside" an and_block we need to check if the last
+      // command was an and_block
+      if (
+        segment.block_type === 'and_block' &&
+        lastSegment[0] === index &&
+        lastSegment[1] === 'and_block'
+      ) {
+        console.debug(`Inner AND BLOCK; canRun=${canRun}`)
+
+        // Check canRun
+        if (canRun) {
+          canRun = await this.runOne(segment, {
+            message,
+            module: ref,
+            source: segment.instance,
+          })
+        } else {
+          // This means we failed a previous command within an and block
+          // and we are going to skip the remaining and_block commands.
+          results.unrun.push(segment.command)
+          results.timeline.push({
+            command: segment.command,
+            status: 'SKIP',
+            instance: segment.instance,
+          })
+
+          lastSegment = [index, segment.block_type]
+
+          continue
+        }
+      }
+
+      if (canRun) {
+        results.success.push(segment.command)
+      } else {
+        results.fail.push(segment.command)
+      }
+
+      results.timeline.push({
+        command: segment.command,
+        status: canRun ? 'PASS' : 'FAIL',
+        instance: segment.instance,
+      })
+
+      lastSegment = [index, segment.block_type]
+    }
+
+    return results
+  }
+
   async execute(
     message: string,
     ref: ModuleRef,
-    golemMessage: GolemMessage
+    golemMessage: GolemMessage,
+    ast: AstParseResult
   ): Promise<ExecutionResults> {
     this.logger.setMessageContext(golemMessage, 'ProcessingTree')
     this.logger.info(`processing message: ${message}`)
-    const tree = this.treeify(message)
+    // const tree = this.treeify(message)
+
+    const tree = {} as any
 
     const results: ExecutionResults = {
       fail: [],

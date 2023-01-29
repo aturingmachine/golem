@@ -46,9 +46,15 @@ export function expandBuiltInAlias(raw: string): string | undefined {
   }
 }
 
+export type CommandHandlerFnProps = {
+  module: ModuleRef
+  message: GolemMessage
+  source: ParsedCommand
+}
+
 export type CommandHandlerFn<T extends ServiceReqs> = (
   this: GolemCommand<T>,
-  props: { module: ModuleRef; message: GolemMessage; source: ParsedCommand },
+  props: CommandHandlerFnProps,
   ...args: any[]
 ) => Promise<boolean>
 

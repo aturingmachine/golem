@@ -3,6 +3,10 @@ import { TemplateTag } from 'common-tags'
 const smartSplitRegex = /"([^"]*)"|(\S+)|( \-\-[A-z\-]+)/g
 
 export const StringUtils = {
+  repeat(char: string, times: number): string {
+    return Array(times).fill(char).join('')
+  },
+
   /**
    * Split a string on spaces, treating strings contained in double quotes as
    * separate unique tokens

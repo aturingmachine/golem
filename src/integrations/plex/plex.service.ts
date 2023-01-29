@@ -16,7 +16,7 @@ type PlexPlaylistRecord = {
 export class PlexService {
   readonly playlists: PlexPlaylistRecord[]
 
-  private readonly client: PlexAPI
+  private readonly client?: PlexAPI
 
   constructor(
     private log: LoggerService,
@@ -31,15 +31,19 @@ export class PlexService {
     const username = this.config.getOrThrow('plex.username')
     const password = this.config.getOrThrow('plex.password')
 
-    this.client = new PlexAPI({
-      hostname: host,
-      username,
-      password,
-      options: {
-        identifier: appId,
-        product: 'Golem Bot',
-      },
-    })
+    try {
+      this.client = new PlexAPI({
+        hostname: host,
+        username,
+        password,
+        options: {
+          identifier: appId,
+          product: 'Golem Bot',
+        },
+      })
+    } catch (error) {
+      this.log.error(`unable to connect to plex ${error}`)
+    }
 
     this.playlists = []
   }
@@ -47,8 +51,8 @@ export class PlexService {
   async loadPlaylists(): Promise<void> {
     this.log.info('Loading Plex Playlists')
 
-    const response = await this.client.query<PlaylistMetadata>('/playlists')
-    const playlistData = response.MediaContainer.Metadata
+    const response = await this.client?.query<PlaylistMetadata>('/playlists')
+    const playlistData = response?.MediaContainer.Metadata
 
     if (!playlistData) {
       this.log.warn(`No Plex Playlist Data Found.`)
@@ -71,7 +75,7 @@ export class PlexService {
   private async getPlaylistById(
     id: string
   ): Promise<PlexPlaylistRecord | undefined> {
-    const details = await this.client.query<LibraryItem>(
+    const details = await this.client?.query<LibraryItem>(
       `/playlists/${id}/items`
     )
 

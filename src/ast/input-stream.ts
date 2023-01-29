@@ -16,7 +16,7 @@ export class InputStream {
   next(): string {
     const ch = this.input.charAt(this.pos++)
 
-    if (ch == '\n') {
+    if (ch === '\n') {
       this.commands++
       this.col = 0
     } else {
@@ -31,8 +31,9 @@ export class InputStream {
   }
 
   eoc(): boolean {
+    // console.log(this.peek(), this.peek_next())
     return (
-      [';', ''].includes(this.peek()) ||
+      [';', '', null].includes(this.peek()) ||
       (this.peek() === '&' && this.peek_next() === '&')
     )
   }

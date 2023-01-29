@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { CustomAlias } from './core/alias/alias.model'
 import configuration from './core/configuration'
 import { CoreModule } from './core/core.module'
+import { Permissions } from './core/permissions/permissions'
 import { IntegrationsModule } from './integrations/integration.module'
 import { Library } from './music/local/library/library'
 import { Album } from './music/local/listings/album'
@@ -33,7 +35,7 @@ import { MusicModule } from './music/music.module'
           synchronize: true,
           logging: true,
           database: config.get('mongo.dbName'),
-          entities: [Library, LocalListing, Album],
+          entities: [Library, LocalListing, Album, CustomAlias, Permissions],
         }
       },
       inject: [ConfigService],

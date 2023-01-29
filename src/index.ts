@@ -1,24 +1,46 @@
+import { writeFileSync } from 'fs'
+import { appendFileSync } from 'fs'
+import path from 'path'
+import { format } from 'util'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { MicroserviceOptions } from '@nestjs/microservices'
+import minimist from 'minimist'
 import { AppModule } from './application.module'
+import { GSCompiler } from './ast/compiler'
 import { CommandService } from './commands/commands.service'
 import { ClientService } from './core/client.service'
 import configuration from './core/configuration'
 import { DiscordBotServer } from './core/discord-transport'
 import { LoggerService } from './core/logger/logger.service'
 import { PlexService } from './integrations/plex/plex.service'
+import { ParsedCommand } from './messages/parsed-command'
 import { ListingLoaderService } from './music/local/library/loader.service'
 import { GolemModule } from './utils/raw-config'
 import { RawConfig } from './utils/raw-config'
 import { humanReadableDuration } from './utils/time-utils'
 
+export function debugDump(...args: unknown[]): void {
+  const out = path.resolve(__dirname, '../out.json')
+  writeFileSync(out, JSON.stringify(args, undefined, 2), { encoding: 'utf-8' })
+}
+
+const commandLineArgs = minimist(process.argv.slice(2))
+
+/**
+ * Inject Globals
+ */
+
+console.debug = (message: any, ...optionaParams: any[]) => {
+  if (!!commandLineArgs.debug) {
+    console.log('[DEBUG] >', message, ...optionaParams)
+  }
+}
+
 async function bootstrap() {
   const start = Date.now()
   const botServer = new DiscordBotServer()
   botServer.init()
-
-  console.log(configuration().logLevels)
 
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
@@ -51,7 +73,11 @@ async function bootstrap() {
     const plexService = app.get(PlexService)
     log.info('Got PlexService')
 
-    await plexService.loadPlaylists()
+    try {
+      await plexService.loadPlaylists()
+    } catch (error) {
+      log.warn(`unable to get plex playlists... ${error}`)
+    }
   } else {
     log.info('PlexModule not loaded.')
   }
@@ -126,7 +152,7 @@ function shutdownHandler(): void {
   return
 }
 
-process.once('exit', shutdownHandler)
+// process.once('exit', shutdownHandler)
 // process.once('uncaughtException', () => {
 //   if (GolemConf.crashHandler) {
 //     execSync(GolemConf.crashHandler)

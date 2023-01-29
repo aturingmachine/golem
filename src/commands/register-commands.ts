@@ -3,7 +3,7 @@ import { Collection } from 'discord.js'
 // import { LogContexts } from '../logger/constants'
 // import { GolemLogger } from '../logger/logger.service'
 import goadmin from './implementations/goadmin'
-// import goalias from './implementations/goalias'
+import goalias from './implementations/goalias'
 // import goget from './implementations/goget'
 // import gomix from './implementations/gomix'
 import gopause from './implementations/gopause'
@@ -23,7 +23,7 @@ export const Commands = new Collection<string, GolemCommand<any>>()
 
 export const RegisteredCommands = {
   goadmin,
-  // goalias,
+  goalias,
   // goget,
   // gomix,
   gopause,
