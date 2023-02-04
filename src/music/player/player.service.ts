@@ -3,6 +3,7 @@ import { Injectable, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { ModuleRef } from '@nestjs/core'
 import { LoggerService } from '../../core/logger/logger.service'
+import { NoPlayerError } from '../../errors/no-player-error'
 import { GolemMessage } from '../../messages/golem-message'
 import { TrackAudioResourceMetadata, TrackType } from '../tracks'
 import { Tracks } from '../tracks/tracks'
@@ -41,6 +42,23 @@ export class PlayerService {
       )}`
     )
     return this._cache.get(guildId)
+  }
+
+  shuffle(guildId: string): MusicPlayer {
+    const player = this.for(guildId)
+
+    if (!player) {
+      this.log.warn(`cannot run shuffle on guild with no player`)
+
+      throw new NoPlayerError({
+        message: 'Cannot shuffle in guild with no active player.',
+        sourceCmd: 'shuffle',
+      })
+    }
+
+    player.shuffle()
+
+    return player
   }
 
   async create(message: GolemMessage): Promise<MusicPlayer | undefined> {

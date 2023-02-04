@@ -29,7 +29,7 @@ export default new GolemCommand({
       return this.subcommandTree.run(this, props)
     } catch (error) {
       this.services.log.error(error)
-      return false
+      throw error
     }
   },
 

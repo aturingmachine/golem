@@ -24,22 +24,10 @@ export default new GolemCommand({
           source
         )
 
-        if (typeof createResult !== 'number') {
-          await message.addReply(
-            new RawReply(`Created alias: ${createResult.name}.`)
-          )
-          return true
-        }
-
         await message.addReply(
-          new RawReply(
-            createResult === 1
-              ? 'Unable to create alias due to an error.'
-              : 'Alias with the same name already exists.'
-          )
+          new RawReply(`Created alias: ${createResult.name}.`)
         )
-
-        return false
+        return true
       },
     },
     delete: {
@@ -54,50 +42,14 @@ export default new GolemCommand({
           return false
         }
 
-        const deleteResult = await this.services.aliasService.delete({
+        await this.services.aliasService.delete({
           userId: message.info.userId,
           guildId: message.info.guildId,
           aliasName: deleteTarget.trim(),
         })
 
-        if (deleteResult === 0) {
-          await message.addReply(new RawReply(`Deleted alias ${deleteTarget}`))
-          return true
-        }
-
-        // Error deleting alias.
-        if (deleteResult === 4) {
-          await message.addReply(new RawReply(`Error deleting alias.`))
-        }
-
-        // Not allowed to delete.
-        if (deleteResult === 3) {
-          await message.addReply(
-            new RawReply(
-              `Missing Required permissions to delete an alias on this server.`
-            )
-          )
-        }
-
-        // Not found
-        if (deleteResult === 2) {
-          await message.addReply(
-            new RawReply(
-              `No alias found on this server named "${deleteTarget}"`
-            )
-          )
-        }
-
-        // Not allowed to delete THIS alias.
-        if (deleteResult === 1) {
-          await message.addReply(
-            new RawReply(
-              `Missing required permissions to delete alias "${deleteTarget}"`
-            )
-          )
-        }
-
-        return false
+        await message.addReply(new RawReply(`Deleted alias ${deleteTarget}`))
+        return true
       },
     },
     list: {

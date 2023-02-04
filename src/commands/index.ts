@@ -53,7 +53,11 @@ export type CommandHandlerFnProps = {
   source: ParsedCommand
 }
 
-export type CommandHandlerFn<T extends ServiceReqs> = (
+export type CommandHandlerFn<
+  T extends ServiceReqs = {
+    log: typeof LoggerService
+  }
+> = (
   this: GolemCommand<T>,
   props: CommandHandlerFnProps,
   ...args: any[]
@@ -205,7 +209,11 @@ type ValidOptions =
   | SlashCommandStringOption
   | SlashCommandUserOption
 
-export class GolemCommand<T extends ServiceReqs> {
+export class GolemCommand<
+  T extends ServiceReqs = {
+    log: typeof LoggerService
+  }
+> {
   public readonly slashCommand: SlashCommandBuilder
   public readonly execute: CommandHandlerFn<T>
   public readonly subcommandTree!: SubcommandTree<T>

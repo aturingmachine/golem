@@ -1,6 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { MongoRepository } from 'typeorm'
+import { BadArgsError } from '../../errors/bad-args-error'
+import { BasicError } from '../../errors/basic-error'
+import { ExistingResourceError } from '../../errors/existing-resource-error'
+import { NoPrivilegesError } from '../../errors/no-privileges-error'
+import { NotFoundError } from '../../errors/not-found-error'
+import { NotOwnedError } from '../../errors/not-owner-error'
 import { ParsedCommand } from '../../messages/parsed-command'
 import { formatForLog } from '../../utils/debug-utils'
 import { LoggerService } from '../logger/logger.service'
@@ -29,7 +35,7 @@ export class AliasService {
     userId: string
     guildId: string
     aliasName: string
-  }): Promise<number> {
+  }): Promise<void> {
     const isAdmin = await this.permissionsService.isAdmin(query)
 
     const canDelete = await this.permissionsService.can(
@@ -47,7 +53,12 @@ export class AliasService {
     )
 
     if (!canDelete) {
-      return 3
+      throw new NoPrivilegesError({
+        message: 'Cannot Delete Alias. Permission Denied.',
+        required: [PermissionCode.AliasDelete],
+        sourceAction: 'delete',
+        sourceCmd: 'alias',
+      })
     }
 
     const records = await this.aliases.findBy({
@@ -57,24 +68,36 @@ export class AliasService {
     })
 
     if (!records.length) {
-      return 2
+      throw new NotFoundError({
+        identifier: query.aliasName,
+        message: `Alias named ${query.aliasName} not found on server ${query.guildId}.`,
+        resource: 'alias',
+        sourceCmd: 'delete',
+      })
     }
 
     if (records[0].authorId !== query.userId && !isAdmin) {
-      return 1
+      throw new NotOwnedError({
+        message: 'Cannot Delete Alias. Permission Denied.',
+        sourceAction: 'delete',
+        sourceCmd: 'alias',
+        resource: 'alias',
+      })
     }
 
     try {
       const result = await this.aliases.deleteOne(records[0])
 
       if (!result.deletedCount) {
-        throw new Error("Couldn't delete alias...")
+        throw new BasicError({
+          message: 'Could not delete alias.',
+          sourceCmd: 'alias',
+          code: 100,
+        })
       }
-
-      return 0
     } catch (error) {
       this.log.error('could not delete alias', error)
-      return 4
+      throw error
     }
   }
 
@@ -82,7 +105,7 @@ export class AliasService {
     authorId: string,
     guildId: string,
     _source: ParsedCommand
-  ): Promise<number | CustomAlias> {
+  ): Promise<CustomAlias> {
     try {
       const name = _source.source.split('=>')[0].trim().split(' ').pop()
       const source = _source.source.split('=>')[1].trim()
@@ -91,12 +114,33 @@ export class AliasService {
 
       const existing = await this.forGuild(guildId)
 
+      if (!source) {
+        throw new BadArgsError({
+          message: 'Missing argument for Alias Value.',
+          sourceCmd: 'alias.create',
+          subcommand: 'create',
+          argName: 'alias value',
+          format: '$go alias create <alias name> => <alias value>',
+        })
+      }
+
       if (!name) {
-        return 3
+        throw new BadArgsError({
+          message: 'Missing argument for Alias Name.',
+          sourceCmd: 'alias.create',
+          subcommand: 'create',
+          argName: 'alias name',
+          format: '$go alias create <alias name> => <alias value>',
+        })
       }
 
       if (existing.map((a) => a.name).includes(name)) {
-        return 2
+        throw new ExistingResourceError({
+          message: 'Missing argument for Alias Name.',
+          sourceCmd: 'alias',
+          identifier: name,
+          resource: 'alias',
+        })
       }
 
       this.log.debug(
@@ -117,12 +161,10 @@ export class AliasService {
         description: desc,
       })
 
-      this.aliases.save(newAlias)
-
-      return newAlias
+      return this.aliases.save(newAlias)
     } catch (error) {
       this.log.error(`error creating alias`, error)
-      return 1
+      throw error
     }
   }
 

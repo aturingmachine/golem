@@ -1,6 +1,9 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
+import { BasicError } from '../../errors/basic-error'
+import { NoModuleError } from '../../errors/no-module-error'
+import { NoPlayerError } from '../../errors/no-player-error'
 import { RawReply } from '../../messages/replies/raw'
 import { PlayQueryService } from '../../music/player/play-query.service'
 import { PlayerService } from '../../music/player/player.service'
@@ -20,67 +23,70 @@ export default new GolemCommand({
     const query = source.getString('query')
     this.services.log.info(`executing play with query ${query}`)
 
-    try {
-      const player = await this.services.playerService.getOrCreate(message)
+    const player = await this.services.playerService.getOrCreate(message)
 
-      if (!player) {
-        this.services.log.warn(
-          `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
-        )
-        return false
-      }
-
-      if (!query) {
-        // If we are doing an "unpause" and nothing is playing
-        // then we have errored...
-        if (!player.isPlaying) {
-          await message.addReply(
-            new RawReply(
-              'No search query to play and nothing playing to unpause...'
-            )
-          )
-
-          return false
-        }
-
-        player?.unpause()
-        await message.addReply(new RawReply('Unpausing!'))
-        return true
-      }
-
-      const queryResult = await this.services.queryService.process(
-        message,
-        query
+    if (!player) {
+      this.services.log.warn(
+        `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
       )
 
-      // Handle a processed result that does not have a supported module
-      if (!('tracks' in queryResult)) {
-        const errMsg = queryResult.missingModule
-          ? `Cannot process request. Module \`${queryResult.missingModule}\` not loaded. Contact Golem's Administrator.`
-          : queryResult.message || 'unable to process request.'
+      throw new NoPlayerError({
+        message: `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
+        sourceCmd: 'play',
+      })
+    }
 
-        this.services.log.warn(`query "${query}" failed: "${errMsg}"`)
-
-        await message.addReply(new RawReply(errMsg))
-
-        return false
+    if (!query) {
+      // If we are doing an "unpause" and nothing is playing
+      // then we have errored...
+      if (!player.isPlaying) {
+        throw new NoPlayerError({
+          sourceCmd: 'play',
+          message:
+            'Cannot execute. No search query to play, and no paused track to unpase.',
+        })
       }
 
-      this.services.playerService.play(
-        message,
-        player,
-        queryResult.tracks,
-        'queue'
-      )
+      player?.unpause()
 
-      this.services.log.debug(`query returned as: ${formatForLog(queryResult)}`)
-
-      await message.addReply(queryResult.replies)
+      await message.addReply(new RawReply('Unpausing!'))
 
       return true
-    } catch (error) {
-      return false
     }
+
+    const queryResult = await this.services.queryService.process(message, query)
+
+    // Handle a processed result that does not have a supported module
+    if (!('tracks' in queryResult)) {
+      if (queryResult.missingModule) {
+        throw new NoModuleError({
+          message: queryResult.message || 'Missing required modules to play.',
+          sourceCmd: 'play',
+          action: 'play',
+          required: [queryResult.missingModule],
+        })
+      }
+
+      throw new BasicError({
+        code: 101,
+        message: queryResult.message || 'Unable to process play request.',
+        sourceCmd: 'play',
+        requiresAdminAttention: true,
+      })
+    }
+
+    this.services.playerService.play(
+      message,
+      player,
+      queryResult.tracks,
+      'queue'
+    )
+
+    this.services.log.debug(`query returned as: ${formatForLog(queryResult)}`)
+
+    await message.addReply(queryResult.replies)
+
+    return true
   },
   info: {
     name: CommandNames.Base.play,

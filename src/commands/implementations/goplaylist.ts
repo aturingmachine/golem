@@ -61,26 +61,6 @@ export default new GolemCommand({
           },
         })
 
-        // Error cases.
-        if (typeof createResult === 'number') {
-          switch (createResult) {
-            case 1:
-              await message.addReply(
-                `Missing required permissions to create a playlist.`
-              )
-              break
-            case 2:
-              await message.addReply(
-                `Playlist with name ${playlistName} already exists.`
-              )
-              break
-            case 3:
-              await message.addReply(`No player queue to build playlist from.`)
-              break
-          }
-          return false
-        }
-
         await message.addReply(
           `Created playlist ${createResult.name} with ${createResult.listings.length} listings.`
         )

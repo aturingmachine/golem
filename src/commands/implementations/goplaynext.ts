@@ -1,6 +1,9 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
+import { BasicError } from '../../errors/basic-error'
+import { NoModuleError } from '../../errors/no-module-error'
+import { NoPlayerError } from '../../errors/no-player-error'
 import { RawReply } from '../../messages/replies/raw'
 import { PlayQueryService } from '../../music/player/play-query.service'
 import { PlayerService } from '../../music/player/player.service'
@@ -29,24 +32,28 @@ export default new GolemCommand({
         this.services.log.warn(
           `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
         )
-        return false
+
+        throw new NoPlayerError({
+          message: `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
+          sourceCmd: 'playnext',
+        })
       }
 
       if (!query) {
         // If we are doing an "unpause" and nothing is playing
         // then we have errored...
         if (!player.isPlaying) {
-          await message.addReply(
-            new RawReply(
-              'No search query to play and nothing playing to unpause...'
-            )
-          )
-
-          return false
+          throw new NoPlayerError({
+            sourceCmd: 'playnext',
+            message:
+              'Cannot execute. No search query to play, and no paused track to unpase.',
+          })
         }
 
         player?.unpause()
+
         await message.addReply(new RawReply('Unpausing!'))
+
         return true
       }
 
@@ -57,15 +64,21 @@ export default new GolemCommand({
 
       // Handle a processed result that does not have a supported module
       if (!('tracks' in queryResult)) {
-        const errMsg = queryResult.missingModule
-          ? `Cannot process request. Module \`${queryResult.missingModule}\` not loaded. Contact Golem's Administrator.`
-          : queryResult.message || 'unable to process request.'
+        if (queryResult.missingModule) {
+          throw new NoModuleError({
+            message: queryResult.message || 'Missing required modules to play.',
+            sourceCmd: 'playnext',
+            action: 'playnext',
+            required: [queryResult.missingModule],
+          })
+        }
 
-        this.services.log.warn(`query "${query}" failed: "${errMsg}"`)
-
-        await message.addReply(new RawReply(errMsg))
-
-        return false
+        throw new BasicError({
+          code: 102,
+          message: queryResult.message || 'Unable to process playnext request.',
+          sourceCmd: 'playnext',
+          requiresAdminAttention: true,
+        })
       }
 
       if (queryResult.tracks.length > 1) {

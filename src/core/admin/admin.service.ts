@@ -1,5 +1,7 @@
 import { Injectable, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { NoModuleError } from '../../errors/no-module-error'
+import { NoPrivilegesError } from '../../errors/no-privileges-error'
 import { GolemMessage } from '../../messages/golem-message'
 import { ListingLoaderService } from '../../music/local/library/loader.service'
 import { LoggerService } from '../logger/logger.service'
@@ -20,7 +22,7 @@ export class AdminService {
 
   async refreshLibraries(
     message: GolemMessage
-  ): Promise<Record<string, number> | 1 | 2> {
+  ): Promise<Record<string, number>> {
     const isAdmin = await this.permissions.isAdmin(message)
 
     if (!isAdmin) {
@@ -28,13 +30,23 @@ export class AdminService {
         `attempt at unauthorized access to AdminService.refreshLibraries! user="${message.info.userId}//${message.info.member?.displayName}" guild="${message.info.guildId}//${message.info.guild?.name}"`
       )
 
-      return 1
+      throw new NoPrivilegesError({
+        message: 'Attempting to LibRefresh without Admin Privileges.',
+        sourceCmd: 'librefresh',
+        sourceAction: 'Library Refresh',
+        required: ['Administrator'],
+      })
     }
 
     if (!this.loader) {
       this.log.warn(`attempted to refresh libraries without LocalMusic module.`)
 
-      return 2
+      throw new NoModuleError({
+        message: 'Attempting to LibRefresh without Admin Privileges.',
+        sourceCmd: 'librefresh',
+        required: ['Administrator'],
+        action: 'refresh libraries',
+      })
     }
 
     const result = this.loader.refresh()

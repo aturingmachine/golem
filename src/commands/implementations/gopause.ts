@@ -1,6 +1,7 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
+import { NoPlayerError } from '../../errors/no-player-error'
 import { MessageBuilderService } from '../../messages/message-builder.service'
 import { RawReply } from '../../messages/replies/raw'
 import { PlayerService } from '../../music/player/player.service'
@@ -21,11 +22,13 @@ export default new GolemCommand({
     const player = this.services.playerService.for(message.info.guildId)
 
     if (!player) {
-      await message.reply('Nothing to pause.')
-      return false
+      throw new NoPlayerError({
+        message: 'Cannot pause, no active player in server.',
+        sourceCmd: 'pause',
+      })
     }
 
-    player?.pause()
+    player.pause()
 
     await message._replies.add(new RawReply('Pausing Playback.'))
 

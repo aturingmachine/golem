@@ -1,6 +1,7 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
+import { NoPlayerError } from '../../errors/no-player-error'
 import { MessageBuilderService } from '../../messages/message-builder.service'
 import { RawReply } from '../../messages/replies/raw'
 import { PlayerService } from '../../music/player/player.service'
@@ -24,7 +25,11 @@ export default new GolemCommand({
       this.services.log.warn(
         `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
       )
-      return false
+
+      throw new NoPlayerError({
+        message: `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
+        sourceCmd: 'skip',
+      })
     }
 
     this.services.log.info('executing')
@@ -49,7 +54,10 @@ export default new GolemCommand({
         )
       }
     } else {
-      await message.addReply(new RawReply('No track to skip.'))
+      throw new NoPlayerError({
+        message: `No track to skip.`,
+        sourceCmd: 'skip',
+      })
     }
 
     return true

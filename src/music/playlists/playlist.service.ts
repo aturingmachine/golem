@@ -4,6 +4,9 @@ import { MongoRepository } from 'typeorm'
 import { LoggerService } from '../../core/logger/logger.service'
 import { PermissionCode } from '../../core/permissions/permissions'
 import { PermissionsService } from '../../core/permissions/permissions.service'
+import { ExistingResourceError } from '../../errors/existing-resource-error'
+import { NoPlayerError } from '../../errors/no-player-error'
+import { NoPrivilegesError } from '../../errors/no-privileges-error'
 import { formatForLog } from '../../utils/debug-utils'
 import { ArrayUtils } from '../../utils/list-utils'
 import { ListingSearcher } from '../local/library/searcher.service'
@@ -110,20 +113,30 @@ export class PlaylistService {
       .join('\n')
   }
 
-  async create(payload: CreatePlaylistPayload): Promise<Playlist | number> {
+  async create(payload: CreatePlaylistPayload): Promise<Playlist> {
     this.log.debug(`create using initial payload: ${formatForLog(payload)}`)
     const canCreate = await this.permissionsService.can(payload.userInfo, [
       PermissionCode.PlaylistCreate,
     ])
 
     if (!canCreate) {
-      return 1
+      throw new NoPrivilegesError({
+        message: 'Missing required permissions to create playlist.',
+        sourceAction: 'create',
+        sourceCmd: 'playlist.create',
+        required: [PermissionCode.PlaylistCreate],
+      })
     }
 
     const records = await this.forGuild(payload.userInfo.guildId)
 
     if (records.some((record) => record.name === payload.name)) {
-      return 2
+      throw new ExistingResourceError({
+        message: 'Missing required permissions to create playlist.',
+        sourceCmd: 'playlist.create',
+        resource: 'playlist',
+        identifier: payload.name,
+      })
     }
 
     let listings: Playlist['listings'] = []
@@ -132,7 +145,11 @@ export class PlaylistService {
       const player = this.players.for(payload.userInfo.guildId)
 
       if (!player || !player.nowPlaying) {
-        return 3
+        throw new NoPlayerError({
+          message:
+            'Cannot create playlist from queue. Server has no active player.',
+          sourceCmd: 'playlist.create',
+        })
       }
 
       const tracks = player.trackList().map((t) => t.audioResource.track)

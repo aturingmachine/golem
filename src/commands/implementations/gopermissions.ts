@@ -106,7 +106,7 @@ export default new GolemCommand({
         if (!parsedPermissions) {
           await message.addReply(
             new RawReply(
-              `Permission set "${newPermissions}" contains no invalid Permission Codes. Use \`$go perms describe\` to view valid Permission Codes.`
+              `Permission set "${newPermissions}" contains no valid Permission Codes. Use \`$go perms describe\` to view valid Permission Codes.`
             )
           )
 

@@ -1,6 +1,7 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
+import { NoPlayerError } from '../../errors/no-player-error'
 import { QueueReply } from '../../messages/replies/queue'
 import { RawReply } from '../../messages/replies/raw'
 import { PlayerService } from '../../music/player/player.service'
@@ -20,9 +21,12 @@ export default new GolemCommand({
     console.log('Got Player:', player, player?.trackCount)
 
     if (!player) {
-      await message.addReply(new RawReply('Not in a valid voice channel.'))
       this.services.log.info(`no channel to join, exiting early`)
-      return false
+
+      throw new NoPlayerError({
+        message: 'Cannot peek queue, no active player in server.',
+        sourceCmd: 'pause',
+      })
     }
 
     // TODO support dynamic values

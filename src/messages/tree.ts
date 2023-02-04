@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { ModuleRef } from '@nestjs/core'
 import { CompiledGolemScript, CompiledScriptSegment } from '../ast/compiler'
-import { AstParseResult, Parser } from '../ast/parser'
 import { CommandHandlerFnProps } from '../commands'
 import { Commands } from '../commands/register-commands'
+import { ClientService } from '../core/client.service'
 import { LoggerService } from '../core/logger/logger.service'
+import { GolemError } from '../errors/golem-error'
 import { formatForLog } from '../utils/debug-utils'
 import { GolemMessage } from './golem-message'
 import { ParsedCommand } from './parsed-command'
@@ -52,8 +54,12 @@ export type ExecutionResults = {
 
 @Injectable()
 export class ProcessingTree {
-  constructor(private logger: LoggerService) {
-    this.logger.setContext('tree-service')
+  constructor(
+    private logger: LoggerService,
+    private clientService: ClientService,
+    private config: ConfigService
+  ) {
+    this.logger.setContext('TreeService')
   }
 
   // TODO make this work with Slash Commands probably?
@@ -111,13 +117,52 @@ export class ProcessingTree {
       console.log('Should be running using:', innerTree.instance.toDebug())
       console.log(innerTree.instance.handler)
 
-      const status = message
-        ? innerTree.instance.handler?.execute({
+      let status
+
+      // client.users.send('id', 'content');
+      if (!!message) {
+        try {
+          status = innerTree.instance.handler?.execute({
             module: ref,
             message: message,
             source: innerTree.instance,
           })
-        : false
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } catch (error: any) {
+          this.logger.error(
+            error.message,
+            error.stack,
+            `TreeService::${innerTree.instance.handler?.options.logSource}::${message.traceId}`
+          )
+
+          status = false
+
+          // Render the error reply onto the reply stack if
+          // it has not already been rendered.
+          await message.addError(error)
+
+          /**
+           * If the error is flagged as requiring admin
+           * attention we should send a DM to the admin.
+           */
+          if (
+            GolemError.is(error) &&
+            error.params.requiresAdminAttention &&
+            this.clientService.client &&
+            this.config.get('discord.adminId')
+          ) {
+            await this.clientService.client.users.send(
+              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              this.config.get('discord.adminId')!,
+              (
+                await error.toMessage()
+              ).opts
+            )
+          }
+        }
+      } else {
+        status = false
+      }
 
       if (status) {
         results.success.push(innerTree.command)
@@ -134,15 +179,6 @@ export class ProcessingTree {
       return status
     }
   }
-
-  // async _runTree(
-  //   script: CompiledGolemScript,
-  //   results: ExecutionResults,
-  //   ref: ModuleRef,
-  //   message?: GolemMessage
-  // ): Promise<boolean | undefined> {
-  //   //
-  // }
 
   async runOne(
     segment: CompiledScriptSegment,
@@ -241,14 +277,12 @@ export class ProcessingTree {
   async execute(
     message: string,
     ref: ModuleRef,
-    golemMessage: GolemMessage,
-    ast: AstParseResult
+    golemMessage: GolemMessage
   ): Promise<ExecutionResults> {
     this.logger.setMessageContext(golemMessage, 'ProcessingTree')
     this.logger.info(`processing message: ${message}`)
-    // const tree = this.treeify(message)
 
-    const tree = {} as any
+    const tree = {} as CommandNodes
 
     const results: ExecutionResults = {
       fail: [],

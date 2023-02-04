@@ -2,7 +2,6 @@ import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
 import { MessageBuilderService } from '../../messages/message-builder.service'
-import { RawReply } from '../../messages/replies/raw'
 import { SearchReply } from '../../messages/replies/search-reply'
 import { ListingSearcher } from '../../music/local/library/searcher.service'
 import { GolemModule } from '../../utils/raw-config'
@@ -13,49 +12,43 @@ export default new GolemCommand({
     search: ListingSearcher,
     builder: MessageBuilderService,
   },
-  logSource: 'go-search',
+  logSource: 'GoSearch',
   async handler({ message, source }): Promise<boolean> {
-    try {
-      this.services.log.setMessageContext(message, 'GoSearch')
+    this.services.log.setMessageContext(message, this.options.logSource)
 
-      const searchQuery = source.getDefault('query', '').trim()
-      let searchCount = source.getDefault('count', 5)
+    const searchQuery = source.getDefault('query', '').trim()
+    let searchCount = source.getDefault('count', 5)
 
+    this.services.log.verbose(
+      `executing Query=${searchQuery}; Count=${searchCount}`
+    )
+
+    searchCount = searchCount > 10 ? 10 : searchCount
+
+    if (!searchQuery.length) {
+      this.services.log.warn(
+        `No query provided by ${message.info.member?.user.username}`
+      )
+      await message.reply('No search string provided.')
+    } else {
+      const results = this.services.search.searchMany(searchQuery)
+
+      if (results.length === 0) {
+        this.services.log.warn(`No results for ${searchQuery}`)
+        await message.reply(`No results found for ${searchQuery}`)
+      }
       this.services.log.verbose(
-        `executing Query=${searchQuery}; Count=${searchCount}`
+        `Found ${results.length} results for ${searchQuery}`
       )
 
-      searchCount = searchCount > 10 ? 10 : searchCount
+      const trimmedResults = results.slice(0, searchCount)
 
-      if (!searchQuery.length) {
-        this.services.log.warn(
-          `No query provided by ${message.info.member?.user.username}`
-        )
-        await message.reply('No search string provided.')
-      } else {
-        const results = this.services.search.searchMany(searchQuery)
-
-        if (results.length === 0) {
-          this.services.log.warn(`No results for ${searchQuery}`)
-          await message.reply(`No results found for ${searchQuery}`)
-        }
-        this.services.log.verbose(
-          `Found ${results.length} results for ${searchQuery}`
-        )
-
-        const trimmedResults = results.slice(0, searchCount)
-
-        await message._replies.add(
-          new SearchReply(searchQuery, trimmedResults, results.length)
-        )
-      }
-
-      return true
-    } catch (error: any) {
-      this.services.log.error(error)
-      message._replies.add(new RawReply(error.message))
-      return false
+      await message._replies.add(
+        new SearchReply(searchQuery, trimmedResults, results.length)
+      )
     }
+
+    return true
   },
   info: {
     name: CommandNames.Base.search,

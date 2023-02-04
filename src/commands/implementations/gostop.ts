@@ -1,7 +1,7 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
-import { RawReply } from '../../messages/replies/raw'
+import { NoPlayerError } from '../../errors/no-player-error'
 import { PlayerService } from '../../music/player/player.service'
 import { GolemModule } from '../../utils/raw-config'
 
@@ -16,28 +16,25 @@ export default new GolemCommand({
   async handler({ message }): Promise<boolean> {
     this.services.log.setMessageContext(message, this.options.logSource)
 
-    try {
-      const player = this.services.playerService.for(message.info.guildId)
+    const player = this.services.playerService.for(message.info.guildId)
 
-      if (!player) {
-        this.services.log.warn(
-          'cannot stop player for guild with no active player'
-        )
-        return false
-      }
-
-      this.services.log.debug('stopping player')
-      player.stop()
-
-      await message.addReply(
-        new RawReply('Playback stopped and queue cleared.')
+    if (!player) {
+      this.services.log.warn(
+        'cannot stop player for guild with no active player'
       )
 
-      return true
-    } catch (error) {
-      this.services.log.error(error)
-      return false
+      throw new NoPlayerError({
+        message: `cannot stop player for server with no active player. Server: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
+        sourceCmd: 'stop',
+      })
     }
+
+    this.services.log.debug('stopping player')
+    player.stop()
+
+    await message.addReply('Playback stopped and queue cleared.')
+
+    return true
   },
 
   info: {

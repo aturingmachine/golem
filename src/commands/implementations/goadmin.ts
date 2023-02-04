@@ -16,6 +16,7 @@ export default new GolemCommand({
   subcommands: {
     bugs: {
       name: 'bugs',
+      // TODO
       async handler({ message }) {
         await message.addReply(new RawReply('Not yet implemented.'))
         return false
@@ -26,32 +27,13 @@ export default new GolemCommand({
       async handler({ message }) {
         const result = await this.services.admin.refreshLibraries(message)
 
-        if (typeof result === 'object') {
-          const msg = Object.entries(result).reduce((prev, curr) => {
-            return prev.concat(`\n${curr[0]}: ${curr[1]} new listings.`)
-          }, 'Refresh Results:')
+        const msg = Object.entries(result).reduce((prev, curr) => {
+          return prev.concat(`\n${curr[0]}: ${curr[1]} new listings.`)
+        }, 'Refresh Results:')
 
-          await message.addReply(new PreformattedReply(msg))
+        await message.addReply(new PreformattedReply(msg))
 
-          return true
-        }
-
-        switch (result) {
-          case 1:
-            await message.addReply(
-              new RawReply(`Library Refresh requires Administrator privileges.`)
-            )
-            break
-          case 2:
-            await message.addReply(
-              new RawReply(
-                `Cannot refresh Libraries - LocalMusic module is not loaded.`
-              )
-            )
-            break
-        }
-
-        return false
+        return true
       },
     },
   },

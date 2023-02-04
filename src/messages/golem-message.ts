@@ -14,6 +14,7 @@ import { CompiledGolemScript } from '../ast/compiler'
 import { AstParseResult } from '../ast/parser'
 import { BuiltInAlias, CommandNames } from '../constants'
 import { LoggerService } from '../core/logger/logger.service'
+import { GolemError } from '../errors/golem-error'
 import { StringUtils } from '../utils/string-utils'
 import { MessageInfo } from './message-info'
 import { ParsedCommand } from './parsed-command'
@@ -143,6 +144,24 @@ export class GolemMessage {
     }
 
     return this._replies.add(reply)
+  }
+
+  async addError(
+    error: Error | GolemError | string | unknown
+  ): Promise<Replies[]> {
+    if (typeof error === 'string') {
+      return this._replies.add(new RawReply(error))
+    }
+
+    if (GolemError.is(error)) {
+      if (error.hasRendered) {
+        return this._replies.children
+      }
+
+      return this._replies.add(error.render())
+    }
+
+    return this._replies.add(new RawReply(`Something went wrong.`))
   }
 
   async reply(
