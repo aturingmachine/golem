@@ -11,17 +11,22 @@ export default new GolemCommand({
     infoService: InfoService,
   },
 
-  async handler({ message, source }): Promise<boolean> {
+  subcommands: {
+    nowplaying: {
+      name: ['nowplaying', 'np'],
+      async handler({ message }) {
+        await message.addReply(this.services.infoService.nowPlaying(message))
+        return true
+      },
+    },
+  },
+
+  async handler(props): Promise<boolean> {
+    const { message } = props
     this.services.log.setMessageContext(message, this.options.logSource)
 
     try {
-      switch (source.subCommand) {
-        case 'nowplaying':
-        case 'np':
-          await message.addReply(this.services.infoService.nowPlaying(message))
-      }
-
-      return true
+      return this.subcommandTree.run(this, props)
     } catch (error) {
       this.services.log.error(error)
       return false

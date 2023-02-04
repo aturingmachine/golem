@@ -21,7 +21,7 @@ import { humanReadableTime, wait } from '../../utils/time-utils'
 import { AListing } from '../local/listings/listings'
 import { TrackAudioResourceMetadata } from '../tracks'
 import { AudioResourceDefinition } from './player.service'
-import { TrackQueue } from './queue'
+import { QueuedTrack, TrackQueue } from './queue'
 
 export type GolemTrackAudioResource = AudioResource & {
   metadata: TrackAudioResourceMetadata
@@ -106,6 +106,10 @@ export class MusicPlayer {
     return this.audioPlayer.state.status === AudioPlayerStatus.Playing
   }
 
+  public get nowPlayingResource(): GolemTrackAudioResource | undefined {
+    return this.currentResource
+  }
+
   public get nowPlaying(): AListing | undefined {
     return this.currentResource?.metadata.listing
   }
@@ -162,6 +166,8 @@ export class MusicPlayer {
     } else {
       this.queue.add(resource.userId, resource)
     }
+
+    this.log.debug(`current queue ${this.queue.queue.length}`)
 
     // TODO thinking these should be moved into the process queue function?
     // resource.onPlay()
@@ -247,6 +253,11 @@ export class MusicPlayer {
   public shuffle(): void {
     this.log.info('shuffling')
     this.queue.shuffle()
+  }
+
+  public trackList(): QueuedTrack[] {
+    this.log.info('fetching tracklist')
+    return this.queue.queue
   }
 
   public peek(depth = 5): AudioResourceDefinition[] {

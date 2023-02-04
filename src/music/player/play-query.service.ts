@@ -19,7 +19,7 @@ export const SupportedHosts = {
   Youtube: ['youtube.com', 'youtu.be'],
 }
 
-type QueryPlayResult =
+export type QueryPlayResult =
   | { tracks: Tracks[]; replies: BaseReply[] }
   | { missingModule?: string; message?: string }
 

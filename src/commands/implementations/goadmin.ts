@@ -1,6 +1,7 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { AdminService } from '../../core/admin/admin.service'
+import { LoggerService } from '../../core/logger/logger.service'
 import { PreformattedReply } from '../../messages/replies/preformatted'
 import { RawReply } from '../../messages/replies/raw'
 
@@ -9,11 +10,20 @@ export default new GolemCommand({
 
   services: {
     admin: AdminService,
+    log: LoggerService,
   },
 
-  async handler({ message, source }): Promise<boolean> {
-    switch (source.subCommand) {
-      case 'librefresh':
+  subcommands: {
+    bugs: {
+      name: 'bugs',
+      async handler({ message }) {
+        await message.addReply(new RawReply('Not yet implemented.'))
+        return false
+      },
+    },
+    librefresh: {
+      name: 'librefresh',
+      async handler({ message }) {
         const result = await this.services.admin.refreshLibraries(message)
 
         if (typeof result === 'object') {
@@ -42,16 +52,15 @@ export default new GolemCommand({
         }
 
         return false
+      },
+    },
+  },
 
-      case 'bugs':
-        await message.addReply(new RawReply('Not yet implemented.'))
-        return false
-      default:
-        await message.addReply(
-          new RawReply('Admin command requires a sub-command')
-        )
-        return false
-    }
+  async handler(props): Promise<boolean> {
+    const { message } = props
+    this.services.log.setMessageContext(message, this.options.logSource)
+
+    return this.subcommandTree.run(this, props)
   },
 
   info: {
@@ -67,13 +76,13 @@ export default new GolemCommand({
         },
         args: [],
       },
-      // {
-      //   name: 'bugs',
-      //   description: {
-      //     short: 'View last 5 bug reports.',
-      //   },
-      //   args: [],
-      // },
+      {
+        name: 'bugs',
+        description: {
+          short: 'View last 5 bug reports.',
+        },
+        args: [],
+      },
     ],
     args: [],
     examples: {

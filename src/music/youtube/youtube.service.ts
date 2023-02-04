@@ -150,6 +150,12 @@ export class YoutubeService {
     )
   }
 
+  hydrateId(userId: string, id: string): Promise<YoutubeTrack> {
+    const fullUrl = `https://www.youtube.com/watch?v=${id}`
+
+    return YoutubeTrack.fromUrl(userId, fullUrl)
+  }
+
   private playlistItemToListing(item: ytpl.Item): YoutubeListing {
     this.log.debug(`creating YoutubeListing from ${formatForLog({
       name: item.author.name,

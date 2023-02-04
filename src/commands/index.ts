@@ -19,6 +19,7 @@ import { GolemMessage } from '../messages/golem-message'
 import { ParsedCommand } from '../messages/parsed-command'
 import { GolemModule } from '../utils/raw-config'
 import { StringUtils } from '../utils/string-utils'
+import { SubcommandTree, SubcommandTreeParams } from './subcommand-tree'
 // import { GolemConf } from '../config'
 // import { any } from '../config/models'
 // import { GolemLogger, LogLevel, LogSources } from '../utils/logger'
@@ -97,7 +98,7 @@ type OptionType = 'boolean' | 'user' | 'channel' | 'role' | 'mentionable'
 
 type ArgChoice<T = string | number> = { name: string; value: T }
 
-type ServiceReqs = Record<string, InjectionToken>
+export type ServiceReqs = Record<string, InjectionToken>
 
 export interface ICommandArg {
   name: string
@@ -163,6 +164,8 @@ type CommandOptions<T extends ServiceReqs> = {
   handler: CommandHandlerFn<T>
   info: CommandDescription
   services: T
+  // Maybe roll this into `info`?
+  subcommands?: SubcommandTreeParams<T>
   errorHandler?: CommandErrorHandlerFn
 }
 
@@ -202,9 +205,10 @@ type ValidOptions =
   | SlashCommandStringOption
   | SlashCommandUserOption
 
-export class GolemCommand<T extends ServiceReqs = {}> {
+export class GolemCommand<T extends ServiceReqs> {
   public readonly slashCommand: SlashCommandBuilder
   public readonly execute: CommandHandlerFn<T>
+  public readonly subcommandTree!: SubcommandTree<T>
 
   public static config: any
 
@@ -222,6 +226,10 @@ export class GolemCommand<T extends ServiceReqs = {}> {
     this.addSubCommands()
 
     this.execute = this.options.handler
+
+    if (options.subcommands) {
+      this.subcommandTree = new SubcommandTree(options.subcommands)
+    }
   }
 
   async init(moduleRef: ModuleRef): Promise<void> {

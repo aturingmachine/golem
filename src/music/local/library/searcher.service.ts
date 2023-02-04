@@ -65,6 +65,10 @@ export class ListingSearcher {
     return result.map((r) => r.original)
   }
 
+  byId(id: string): LocalListing | undefined {
+    return this.listings.records.find((listing) => listing.listingId === id)
+  }
+
   findByPath(path: string): Record<'id' | 'name', string> | undefined {
     const listing = this.listings.records.find((l) => l.path === path)
 

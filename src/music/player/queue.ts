@@ -2,7 +2,7 @@ import { LoggerService } from '../../core/logger/logger.service'
 import { ArrayUtils } from '../../utils/list-utils'
 import { AudioResourceDefinition } from './player.service'
 
-interface QueuedTrack {
+export interface QueuedTrack {
   queuedBy: string
   audioResource: AudioResourceDefinition
 }
@@ -153,7 +153,7 @@ export class TrackQueue {
     return this.queue.length
   }
 
-  private get queue(): QueuedTrack[] {
+  get queue(): QueuedTrack[] {
     return [...this.explicitQueue, ...this.passiveQueue]
   }
 }

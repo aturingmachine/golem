@@ -10,6 +10,7 @@ import { Library } from './music/local/library/library'
 import { Album } from './music/local/listings/album'
 import { LocalListing } from './music/local/listings/listings'
 import { MusicModule } from './music/music.module'
+import { Playlist } from './music/playlists/playlist.model'
 
 @Module({
   imports: [
@@ -35,7 +36,14 @@ import { MusicModule } from './music/music.module'
           synchronize: true,
           logging: true,
           database: config.get('mongo.dbName'),
-          entities: [Library, LocalListing, Album, CustomAlias, Permissions],
+          entities: [
+            Library,
+            LocalListing,
+            Album,
+            CustomAlias,
+            Permissions,
+            Playlist,
+          ],
         }
       },
       inject: [ConfigService],

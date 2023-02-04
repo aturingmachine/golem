@@ -45,21 +45,10 @@ export default new GolemCommand({
     log: LoggerService,
   },
 
-  async handler({ message, source }): Promise<boolean> {
-    this.services.log.setMessageContext(message, 'GoPermissions')
-
-    this.services.log.debug(
-      `attempting GoPerms using subcommand ${source.subCommand}`
-    )
-
-    switch (source.subCommand) {
-      case PermissionSubcommand.Describe:
-        const msg = tablePermissions(Object.values(PermissionCode))
-
-        await message.addReply(new PreformattedReply(msg))
-        return true
-
-      case PermissionSubcommand.Get:
+  subcommands: {
+    get: {
+      name: 'get',
+      async handler({ message, source }) {
         const getUserIdParam = source.getUser('user')
 
         if (!getUserIdParam) {
@@ -83,8 +72,11 @@ export default new GolemCommand({
           new RawReply(tablePermissions(perms.permissions))
         )
         return true
-
-      case PermissionSubcommand.Set:
+      },
+    },
+    set: {
+      name: 'set',
+      async handler({ message, source }) {
         const setUserIdParam = source.getUser('user')
 
         if (!setUserIdParam) {
@@ -149,8 +141,11 @@ export default new GolemCommand({
         }
 
         return true
-
-      case PermissionSubcommand.Add:
+      },
+    },
+    add: {
+      name: 'add',
+      async handler({ message, source }) {
         const addPermUserIdParam = source.getUser('user')
         const addPermPermissionParam = source.getString('permission')
 
@@ -242,8 +237,11 @@ export default new GolemCommand({
         }
 
         return true
-
-      case PermissionSubcommand.Remove:
+      },
+    },
+    remove: {
+      name: 'remove',
+      async handler({ message, source }) {
         const remPermUserIdParam = source.getUser('user')
         const remPermPermissionParam = source.getString('permission')
 
@@ -315,11 +313,28 @@ export default new GolemCommand({
         )
 
         return true
+      },
+    },
+    describe: {
+      name: 'describe',
+      async handler({ message }) {
+        const msg = tablePermissions(Object.values(PermissionCode))
 
-      default:
-        await message.addReply(new RawReply(`Invalid subcommand.`))
-        return false
-    }
+        await message.addReply(new PreformattedReply(msg))
+        return true
+      },
+    },
+  },
+
+  async handler(props): Promise<boolean> {
+    const { message, source } = props
+    this.services.log.setMessageContext(message, 'GoPermissions')
+
+    this.services.log.debug(
+      `attempting GoPerms using subcommand ${source.subCommand}`
+    )
+
+    return this.subcommandTree.run(this, props)
   },
 
   info: {

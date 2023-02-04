@@ -7,7 +7,8 @@ import { Album } from './local/listings/album'
 import { LocalListing } from './local/listings/listings'
 import { LocalMusicModule } from './local/local-music.module'
 import { PlayQueryService } from './player/play-query.service'
-import { PlayerService } from './player/player.service'
+import { PlayerModule } from './player/player.module'
+import { PlaylistModule } from './playlists/playlists.module'
 import { YoutubeMusicModule } from './youtube/youtube-music.module'
 
 @Module({
@@ -19,8 +20,14 @@ import { YoutubeMusicModule } from './youtube/youtube-music.module'
     LocalMusicModule.forRoot(),
 
     YoutubeMusicModule.forRoot(),
+
+    PlaylistModule,
+
+    PlayerModule,
   ],
-  providers: [PlayerService, PlayQueryService],
-  exports: [PlayerService, PlayQueryService, LocalMusicModule],
+
+  providers: [PlayQueryService],
+
+  exports: [PlayerModule, PlayQueryService, LocalMusicModule],
 })
 export class MusicModule {}

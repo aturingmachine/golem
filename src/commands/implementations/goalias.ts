@@ -14,15 +14,10 @@ export default new GolemCommand({
     aliasService: AliasService,
   },
 
-  async handler({ message, source }): Promise<boolean> {
-    this.services.log.setMessageContext(message, 'GoAlias')
-    this.services.log.info('executing')
-
-    const subCommand = source.subCommand
-    this.services.log.debug(`sourced=${source.toDebug()}`)
-
-    switch (subCommand) {
-      case 'create':
+  subcommands: {
+    create: {
+      name: 'create',
+      async handler({ message, source }) {
         const createResult = await this.services.aliasService.create(
           message.info.userId,
           message.info.guildId,
@@ -45,7 +40,11 @@ export default new GolemCommand({
         )
 
         return false
-      case 'delete':
+      },
+    },
+    delete: {
+      name: 'delete',
+      async handler({ message, source }) {
         const deleteTarget = source.getString('aliasname')
 
         if (!deleteTarget) {
@@ -99,17 +98,27 @@ export default new GolemCommand({
         }
 
         return false
-        break
-      case 'list':
+      },
+    },
+    list: {
+      name: 'list',
+      async handler({ message }) {
         const list = await this.services.aliasService.listForGuild(
           message.info.guildId
         )
         await message.addReply(new RawReply('```\n' + list + '\n```'))
 
         return true
-      default:
-        return false
-    }
+      },
+    },
+  },
+
+  async handler(props): Promise<boolean> {
+    const { message } = props
+    this.services.log.setMessageContext(message, 'GoAlias')
+    this.services.log.info('executing')
+
+    return this.subcommandTree.run(this, props)
   },
 
   info: {
