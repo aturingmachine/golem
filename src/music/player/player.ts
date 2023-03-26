@@ -239,7 +239,7 @@ export class MusicPlayer {
 
   public stop(): void {
     this.log.info(`stopping player`)
-    this.currentResource?.metadata.track.onSkip()
+    // this.currentResource?.metadata.track.onSkip()
     this.queueLock = true
     this.queue.clear()
     this.currentResource = undefined

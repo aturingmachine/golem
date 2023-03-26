@@ -4,6 +4,7 @@ import { MongoRepository } from 'typeorm'
 import { LoggerService } from '../../core/logger/logger.service'
 import { PermissionCode } from '../../core/permissions/permissions'
 import { PermissionsService } from '../../core/permissions/permissions.service'
+import { Errors } from '../../errors'
 import { ExistingResourceError } from '../../errors/existing-resource-error'
 import { NoPlayerError } from '../../errors/no-player-error'
 import { NoPrivilegesError } from '../../errors/no-privileges-error'
@@ -204,11 +205,16 @@ export class PlaylistService {
 
   async hydrate(
     payload: HydratePlaylistPayload
-  ): Promise<HydratePlaylistResult | number> {
+  ): Promise<HydratePlaylistResult> {
     const playlist = await this.byName(payload.guildId, payload.name.trim())
 
     if (!playlist) {
-      return 1
+      throw Errors.NotFound({
+        message: `Could not find playlist named ${payload.name}.`,
+        sourceCmd: 'playlist.play',
+        identifier: payload.name,
+        resource: 'playlist',
+      })
     }
 
     const hydrated = (

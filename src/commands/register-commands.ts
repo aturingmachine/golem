@@ -1,11 +1,9 @@
 import { Collection } from 'discord.js'
-// import { GolemConf } from '../config'
-// import { LogContexts } from '../logger/constants'
-// import { GolemLogger } from '../logger/logger.service'
 import goadmin from './implementations/goadmin'
 import goalias from './implementations/goalias'
 // import goget from './implementations/goget'
 // import gomix from './implementations/gomix'
+import goget from './implementations/goget'
 import gopause from './implementations/gopause'
 import gopeek from './implementations/gopeek'
 import gopermission from './implementations/gopermissions'
@@ -19,12 +17,24 @@ import goskip from './implementations/goskip'
 import gostop from './implementations/gostop'
 import { GolemCommand } from '.'
 
+console.log('IS this file fucking imported?')
+
 export const Commands = new Collection<string, GolemCommand<any>>()
+
+export function GetCommand(commandName: string): GolemCommand<any> {
+  const target = Commands.get(commandName)
+
+  if (!target) {
+    throw new Error(`No command of name ${commandName} found.`)
+  }
+
+  return target
+}
 
 export const RegisteredCommands = {
   goadmin,
   goalias,
-  // goget,
+  goget,
   // gomix,
   gopause,
   gopeek,

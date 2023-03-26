@@ -13,7 +13,6 @@ import { LoggerService } from './logger/logger.service'
 @Controller()
 export class MessageController {
   constructor(
-    @Inject(CONTEXT) private ctx: RequestContext,
     private logger: LoggerService,
     private ref: ModuleRef,
     private treeService: ProcessingTree,
@@ -30,6 +29,8 @@ export class MessageController {
     if (!data.message.content.startsWith('$')) {
       return
     }
+
+    // console.log(this.ref.get(LoggerService))
 
     let messageContent = data.message.content
 
@@ -48,9 +49,7 @@ export class MessageController {
       data.message.content
     )
 
-    this.logger.debug(
-      `pre alias injection - messageContent="${messageContent}"`
-    )
+    this.logger.info(`pre alias injection - messageContent="${messageContent}"`)
 
     // If we have an alias we want to expand it into a "raw" message string
     if (aliasHits && aliasHits.length > 0) {
@@ -58,7 +57,7 @@ export class MessageController {
       messageContent = this.aliasService.injectHits(messageContent, aliasHits)
     }
 
-    this.logger.debug(
+    this.logger.info(
       `post alias injection - messageContent="${messageContent}"`
     )
 
@@ -83,8 +82,11 @@ export class MessageController {
 
     const state: Partial<Record<ReplyType, boolean>> = {}
 
+    console.log('Going To filter rpelies', replies)
+
     const uniqueReplies = replies.filter((rep) => {
       if (!rep.isUnique) {
+        this.logger.debug(`Filtering Non Unique Reply: ${rep.type}`)
         return true
       }
 
@@ -103,8 +105,10 @@ export class MessageController {
       return true
     })
 
+    console.log('RepliesToSend:', uniqueReplies)
+
     for (const reply of uniqueReplies) {
-      this.logger.debug(
+      this.logger.info(
         `attempting to render ${reply.isUnique ? 'unqiue' : 'non-unique'} ${
           reply.type
         }`

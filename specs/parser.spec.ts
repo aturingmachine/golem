@@ -36,14 +36,17 @@ describe('Parser', () => {
       expect(firstBlock.type).toEqual('solo')
       expect(firstBlock.commands[0].tokens).toHaveLength(3)
       expect(firstBlock.commands[0].tokens[0]).toEqual({
+        insideAlias: false,
         type: 'invoker',
         value: '$go',
       })
       expect(firstBlock.commands[0].tokens[1]).toEqual({
+        insideAlias: false,
         type: 'cmd',
         value: 'play',
       })
       expect(firstBlock.commands[0].tokens[2]).toEqual({
+        insideAlias: false,
         type: 'str',
         value: 'twice tt',
       })
@@ -63,28 +66,34 @@ describe('Parser', () => {
       expect(firstBlock.type).toEqual('and_block')
       expect(firstBlock.commands[0].tokens).toHaveLength(3)
       expect(firstBlock.commands[0].tokens[0]).toEqual({
+        insideAlias: false,
         type: 'invoker',
         value: '$go',
       })
       expect(firstBlock.commands[0].tokens[1]).toEqual({
+        insideAlias: false,
         type: 'cmd',
         value: 'play',
       })
       expect(firstBlock.commands[0].tokens[2]).toEqual({
+        insideAlias: false,
         type: 'str',
         value: 'twice tt',
       })
 
       expect(firstBlock.commands[1].tokens).toHaveLength(3)
       expect(firstBlock.commands[1].tokens[0]).toEqual({
+        insideAlias: false,
         type: 'invoker',
         value: '$go',
       })
       expect(firstBlock.commands[1].tokens[1]).toEqual({
+        insideAlias: false,
         type: 'cmd',
         value: 'play',
       })
       expect(firstBlock.commands[1].tokens[2]).toEqual({
+        insideAlias: false,
         type: 'str',
         value: 'loona so what',
       })
@@ -112,10 +121,12 @@ describe('Parser', () => {
 
         expect(firstBlock.commands[0].tokens).toHaveLength(2)
         expect(firstBlock.commands[0].tokens[0]).toEqual({
+          insideAlias: false,
           type: 'cmd',
           value: aliasName,
         })
         expect(firstBlock.commands[0].tokens[1]).toEqual({
+          insideAlias: false,
           type: 'str',
           value: 'twice tt',
         })
@@ -136,10 +147,12 @@ describe('Parser', () => {
 
       expect(firstBlock.commands[0].tokens).toHaveLength(2)
       expect(firstBlock.commands[0].tokens[0]).toEqual({
+        insideAlias: false,
         type: 'cmd',
         value: 'play',
       })
       expect(firstBlock.commands[0].tokens[1]).toEqual({
+        insideAlias: false,
         type: 'str',
         value: 'twice tt',
       })
@@ -157,12 +170,14 @@ describe('Parser', () => {
       const firstBlock = result.blocks[0]
 
       expect(firstBlock.commands[0].tokens[3]).toEqual({
+        insideAlias: false,
         type: 'opt',
         value: '--some_opt="this has quotes"',
         name: 'some_opt',
         opt_val: 'this has quotes',
       })
       expect(firstBlock.commands[0].tokens[4]).toEqual({
+        insideAlias: false,
         type: 'opt',
         value: '--another_one',
         name: 'another_one',
@@ -181,6 +196,7 @@ describe('Parser', () => {
       const firstBlock = result.blocks[0]
 
       expect(firstBlock.commands[0].tokens[3]).toEqual({
+        insideAlias: false,
         type: 'opt',
         // eslint-disable-next-line prettier/prettier
         value: `--some_opt="this \"has\" quotes"`,
@@ -226,33 +242,40 @@ describe('Parser', () => {
 
       expect(firstBlock.commands[0]).toHaveLength(4)
       expect(firstBlock.commands[0].tokens[0]).toEqual({
+        insideAlias: false,
         type: 'invoker',
         value: '$go',
       })
       expect(firstBlock.commands[0].tokens[1]).toEqual({
+        insideAlias: false,
         type: 'cmd',
         value: 'play',
       })
       expect(firstBlock.commands[0].tokens[2]).toEqual({
+        insideAlias: false,
         type: 'var',
         value: '%song_name',
         name: 'song_name',
       })
       expect(firstBlock.commands[0].tokens[3]).toEqual({
+        insideAlias: false,
         type: 'opt',
         value: '--song_name=:[random(thing1, thing2)]',
         name: 'song_name',
         opt_val: {
+          insideAlias: false,
           type: 'func',
           name: 'random',
           param_names: ['thing1', 'thing2'],
           params: [
             {
+              insideAlias: false,
               type: 'var',
               value: 'thing1',
               name: 'thing1',
             },
             {
+              insideAlias: false,
               type: 'var',
               value: 'thing2',
               name: 'thing2',
@@ -278,36 +301,43 @@ describe('Parser', () => {
 
       expect(firstBlock.commands[0]).toHaveLength(7)
       expect(firstBlock.commands[0].tokens[0]).toEqual({
+        insideAlias: false,
         type: 'invoker',
         value: '$go',
       })
       expect(firstBlock.commands[0].tokens[1]).toEqual({
+        insideAlias: false,
         type: 'cmd',
         value: 'play',
       })
       expect(firstBlock.commands[0].tokens[2]).toEqual({
+        insideAlias: false,
         type: 'str',
         value: 'twice tt',
       })
       expect(firstBlock.commands[0].tokens[3]).toEqual({
+        insideAlias: false,
         type: 'opt',
         value: '--some_opt=a-string',
         name: 'some_opt',
         opt_val: 'a-string',
       })
       expect(firstBlock.commands[0].tokens[4]).toEqual({
+        insideAlias: false,
         type: 'opt',
         value: '--another_opt=10',
         name: 'another_opt',
         opt_val: '10',
       })
       expect(firstBlock.commands[0].tokens[5]).toEqual({
+        insideAlias: false,
         type: 'opt',
         value: '--bool',
         name: 'bool',
         opt_val: 'true',
       })
       expect(firstBlock.commands[0].tokens[6]).toEqual({
+        insideAlias: false,
         type: 'opt',
         value: '--quote_opt="I can have spaces!"',
         name: 'quote_opt',
@@ -331,19 +361,23 @@ describe('Parser', () => {
 
       expect(firstBlock.commands[0].tokens).toHaveLength(4)
       expect(firstBlock.commands[0].tokens[0]).toEqual({
+        insideAlias: false,
         type: 'invoker',
         value: '$go',
       })
       expect(firstBlock.commands[0].tokens[1]).toEqual({
+        insideAlias: false,
         type: 'cmd',
         value: 'play',
       })
       expect(firstBlock.commands[0].tokens[2]).toEqual({
+        insideAlias: false,
         type: 'var',
         value: '%song-name',
         name: 'song-name',
       })
       expect(firstBlock.commands[0].tokens[3]).toEqual({
+        insideAlias: false,
         type: 'var',
         value: '%another_var',
         name: 'another_var',
@@ -364,25 +398,39 @@ describe('Parser', () => {
 
       expect(firstBlock.commands[0].tokens).toHaveLength(4)
       expect(firstBlock.commands[0].tokens[0]).toEqual({
+        insideAlias: false,
         type: 'invoker',
         value: '$go',
       })
       expect(firstBlock.commands[0].tokens[1]).toEqual({
+        insideAlias: false,
         type: 'cmd',
         value: 'play',
       })
       expect(firstBlock.commands[0].tokens[2]).toEqual({
+        insideAlias: false,
         type: 'str',
         value: 'twice tt',
       })
       expect(firstBlock.commands[0].tokens[3]).toEqual({
+        insideAlias: false,
         type: 'func',
         value: ':[random(param1, param_2)]',
         param_names: ['param1', 'param_2'],
         name: 'random',
         params: [
-          { type: 'var', value: 'param1', name: 'param1' },
-          { type: 'var', value: 'param_2', name: 'param_2' },
+          {
+            insideAlias: false,
+            type: 'var',
+            value: 'param1',
+            name: 'param1',
+          },
+          {
+            insideAlias: false,
+            type: 'var',
+            value: 'param_2',
+            name: 'param_2',
+          },
         ],
       })
     })
@@ -401,24 +449,38 @@ describe('Parser', () => {
 
       expect(firstBlock.commands[0].tokens).toHaveLength(4)
       expect(firstBlock.commands[0].tokens[0]).toEqual({
+        insideAlias: false,
         type: 'invoker',
         value: '$go',
       })
       expect(firstBlock.commands[0].tokens[1]).toEqual({
+        insideAlias: false,
         type: 'cmd',
         value: 'play',
       })
       expect(firstBlock.commands[0].tokens[2]).toEqual({
+        insideAlias: false,
         type: 'func',
         value: ':[random(param1, param_2)]',
         param_names: ['param1', 'param_2'],
         name: 'random',
         params: [
-          { type: 'var', value: 'param1', name: 'param1' },
-          { type: 'var', value: 'param_2', name: 'param_2' },
+          {
+            insideAlias: false,
+            type: 'var',
+            value: 'param1',
+            name: 'param1',
+          },
+          {
+            insideAlias: false,
+            type: 'var',
+            value: 'param_2',
+            name: 'param_2',
+          },
         ],
       })
       expect(firstBlock.commands[0].tokens[3]).toEqual({
+        insideAlias: false,
         type: 'str',
         value: 'twice tt',
       })
@@ -439,14 +501,17 @@ describe('Parser', () => {
 
     expect(firstBlock.commands[0].tokens).toHaveLength(3)
     expect(firstBlock.commands[0].tokens[0]).toEqual({
+      insideAlias: false,
       type: 'invoker',
       value: '$go',
     })
     expect(firstBlock.commands[0].tokens[1]).toEqual({
+      insideAlias: false,
       type: 'cmd',
       value: 'play',
     })
     expect(firstBlock.commands[0].tokens[2]).toEqual({
+      insideAlias: false,
       type: 'str',
       value: 'twice tt',
     })
@@ -466,28 +531,34 @@ describe('Parser', () => {
 
     expect(firstBlock.commands[0].tokens).toHaveLength(3)
     expect(firstBlock.commands[0].tokens[0]).toEqual({
+      insideAlias: false,
       type: 'invoker',
       value: '$go',
     })
     expect(firstBlock.commands[0].tokens[1]).toEqual({
+      insideAlias: false,
       type: 'cmd',
       value: 'play',
     })
     expect(firstBlock.commands[0].tokens[2]).toEqual({
+      insideAlias: false,
       type: 'str',
       value: 'twice tt',
     })
 
     expect(firstBlock.commands[1].tokens).toHaveLength(3)
     expect(firstBlock.commands[1].tokens[0]).toEqual({
+      insideAlias: false,
       type: 'invoker',
       value: '$go',
     })
     expect(firstBlock.commands[1].tokens[1]).toEqual({
+      insideAlias: false,
       type: 'cmd',
       value: 'play',
     })
     expect(firstBlock.commands[1].tokens[2]).toEqual({
+      insideAlias: false,
       type: 'str',
       value: 'loona so what',
     })

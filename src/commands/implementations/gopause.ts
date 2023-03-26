@@ -1,8 +1,7 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
-import { NoPlayerError } from '../../errors/no-player-error'
-import { MessageBuilderService } from '../../messages/message-builder.service'
+import { Errors } from '../../errors'
 import { RawReply } from '../../messages/replies/raw'
 import { PlayerService } from '../../music/player/player.service'
 import { GolemModule } from '../../utils/raw-config'
@@ -10,11 +9,10 @@ import { GolemModule } from '../../utils/raw-config'
 export default new GolemCommand({
   services: {
     log: LoggerService,
-    builder: MessageBuilderService,
     playerService: PlayerService,
   },
   logSource: 'go-play',
-  async handler({ message }): Promise<boolean> {
+  async handler({ message }) {
     this.services.log.setMessageContext(message, 'GoPause')
 
     this.services.log.info('executing')
@@ -22,7 +20,7 @@ export default new GolemCommand({
     const player = this.services.playerService.for(message.info.guildId)
 
     if (!player) {
-      throw new NoPlayerError({
+      throw Errors.NoPlayer({
         message: 'Cannot pause, no active player in server.',
         sourceCmd: 'pause',
       })
@@ -30,9 +28,7 @@ export default new GolemCommand({
 
     player.pause()
 
-    await message._replies.add(new RawReply('Pausing Playback.'))
-
-    return true
+    await message.addReply(new RawReply('Pausing Playback.'))
   },
   info: {
     name: CommandNames.Base.pause,

@@ -72,20 +72,18 @@ describe('Message Info', () => {
       })
     })
 
-    fit('should evaluate functions for values', () => {
+    it('should evaluate functions for values', () => {
       source =
         '$go play %song_name --song_name=:[random(twice tt, loona so what)] --skip'
 
       createInvocation()
       debugDump(invocation)
 
-      console.log(invocation.asRaw)
-
-      expect(invocation.variables).toEqual({
-        missing_value: undefined,
-        song_name: 'twice tt',
-        'another-var': 10,
-      })
+      expect(
+        ['twice tt', 'loona so what'].includes(
+          invocation.variables.song_name as string
+        )
+      ).toBeTruthy()
     })
 
     function createInvocation() {

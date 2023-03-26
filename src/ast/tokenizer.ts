@@ -8,7 +8,7 @@ import { InputStream } from './input-stream'
 const shouldDebug = true
 
 const dd = (...args: unknown[]) => {
-  if (shouldDebug) {
+  if (shouldDebug && false) {
     console.log(...args)
   }
 }
@@ -490,7 +490,7 @@ export class Tokenizer {
       .split(',')
       .map((s) => s.trim())
 
-    console.log(param_names)
+    // console.log(param_names)
 
     const params: VarAstToken[] = param_names.map((p) => ({
       type: 'var',

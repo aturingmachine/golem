@@ -1,9 +1,8 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
-import { NoPlayerError } from '../../errors/no-player-error'
+import { Errors } from '../../errors'
 import { QueueReply } from '../../messages/replies/queue'
-import { RawReply } from '../../messages/replies/raw'
 import { PlayerService } from '../../music/player/player.service'
 import { GolemModule } from '../../utils/raw-config'
 
@@ -18,12 +17,12 @@ export default new GolemCommand({
 
     const player = this.services.playerService.for(message.info.guildId)
 
-    console.log('Got Player:', player, player?.trackCount)
+    // console.log('Got Player:', player, player?.trackCount)
 
     if (!player) {
       this.services.log.info(`no channel to join, exiting early`)
 
-      throw new NoPlayerError({
+      throw Errors.NoPlayer({
         message: 'Cannot peek queue, no active player in server.',
         sourceCmd: 'pause',
       })
@@ -39,8 +38,6 @@ export default new GolemCommand({
     )
 
     await message.addReply(peek)
-
-    return true
   },
   info: {
     name: CommandNames.Base.peek,

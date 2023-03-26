@@ -1,9 +1,7 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
-import { BasicError } from '../../errors/basic-error'
-import { NoModuleError } from '../../errors/no-module-error'
-import { NoPlayerError } from '../../errors/no-player-error'
+import { Errors } from '../../errors'
 import { RawReply } from '../../messages/replies/raw'
 import { PlayQueryService } from '../../music/player/play-query.service'
 import { PlayerService } from '../../music/player/player.service'
@@ -17,7 +15,7 @@ export default new GolemCommand({
     queryService: PlayQueryService,
   },
   logSource: 'GoPlay',
-  async handler({ message, source }): Promise<boolean> {
+  async handler({ message, source }) {
     this.services.log.setMessageContext(message, 'GoPlay')
 
     const query = source.getString('query')
@@ -30,7 +28,7 @@ export default new GolemCommand({
         `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
       )
 
-      throw new NoPlayerError({
+      throw Errors.NoPlayer({
         message: `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
         sourceCmd: 'play',
       })
@@ -40,7 +38,7 @@ export default new GolemCommand({
       // If we are doing an "unpause" and nothing is playing
       // then we have errored...
       if (!player.isPlaying) {
-        throw new NoPlayerError({
+        throw Errors.NoPlayer({
           sourceCmd: 'play',
           message:
             'Cannot execute. No search query to play, and no paused track to unpase.',
@@ -51,15 +49,15 @@ export default new GolemCommand({
 
       await message.addReply(new RawReply('Unpausing!'))
 
-      return true
+      return
     }
 
     const queryResult = await this.services.queryService.process(message, query)
 
-    // Handle a processed result that does not have a supported module
     if (!('tracks' in queryResult)) {
+      // Handle a processed result that does not have a supported module
       if (queryResult.missingModule) {
-        throw new NoModuleError({
+        throw Errors.NoModule({
           message: queryResult.message || 'Missing required modules to play.',
           sourceCmd: 'play',
           action: 'play',
@@ -67,7 +65,7 @@ export default new GolemCommand({
         })
       }
 
-      throw new BasicError({
+      throw Errors.Basic({
         code: 101,
         message: queryResult.message || 'Unable to process play request.',
         sourceCmd: 'play',
@@ -85,8 +83,6 @@ export default new GolemCommand({
     this.services.log.debug(`query returned as: ${formatForLog(queryResult)}`)
 
     await message.addReply(queryResult.replies)
-
-    return true
   },
   info: {
     name: CommandNames.Base.play,

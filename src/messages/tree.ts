@@ -117,16 +117,17 @@ export class ProcessingTree {
       console.log('Should be running using:', innerTree.instance.toDebug())
       console.log(innerTree.instance.handler)
 
-      let status
+      let status = true
 
       // client.users.send('id', 'content');
       if (!!message) {
         try {
-          status = innerTree.instance.handler?.execute({
-            module: ref,
+          innerTree.instance.handler?.execute({
             message: message,
             source: innerTree.instance,
           })
+
+          status = true
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
           this.logger.error(
@@ -183,11 +184,11 @@ export class ProcessingTree {
   async runOne(
     segment: CompiledScriptSegment,
     fnProps: CommandHandlerFnProps
-  ): Promise<boolean> {
+  ): Promise<void> {
     if (segment.instance.handler) {
-      return segment.instance.handler.execute(fnProps)
+      await segment.instance.handler.execute(fnProps)
     } else {
-      return false
+      throw new Error('TODO')
     }
   }
 
@@ -219,11 +220,16 @@ export class ProcessingTree {
         segment.block_type === 'solo' ||
         (segment.block_type === 'and_block' && lastSegment[1] === 'solo')
       ) {
-        canRun = await this.runOne(segment, {
-          message,
-          module: ref,
-          source: segment.instance,
-        })
+        try {
+          await this.runOne(segment, {
+            message,
+            source: segment.instance,
+          })
+          canRun = true
+        } catch (error) {
+          canRun = false
+          throw error
+        }
       }
 
       // If we are "inside" an and_block we need to check if the last
@@ -235,11 +241,16 @@ export class ProcessingTree {
       ) {
         // Check canRun
         if (canRun) {
-          canRun = await this.runOne(segment, {
-            message,
-            module: ref,
-            source: segment.instance,
-          })
+          try {
+            await this.runOne(segment, {
+              message,
+              source: segment.instance,
+            })
+            canRun = true
+          } catch (error) {
+            canRun = false
+            throw error
+          }
         } else {
           // This means we failed a previous command within an and block
           // and we are going to skip the remaining and_block commands.

@@ -20,9 +20,6 @@ import { ParsedCommand } from '../messages/parsed-command'
 import { GolemModule } from '../utils/raw-config'
 import { StringUtils } from '../utils/string-utils'
 import { SubcommandTree, SubcommandTreeParams } from './subcommand-tree'
-// import { GolemConf } from '../config'
-// import { any } from '../config/models'
-// import { GolemLogger, LogLevel, LogSources } from '../utils/logger'
 
 export function expandBuiltInAlias(raw: string): string | undefined {
   const parsed = raw.replace(/^\$/, '')
@@ -48,7 +45,7 @@ export function expandBuiltInAlias(raw: string): string | undefined {
 }
 
 export type CommandHandlerFnProps = {
-  module: ModuleRef
+  // module: ModuleRef
   message: GolemMessage
   source: ParsedCommand
 }
@@ -61,7 +58,7 @@ export type CommandHandlerFn<
   this: GolemCommand<T>,
   props: CommandHandlerFnProps,
   ...args: any[]
-) => Promise<boolean>
+) => Promise<void>
 
 export type CommandErrorHandlerFn = (
   error: Error,

@@ -7,6 +7,7 @@ import {
   tablePermissions,
 } from '../../core/permissions/permissions'
 import { PermissionsService } from '../../core/permissions/permissions.service'
+import { Errors } from '../../errors'
 import { PermissionChangeReply } from '../../messages/replies/permissions-change'
 import { PreformattedReply } from '../../messages/replies/preformatted'
 import { RawReply } from '../../messages/replies/raw'
@@ -52,10 +53,11 @@ export default new GolemCommand({
         const getUserIdParam = source.getUser('user')
 
         if (!getUserIdParam) {
-          await message.addReply(
-            new RawReply('`perms get` requires an argument for `user`.')
-          )
-          return false
+          throw Errors.BadArgs({
+            argName: 'user',
+            sourceCmd: 'perms.get',
+            message: '`perms get` requires an argument for `user`.',
+          })
         }
 
         const perms = await this.services.permissions.lookup(
@@ -64,14 +66,17 @@ export default new GolemCommand({
         )
 
         if (!perms) {
-          await message.addReply(new RawReply(`No permissions record found.`))
-          return true
+          throw Errors.NotFound({
+            message: 'No permissions record found.',
+            sourceCmd: 'perms.get',
+            resource: 'permissions',
+            identifier: getUserIdParam,
+          })
         }
 
         await message.addReply(
           new RawReply(tablePermissions(perms.permissions))
         )
-        return true
       },
     },
     set: {
@@ -80,22 +85,24 @@ export default new GolemCommand({
         const setUserIdParam = source.getUser('user')
 
         if (!setUserIdParam) {
-          await message.addReply(
-            new RawReply('`perms set` requires an argument for `user`.')
-          )
-          return false
+          throw Errors.BadArgs({
+            argName: 'user',
+            format: '$go perms set <user-id> <...permissions>',
+            sourceCmd: 'perms.set',
+            message: '`perms set` requires an argument for `user`.',
+          })
         }
 
         const newPermissions = source.getString('permissions')
 
         if (!newPermissions) {
-          await message.addReply(
-            new RawReply(
-              '`perms set` requires one more permission codes to set - separated by spaces.'
-            )
-          )
-
-          return false
+          throw Errors.BadArgs({
+            argName: 'permissions',
+            sourceCmd: 'perms.set',
+            format: '$go perms set <user-id> <...permissions>',
+            message:
+              '`perms set` requires one more permission codes to set - separated by spaces.',
+          })
         }
 
         const parsedPermissions = newPermissions
@@ -103,14 +110,13 @@ export default new GolemCommand({
           .map(toPermission)
           .filter(ArrayUtils.isDefined)
 
-        if (!parsedPermissions) {
-          await message.addReply(
-            new RawReply(
-              `Permission set "${newPermissions}" contains no valid Permission Codes. Use \`$go perms describe\` to view valid Permission Codes.`
-            )
-          )
-
-          return false
+        if (!parsedPermissions || !parsedPermissions.length) {
+          throw Errors.BadArgs({
+            argName: 'permissions',
+            sourceCmd: 'perms.set',
+            format: '$go perms set <user-id> <...permissions>',
+            message: `Permission set "${newPermissions}" contains no valid Permission Codes. Use \`$go perms describe\` to view valid Permission Codes.`,
+          })
         }
 
         const record = await this.services.permissions.lookup(
@@ -134,13 +140,11 @@ export default new GolemCommand({
           await message.addReply(
             new RawReply(
               `Permissions "${parsedPermissions.join(
-                ','
+                ', '
               )}" set for ${message.getUserById(setUserIdParam)}.`
             )
           )
         }
-
-        return true
       },
     },
     add: {
@@ -152,11 +156,12 @@ export default new GolemCommand({
         if (!addPermUserIdParam) {
           this.services.log.warn(`attempting to ADD permission without user id`)
 
-          await message.addReply(
-            new RawReply('Missing required parameter for user.')
-          )
-
-          return false
+          throw Errors.BadArgs({
+            argName: 'user',
+            sourceCmd: 'perms.add',
+            format: '$go perms add <user-id> <permission>',
+            message: '`perms add` requires an argument for `user`.',
+          })
         }
 
         const addPermParsedPermissions = toPermission(
@@ -168,13 +173,13 @@ export default new GolemCommand({
             `attempting to ADD permissions with invalid permission codes. ${addPermPermissionParam}`
           )
 
-          await message.addReply(
-            new RawReply(
-              'Missing required, valid Permission Code to add. Use `$go permissions describe` to see valid Permission Codes.'
-            )
-          )
-
-          return false
+          throw Errors.BadArgs({
+            argName: 'permission',
+            sourceCmd: 'perms.add',
+            format: '$go perms add <user-id> <permission>',
+            message:
+              'Missing required, valid Permission Code to add. Use `$go permissions describe` to see valid Permission Codes.',
+          })
         }
 
         const existingAddPermRecord = await this.services.permissions.lookup(
@@ -235,8 +240,6 @@ export default new GolemCommand({
             )
           )
         }
-
-        return true
       },
     },
     remove: {
@@ -248,29 +251,30 @@ export default new GolemCommand({
         if (!remPermUserIdParam) {
           this.services.log.warn(`attempting to ADD permission without user id`)
 
-          await message.addReply(
-            new RawReply('Missing required parameter for user.')
-          )
-
-          return false
+          throw Errors.BadArgs({
+            argName: 'permission',
+            sourceCmd: 'perms.remove',
+            format: '$go perms remove <user-id> <permission>',
+            message: 'Missing required parameter for user',
+          })
         }
 
         const remPermParsedPermissions = toPermission(
           remPermPermissionParam || ''
         )
 
-        if (!remPermPermissionParam) {
+        if (!remPermParsedPermissions || !remPermParsedPermissions.length) {
           this.services.log.warn(
             `attempting to REMOVE permissions with invalid permission codes. ${remPermParsedPermissions}`
           )
 
-          await message.addReply(
-            new RawReply(
-              'Missing required, valid Permission Code to remove. Use `$go permissions describe` to see valid Permission Codes.'
-            )
-          )
-
-          return false
+          throw Errors.BadArgs({
+            argName: 'permission',
+            sourceCmd: 'perms.remove',
+            format: '$go perms remove <user-id> <permission>',
+            message:
+              'Missing required, valid Permission Code to remove. Use `$go permissions describe` to see valid Permission Codes.',
+          })
         }
 
         const remPermRecord = await this.services.permissions.lookup(
@@ -291,7 +295,12 @@ export default new GolemCommand({
             )
           )
 
-          return false
+          throw Errors.NotFound({
+            message: 'No permissions record found.',
+            sourceCmd: 'perms.remove',
+            resource: 'permissions',
+            identifier: remPermUserIdParam,
+          })
         }
 
         const updateRemPermissions = ArrayUtils.remove(
@@ -311,8 +320,6 @@ export default new GolemCommand({
             `Permission ${remPermPermissionParam} Removed.`
           )
         )
-
-        return true
       },
     },
     describe: {
@@ -321,12 +328,11 @@ export default new GolemCommand({
         const msg = tablePermissions(Object.values(PermissionCode))
 
         await message.addReply(new PreformattedReply(msg))
-        return true
       },
     },
   },
 
-  async handler(props): Promise<boolean> {
+  async handler(props): Promise<void> {
     const { message, source } = props
     this.services.log.setMessageContext(message, 'GoPermissions')
 

@@ -19,7 +19,6 @@ export default new GolemCommand({
       // TODO
       async handler({ message }) {
         await message.addReply(new RawReply('Not yet implemented.'))
-        return false
       },
     },
     librefresh: {
@@ -32,13 +31,11 @@ export default new GolemCommand({
         }, 'Refresh Results:')
 
         await message.addReply(new PreformattedReply(msg))
-
-        return true
       },
     },
   },
 
-  async handler(props): Promise<boolean> {
+  async handler(props) {
     const { message } = props
     this.services.log.setMessageContext(message, this.options.logSource)
 

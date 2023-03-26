@@ -25,3 +25,21 @@ export class BadArgsError extends GolemError {
     )
   }
 }
+
+export class NoSubCommandError extends GolemError {
+  constructor(
+    readonly params: GolemErrorParams & {
+      options: string[]
+    }
+  ) {
+    super(params)
+  }
+
+  toMessage(): RawReply {
+    return new RawReply(
+      `Missing required subcommand. ${
+        this.params.sourceCmd
+      } requires a subcommand <${this.params.options.join('|')}>`
+    )
+  }
+}

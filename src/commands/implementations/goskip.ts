@@ -1,9 +1,9 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
-import { NoPlayerError } from '../../errors/no-player-error'
+import { Errors } from '../../errors'
 import { MessageBuilderService } from '../../messages/message-builder.service'
-import { RawReply } from '../../messages/replies/raw'
+import { Replies } from '../../messages/replies/replies'
 import { PlayerService } from '../../music/player/player.service'
 import { GolemModule } from '../../utils/raw-config'
 
@@ -16,7 +16,7 @@ export default new GolemCommand({
 
   logSource: 'GoSkip',
 
-  async handler({ message, source }): Promise<boolean> {
+  async handler({ message, source }) {
     this.services.log.setMessageContext(message, 'GoSkip')
 
     const player = this.services.playerService.for(message.info.guildId)
@@ -26,7 +26,7 @@ export default new GolemCommand({
         `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
       )
 
-      throw new NoPlayerError({
+      throw Errors.NoPlayer({
         message: `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
         sourceCmd: 'skip',
       })
@@ -42,7 +42,7 @@ export default new GolemCommand({
       await player.skip(skipCount)
 
       if (player.currentResource) {
-        const nowPlayingMessage = this.services.builder.nowPlaying(
+        const nowPlayingMessage = await this.services.builder.nowPlaying(
           message,
           player.nowPlaying
         )
@@ -50,17 +50,15 @@ export default new GolemCommand({
         await message.addReply(nowPlayingMessage)
       } else {
         await message.addReply(
-          new RawReply('Track Skipped! The queue is now empty.')
+          Replies.Raw('Track Skipped! The queue is now empty.')
         )
       }
     } else {
-      throw new NoPlayerError({
+      throw Errors.NoPlayer({
         message: `No track to skip.`,
         sourceCmd: 'skip',
       })
     }
-
-    return true
   },
 
   info: {

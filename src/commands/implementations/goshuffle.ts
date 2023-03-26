@@ -1,9 +1,7 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
-import { GolemError } from '../../errors/golem-error'
-import { MessageBuilderService } from '../../messages/message-builder.service'
-import { RawReply } from '../../messages/replies/raw'
+import { NowPlayingReply } from '../../messages/replies/now-playing'
 import { PlayerService } from '../../music/player/player.service'
 import { GolemModule } from '../../utils/raw-config'
 
@@ -13,24 +11,18 @@ export default new GolemCommand({
   services: {
     log: LoggerService,
     playerService: PlayerService,
-    builder: MessageBuilderService,
   },
 
-  async handler({ message }): Promise<boolean> {
+  async handler({ message }) {
     this.services.log.setMessageContext(message, this.options.logSource)
 
     const player = this.services.playerService.shuffle(message.info.guildId)
 
     if (player.nowPlaying) {
       await message.addReply(
-        this.services.builder.nowPlaying(message, player.nowPlaying)
+        NowPlayingReply.fromListing(message, player.nowPlaying, player)
       )
-    } else {
-      //This case should be impossible but :shrug:
-      await message.addReply(new RawReply('Queue shuffled!'))
     }
-
-    return true
   },
 
   info: {

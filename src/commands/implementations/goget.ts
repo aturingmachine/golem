@@ -16,12 +16,11 @@ export default new GolemCommand({
       name: ['nowplaying', 'np'],
       async handler({ message }) {
         await message.addReply(this.services.infoService.nowPlaying(message))
-        return true
       },
     },
   },
 
-  async handler(props): Promise<boolean> {
+  async handler(props) {
     const { message } = props
     this.services.log.setMessageContext(message, this.options.logSource)
 

@@ -2,6 +2,7 @@ import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { AliasService } from '../../core/alias/alias.service'
 import { LoggerService } from '../../core/logger/logger.service'
+import { Errors } from '../../errors'
 import { MessageBuilderService } from '../../messages/message-builder.service'
 import { RawReply } from '../../messages/replies/raw'
 
@@ -27,7 +28,6 @@ export default new GolemCommand({
         await message.addReply(
           new RawReply(`Created alias: ${createResult.name}.`)
         )
-        return true
       },
     },
     delete: {
@@ -36,10 +36,11 @@ export default new GolemCommand({
         const deleteTarget = source.getString('aliasname')
 
         if (!deleteTarget) {
-          await message.addReply(
-            `Missing required "aliasname" parameter. Correct usage is "alias delete <alias-name>"`
-          )
-          return false
+          throw Errors.BadArgs({
+            argName: 'alias-name',
+            message: `Missing required "aliasname" parameter. Correct usage is "alias delete <alias-name>"`,
+            sourceCmd: '',
+          })
         }
 
         await this.services.aliasService.delete({
@@ -49,7 +50,6 @@ export default new GolemCommand({
         })
 
         await message.addReply(new RawReply(`Deleted alias ${deleteTarget}`))
-        return true
       },
     },
     list: {
@@ -59,13 +59,11 @@ export default new GolemCommand({
           message.info.guildId
         )
         await message.addReply(new RawReply('```\n' + list + '\n```'))
-
-        return true
       },
     },
   },
 
-  async handler(props): Promise<boolean> {
+  async handler(props) {
     const { message } = props
     this.services.log.setMessageContext(message, 'GoAlias')
     this.services.log.info('executing')

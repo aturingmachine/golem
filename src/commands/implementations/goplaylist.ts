@@ -1,9 +1,9 @@
 import { GolemCommand } from '..'
 import { CommandNames } from '../../constants'
 import { LoggerService } from '../../core/logger/logger.service'
+import { Errors } from '../../errors'
 import { PlexService } from '../../integrations/plex/plex.service'
 import { MessageBuilderService } from '../../messages/message-builder.service'
-import { RawReply } from '../../messages/replies/raw'
 import { ListingLoaderService } from '../../music/local/library/loader.service'
 import { AListing } from '../../music/local/listings/listings'
 import {
@@ -35,7 +35,6 @@ export default new GolemCommand({
         await message.addReply(
           await this.services.playlists.list(message.info.guildId)
         )
-        return true
       },
     },
     create: {
@@ -44,8 +43,13 @@ export default new GolemCommand({
         const playlistName = source.getString('playlistname')
 
         if (!playlistName || playlistName === 'true') {
-          await message.addReply('Missing required argument for playlist name.')
-          return false
+          throw Errors.BadArgs({
+            message: 'Missing required argument for playlist name.',
+            sourceCmd: 'playlist.create',
+            argName: 'playlist name',
+            subcommand: 'create',
+            format: '$go playlist create <playlist name> [--fromQueue]',
+          })
         }
 
         this.services.log.debug(
@@ -64,8 +68,6 @@ export default new GolemCommand({
         await message.addReply(
           `Created playlist ${createResult.name} with ${createResult.listings.length} listings.`
         )
-
-        return true
       },
     },
     test: {
@@ -74,15 +76,22 @@ export default new GolemCommand({
         const playlistName = source.getString('playlistname')
 
         if (!playlistName) {
-          await message.addReply('Missing required argument for playlist name.')
-          return false
+          throw Errors.BadArgs({
+            message: 'Missing required argument for playlist name.',
+            sourceCmd: 'playlist.play',
+            argName: 'playlist name',
+            subcommand: 'play',
+            format: '$go playlist play <playlist name>',
+          })
         }
 
         const player = await this.services.players.getOrCreate(message)
 
         if (!player) {
-          await message.addReply(`ERR: NOPLAYER`)
-          return false
+          throw Errors.NoPlayer({
+            message: 'Missing required argument for playlist name.',
+            sourceCmd: 'playlist.play',
+          })
         }
 
         const result = await this.services.playlists.hydrate({
@@ -90,12 +99,6 @@ export default new GolemCommand({
           name: playlistName,
           userId: message.info.userId,
         })
-
-        // TODO proper error handling
-        if (typeof result === 'number') {
-          await message.addReply(`ERR: ${result}`)
-          return false
-        }
 
         await this.services.players.playMany(message, player, result.tracks)
 
@@ -105,8 +108,6 @@ export default new GolemCommand({
         await message.addReply(
           `Should have queued ${result.tracks.length} tracks.`
         )
-
-        return true
       },
     },
     add: {
@@ -116,8 +117,13 @@ export default new GolemCommand({
         const query = source.getString('query')
 
         if (!playlistName) {
-          await message.addReply(`Missing required argument for playlist name.`)
-          return false
+          throw Errors.BadArgs({
+            message: 'Missing required argument for playlist name.',
+            sourceCmd: 'playlist.add',
+            argName: 'playlist name',
+            subcommand: 'add',
+            format: '$go playlist add <playlist name> [search query]',
+          })
         }
 
         let trackSource: AListing | undefined | QueryPlayResult =
@@ -140,8 +146,11 @@ export default new GolemCommand({
         }
 
         if (!trackToAdd) {
-          await message.addReply(`couldn't create listing to add.`)
-          return false
+          throw Errors.Basic({
+            message: 'Could not create listing to add to playlist.',
+            sourceCmd: 'playlist.add',
+            code: 104,
+          })
         }
 
         const result = await this.services.playlists.add(
@@ -151,35 +160,27 @@ export default new GolemCommand({
         )
 
         if (!result) {
-          await message.addReply(
-            `Could not find playlist of name ${playlistName}`
-          )
-          return false
+          throw Errors.NotFound({
+            message: 'Could not create listing to add to playlist.',
+            sourceCmd: 'playlist.add',
+            identifier: playlistName,
+            resource: 'playlist',
+          })
         }
 
         await message.addReply(`Added track ${trackName} to playlist.`)
-
-        return true
       },
     },
   },
 
-  async handler(props): Promise<boolean> {
+  async handler(props) {
     const { message, source } = props
     this.services.log.setMessageContext(message, this.options.logSource)
     this.services.log.info(
       `running ${source.subCommand} ${source.getString('playlistname')}`
     )
 
-    return this.subcommandTree.run(this, props)
-
-    if (!source.subCommand) {
-      await message.addReply(
-        new RawReply('Temporarily Disabling Legacy Playlist Support.')
-      )
-
-      return false
-    }
+    await this.subcommandTree.run(this, props)
 
     // LEGEACY
     // const playlistName = source.getString('playlist')
