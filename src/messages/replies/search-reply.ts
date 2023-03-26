@@ -1,4 +1,4 @@
-import { EmbedFieldData, MessageEmbed, MessageOptions } from 'discord.js'
+import { APIEmbedField, EmbedBuilder, MessageReplyOptions } from 'discord.js'
 import { Constants, embedFieldSpacer } from '../../constants'
 import { LocalListing } from '../../music/local/listings/listings'
 import { BaseReply } from './base'
@@ -9,8 +9,8 @@ const getSearchReply = (
   query: string,
   results: LocalListing[],
   totalCount: number
-): MessageOptions => {
-  const fields: EmbedFieldData[] = results
+): MessageReplyOptions => {
+  const fields: APIEmbedField[] = results
     .map((res, index) => ({
       name: `Hit ${index + 1}`,
       value: res.longName,
@@ -23,9 +23,9 @@ const getSearchReply = (
       prev.push(curr)
 
       return prev
-    }, [] as EmbedFieldData[])
+    }, [] as APIEmbedField[])
 
-  const embed = new MessageEmbed()
+  const embed = new EmbedBuilder()
     .setTitle(`Top ${results.length} for "${query.toUpperCase()}"`)
     .setDescription(`Taken from **${totalCount}** total results`)
     .setFields(...fields, embedFieldSpacer)

@@ -1,4 +1,4 @@
-import { MessageAttachment, EmbedFieldData } from 'discord.js'
+import { AttachmentBuilder, APIEmbedField } from 'discord.js'
 import { IFastAverageColorResult } from 'fast-average-color'
 import md5 from 'md5'
 import { IAudioMetadata } from 'music-metadata'
@@ -11,9 +11,9 @@ import { humanReadableDuration } from '../../../utils/time-utils'
 import { AAlbum, Album } from './album'
 
 export type ListingEmbedData = {
-  fields: EmbedFieldData[]
+  fields: APIEmbedField[]
   color: IFastAverageColorResult
-  image?: MessageAttachment
+  image?: AttachmentBuilder
 }
 
 export abstract class AListing {
@@ -215,14 +215,14 @@ export class LocalListing extends AListing {
 
   async toEmbed(): Promise<ListingEmbedData> {
     const artBuffer = this.album.covers.med.get() || PlexLogo
-    const image = new MessageAttachment(artBuffer, 'cover.png')
+    const image = new AttachmentBuilder(artBuffer, { name: 'cover.png' })
     const color = await ImageUtils.averageColor(artBuffer)
 
     const duration = this.hasDefaultDuration
       ? '-'
       : humanReadableDuration(this.duration)
 
-    const fields: EmbedFieldData[] = [
+    const fields: APIEmbedField[] = [
       {
         name: 'Artist',
         value: this.artist,

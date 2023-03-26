@@ -1,4 +1,4 @@
-import { HexColorString, MessageEmbed } from 'discord.js'
+import { HexColorString, EmbedBuilder } from 'discord.js'
 import { AListing } from '../../music/local/listings/listings'
 import { MusicPlayer } from '../../music/player/player'
 import { GolemMessage } from '../golem-message'
@@ -29,7 +29,7 @@ export class NowPlayingReply extends BaseReply {
       ? `Starts In: ${player.stats.hTime}`
       : 'Starting Now'
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setTitle(title)
       .setColor(listingEmbed.color.hex as HexColorString)
       .setDescription(description)

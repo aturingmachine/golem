@@ -116,10 +116,18 @@ export class ParsedMessage {
   ) {
     this.log.setContext(`message-info${uid ? '::' + uid : ''}`)
     const rawContent = typeof message === 'string' ? message : message.content
+    console.log(rawContent)
 
     const sliceIndex = getSliceIndex(rawContent)
 
     this.log.debug(
+      `parsing raw ${formatForLog({
+        rawContent,
+        sliceIndex,
+      })}; slice index: ${sliceIndex}`
+    )
+
+    console.log(
       `parsing raw ${formatForLog({
         rawContent,
         sliceIndex,
@@ -161,15 +169,16 @@ export class MessageInfo {
   constructor(
     public interaction: GolemMessageInteraction,
     private logger: LoggerService,
-    parasedLogger: LoggerService,
+    parsedLogger: LoggerService,
     private uid?: string
   ) {
+    console.log(interaction)
     this.member = this.interaction.member as GuildMember
     this.guild = this.interaction.guild
 
     this.parsed = new ParsedMessage(
       '' + this.interaction.toString(),
-      parasedLogger,
+      parsedLogger,
       this.uid
     )
   }

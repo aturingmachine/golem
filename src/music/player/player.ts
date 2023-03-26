@@ -10,11 +10,16 @@ import {
   joinVoiceChannel,
   JoinVoiceChannelOptions,
   VoiceConnection,
+  VoiceConnectionConnectingState,
+  VoiceConnectionDestroyedState,
+  VoiceConnectionDisconnectedState,
   VoiceConnectionDisconnectReason,
+  VoiceConnectionSignallingState,
   VoiceConnectionState,
   VoiceConnectionStatus,
 } from '@discordjs/voice'
 import { ModuleRef } from '@nestjs/core'
+import { ChannelType } from 'discord.js'
 import { ClientService } from '../../core/client.service'
 import { LoggerService } from '../../core/logger/logger.service'
 import { humanReadableTime, wait } from '../../utils/time-utils'
@@ -61,8 +66,6 @@ export class MusicPlayer {
     this.channelName = options.channelName
     this.channelId = options.channelId
     this.audioPlayer = createAudioPlayer()
-
-    this.audioPlayer.on('stateChange', this.playerStateHandler.bind(this))
 
     this.audioPlayer.on('error', this.audioPlayErrorHandler.bind(this))
 
@@ -304,7 +307,10 @@ export class MusicPlayer {
 
     const channel = await this.clientService.channels.fetch(this.channelId)
 
-    if (channel?.isVoice() && channel.members.size === 1) {
+    if (
+      channel?.type === ChannelType.GuildVoice &&
+      channel.members.size === 1
+    ) {
       return
     }
 
@@ -315,8 +321,23 @@ export class MusicPlayer {
     this.voiceConnection = joinVoiceChannel(this.options)
 
     this.voiceConnection.on(
-      'stateChange',
-      this.voiceConnectionStateHandler.bind(this)
+      VoiceConnectionStatus.Disconnected,
+      this.onVoiceDisconnected.bind(this)
+    )
+
+    this.voiceConnection.on(
+      VoiceConnectionStatus.Destroyed,
+      this.onVoiceDestroyed.bind(this)
+    )
+
+    this.voiceConnection.on(
+      VoiceConnectionStatus.Connecting,
+      this.onVoiceConnectingOrSignalling.bind(this)
+    )
+
+    this.voiceConnection.on(
+      VoiceConnectionStatus.Signalling,
+      this.onVoiceConnectingOrSignalling.bind(this)
     )
 
     this.subscribe()
@@ -408,119 +429,163 @@ export class MusicPlayer {
     this.queueLock = false
   }
 
-  private async playerStateHandler(
+  private onAutoPause(
+    oldState: AudioPlayerState,
+    newState: AudioPlayerState
+  ): void {
+    this.log.debug(
+      `player state change ${oldState.status} => ${newState.status}`
+    )
+    this.startTimer()
+  }
+
+  private onBuffering(
+    oldState: AudioPlayerState,
+    newState: AudioPlayerState
+  ): void {
+    this.log.debug(
+      `player state change ${oldState.status} => ${newState.status}`
+    )
+    this.clearTimer()
+  }
+
+  private async onIdle(
     oldState: AudioPlayerState,
     newState: AudioPlayerState
   ): Promise<void> {
-    this.log.verbose(
-      `state change - player: ${this.primaryKey} -  ${this.secondaryKey}; ${oldState.status} => ${newState.status}`
+    this.log.debug(
+      `player state change ${oldState.status} => ${newState.status}`
     )
+    this.startTimer()
 
-    switch (newState.status) {
-      case AudioPlayerStatus.AutoPaused:
-        // start timer
-        this.startTimer()
-        break
-      case AudioPlayerStatus.Buffering:
-        this.clearTimer()
-        break
-      case AudioPlayerStatus.Idle:
-        // Golem.presence.update()
-        // start timer
-        this.startTimer()
-
-        if (
-          oldState.status !== AudioPlayerStatus.Idle &&
-          !this.isDisconnected &&
-          !this.isDestroyed
-        ) {
-          // process queue
-          await this.processQueue()
-        }
-        break
-      case AudioPlayerStatus.Paused:
-        // start timer
-        this.startTimer()
-        break
-      case AudioPlayerStatus.Playing:
-        if (isNotActive(oldState.status)) {
-          // clear timer
-          this.clearTimer()
-
-          // if idle trigger queue event
-          if (oldState.status === AudioPlayerStatus.Idle) {
-            // Golem.events.trigger(
-            //   GolemEvent.Queue,
-            //   this.voiceConnection.joinConfig.guildId
-            // )
-          }
-        }
-        break
+    if (
+      oldState.status !== AudioPlayerStatus.Idle &&
+      !this.isDisconnected &&
+      !this.isDestroyed
+    ) {
+      // process queue
+      await this.processQueue()
     }
   }
 
-  private async voiceConnectionStateHandler(
-    _: VoiceConnectionState,
-    newState: VoiceConnectionState
-  ): Promise<void> {
-    if (newState.status === VoiceConnectionStatus.Disconnected) {
-      if (
-        newState.reason === VoiceConnectionDisconnectReason.WebSocketClose &&
-        newState.closeCode === 4014
-      ) {
-        try {
-          await entersState(
-            this.voiceConnection,
-            VoiceConnectionStatus.Connecting,
-            5_000
-          )
-          // Probably moved voice channel
-        } catch {
-          this.voiceConnection.destroy()
-          // Probably removed from voice channel
-        }
-      } else if (this.voiceConnection.rejoinAttempts < 5) {
-        /*
-          The disconnect in this case is recoverable, and we also have <5 repeated attempts so we will reconnect.
-        */
-        await wait((this.voiceConnection.rejoinAttempts + 1) * 5_000)
-        this.voiceConnection.rejoin()
-      } else {
-        /*
-          The disconnect in this case may be recoverable, but we have no more remaining attempts - destroy.
-        */
-        this.voiceConnection.destroy()
+  private onPaused(
+    oldState: AudioPlayerState,
+    newState: AudioPlayerState
+  ): void {
+    this.log.debug(
+      `player state change ${oldState.status} => ${newState.status}`
+    )
+    this.startTimer()
+  }
+
+  private onPlaying(
+    oldState: AudioPlayerState,
+    newState: AudioPlayerState
+  ): void {
+    this.log.debug(
+      `player state change ${oldState.status} => ${newState.status}`
+    )
+    if (isNotActive(oldState.status)) {
+      // clear timer
+      this.clearTimer()
+
+      // if idle trigger queue event
+      if (oldState.status === AudioPlayerStatus.Idle) {
+        // Golem.events.trigger(
+        //   GolemEvent.Queue,
+        //   this.voiceConnection.joinConfig.guildId
+        // )
       }
-    } else if (newState.status === VoiceConnectionStatus.Destroyed) {
-      /*
-        Once destroyed, stop the subscription
-      */
-      this.stop()
-    } else if (
-      !this.readyLock &&
-      (newState.status === VoiceConnectionStatus.Connecting ||
-        newState.status === VoiceConnectionStatus.Signalling)
+    }
+  }
+
+  private addPlayerStateHandlers(): void {
+    this.audioPlayer.on(
+      AudioPlayerStatus.AutoPaused,
+      this.onAutoPause.bind(this)
+    )
+    this.audioPlayer.on(
+      AudioPlayerStatus.Buffering,
+      this.onBuffering.bind(this)
+    )
+    this.audioPlayer.on(AudioPlayerStatus.Idle, this.onIdle.bind(this))
+    this.audioPlayer.on(AudioPlayerStatus.Paused, this.onPaused.bind(this))
+    this.audioPlayer.on(AudioPlayerStatus.Playing, this.onPlaying.bind(this))
+  }
+
+  private async onVoiceDisconnected(
+    oldState: VoiceConnectionState,
+    newState: VoiceConnectionDisconnectedState
+  ): Promise<void> {
+    this.log.debug(
+      `voice state change ${oldState.status} => ${newState.status}`
+    )
+    if (
+      newState.reason === VoiceConnectionDisconnectReason.WebSocketClose &&
+      newState.closeCode === 4014
     ) {
-      /*
-        In the Signalling or Connecting states, we set a 20 second time limit for the connection to become ready
-        before destroying the voice connection. This stops the voice connection permanently existing in one of these
-        states.
-      */
-      this.readyLock = true
       try {
         await entersState(
           this.voiceConnection,
-          VoiceConnectionStatus.Ready,
-          20_000
+          VoiceConnectionStatus.Connecting,
+          5_000
         )
+        // Probably moved voice channel
       } catch {
-        if (
-          this.voiceConnection.state.status !== VoiceConnectionStatus.Destroyed
-        )
-          this.voiceConnection.destroy()
-      } finally {
-        this.readyLock = false
+        this.voiceConnection.destroy()
+        // Probably removed from voice channel
       }
+    } else if (this.voiceConnection.rejoinAttempts < 5) {
+      /*
+       * The disconnect in this case is recoverable, and we also have <5 repeated attempts so we will reconnect.
+       */
+      await wait((this.voiceConnection.rejoinAttempts + 1) * 5_000)
+      this.voiceConnection.rejoin()
+    } else {
+      /*
+       * The disconnect in this case may be recoverable, but we have no more remaining attempts - destroy.
+       */
+      this.voiceConnection.destroy()
+    }
+  }
+
+  private async onVoiceDestroyed(
+    oldState: VoiceConnectionState,
+    newState: VoiceConnectionDestroyedState
+  ): Promise<void> {
+    this.log.debug(
+      `voice state change ${oldState.status} => ${newState.status}`
+    )
+    /*
+     * Once destroyed, stop the subscription
+     */
+    this.stop()
+  }
+
+  private async onVoiceConnectingOrSignalling(
+    oldState: VoiceConnectionState,
+    newState: VoiceConnectionConnectingState | VoiceConnectionSignallingState
+  ): Promise<void> {
+    this.log.debug(
+      `voice state change ${oldState.status} => ${newState.status}`
+    )
+    /*
+     * In the Signalling or Connecting states, we set a 20 second time limit for the connection to become ready
+     * before destroying the voice connection. This stops the voice connection permanently existing in one of these
+     * states.
+     */
+    this.readyLock = true
+    try {
+      await entersState(
+        this.voiceConnection,
+        VoiceConnectionStatus.Ready,
+        20_000
+      )
+    } catch {
+      if (this.voiceConnection.state.status !== VoiceConnectionStatus.Destroyed)
+        this.voiceConnection.destroy()
+    } finally {
+      this.readyLock = false
     }
   }
 

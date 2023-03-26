@@ -56,8 +56,13 @@ export class GSCompiler {
     ast: AstParseResult
     compiled: CompiledGolemScript
   } {
+    console.log(`Making Parser from source: "${source}"`)
     const ast = new Parser(source).result
     const compiled = new GSCompiler(ast).compile()
+
+    console.log(
+      `Parser Produced: AST RAW "${ast.raw}" :::: GS RAW ${compiled.raw}`
+    )
 
     return {
       ast,
@@ -66,9 +71,14 @@ export class GSCompiler {
   }
 
   compile(): CompiledGolemScript {
+    // Here probs
     const raw = this.ast.blocks
       .flatMap((block, blockIndex) => {
         return Object.values(block.commands).flatMap((leaf, _index) => {
+          console.log(
+            'gs:compiled leaf tokens: ',
+            leaf.tokens.map((t) => t.value).join(' ')
+          )
           this.updateCurrentSegment('srcLeaf', leaf)
           this.updateCurrentSegment('index', blockIndex)
           this.updateCurrentSegment('block_type', block.type)
@@ -91,6 +101,7 @@ export class GSCompiler {
 
   private compileTokens(leaf: AstTokenLeaf): string {
     const compiled = leaf.tokens.flatMap((token, index) => {
+      console.log('gs:compiledTokens compiling:', formatForLog(token))
       return this.compileLeaf(token, index)
     })
 
@@ -129,6 +140,10 @@ export class GSCompiler {
 
     return compiled
       .filter(ArrayUtils.isDefined)
+      .map((c) => {
+        console.log('gs:compileTokens compiled:', formatForLog(c))
+        return c
+      })
       .map((c) => c.resolved_value)
       .concat(this.dividers.shift()?.[0] || '')
       .join(' ')
@@ -177,6 +192,14 @@ export class GSCompiler {
         }
         break
       default:
+        console.log(
+          'gs:default',
+          formatForLog({
+            name: token.type,
+            raw: token.value.toString(),
+            resolved_value: token.value.toString(),
+          })
+        )
         result = {
           name: token.type,
           raw: token.value.toString(),
@@ -225,6 +248,7 @@ export class GSCompiler {
   }
 
   private compileOptLeaf(token: OptAstToken): CompileTokenResult {
+    console.log('GS:compileOptLeaf', formatForLog(token))
     const val: string | boolean | number | FuncAstToken = token.opt_val
 
     // Handle nested Function Call
@@ -254,6 +278,14 @@ export class GSCompiler {
     } else if (isNumber) {
       this.tokens[token.name] = parseInt(val)
     }
+
+    console.log(
+      `compileOptLeaf: ${formatForLog({
+        raw: token.opt_val.toString(),
+        name: token.name,
+        resolved_value: val,
+      })}`
+    )
 
     return {
       raw: token.opt_val.toString(),

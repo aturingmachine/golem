@@ -8,7 +8,7 @@ import { InputStream } from './input-stream'
 const shouldDebug = true
 
 const dd = (...args: unknown[]) => {
-  if (shouldDebug && false) {
+  if (shouldDebug) {
     console.log(...args)
   }
 }
@@ -195,46 +195,55 @@ export class Tokenizer {
   }
 
   read_command(): CmdAstToken | null {
-    let cmd_name: CommandBase | string = ''
-    let potentials = this.command_names.slice(1)
+    // let cmd_name: CommandBase | string = ''
+    // let potentials = this.command_names.slice(1)
 
-    while (!this.stream.eof()) {
-      const ch = this.stream.peek()
-      dd(`Checking "${ch}"`)
+    const toWhiteSpace = this.stream.peek_to_whitespace()
 
-      if (this.is_whitespace(ch) && potentials.length < 1) {
-        break
-      }
+    console.log(`toWhiteSpace: "${toWhiteSpace}"`)
 
-      if (
-        this.is_whitespace(ch) &&
-        !potentials.some((potential) => potential.includes(' '))
-      ) {
-        break
-      }
+    // while (!this.stream.eof()) {
+    //   const ch = this.stream.peek()
+    //   dd(`Checking "${ch}"`)
 
-      const potential_new_command = cmd_name + ch
+    //   if (this.is_whitespace(ch) && potentials.length < 1) {
+    //     break
+    //   }
 
-      const new_potentials = potentials.filter((potential) => {
-        return new RegExp(`^${potential_new_command}`, 'i').test(potential)
-      })
+    //   if (
+    //     this.is_whitespace(ch) &&
+    //     !potentials.some((potential) => potential.includes(' '))
+    //   ) {
+    //     break
+    //   }
 
-      if (!new_potentials.length) {
-        break
-      }
+    //   console.log(`Is Command is going to check "${cmd_name + ch}"`)
+    //   const potential_new_command = cmd_name + ch
 
-      this.stream.next()
+    //   const new_potentials = potentials.filter((potential) => {
+    //     return new RegExp(`^${potential_new_command}`, 'i').test(potential)
+    //   })
 
-      cmd_name = potential_new_command as CommandBase
+    //   if (!new_potentials.length) {
+    //     console.log('Is Command has no new potentials.')
+    //     break
+    //   }
 
-      potentials = [...new_potentials]
-    }
+    //   console.log('Is Command Calling stream.next()')
+    //   this.stream.next()
 
-    const base = Commands.get(cmd_name.trim())?.info.name
+    //   cmd_name = potential_new_command as CommandBase
+
+    //   potentials = [...new_potentials]
+    // }
+
+    const base = Commands.get(toWhiteSpace)?.info.name
 
     if (!base) {
       return null
     }
+
+    this.stream.skip_to_whitespace()
 
     return {
       type: 'cmd',
@@ -576,7 +585,10 @@ export class Tokenizer {
       }
     }
 
-    if (this.is_command(ch)) {
+    if (
+      this.is_command(ch) &&
+      this.is_command(this.stream.peek_to_whitespace())
+    ) {
       dd('is_command', ch)
 
       const r = this.read_command()

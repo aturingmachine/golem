@@ -194,8 +194,7 @@ export class ProcessingTree {
 
   async _execute(
     script: CompiledGolemScript,
-    message: GolemMessage,
-    ref: ModuleRef
+    message: GolemMessage
   ): Promise<ExecutionResults> {
     const results: ExecutionResults = {
       fail: [],
@@ -204,7 +203,9 @@ export class ProcessingTree {
       timeline: [],
     }
 
-    this.logger.debug(`executing segment[0] ${formatForLog(script)}`)
+    this.logger.debug(
+      `executing segment[0] "${script.raw}" ${formatForLog(script)}`
+    )
 
     let lastSegment: [number, 'and_block' | 'solo'] = [
       0,

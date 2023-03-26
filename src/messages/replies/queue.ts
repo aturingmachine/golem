@@ -1,5 +1,4 @@
-import { Embed } from '@discordjs/builders'
-import { EmbedBuilder } from 'discord.js/node_modules/@discordjs/builders'
+import { EmbedBuilder, APIEmbedField } from 'discord.js'
 import { Track } from '../../music/tracks'
 import { BaseReply } from './base'
 import { ReplyType } from './types'
@@ -16,7 +15,7 @@ export class QueueReply extends BaseReply {
     const fields = tracks.slice(0, 10).map((track, index) => ({
       name: index === 0 ? 'Up Next' : `Position: ${index + 1}`,
       value: `${track.metadata.title} - ${track.metadata.artist}`,
-    })) as Embed['fields']
+    })) as APIEmbedField[]
 
     console.log(fields)
 

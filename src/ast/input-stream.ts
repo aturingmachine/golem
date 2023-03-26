@@ -30,6 +30,19 @@ export class InputStream {
     return this.input.charAt(this.pos)
   }
 
+  peek_to_whitespace(): string {
+    const index = this.remaining().search(/[ ;]/)
+    return this.remaining().slice(0, index > 0 ? index : undefined)
+  }
+
+  skip_to_whitespace(): void {
+    const index = this.remaining().search(/[ ;]/)
+
+    if (index > 0) {
+      this.pos = this.pos + index
+    }
+  }
+
   eoc(): boolean {
     // console.log(this.peek(), this.peek_next())
     return (

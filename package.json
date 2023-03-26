@@ -22,6 +22,7 @@
     "@nestjs/testing": "^8.4.7",
     "@types/common-tags": "^1.8.1",
     "@types/express": "^4.17.13",
+    "@types/jest": "^29.5.0",
     "@types/md5": "^2.3.1",
     "@types/minimist": "^1.2.2",
     "@types/node": "^17.0.5",
@@ -34,17 +35,15 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.24.2",
     "eslint-plugin-prettier": "^4.0.0",
-    "jest": "^27.4.5",
+    "jest": "^29.5.0",
     "jest-mock": "^29.4.3",
     "prettier": "^2.3.2",
-    "ts-jest": "^27.1.2",
-    "typescript": "^4.4.2"
+    "ts-jest": "^29.0.5",
+    "typescript": "^4.9.5"
   },
   "dependencies": {
-    "@discordjs/builders": "^0.11.0",
-    "@discordjs/opus": "github:discordjs/opus",
-    "@discordjs/rest": "^0.4.1",
-    "@discordjs/voice": "^0.7.4",
+    "@discordjs/opus": "^0.9.0",
+    "@discordjs/voice": "^0.15.0",
     "@nestjs/common": "^8.4.7",
     "@nestjs/config": "^2.2.0",
     "@nestjs/core": "^8.4.7",
@@ -54,8 +53,7 @@
     "chalk": "^4.1.2",
     "common-tags": "^1.8.2",
     "dargs": "^7.0.0",
-    "discord-api-types": "^0.36.3",
-    "discord.js": "^13.7.0",
+    "discord.js": "^14.8.0",
     "dotenv": "^10.0.0",
     "execa": "^5.1.1",
     "express": "^4.17.1",
@@ -83,6 +81,6 @@
     "yaml": "2.0.0-9",
     "ytdl-core": "^4.9.1",
     "ytpl": "^2.2.3",
-    "ytsr": "^3.5.3"
+    "ytsr": "^3.8.0"
   }
 }

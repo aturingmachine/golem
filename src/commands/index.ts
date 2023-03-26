@@ -12,7 +12,7 @@ import {
 } from '@discordjs/builders'
 import { InjectionToken } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
-import { Constructable } from 'discord.js'
+import type { Constructable } from 'discord.js'
 import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
 import { LoggerService } from '../core/logger/logger.service'
 import { GolemMessage } from '../messages/golem-message'
@@ -368,10 +368,7 @@ export class GolemCommand<
 
           if (arg.choices) {
             arg.choices.forEach((choice) => {
-              ;(option as SlashCommandIntegerOption).addChoice(
-                choice.name,
-                choice.value
-              )
+              ;(option as SlashCommandIntegerOption).addChoices(choice)
             })
           }
           break
@@ -386,10 +383,7 @@ export class GolemCommand<
 
           if (arg.choices) {
             arg.choices.forEach((choice) => {
-              ;(option as SlashCommandStringOption).addChoice(
-                choice.name,
-                choice.value
-              )
+              ;(option as SlashCommandStringOption).addChoices(choice)
             })
           }
           break

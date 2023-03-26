@@ -1,4 +1,4 @@
-import { MessageEmbed, HexColorString } from 'discord.js'
+import { EmbedBuilder, HexColorString } from 'discord.js'
 import { AListing } from '../../music/local/listings/listings'
 import { BaseReply } from './base'
 import { ReplyType } from './types'
@@ -13,7 +13,7 @@ export class ListingReply extends BaseReply {
     const title = listing.title
     const description = `${listing.artist} - ${listing.title}`
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setTitle(title)
       .setColor(listingEmbed.color.hex as HexColorString)
       .setDescription(description)

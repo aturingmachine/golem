@@ -1,5 +1,5 @@
 import { URL } from 'url'
-import { EmbedFieldData } from 'discord.js'
+import { APIEmbedField } from 'discord.js'
 import ytpl from 'ytpl'
 import { embedFieldSpacer } from '../../constants'
 import { ImageUtils } from '../../utils/image-utils'
@@ -66,7 +66,7 @@ export class YoutubeListing extends AListing {
     const duration = humanReadableDuration(this.duration)
     const color = await ImageUtils.averageColor(this.album.getArt('original'))
 
-    const fields: EmbedFieldData[] = [
+    const fields: APIEmbedField[] = [
       {
         name: 'Artist',
         value: this.artist,

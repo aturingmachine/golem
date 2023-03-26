@@ -1,5 +1,5 @@
 import { CustomTransportStrategy, Server } from '@nestjs/microservices'
-import { Client, Intents } from 'discord.js'
+import { Client, GatewayIntentBits } from 'discord.js'
 
 export class DiscordBotServer
   extends Server
@@ -20,9 +20,10 @@ export class DiscordBotServer
           parse: ['users'],
         },
         intents: [
-          Intents.FLAGS.GUILDS,
-          Intents.FLAGS.GUILD_VOICE_STATES,
-          Intents.FLAGS.GUILD_MESSAGES,
+          GatewayIntentBits.Guilds,
+          GatewayIntentBits.GuildVoiceStates,
+          GatewayIntentBits.GuildMessages,
+          GatewayIntentBits.MessageContent,
         ],
       })
   }
@@ -44,6 +45,7 @@ export class DiscordBotServer
     })
 
     this.client.on('messageCreate', (message) => {
+      console.log('client on message create', message)
       const handler = this.messageHandlers.get('messageCreate')
 
       if (handler) {

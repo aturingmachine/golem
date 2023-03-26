@@ -1,9 +1,40 @@
+import { GSCompiler } from '../src/ast/compiler'
 import { Parser } from '../src/ast/parser'
 import '../src/commands/register-commands'
-import { CommandInvocation } from '../src/messages/message-info'
+import { LoggerService } from '../src/core/logger/logger.service'
+import { GolemMessage } from '../src/messages/golem-message'
+import { CommandInvocation, MessageInfo } from '../src/messages/message-info'
 import { debugDump } from '../test-utils/debug-dump'
 
 describe('Message Info', () => {
+  describe.only('Text Parsing', () => {
+    it('should', () => {
+      const messageContent = '$go play rocket punch flash'
+      const logger1 = new LoggerService({})
+      const logger2 = new LoggerService({})
+
+      const asdf = GSCompiler.fromString(messageContent)
+
+      const messageInfo = new MessageInfo(
+        {
+          source: {
+            content: messageContent,
+          },
+          toString() {
+            return messageContent
+          },
+        } as any,
+        logger1,
+        logger2
+      )
+
+      console.log(
+        'Parsed Content > ',
+        JSON.stringify(messageInfo.parsed.content)
+      )
+    })
+  })
+
   describe('Command Invocation', () => {
     let source: string
     let invocation: CommandInvocation

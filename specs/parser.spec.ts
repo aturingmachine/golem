@@ -159,6 +159,14 @@ describe('Parser', () => {
     })
   })
 
+  it.only('should', () => {
+    command = '$go play rocket punch flash'
+
+    const result = testParse()
+
+    console.log(result.raw)
+  })
+
   describe('Advanced Parsing', () => {
     it('should handle options that use quotes', () => {
       command = '$go play twice tt --some_opt="this has quotes" --another_one'

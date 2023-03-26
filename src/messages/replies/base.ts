@@ -1,4 +1,4 @@
-import { MessageOptions } from 'discord.js'
+import { MessageReplyOptions } from 'discord.js'
 import { ReplyType } from './types'
 
 export abstract class BaseReply {
@@ -10,5 +10,5 @@ export abstract class BaseReply {
    */
   abstract readonly isUnique: boolean
 
-  constructor(readonly opts: MessageOptions) {}
+  constructor(readonly opts: MessageReplyOptions) {}
 }

@@ -1,12 +1,13 @@
 import {
   AwaitMessageComponentOptions,
-  CacheType,
+  CollectedMessageInteraction,
+  Collection,
   CommandInteraction,
+  ComponentType,
   GuildMember,
   InteractionReplyOptions,
   Message,
-  MessageComponentInteraction,
-  MessageOptions,
+  MessageReplyOptions,
   SelectMenuInteraction,
 } from 'discord.js'
 import { v4 } from 'uuid'
@@ -23,7 +24,7 @@ import { RawReply } from './replies/raw'
 import { Replies } from './replies/types'
 
 export type GolemMessageReplyOptions =
-  | MessageOptions
+  | MessageReplyOptions
   | InteractionReplyOptions
   | string
 
@@ -45,11 +46,11 @@ export class GolemMessageOpts {
     return { ...(this.rawOpts as InteractionReplyOptions), ...aux }
   }
 
-  asMessage(aux?: Partial<MessageOptions>): MessageOptions {
-    return { ...(this.rawOpts as MessageOptions), ...aux }
+  asMessage(aux?: Partial<MessageReplyOptions>): MessageReplyOptions {
+    return { ...(this.rawOpts as MessageReplyOptions), ...aux }
   }
 
-  asObject<T extends MessageOptions | InteractionReplyOptions>(
+  asObject<T extends MessageReplyOptions | InteractionReplyOptions>(
     aux?: Partial<T>
   ): T {
     return {
@@ -90,6 +91,7 @@ export class GolemMessage {
 
     this.log.debug(`rendered ${this.commands.length} commands.`)
 
+    console.log(this.source)
     this.info = new MessageInfo(this.source, logs[0], logs[1], this.traceId)
   }
 
@@ -105,7 +107,7 @@ export class GolemMessage {
     return this.commands.map((c) => c.toDebug()).join(', ')
   }
 
-  collector<T extends MessageComponentInteraction<CacheType>>(
+  collector<T extends CollectedMessageInteraction>(
     options: AwaitMessageComponentOptions<T>,
     handler: (interaction: T) => Promise<T | void>
   ): Promise<T | void> | undefined {
@@ -113,7 +115,8 @@ export class GolemMessage {
       return this.lastReply
         .awaitMessageComponent({
           ...options,
-          componentType: options.componentType || 'ACTION_ROW',
+          componentType:
+            options.componentType || (ComponentType.ActionRow as any),
           filter: async (interaction): Promise<boolean> => {
             if (!interaction.isMessageComponent()) {
               return false
@@ -124,7 +127,7 @@ export class GolemMessage {
             }
 
             if (options.filter) {
-              return await options.filter(interaction as T)
+              return await options.filter(interaction as T, new Collection())
             }
 
             return true
@@ -207,10 +210,12 @@ export class GolemMessage {
       return
     }
 
-    let parsedOptions: MessageOptions
+    let parsedOptions: MessageReplyOptions
     if (typeof options === 'string') {
       parsedOptions = { content: options }
     } else if ('reply' in options) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       parsedOptions = options
     } else {
       // Handle interaction I guess?

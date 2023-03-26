@@ -1,4 +1,4 @@
-import { EmbedFieldData, MessageEmbed, MessageOptions } from 'discord.js'
+import { APIEmbedField, EmbedBuilder, MessageReplyOptions } from 'discord.js'
 import { ImageUtils } from '../../utils/image-utils'
 import { YoutubeTrack } from '../tracks/youtube-track'
 import { YoutubeListing } from './youtube-listing'
@@ -12,7 +12,7 @@ export interface YoutubePlaylistListing {
 export class YoutubePlaylistEmbed {
   static trackListCount = 5
 
-  constructor(public options: MessageOptions) {}
+  constructor(public options: MessageReplyOptions) {}
 
   static async from(
     title: string,
@@ -21,11 +21,11 @@ export class YoutubePlaylistEmbed {
   ): Promise<YoutubePlaylistEmbed> {
     const color = await ImageUtils.averageColor(thumbnail || undefined)
 
-    const firstTracks: EmbedFieldData[] = tracks
+    const firstTracks: APIEmbedField[] = tracks
       .slice(0, YoutubePlaylistEmbed.trackListCount)
       .map((track) => ({ name: track.meta.title, value: track.meta.artist }))
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setTitle(`Queuing YouTube playlist`)
       .setDescription(title)
       .setColor(color.hex)
@@ -36,11 +36,11 @@ export class YoutubePlaylistEmbed {
     }
 
     if (tracks.length > YoutubePlaylistEmbed.trackListCount) {
-      embed.setFooter(
-        `and ${
+      embed.setFooter({
+        text: `and ${
           tracks.length - YoutubePlaylistEmbed.trackListCount
-        } other tracks`
-      )
+        } other tracks`,
+      })
     }
 
     return new YoutubePlaylistEmbed({ embeds: [embed] })

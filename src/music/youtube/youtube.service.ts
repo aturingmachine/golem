@@ -99,6 +99,10 @@ export class YoutubeService {
       })
 
       process.on('error', onError)
+
+      process.on('message', (message) => {
+        this.log.debug(`yt-dlp out => "${message.toString()}"`)
+      })
     })
   }
 
