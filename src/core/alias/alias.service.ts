@@ -216,10 +216,10 @@ export class AliasService {
     const hits: CustomAliasHit[] = []
 
     blocks.forEach((block, index) => {
-      console.log(`Checking block "${block}" for alias hits`)
+      this.log.debug(`Checking block "${block}" for alias hits`)
       const match = guildAliases.find((alias) => {
         const testBlockFormat = block.trim() + ' '
-        console.log(
+        this.log.debug(
           `Checking alias "${formatForLog(alias)}" [block.startsWith(${
             alias.name
           })] ? ${testBlockFormat.startsWith('$' + alias.name)}`

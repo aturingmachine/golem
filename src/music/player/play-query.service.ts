@@ -134,7 +134,6 @@ export class PlayQueryService {
 
   private async processUrl(userId: string, url: URL): Promise<QueryPlayResult> {
     const host = Object.entries(SupportedHosts).find(([_host, domains]) => {
-      console.log(_host, ' => ', domains)
       return domains.some((domain) => url.host.includes(domain))
     })?.[0]
 

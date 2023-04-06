@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import {
   ChannelManager,
   Client,
   Collection,
   Guild,
   GuildManager,
+  MessageCreateOptions,
+  MessagePayload,
 } from 'discord.js'
 import { LoggerService } from './logger/logger.service'
 
@@ -12,7 +15,7 @@ import { LoggerService } from './logger/logger.service'
 export class ClientService {
   private _clientInstance?: Client
 
-  constructor(private log: LoggerService) {
+  constructor(private log: LoggerService, private config: ConfigService) {
     this.log.setContext('ClientService')
   }
 
@@ -53,5 +56,19 @@ export class ClientService {
 
   get guildIds(): string[] {
     return Object.keys(this.guildManager.cache)
+  }
+
+  async messageAdmin(
+    payload: string | MessagePayload | MessageCreateOptions
+  ): Promise<void> {
+    this.log.info('sending DM to admin')
+
+    const adminId = this.config.get('discord.adminId')
+
+    if (!this.client || !adminId) {
+      return
+    }
+
+    this.client.users.send(adminId, payload)
   }
 }

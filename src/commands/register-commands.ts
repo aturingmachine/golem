@@ -11,13 +11,12 @@ import goplay from './implementations/goplay'
 import goplaylist from './implementations/goplaylist'
 import goplaynext from './implementations/goplaynext'
 // import goreport from './implementations/goreport'
+import goreport from './implementations/goreport'
 import gosearch from './implementations/gosearch'
 import goshuffle from './implementations/goshuffle'
 import goskip from './implementations/goskip'
 import gostop from './implementations/gostop'
 import { GolemCommand } from '.'
-
-console.log('IS this file fucking imported?')
 
 export const Commands = new Collection<string, GolemCommand<any>>()
 
@@ -42,7 +41,7 @@ export const RegisteredCommands = {
   goplay,
   goplaylist,
   goplaynext,
-  // goreport,
+  goreport,
   gosearch,
   goshuffle,
   goskip,

@@ -91,7 +91,6 @@ export class GolemMessage {
 
     this.log.debug(`rendered ${this.commands.length} commands.`)
 
-    console.log(this.source)
     this.info = new MessageInfo(this.source, logs[0], logs[1], this.traceId)
   }
 

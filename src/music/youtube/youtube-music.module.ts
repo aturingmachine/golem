@@ -7,7 +7,6 @@ import { YoutubeService } from './youtube.service'
 export class YoutubeMusicModule {
   public static forRoot(): DynamicModule {
     if (!RawConfig.modules.includes(GolemModule.Youtube)) {
-      console.log('No Youtube Module Loaded')
       return { module: YoutubeMusicModule }
     }
 

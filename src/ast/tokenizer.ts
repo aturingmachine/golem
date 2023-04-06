@@ -103,6 +103,7 @@ export class Tokenizer {
   readonly stream: InputStream
 
   private isInAlias = false
+  private hasCommand = false
 
   constructor(readonly input: string) {
     this.stream = new InputStream(input)
@@ -200,8 +201,6 @@ export class Tokenizer {
 
     const toWhiteSpace = this.stream.peek_to_whitespace()
 
-    console.log(`toWhiteSpace: "${toWhiteSpace}"`)
-
     // while (!this.stream.eof()) {
     //   const ch = this.stream.peek()
     //   dd(`Checking "${ch}"`)
@@ -242,6 +241,8 @@ export class Tokenizer {
     if (!base) {
       return null
     }
+
+    this.hasCommand = true
 
     this.stream.skip_to_whitespace()
 
@@ -587,7 +588,9 @@ export class Tokenizer {
 
     if (
       this.is_command(ch) &&
-      this.is_command(this.stream.peek_to_whitespace())
+      this.is_command(this.stream.peek_to_whitespace()) &&
+      !this.hasCommand &&
+      !this.isInAlias
     ) {
       dd('is_command', ch)
 

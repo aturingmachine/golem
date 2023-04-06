@@ -1,3 +1,4 @@
+import { execSync } from 'child_process'
 import { writeFileSync } from 'fs'
 import path from 'path'
 import { ConfigService } from '@nestjs/config'
@@ -20,18 +21,6 @@ import { humanReadableDuration } from './utils/time-utils'
 export function debugDump(...args: unknown[]): void {
   const out = path.resolve(__dirname, '../out.json')
   writeFileSync(out, JSON.stringify(args, undefined, 2), { encoding: 'utf-8' })
-}
-
-const commandLineArgs = minimist(process.argv.slice(2))
-
-/**
- * Inject Globals
- */
-
-console.debug = (message: any, ...optionaParams: any[]) => {
-  if (!!commandLineArgs.debug) {
-    console.log('[DEBUG] >', message, ...optionaParams)
-  }
 }
 
 async function bootstrap() {
@@ -99,6 +88,36 @@ async function bootstrap() {
   const end = Date.now()
   log.debug(`bootstrap lasted ${humanReadableDuration((end - start) / 1000)}`)
 
+  // Function for handling Shutdowns
+  function shutdownHandler(): void {
+    log.info('running shutdown handler')
+    clientService.client?.destroy()
+
+    return
+  }
+
+  // Set a handler to DM the admin on an uncaught exception.
+  process.on('uncaughtException', async (err) => {
+    // Build a message for a DM
+    const message = `
+GOLEM ERROR: UNCAUGHT EXCEPTION ${new Date().toUTCString()}
+-----
+Error: ${err.name} - ${err.message}
+STACK: ${err.stack || 'No Stack Available.'}`
+
+    await clientService.messageAdmin(message)
+
+    // Use a custom crash handler if there is one
+    const customHandler = config.get('crash.run')
+
+    if (customHandler) {
+      execSync(customHandler)
+    }
+  })
+
+  // Run the shutdown handler on exit.
+  process.once('exit', shutdownHandler)
+
   await app.listen()
   // const app = await NestFactory.createApplicationContext(AppModule)
   // // application logic...
@@ -160,6 +179,7 @@ function shutdownHandler(): void {
 //     execSync(GolemConf.crashHandler)
 //   }
 // })
+
 process.once('SIGINT', () => process.exit(1))
 
 bootstrap()

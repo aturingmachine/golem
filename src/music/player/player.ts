@@ -413,7 +413,6 @@ export class MusicPlayer {
         //   this.voiceConnection.joinConfig.guildId
         // )
       } catch (error) {
-        console.error(error)
         this.log.error(`error processing queue ${error}`)
         this.skip()
       }
@@ -590,7 +589,6 @@ export class MusicPlayer {
   }
 
   private audioPlayErrorHandler(error: AudioPlayerError): void {
-    console.error(error)
     this.skip()
     this.log.error(`audio player error occurred ${error.message}`)
   }

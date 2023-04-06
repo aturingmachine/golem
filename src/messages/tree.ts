@@ -114,9 +114,6 @@ export class ProcessingTree {
       }
     } else if (innerTree.type === RUN) {
       // Run the command, return the status
-      console.log('Should be running using:', innerTree.instance.toDebug())
-      console.log(innerTree.instance.handler)
-
       let status = true
 
       // client.users.send('id', 'content');
@@ -304,12 +301,6 @@ export class ProcessingTree {
     }
 
     await this.runTree(tree, results, ref, golemMessage)
-
-    results.timeline.forEach((i) => {
-      const c = Commands.get(i.command)
-
-      console.log(c?.info.name)
-    })
 
     this.logger.setContext('tree-service')
 

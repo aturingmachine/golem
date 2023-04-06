@@ -82,7 +82,7 @@ export class MessageController {
 
     const state: Partial<Record<ReplyType, boolean>> = {}
 
-    console.log('Going To filter rpelies', replies)
+    // console.log('Going To filter rpelies', replies)
 
     const uniqueReplies = replies.filter((rep) => {
       if (!rep.isUnique) {
@@ -105,7 +105,7 @@ export class MessageController {
       return true
     })
 
-    console.log('RepliesToSend:', uniqueReplies)
+    // console.log('RepliesToSend:', uniqueReplies)
 
     for (const reply of uniqueReplies) {
       this.logger.info(

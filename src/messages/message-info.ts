@@ -35,8 +35,6 @@ export class CommandInvocation {
 
         // Handle nested Function Call
         if (typeof val === 'object') {
-          console.log('val >', val)
-
           const def = GolemScriptFunctions.get(val.name)
 
           const evaled = def?.implementation(...val.params.map((p) => p.value))
@@ -116,18 +114,10 @@ export class ParsedMessage {
   ) {
     this.log.setContext(`message-info${uid ? '::' + uid : ''}`)
     const rawContent = typeof message === 'string' ? message : message.content
-    console.log(rawContent)
 
     const sliceIndex = getSliceIndex(rawContent)
 
     this.log.debug(
-      `parsing raw ${formatForLog({
-        rawContent,
-        sliceIndex,
-      })}; slice index: ${sliceIndex}`
-    )
-
-    console.log(
       `parsing raw ${formatForLog({
         rawContent,
         sliceIndex,
@@ -172,7 +162,6 @@ export class MessageInfo {
     parsedLogger: LoggerService,
     private uid?: string
   ) {
-    console.log(interaction)
     this.member = this.interaction.member as GuildMember
     this.guild = this.interaction.guild
 

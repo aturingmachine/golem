@@ -92,14 +92,6 @@ export class TrackQueue {
 
   peekDeep(depth = 5): AudioResourceDefinition[] {
     this.log.verbose('Deep Peeking')
-    console.log(this.queue)
-    console.log(this.queue.length)
-    console.log(
-      '---RAW QUEUE---',
-      this.explicitQueue,
-      this.passiveQueue,
-      '---END RAW QUEUE---'
-    )
 
     return depth > 0
       ? this.queue.slice(0, depth).map((i) => i.audioResource)

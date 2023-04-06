@@ -20,6 +20,7 @@ export class DiscordBotServer
           parse: ['users'],
         },
         intents: [
+          GatewayIntentBits.DirectMessages,
           GatewayIntentBits.Guilds,
           GatewayIntentBits.GuildVoiceStates,
           GatewayIntentBits.GuildMessages,
@@ -45,7 +46,7 @@ export class DiscordBotServer
     })
 
     this.client.on('messageCreate', (message) => {
-      console.log('client on message create', message)
+      // console.log('client on message create', message)
       const handler = this.messageHandlers.get('messageCreate')
 
       if (handler) {

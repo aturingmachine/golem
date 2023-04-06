@@ -138,10 +138,10 @@ export class ParsedCommand {
         return parseSegment(segment, RegisteredCommands.goadmin.info)
       case CommandBase.alias:
         return parseSegment(segment, RegisteredCommands.goalias.info)
-      // case BuiltInAlias.NP:
-      // case BuiltInAlias.NowPlaying:
-      // case CommandBase.get:
-      //   return parseSegment(segment, RegisteredCommands.goget.info)
+      case BuiltInAlias.NP:
+      case BuiltInAlias.NowPlaying:
+      case CommandBase.get:
+        return parseSegment(segment, RegisteredCommands.goget.info)
       // case CommandBase.help:
       //   return parseSegment(segment, gohelp.info)
       // case CommandBase.mix:
@@ -160,12 +160,12 @@ export class ParsedCommand {
       case BuiltInAlias.PlayNext:
       case CommandBase.playNext:
         return parseSegment(segment, RegisteredCommands.goplaynext.info)
-      // case CommandBase.report:
-      //   return parseSegment(segment, RegisteredCommands.goreport.info)
+      case CommandBase.report:
+        return parseSegment(segment, RegisteredCommands.goreport.info)
       case CommandBase.search:
         return parseSegment(segment, RegisteredCommands.gosearch.info)
-      // case CommandBase.shuffle:
-      //   return parseSegment(segment, RegisteredCommands.goshuffle.info)
+      case CommandBase.shuffle:
+        return parseSegment(segment, RegisteredCommands.goshuffle.info)
       case BuiltInAlias.Skip:
       case CommandBase.skip:
         return parseSegment(segment, RegisteredCommands.goskip.info)

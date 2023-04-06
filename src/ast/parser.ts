@@ -62,7 +62,7 @@ export class Parser {
   }
 
   parseOne(section: string): AstBlock {
-    console.log(`PARSER::parseOne "${section}"`)
+    // console.log(`PARSER::parseOne "${section}"`)
     const tokenizer = new Tokenizer(section)
     const type = section.includes('&&') ? 'and_block' : 'solo'
     const prog: AstTokenTree = {}
@@ -80,14 +80,14 @@ export class Parser {
         try {
           const next = tokenizer.read_next()
           cmd.push(next)
-          console.log(`pushing cmd: > ${formatForLog(next || {})}`)
+          // console.log(`pushing cmd: > ${formatForLog(next || {})}`)
         } catch (error) {
           console.error(error)
           throw error
         }
       }
 
-      console.log(`cmd done as: "${cmd.join(', ')}"`)
+      // console.log(`cmd done as: "${cmd.join(', ')}"`)
 
       return cmd
     }
