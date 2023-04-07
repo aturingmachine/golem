@@ -24,6 +24,7 @@ export type LastFmConfig = {
 
 export type LibraryConfig = {
   paths: string[]
+  albumLocation: string
 }
 
 export type MongoConfig = {
@@ -100,10 +101,10 @@ export default (): ConfigurationOptions => {
     serverIds: raw.discord?.serverIds || [],
     adminId: raw.discord?.adminId || '',
     debug: {
-      channelId: raw.discord?.debug.channel_id,
-      channelName: raw.discord?.debug.channel_name,
-      guildId: raw.discord?.debug.guild_id,
-      guildName: raw.discord?.debug.guild_name,
+      channelId: raw.discord?.debug?.channel_id,
+      channelName: raw.discord?.debug?.channel_name,
+      guildId: raw.discord?.debug?.guild_id,
+      guildName: raw.discord?.debug?.guild_name,
     },
   }
 
@@ -122,6 +123,7 @@ export default (): ConfigurationOptions => {
 
   const library = {
     paths: raw.library?.paths || [],
+    albumLocation: raw.library?.albumLocation || '',
   }
 
   const mongo = {

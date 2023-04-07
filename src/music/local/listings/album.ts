@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs'
 import path from 'path'
 import { Column, Entity, ObjectID, ObjectIdColumn } from 'typeorm'
+import { RawConfig } from '../../../utils/raw-config'
 import { StringUtils } from '../../../utils/string-utils'
 
 export abstract class AAlbum {
@@ -10,8 +11,6 @@ export abstract class AAlbum {
 
 @Entity()
 export class Album extends AAlbum {
-  static readonly baseArtPath = '/home/turing/dev/golem/data/albums'
-
   @ObjectIdColumn()
   _id!: ObjectID
 
@@ -38,7 +37,7 @@ export class Album extends AAlbum {
     this.name = name
     this.artist = artist
     this.path = path.resolve(
-      Album.baseArtPath,
+      RawConfig.settings.library?.albumLocation || '../../../data/albums',
       StringUtils.slugify(artist),
       StringUtils.slugify(name)
     )

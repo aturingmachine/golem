@@ -76,7 +76,7 @@ export class MusicPlayer {
     this.log = await this.ref.resolve(LoggerService, undefined, {
       strict: false,
     })
-    this.log.setContext('MusicPlayer', this.guildName)
+    this.log.setContext('MusicPlayer', this.guildName, this.options.guildId)
     this.log.debug('Logger resolved for the Player')
 
     this.log.debug('Trying to resolve a LoggerService for the queue')

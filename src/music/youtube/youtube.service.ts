@@ -25,7 +25,7 @@ export class YoutubeService {
     output: '-',
     quiet: true,
     format: 'ba[ext=webm][acodec=opus] / ba',
-    limitRate: '100K',
+    limitRate: '1000K',
   })
 
   constructor(

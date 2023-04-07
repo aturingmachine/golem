@@ -64,28 +64,45 @@ export class PlayerService {
   async create(message: GolemMessage): Promise<MusicPlayer | undefined> {
     const debugServer = this.config.get('discord.debug')
 
-    if ((!debugServer && !message.info.voiceChannel) || !message.info.guild) {
+    if (
+      (!debugServer && !message.info.voiceChannel) ||
+      !message.info.guild ||
+      !message.info.voiceChannel
+    ) {
       this.log.warn(`create unable to create - no voice channel or guild`)
       return
     }
 
-    const opts = debugServer
-      ? {
-          adapterCreator: message.info.guild
-            .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
-          channelId: debugServer.channelId,
-          channelName: debugServer.channelName,
-          guildId: debugServer.guildId,
-          guildName: debugServer.guildName,
-        }
-      : {
-          adapterCreator: message.info.guild
-            .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
-          channelId: message.info.voiceChannel?.id,
-          channelName: message.info.voiceChannel?.name,
-          guildId: message.info.guildId,
-          guildName: message.info.guild.name,
-        }
+    // const opts = debugServer
+    //   ? {
+    //       adapterCreator: message.info.guild
+    //         .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
+    //       channelId: debugServer.channelId,
+    //       channelName: debugServer.channelName,
+    //       guildId: debugServer.guildId,
+    //       guildName: debugServer.guildName,
+    //     }
+    //   : {
+    //       adapterCreator: message.info.guild
+    //         .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
+    //       channelId: message.info.voiceChannel?.id,
+    //       channelName: message.info.voiceChannel?.name,
+    //       guildId: message.info.guildId,
+    //       guildName: message.info.guild.name,
+    //     }
+    const opts = {
+      adapterCreator: message.info.guild
+        .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
+      channelId: message.info.voiceChannel.id,
+      channelName: message.info.voiceChannel.name,
+      guildId: message.info.guildId,
+      guildName: message.info.guild.name,
+    }
+
+    this.log.debug(
+      `creating new player for name="${message.info.guild.name}" id="${message.info.guildId}" channelId="${message.info.voiceChannel?.id}",
+      channelName="${message.info.voiceChannel?.name}"`
+    )
 
     const player = new MusicPlayer(this.ref, opts)
 

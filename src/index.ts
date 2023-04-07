@@ -28,6 +28,8 @@ async function bootstrap() {
   const botServer = new DiscordBotServer()
   botServer.init()
 
+  // const app = await NestFactory.create(AppModule);
+
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {

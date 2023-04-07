@@ -32,18 +32,19 @@ export class ListingLoaderService {
   }
 
   async load(): Promise<void> {
+    this.log.info('starting load job')
     if (this.config.get('args.bust-cache')) {
       await this.wipeData()
     }
 
     for (const library of this.config.get('library').paths) {
-      this.log.info(`processing library ${library}`)
       const name = library.split('/').pop() || 'Library'
+      this.log.info(`processing library" ${library}" named as "${name}"`)
 
       if (this.config.get('args.bust-cache')) {
         await this.loadFromDisk(library, name)
       } else {
-        await this.loadFromDB(name)
+        await this.loadFromDB(name, library)
       }
     }
   }
@@ -52,7 +53,7 @@ export class ListingLoaderService {
     return getAllFiles(path, []).filter((trackPath) => !reg.test(trackPath))
   }
 
-  private async loadFromDB(name: string): Promise<void> {
+  private async loadFromDB(name: string, rawLibName: string): Promise<void> {
     this.log.debug(`Loading library ${name} from database.`)
     const library = await this.libraries.findOne({
       where: { name },
@@ -84,6 +85,8 @@ export class ListingLoaderService {
       } catch (error) {
         console.error(error)
       }
+    } else {
+      this.loadFromDisk(rawLibName, name)
     }
   }
 
