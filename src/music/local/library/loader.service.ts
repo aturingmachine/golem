@@ -31,6 +31,14 @@ export class ListingLoaderService {
     this.log.setContext('ListingLoader')
   }
 
+  libs(): Promise<Library[]> {
+    return this.libraries.find({})
+  }
+
+  allListings(): Promise<LocalListing[]> {
+    return this.listings.find({})
+  }
+
   async load(): Promise<void> {
     this.log.info('starting load job')
     if (this.config.get('args.bust-cache')) {

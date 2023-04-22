@@ -19,9 +19,15 @@ export class AlbumService {
     this.log.setContext('AlbumService')
   }
 
+  all(): Promise<Album[]> {
+    return this.albums.find({})
+  }
+
   async for(query: ObjectID | LocalListing): Promise<Album | null> {
     const parsedQuery = query instanceof LocalListing ? query.albumId : query
-    const record = await this.albums.findOne({ where: { _id: parsedQuery } })
+    const record = await this.albums.findOne({
+      where: { _id: new ObjectID(parsedQuery.toString()) },
+    })
 
     return record
   }
@@ -41,7 +47,8 @@ export class AlbumService {
       [1000, '_xl'],
     ]
 
-    const album = new Album(albumName, artist)
+    // const album = new Album(albumName, artist)
+    const album = Album.rebuild(this.albums.create({ name: albumName, artist }))
 
     try {
       mkdirSync(album.path, { recursive: true })

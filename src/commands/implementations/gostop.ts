@@ -26,6 +26,7 @@ export default new GolemCommand({
       throw Errors.NoPlayer({
         message: `cannot stop player for server with no active player. Server: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
         sourceCmd: 'stop',
+        traceId: message.traceId,
       })
     }
 

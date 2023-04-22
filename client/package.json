@@ -2,6 +2,7 @@
   "name": "golem-admin-client",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check build-only",
@@ -13,9 +14,14 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "colorthief": "^2.4.0",
     "pinia": "^2.0.32",
+    "socket.io-client": "^4.6.1",
+    "uuid": "^9.0.0",
     "vue": "^3.2.47",
-    "vue-router": "^4.1.6"
+    "vue-router": "^4.1.6",
+    "vue3-charts": "^1.1.33",
+    "vuetify": "^3.1.13"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.2.0",

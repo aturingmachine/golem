@@ -24,9 +24,32 @@ import { ClientService } from '../../core/client.service'
 import { LoggerService } from '../../core/logger/logger.service'
 import { humanReadableTime, wait } from '../../utils/time-utils'
 import { AListing } from '../local/listings/listings'
-import { TrackAudioResourceMetadata } from '../tracks'
+import { TrackAudioResourceMetadata, TrackType } from '../tracks'
 import { AudioResourceDefinition } from './player.service'
 import { QueuedTrack, TrackQueue } from './queue'
+
+export type MusicPlayerJSON = {
+  guild: {
+    id: string
+    name: string
+  }
+  channel: {
+    id: string
+    name: string
+  }
+  nowPlaying: {
+    listing: {
+      id: string | undefined
+      type: TrackType | undefined
+      duration: number | undefined
+      playbackDuration: number | undefined
+      title: string | undefined
+      artist: string | undefined
+    }
+  }
+  queue: any[]
+  status: AudioPlayerStatus
+}
 
 export type GolemTrackAudioResource = AudioResource & {
   metadata: TrackAudioResourceMetadata
@@ -68,8 +91,6 @@ export class MusicPlayer {
     this.audioPlayer = createAudioPlayer()
 
     this.audioPlayer.on('error', this.audioPlayErrorHandler.bind(this))
-
-    this.joinVoice()
   }
 
   async init(): Promise<void> {
@@ -87,6 +108,47 @@ export class MusicPlayer {
 
     this.queue = new TrackQueue(queueLogger, this.guildName)
     this.log.debug('Should be done with the init')
+
+    this.addPlayerStateHandlers()
+    this.joinVoice()
+  }
+
+  toJSON(): MusicPlayerJSON {
+    return {
+      guild: {
+        id: this.options.guildId,
+        name: this.options.guildName,
+      },
+      channel: {
+        id: this.options.channelId,
+        name: this.options.channelName,
+      },
+      nowPlaying: {
+        listing: {
+          type: this.nowPlayingResource?.metadata.track.type,
+          id: this.nowPlaying?.listingId,
+          duration: this.nowPlaying?.duration,
+          playbackDuration: this.nowPlayingResource?.playbackDuration,
+          title: this.nowPlaying?.title,
+          artist: this.nowPlaying?.artist,
+        },
+      },
+      status: this.audioPlayer.state.status,
+      queue: this.queue.queue.map((track) => {
+        return {
+          type: track.audioResource.track.type,
+          id: track.audioResource.track.listing.listingId,
+          title: track.audioResource.track.listing.title,
+          album: track.audioResource.track.listing.albumName,
+          albumId:
+            '_id' in track.audioResource.track.listing.album
+              ? track.audioResource.track.listing.album._id
+              : '',
+          artist: track.audioResource.track.listing.artist,
+          duration: track.audioResource.track.listing.duration,
+        }
+      }),
+    }
   }
 
   /**
@@ -251,6 +313,8 @@ export class MusicPlayer {
     this.queueLock = false
     // Golem.presence.update()
     // this.disconnect()
+
+    this.startTimer()
   }
 
   public shuffle(): void {
@@ -344,6 +408,7 @@ export class MusicPlayer {
   }
 
   private subscribe(): void {
+    this.log.info(`subscribing for [${this.options.guildName}]`)
     this.voiceConnection.subscribe(this.audioPlayer)
   }
 
@@ -364,7 +429,9 @@ export class MusicPlayer {
       `processing queue - VC Status = ${this.voiceConnection.state.status}`
     )
 
-    if (this.isDestroyed) {
+    // TODO state transfers have changed I think and this is triggering when the shit
+    // is empty lol
+    if (this.isDestroyed && this.queue.queue.length > 0) {
       this.log.debug(
         `player in destroyed state at process attempt for ${this.primaryKey}  -  ${this.secondaryKey} - running rejoin and subscribe`
       )
@@ -432,9 +499,9 @@ export class MusicPlayer {
     oldState: AudioPlayerState,
     newState: AudioPlayerState
   ): void {
-    this.log.debug(
-      `player state change ${oldState.status} => ${newState.status}`
-    )
+    // this.log.debug(
+    //   `player state change ${oldState.status} => ${newState.status}`
+    // )
     this.startTimer()
   }
 
@@ -442,9 +509,9 @@ export class MusicPlayer {
     oldState: AudioPlayerState,
     newState: AudioPlayerState
   ): void {
-    this.log.debug(
-      `player state change ${oldState.status} => ${newState.status}`
-    )
+    // this.log.debug(
+    //   `player state change ${oldState.status} => ${newState.status}`
+    // )
     this.clearTimer()
   }
 
@@ -452,9 +519,9 @@ export class MusicPlayer {
     oldState: AudioPlayerState,
     newState: AudioPlayerState
   ): Promise<void> {
-    this.log.debug(
-      `player state change ${oldState.status} => ${newState.status}`
-    )
+    // this.log.debug(
+    //   `player state change ${oldState.status} => ${newState.status}`
+    // )
     this.startTimer()
 
     if (
@@ -471,9 +538,9 @@ export class MusicPlayer {
     oldState: AudioPlayerState,
     newState: AudioPlayerState
   ): void {
-    this.log.debug(
-      `player state change ${oldState.status} => ${newState.status}`
-    )
+    // this.log.debug(
+    //   `player state change ${oldState.status} => ${newState.status}`
+    // )
     this.startTimer()
   }
 
@@ -481,9 +548,9 @@ export class MusicPlayer {
     oldState: AudioPlayerState,
     newState: AudioPlayerState
   ): void {
-    this.log.debug(
-      `player state change ${oldState.status} => ${newState.status}`
-    )
+    // this.log.debug(
+    //   `player state change ${oldState.status} => ${newState.status}`
+    // )
     if (isNotActive(oldState.status)) {
       // clear timer
       this.clearTimer()
@@ -499,17 +566,41 @@ export class MusicPlayer {
   }
 
   private addPlayerStateHandlers(): void {
-    this.audioPlayer.on(
-      AudioPlayerStatus.AutoPaused,
-      this.onAutoPause.bind(this)
-    )
-    this.audioPlayer.on(
-      AudioPlayerStatus.Buffering,
-      this.onBuffering.bind(this)
-    )
-    this.audioPlayer.on(AudioPlayerStatus.Idle, this.onIdle.bind(this))
-    this.audioPlayer.on(AudioPlayerStatus.Paused, this.onPaused.bind(this))
-    this.audioPlayer.on(AudioPlayerStatus.Playing, this.onPlaying.bind(this))
+    this.audioPlayer.on('stateChange', (oldState, newState) => {
+      this.log.debug(
+        `player state change ${oldState.status} => ${newState.status}`
+      )
+
+      switch (newState.status) {
+        case AudioPlayerStatus.AutoPaused:
+          this.onAutoPause(oldState, newState)
+          break
+        case AudioPlayerStatus.Buffering:
+          this.onBuffering(oldState, newState)
+          break
+        case AudioPlayerStatus.Idle:
+          this.onIdle(oldState, newState)
+          break
+        case AudioPlayerStatus.Paused:
+          this.onPaused(oldState, newState)
+          break
+        case AudioPlayerStatus.Playing:
+          this.onPlaying(oldState, newState)
+          break
+      }
+    })
+
+    // this.audioPlayer.on(
+    //   AudioPlayerStatus.AutoPaused,
+    //   this.onAutoPause.bind(this)
+    // )
+    // this.audioPlayer.on(
+    //   AudioPlayerStatus.Buffering,
+    //   this.onBuffering.bind(this)
+    // )
+    // this.audioPlayer.on(AudioPlayerStatus.Idle, this.onIdle.bind(this))
+    // this.audioPlayer.on(AudioPlayerStatus.Paused, this.onPaused.bind(this))
+    // this.audioPlayer.on(AudioPlayerStatus.Playing, this.onPlaying.bind(this))
   }
 
   private async onVoiceDisconnected(

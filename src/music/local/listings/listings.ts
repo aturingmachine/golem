@@ -100,8 +100,8 @@ export class LocalListing extends AListing {
   @Column()
   public albumArtist: string
 
-  @ObjectIdColumn()
-  public albumId!: ObjectID
+  @Column()
+  public albumId!: string
 
   @Column(() => Album)
   public album!: Album
@@ -150,8 +150,8 @@ export class LocalListing extends AListing {
   }
 
   setAlbum(album: Album): void {
-    this.albumId = album._id
-    this.album = new Album(album.name, album.artist)
+    this.albumId = album._id.toString()
+    this.album = Album.rebuild(album)
   }
 
   get albumArtUrl(): string {

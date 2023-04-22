@@ -57,6 +57,7 @@ export default new GolemCommand({
             argName: 'user',
             sourceCmd: 'perms.get',
             message: '`perms get` requires an argument for `user`.',
+            traceId: message.traceId,
           })
         }
 
@@ -71,6 +72,7 @@ export default new GolemCommand({
             sourceCmd: 'perms.get',
             resource: 'permissions',
             identifier: getUserIdParam,
+            traceId: message.traceId,
           })
         }
 
@@ -90,6 +92,7 @@ export default new GolemCommand({
             format: '$go perms set <user-id> <...permissions>',
             sourceCmd: 'perms.set',
             message: '`perms set` requires an argument for `user`.',
+            traceId: message.traceId,
           })
         }
 
@@ -102,6 +105,7 @@ export default new GolemCommand({
             format: '$go perms set <user-id> <...permissions>',
             message:
               '`perms set` requires one more permission codes to set - separated by spaces.',
+            traceId: message.traceId,
           })
         }
 
@@ -116,6 +120,7 @@ export default new GolemCommand({
             sourceCmd: 'perms.set',
             format: '$go perms set <user-id> <...permissions>',
             message: `Permission set "${newPermissions}" contains no valid Permission Codes. Use \`$go perms describe\` to view valid Permission Codes.`,
+            traceId: message.traceId,
           })
         }
 
@@ -161,6 +166,7 @@ export default new GolemCommand({
             sourceCmd: 'perms.add',
             format: '$go perms add <user-id> <permission>',
             message: '`perms add` requires an argument for `user`.',
+            traceId: message.traceId,
           })
         }
 
@@ -179,6 +185,7 @@ export default new GolemCommand({
             format: '$go perms add <user-id> <permission>',
             message:
               'Missing required, valid Permission Code to add. Use `$go permissions describe` to see valid Permission Codes.',
+            traceId: message.traceId,
           })
         }
 
@@ -256,6 +263,7 @@ export default new GolemCommand({
             sourceCmd: 'perms.remove',
             format: '$go perms remove <user-id> <permission>',
             message: 'Missing required parameter for user',
+            traceId: message.traceId,
           })
         }
 
@@ -274,6 +282,7 @@ export default new GolemCommand({
             format: '$go perms remove <user-id> <permission>',
             message:
               'Missing required, valid Permission Code to remove. Use `$go permissions describe` to see valid Permission Codes.',
+            traceId: message.traceId,
           })
         }
 
@@ -300,6 +309,7 @@ export default new GolemCommand({
             sourceCmd: 'perms.remove',
             resource: 'permissions',
             identifier: remPermUserIdParam,
+            traceId: message.traceId,
           })
         }
 

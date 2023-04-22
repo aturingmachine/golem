@@ -4,6 +4,7 @@ export type GolemErrorParams = {
   message: string
   sourceCmd: string
   requiresAdminAttention?: boolean
+  traceId?: string
 }
 
 export abstract class GolemError extends Error {
@@ -14,6 +15,16 @@ export abstract class GolemError extends Error {
   }
 
   abstract toMessage(): Promise<Replies> | Replies
+
+  toAdminString(): string {
+    const dump = Object.entries(this.params)
+      .map(([k, v]) => {
+        return `${k.toUpperCase()}="${v}"`
+      })
+      .join('\n')
+
+    return dump
+  }
 
   async render(): Promise<Replies> {
     const reply = await this.toMessage()

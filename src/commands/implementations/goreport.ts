@@ -24,6 +24,7 @@ export default new GolemCommand({
         argName: 'reportmessage',
         message: 'A message is required.',
         sourceCmd: 'report',
+        traceId: props.message.traceId,
       })
     }
 

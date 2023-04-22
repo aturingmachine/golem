@@ -12,6 +12,7 @@
     "src/web/**"
   ],
   "compilerOptions": {
+    "sourceMap": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "target": "esnext",

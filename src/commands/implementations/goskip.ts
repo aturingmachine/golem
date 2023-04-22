@@ -29,6 +29,7 @@ export default new GolemCommand({
       throw Errors.NoPlayer({
         message: `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
         sourceCmd: 'skip',
+        traceId: message.traceId,
       })
     }
 
@@ -57,6 +58,7 @@ export default new GolemCommand({
       throw Errors.NoPlayer({
         message: `No track to skip.`,
         sourceCmd: 'skip',
+        traceId: message.traceId,
       })
     }
   },

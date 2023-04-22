@@ -25,6 +25,7 @@ export default new GolemCommand({
       throw Errors.NoPlayer({
         message: 'Cannot peek queue, no active player in server.',
         sourceCmd: 'pause',
+        traceId: message.traceId,
       })
     }
 

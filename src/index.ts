@@ -3,17 +3,15 @@ import { writeFileSync } from 'fs'
 import path from 'path'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
-import { MicroserviceOptions } from '@nestjs/microservices'
-import minimist from 'minimist'
 import { AppModule } from './application.module'
-import { CommandService } from './commands/commands.service'
 import { ClientService } from './core/client.service'
 import configuration from './core/configuration'
 import { DiscordBotServer } from './core/discord-transport'
+import { InitService } from './core/init.service'
 import { LoggerService } from './core/logger/logger.service'
-import { PermissionsService } from './core/permissions/permissions.service'
 import { PlexService } from './integrations/plex/plex.service'
 import { ListingLoaderService } from './music/local/library/loader.service'
+import { DiscordMarkdown } from './utils/discord-markdown-builder'
 import { GolemModule } from './utils/raw-config'
 import { RawConfig } from './utils/raw-config'
 import { humanReadableDuration } from './utils/time-utils'
@@ -28,15 +26,14 @@ async function bootstrap() {
   const botServer = new DiscordBotServer()
   botServer.init()
 
-  // const app = await NestFactory.create(AppModule);
-
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      strategy: botServer,
-      logger: configuration().logLevels,
-    }
-  )
+  const app = await NestFactory.create(AppModule)
+  app.enableCors({
+    origin: [/localhost:?[0-9]*/, /192\.168\.[0-9]+\.[0-9]+:?[0-9]*/],
+  })
+  app.connectMicroservice({
+    strategy: botServer,
+    logger: configuration().logLevels,
+  })
 
   const log = await app.resolve(LoggerService)
   log.setContext('Bootstrap')
@@ -70,42 +67,27 @@ async function bootstrap() {
     log.info('PlexModule not loaded.')
   }
 
-  log.info('Logging in...')
-  const id = await botServer.login(config.get('discord.token'))
-  log.info(`Logged in as ${id}`)
-
-  log.debug('Injecting client instance to container')
-  clientService.client = botServer.client
-  log.debug('Client instance injected')
-
-  const commandService = app.get(CommandService)
-
-  await commandService.registerCommands()
-
-  log.debug(`Setting base permissions.`)
-  const permissionService = app.get(PermissionsService)
-  await permissionService.setInitial()
-  log.debug(`Done setting base permissions.`)
+  log.debug(`Getting Init Service.`)
+  const initService = app.get(InitService)
+  log.debug(`Running Init.`)
+  await initService.runInit(botServer)
+  log.debug(`Init Complete.`)
 
   const end = Date.now()
   log.debug(`bootstrap lasted ${humanReadableDuration((end - start) / 1000)}`)
 
-  // Function for handling Shutdowns
-  function shutdownHandler(): void {
-    log.info('running shutdown handler')
-    clientService.client?.destroy()
-
-    return
-  }
-
   // Set a handler to DM the admin on an uncaught exception.
   process.on('uncaughtException', async (err) => {
     // Build a message for a DM
-    const message = `
+    const message = DiscordMarkdown.start()
+      .preformat(
+        `
 GOLEM ERROR: UNCAUGHT EXCEPTION ${new Date().toUTCString()}
 -----
 Error: ${err.name} - ${err.message}
 STACK: ${err.stack || 'No Stack Available.'}`
+      )
+      .toString()
 
     await clientService.messageAdmin(message)
 
@@ -118,62 +100,29 @@ STACK: ${err.stack || 'No Stack Available.'}`
   })
 
   // Run the shutdown handler on exit.
-  process.once('exit', shutdownHandler)
+  process.once('exit', () => initService.shutdown())
 
-  await app.listen()
-  // const app = await NestFactory.createApplicationContext(AppModule)
-  // // application logic...
-  // const logger = app.get(GolemLogger)
-  // logger.setContext('bootstrap')
-  // logger.info('Bootstrapping')
-  // const config = app.get(GolemConf)
-  // config.init()
-  // app.useLogger(logger)
-  // const database = app.get(DatabaseService)
-  // logger.info('Getting DB Service and connecting')
-  // await database.connect()
-  // logger.info('DB Connected')
-  // // TODO
-  // logger.info('Registering Commands')
-  // const commandService = app.get(CommandService)
-  // commandService.registerCommands()
-  // if (config.options.NoRun) {
-  //   logger.info('NoRun set - exiting')
-  //   process.exit(0)
-  // }
-  // logger.info('Grabbing bot instance')
-  // const golemBot = app.get(GolemBot)
-  // logger.info('Running bot initialization')
-  // await golemBot.initialize()
-  // await golemBot.login()
-  // TODO
-  // if (config.modules.Web) {
-  //   startApi()
-  // }
-  // golemBot.debugger.start()
-  // if (config.options.TTY) {
-  //   golemBot.debugger.setPrompt()
-  //   golemBot.debugger.listen()
-  // }
+  await app.startAllMicroservices()
+  await app.listen(8211)
 }
 
 // TODO
-function shutdownHandler(): void {
-  // GolemLogger?.info('running shutdown handler', { src: 'main' }) ||
-  //   console.log('running shutdown handler')
+// function shutdownHandler(): void {
+// GolemLogger?.info('running shutdown handler', { src: 'main' }) ||
+//   console.log('running shutdown handler')
 
-  // try {
-  //   Golem.playerCache.disconnectAll()
-  // } catch (error) {
-  //   console.error('couldnt disconnect all golem connections', error)
-  // }
+// try {
+//   Golem.playerCache.disconnectAll()
+// } catch (error) {
+//   console.error('couldnt disconnect all golem connections', error)
+// }
 
-  // GolemLogger?.info('logging out', { src: 'main' }) ||
-  //   console.log('logging client out')
+// GolemLogger?.info('logging out', { src: 'main' }) ||
+//   console.log('logging client out')
 
-  // Golem.client.destroy()
-  return
-}
+// Golem.client.destroy()
+// return
+// }
 
 // process.once('exit', shutdownHandler)
 // process.once('uncaughtException', () => {

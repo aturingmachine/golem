@@ -31,6 +31,13 @@ export class Album extends AAlbum {
     { path: string; get(): Buffer }
   >
 
+  static rebuild(album: Album): Album {
+    const rebuilt = new Album(album.name, album.artist)
+    rebuilt._id = album._id
+
+    return rebuilt
+  }
+
   constructor(name: string, artist: string) {
     super()
 

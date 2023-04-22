@@ -106,6 +106,7 @@ export class ParsedMessage {
 
   public args: Record<string, string | boolean | number>
   public content: string
+  public readonly rawContent: string
 
   constructor(
     message: Message | string,
@@ -113,18 +114,19 @@ export class ParsedMessage {
     private uid?: string
   ) {
     this.log.setContext(`message-info${uid ? '::' + uid : ''}`)
-    const rawContent = typeof message === 'string' ? message : message.content
+    this.rawContent = typeof message === 'string' ? message : message.content
 
-    const sliceIndex = getSliceIndex(rawContent)
+    const sliceIndex = getSliceIndex(this.rawContent)
 
     this.log.debug(
       `parsing raw ${formatForLog({
-        rawContent,
+        rawContent: this.rawContent,
         sliceIndex,
       })}; slice index: ${sliceIndex}`
     )
 
-    this.content = sliceIndex > 0 ? rawContent.slice(0, sliceIndex) : rawContent
+    this.content =
+      sliceIndex > 0 ? this.rawContent.slice(0, sliceIndex) : this.rawContent
 
     this.log.debug(`produced content: ${this.content}`)
 

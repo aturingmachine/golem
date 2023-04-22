@@ -31,6 +31,7 @@ export default new GolemCommand({
       throw Errors.NoPlayer({
         message: `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
         sourceCmd: 'play',
+        traceId: message.traceId,
       })
     }
 
@@ -42,6 +43,7 @@ export default new GolemCommand({
           sourceCmd: 'play',
           message:
             'Cannot execute. No search query to play, and no paused track to unpase.',
+          traceId: message.traceId,
         })
       }
 
@@ -62,6 +64,7 @@ export default new GolemCommand({
           sourceCmd: 'play',
           action: 'play',
           required: [queryResult.missingModule],
+          traceId: message.traceId,
         })
       }
 
@@ -70,6 +73,7 @@ export default new GolemCommand({
         message: queryResult.message || 'Unable to process play request.',
         sourceCmd: 'play',
         requiresAdminAttention: true,
+        traceId: message.traceId,
       })
     }
 

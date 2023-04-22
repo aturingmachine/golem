@@ -49,6 +49,7 @@ export default new GolemCommand({
             argName: 'playlist name',
             subcommand: 'create',
             format: '$go playlist create <playlist name> [--fromQueue]',
+            traceId: message.traceId,
           })
         }
 
@@ -82,6 +83,7 @@ export default new GolemCommand({
             argName: 'playlist name',
             subcommand: 'play',
             format: '$go playlist play <playlist name>',
+            traceId: message.traceId,
           })
         }
 
@@ -91,6 +93,7 @@ export default new GolemCommand({
           throw Errors.NoPlayer({
             message: 'Missing required argument for playlist name.',
             sourceCmd: 'playlist.play',
+            traceId: message.traceId,
           })
         }
 
@@ -123,6 +126,7 @@ export default new GolemCommand({
             argName: 'playlist name',
             subcommand: 'add',
             format: '$go playlist add <playlist name> [search query]',
+            traceId: message.traceId,
           })
         }
 
@@ -150,6 +154,7 @@ export default new GolemCommand({
             message: 'Could not create listing to add to playlist.',
             sourceCmd: 'playlist.add',
             code: 104,
+            traceId: message.traceId,
           })
         }
 
@@ -165,6 +170,7 @@ export default new GolemCommand({
             sourceCmd: 'playlist.add',
             identifier: playlistName,
             resource: 'playlist',
+            traceId: message.traceId,
           })
         }
 

@@ -1,8 +1,10 @@
 import { RawReply } from '../messages/replies/raw'
-import { GolemError } from './golem-error'
+import { GolemError, GolemErrorParams } from './golem-error'
 
 export class NoPlayerError extends GolemError {
-  constructor(params: { message: string; sourceCmd: string }) {
+  constructor(
+    params: GolemErrorParams & { message: string; sourceCmd: string }
+  ) {
     super(params)
   }
 

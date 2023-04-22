@@ -1,7 +1,8 @@
 {
   "exclude": [
     "src/djs/**",
-    "dist/**"
+    "dist/**",
+    "client/**"
   ],
   "compilerOptions": {
     "experimentalDecorators": true,

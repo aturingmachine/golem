@@ -8,7 +8,7 @@ import { GolemMessage } from '../../messages/golem-message'
 import { TrackAudioResourceMetadata, TrackType } from '../tracks'
 import { Tracks } from '../tracks/tracks'
 import { YoutubeService } from '../youtube/youtube.service'
-import { MusicPlayer } from './player'
+import { MusicPlayer, MusicPlayerOptions } from './player'
 
 type AudioResourceFactory = () =>
   | AudioResource<TrackAudioResourceMetadata>
@@ -33,6 +33,10 @@ export class PlayerService {
     private youtube: YoutubeService
   ) {
     this.log.setContext('PlayerService')
+  }
+
+  get cached(): Map<string, MusicPlayer> {
+    return this._cache
   }
 
   for(guildId: string): MusicPlayer | undefined {
@@ -64,13 +68,43 @@ export class PlayerService {
   async create(message: GolemMessage): Promise<MusicPlayer | undefined> {
     const debugServer = this.config.get('discord.debug')
 
+    console.log(debugServer)
+
+    const hasDebugServer =
+      !!debugServer.channelId &&
+      !!debugServer.channelName &&
+      !!debugServer.guildId &&
+      !!debugServer.guildName
+
     if (
-      (!debugServer && !message.info.voiceChannel) ||
-      !message.info.guild ||
-      !message.info.voiceChannel
+      (!hasDebugServer && !message.info.voiceChannel) ||
+      !message.info.guild
     ) {
       this.log.warn(`create unable to create - no voice channel or guild`)
       return
+    }
+
+    let opts: MusicPlayerOptions
+
+    if (hasDebugServer) {
+      this.log.info(`creating player using debug server`)
+      opts = {
+        adapterCreator: message.info.guild
+          .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
+        channelId: debugServer.channelId,
+        channelName: debugServer.channelName,
+        guildId: debugServer.guildId,
+        guildName: debugServer.guildName,
+      }
+    } else {
+      opts = {
+        adapterCreator: message.info.guild
+          .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
+        channelId: message.info.voiceChannel!.id,
+        channelName: message.info.voiceChannel!.name,
+        guildId: message.info.guildId,
+        guildName: message.info.guild.name,
+      }
     }
 
     // const opts = debugServer
@@ -90,14 +124,14 @@ export class PlayerService {
     //       guildId: message.info.guildId,
     //       guildName: message.info.guild.name,
     //     }
-    const opts = {
-      adapterCreator: message.info.guild
-        .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
-      channelId: message.info.voiceChannel.id,
-      channelName: message.info.voiceChannel.name,
-      guildId: message.info.guildId,
-      guildName: message.info.guild.name,
-    }
+    // const opts = {
+    //   adapterCreator: message.info.guild
+    //     .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
+    //   channelId: message.info.voiceChannel.id,
+    //   channelName: message.info.voiceChannel.name,
+    //   guildId: message.info.guildId,
+    //   guildName: message.info.guild.name,
+    // }
 
     this.log.debug(
       `creating new player for name="${message.info.guild.name}" id="${message.info.guildId}" channelId="${message.info.voiceChannel?.id}",
@@ -124,6 +158,14 @@ export class PlayerService {
     this.log.info(`have to make new instance for ${message.info.guildId}`)
 
     return this.create(message)
+  }
+
+  async destroy(guildId: string): Promise<void> {
+    const player = this.for(guildId)
+
+    if (player) {
+      player.destroy()
+    }
   }
 
   convertToAudioResource(

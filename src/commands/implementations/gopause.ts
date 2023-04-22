@@ -23,6 +23,7 @@ export default new GolemCommand({
       throw Errors.NoPlayer({
         message: 'Cannot pause, no active player in server.',
         sourceCmd: 'pause',
+        traceId: message.traceId,
       })
     }
 

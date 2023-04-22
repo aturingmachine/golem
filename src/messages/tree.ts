@@ -3,11 +3,11 @@ import { ConfigService } from '@nestjs/config'
 import { ModuleRef } from '@nestjs/core'
 import { CompiledGolemScript, CompiledScriptSegment } from '../ast/compiler'
 import { CommandHandlerFnProps } from '../commands'
-import { Commands } from '../commands/register-commands'
 import { ClientService } from '../core/client.service'
 import { LoggerService } from '../core/logger/logger.service'
 import { GolemError } from '../errors/golem-error'
 import { formatForLog } from '../utils/debug-utils'
+import { DiscordMarkdown } from '../utils/discord-markdown-builder'
 import { GolemMessage } from './golem-message'
 import { ParsedCommand } from './parsed-command'
 
@@ -226,7 +226,8 @@ export class ProcessingTree {
           canRun = true
         } catch (error) {
           canRun = false
-          throw error
+
+          message.addError(error)
         }
       }
 
@@ -247,7 +248,7 @@ export class ProcessingTree {
             canRun = true
           } catch (error) {
             canRun = false
-            throw error
+            message.addError(error)
           }
         } else {
           // This means we failed a previous command within an and block
@@ -283,27 +284,49 @@ export class ProcessingTree {
     return results
   }
 
-  async execute(
-    message: string,
-    ref: ModuleRef,
-    golemMessage: GolemMessage
-  ): Promise<ExecutionResults> {
-    this.logger.setMessageContext(golemMessage, 'ProcessingTree')
-    this.logger.info(`processing message: ${message}`)
+  private async handleError(
+    message: GolemMessage,
+    error: unknown
+  ): Promise<void> {
+    await message.addError(error)
 
-    const tree = {} as CommandNodes
-
-    const results: ExecutionResults = {
-      fail: [],
-      success: [],
-      unrun: [],
-      timeline: [],
+    let adminMessage = ''
+    if (GolemError.is(error)) {
+      if (error.params.requiresAdminAttention) {
+        adminMessage = DiscordMarkdown.start()
+          .raw('-----')
+          .bold(`DATE: ${new Date().toUTCString()}`)
+          .bold(`ADMIN ATTENTION REQUESTED VIA ERROR HANDLER`)
+          .newLine()
+          .code(`SERVER: ${message.info.guild?.name || message.info.guildId}`)
+          .newLine()
+          .preformat(error.toAdminString())
+          .toString()
+      }
+    } else if (error instanceof Error) {
+      adminMessage = DiscordMarkdown.start()
+        .preformat(
+          `
+GOLEM ERROR: UNCAUGHT EXCEPTION ${new Date().toUTCString()}
+-----
+Error: ${error.name} - ${error.message}
+STACK: ${error.stack || 'No Stack Available.'}`
+        )
+        .toString()
+    } else {
+      adminMessage = DiscordMarkdown.start()
+        .preformat(
+          `
+GOLEM ERROR: UNCAUGHT EXCEPTION ${new Date().toUTCString()}
+-----
+${error?.toString() || error}
+`
+        )
+        .toString()
     }
 
-    await this.runTree(tree, results, ref, golemMessage)
-
-    this.logger.setContext('tree-service')
-
-    return results
+    if (adminMessage.length > 0) {
+      await this.clientService.messageAdmin(adminMessage)
+    }
   }
 }

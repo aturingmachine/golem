@@ -30,6 +30,7 @@ export class SubcommandTree<T extends ServiceReqs> {
         message: '',
         options: command.info.subcommands?.map((s) => s.name) || [],
         sourceCmd: command.info.name,
+        traceId: props.message.traceId,
       })
     }
 
@@ -48,6 +49,7 @@ export class SubcommandTree<T extends ServiceReqs> {
         code: 104,
         message: `No sub-command definition found for ${subcommand}`,
         sourceCmd: command.info.name,
+        traceId: props.message.traceId,
       })
     }
 

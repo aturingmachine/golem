@@ -2,8 +2,10 @@ import { Module } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { CustomAlias } from './core/alias/alias.model'
+import { AuditRecord } from './core/audits/audit.model'
 import configuration from './core/configuration'
 import { CoreModule } from './core/core.module'
+import { GuildConfig } from './core/guild-config/guild-config.model'
 import { Permissions } from './core/permissions/permissions'
 import { IntegrationsModule } from './integrations/integration.module'
 import { Library } from './music/local/library/library'
@@ -11,12 +13,14 @@ import { Album } from './music/local/listings/album'
 import { LocalListing } from './music/local/listings/listings'
 import { MusicModule } from './music/music.module'
 import { Playlist } from './music/playlists/playlist.model'
+import { WebModule } from './web/web.module'
 
 @Module({
   imports: [
     CoreModule,
     MusicModule,
     IntegrationsModule,
+    WebModule,
 
     ConfigModule.forRoot({
       isGlobal: true,
@@ -43,6 +47,8 @@ import { Playlist } from './music/playlists/playlist.model'
             CustomAlias,
             Permissions,
             Playlist,
+            GuildConfig,
+            AuditRecord,
           ],
         }
       },

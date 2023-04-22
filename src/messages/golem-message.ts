@@ -73,6 +73,8 @@ export class GolemMessage {
    */
   public readonly traceId: string
 
+  public auditId!: string
+
   private replies: Message[] = []
 
   constructor(

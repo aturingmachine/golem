@@ -40,6 +40,7 @@ export default new GolemCommand({
             argName: 'alias-name',
             message: `Missing required "aliasname" parameter. Correct usage is "alias delete <alias-name>"`,
             sourceCmd: '',
+            traceId: message.traceId,
           })
         }
 

@@ -1,4 +1,4 @@
-import { Controller } from '@nestjs/common'
+import { Controller, Injectable } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
 import { MessagePattern } from '@nestjs/microservices'
 import { Message } from 'discord.js'
@@ -8,6 +8,8 @@ import { MessageId } from '../messages/message-id.model'
 import { ReplyType } from '../messages/replies/types'
 import { ProcessingTree } from '../messages/tree'
 import { AliasService } from './alias/alias.service'
+import { AuditService } from './audits/audit.service'
+import { GuildConfigService } from './guild-config/guild-config.service'
 import { LoggerService } from './logger/logger.service'
 
 @Controller()
@@ -16,21 +18,21 @@ export class MessageController {
     private logger: LoggerService,
     private ref: ModuleRef,
     private treeService: ProcessingTree,
-    private aliasService: AliasService
+    private aliasService: AliasService,
+    private guildConfig: GuildConfigService,
+    private auditService: AuditService
   ) {
     this.logger.setContext('MessageController')
   }
 
   @MessagePattern('messageCreate')
   async handleMessage(data: { message: Message }): Promise<void> {
-    this.logger.info(`raw message="${data.message.content}"`)
+    this.logger.debug(`raw message="${data.message.content}"`)
 
     // If we don't start with a buck then we can assume the message is not for us
     if (!data.message.content.startsWith('$')) {
       return
     }
-
-    // console.log(this.ref.get(LoggerService))
 
     let messageContent = data.message.content
 
@@ -71,7 +73,17 @@ export class MessageController {
       extraLogs
     )
 
+    const audit = await this.auditService.create(message, data.message.content)
+
+    message.auditId = audit._id.toString()
+
     await this.treeService._execute(compiled, message)
+
+    // Set default channel for Guild Config if there is not one
+    await this.guildConfig.setDefaultChannelId(
+      message.info.guildId,
+      message.source.channelId
+    )
 
     const replies = message._replies.render()
 
@@ -81,8 +93,6 @@ export class MessageController {
     )
 
     const state: Partial<Record<ReplyType, boolean>> = {}
-
-    // console.log('Going To filter rpelies', replies)
 
     const uniqueReplies = replies.filter((rep) => {
       if (!rep.isUnique) {
