@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "Removing Old Build"
+rm -rf dist
+
+echo "Building Client"
+npm run build --prefix client/ 
+
+echo "Building Golem"
+npm run build
+
+echo "Moving Client Dist"
+mkdir dist/client
+
+cp -r client/dist/* dist/client
+
+echo "Done."

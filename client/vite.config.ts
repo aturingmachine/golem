@@ -10,6 +10,7 @@ export default defineConfig({
     __API_HOST__: JSON.stringify('localhost:8211'),
     __API_URL__: JSON.stringify('http://localhost:8211/api')
   },
+  base: "/app/",
   // server: {
   //   port:  8211,
   // },

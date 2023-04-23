@@ -21,7 +21,7 @@ export const useAuditsStore = defineStore('audit-logs', {
     forGuild(): GetterFn<[string], AuditRecord[]> {
       return (guildId): AuditRecord[] => {
         console.log('Fetching audits for', guildId)
-        return Object.values(this.records[guildId]).sort((a, b) => {
+        return Object.values(this.records[guildId] || {}).sort((a, b) => {
           return a.timestamp - b.timestamp
         })
       }

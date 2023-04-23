@@ -4,13 +4,14 @@ import { CoreModule } from '../core/core.module'
 import { LoggerModule } from '../core/logger/logger.module'
 import { LocalMusicModule } from '../music/local/local-music.module'
 import { PlayerModule } from '../music/player/player.module'
+import { AppController } from './app.controller'
 import { PlayerController } from './player.controller'
 import { WebClientController } from './web.controller'
 import { WebService } from './web.service'
 import { WS } from './websocket.gateway'
 
 @Module({
-  controllers: [WebClientController, PlayerController],
+  controllers: [WebClientController, PlayerController, AppController],
 
   providers: [WebService, WS],
 
