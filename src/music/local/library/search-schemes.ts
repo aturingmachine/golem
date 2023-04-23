@@ -131,7 +131,8 @@ export class SearchSchemes {
       result = fuzzy.filter(query, tracks, extractors.baseReverse)
     }
 
-    return result[0]?.score < this.config.get('search.minimum-score')
+    return result[0]?.score <
+      (this.config.get<number>('search.minimum-score') || 35)
       ? []
       : result
   }

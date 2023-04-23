@@ -40,7 +40,8 @@ export const useResourceStore = defineStore('resources', {
       const newData = { 
         load: data.load, 
         freemem: data.freemem, 
-        uptime: data.uptime,  
+        uptime: data.uptime,
+        currentmemmaybe: data.currentmemmaybe
       }
 
       if (this.history.length > 60) {

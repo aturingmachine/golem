@@ -25,10 +25,6 @@ import { useAppStore } from './stores/app';
 import SnackBar from '@/components/SnackBar.vue'
 
 const routes = [
-  // {
-  //   title: 'Home',
-  //   path: '/'
-  // },
   {
     title: 'Players',
     path: '/players'
@@ -36,6 +32,10 @@ const routes = [
   {
     title: 'Audit Logs',
     path: '/audits'
+  },
+  {
+    title: 'Search',
+    path: '/search'
   },
   {
     path: '/resource-usage',

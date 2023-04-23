@@ -1,5 +1,6 @@
-import { CpuInfo } from 'os'
+import { execSync } from 'child_process'
 import { Injectable, Optional } from '@nestjs/common'
+import fuzzy from 'fuzzy'
 import os from 'os-utils'
 import { AuditRecord } from '../core/audits/audit.model'
 import { AuditService } from '../core/audits/audit.service'
@@ -8,6 +9,10 @@ import { LoggerService } from '../core/logger/logger.service'
 import { AlbumService } from '../music/local/library/album.service'
 import { Library } from '../music/local/library/library'
 import { ListingLoaderService } from '../music/local/library/loader.service'
+import {
+  ListingSearcher,
+  SearchResult,
+} from '../music/local/library/searcher.service'
 import { Album } from '../music/local/listings/album'
 import { LocalListing } from '../music/local/listings/listings'
 import { MusicPlayerJSON } from '../music/player/player'
@@ -21,6 +26,7 @@ export class WebService {
     private players: PlayerService,
     private albums: AlbumService,
     private audits: AuditService,
+    private search: ListingSearcher,
     @Optional() private loader?: ListingLoaderService
   ) {
     this.log.setContext('WebService')
@@ -69,17 +75,42 @@ export class WebService {
     totalmem: number
     freemem: number
     uptime: number
+    currentmemmaybe: number
   } {
+    const pid = process.pid
+
+    const asdf = execSync(
+      `ps -aux | grep ${pid} | grep -v grep | awk '{print $4}'`,
+      {
+        encoding: 'utf-8',
+      }
+    )
+
     const load = os.loadavg(5)
     const totalmem = os.totalmem()
     const freemem = os.freememPercentage()
     const uptime = os.processUptime()
+    const currentmemmaybe = parseFloat(asdf)
 
     return {
       uptime,
       load,
       totalmem,
       freemem,
+      currentmemmaybe,
+    }
+  }
+
+  searchListings(query: string): {
+    results: fuzzy.FilterResult<LocalListing>[]
+    top?: SearchResult
+  } {
+    const top = this.search.search(query)
+    const results = this.search.searchManyRaw(query)
+
+    return {
+      top,
+      results,
     }
   }
 }

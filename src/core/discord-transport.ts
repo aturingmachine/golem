@@ -25,6 +25,7 @@ export class DiscordBotServer
           GatewayIntentBits.GuildVoiceStates,
           GatewayIntentBits.GuildMessages,
           GatewayIntentBits.MessageContent,
+          GatewayIntentBits.GuildMembers,
         ],
       })
   }

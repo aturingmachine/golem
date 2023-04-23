@@ -18,3 +18,15 @@ export function convertMS( milliseconds: number ) {
     seconds: seconds
   };
 }
+
+export function formatMS(milliseconds: number) {
+  const parsed = convertMS(milliseconds)
+
+  let base = `${parsed.minute.toString().padStart(2, '0')}:${parsed.seconds.toString().padStart(2, '0')}`
+
+  if (parsed.hour) {
+    base = `${parsed.hour.toString().padStart(2, '0')}:${base}`
+  }
+
+  return base
+}

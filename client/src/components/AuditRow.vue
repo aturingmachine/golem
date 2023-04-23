@@ -11,7 +11,7 @@
         Trace: {{ audit.traceId }}
       </span>
     </span>
-    <span>
+    <span v-if="user">
       <span class="font-weight-bold">
         <v-avatar>
           <v-img :src="user.displayAvatarURL"></v-img>

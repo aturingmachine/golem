@@ -8,6 +8,7 @@ import {
   GuildManager,
   MessageCreateOptions,
   MessagePayload,
+  User,
 } from 'discord.js'
 import { LoggerService } from './logger/logger.service'
 
@@ -56,6 +57,10 @@ export class ClientService {
 
   get guildIds(): string[] {
     return Object.keys(this.guildManager.cache)
+  }
+
+  userById(id: string): Promise<User> | undefined {
+    return this.client?.users.fetch(id)
   }
 
   async messageAdmin(

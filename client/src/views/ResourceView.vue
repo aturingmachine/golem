@@ -7,7 +7,7 @@
         </h2>
       </v-col>
 
-      <v-col cols="6" class="resource-card cpu-chart">
+      <v-col cols="12" class="resource-card cpu-chart">
         <h3>CPU Load: {{ resources.current.load }}%</h3>
         <Chart
           :size="{ width: 500, height: 420 }"
@@ -42,9 +42,18 @@
         </Chart>
       </v-col>
 
-      <v-col cols="6" class="resource-card mem-chart">
-        <h3>Current Memory Usage: {{ (resources.totalMem / 1000 - (resources.totalMem * resources.current.freemem / 1000)).toFixed(2) }}GB</h3>
-        <Responsive>
+      <v-col cols="12" class="resource-card mem-chart">
+        <h3>Current Memory Usage:</h3>
+
+        <dl>
+          <template v-for="data of memData" :key="data.name">
+            <dt>{{ data.name }}</dt>
+            <dd>{{ data.val }}GB</dd>
+          </template>
+        </dl>
+
+        <!-- <h3>Current Memory Usage: {{ (resources.totalMem / 1000 - (resources.totalMem * resources.current.freemem / 1000)).toFixed(2) }}GB</h3> -->
+        <!-- <Responsive>
           <template #main="{ width }">
             <Chart
               direction="circular"
@@ -74,7 +83,7 @@
               </template>
             </Chart>
           </template>
-        </Responsive>
+        </Responsive> -->
       </v-col>
 
       <v-col cols="6" class="resource-card">
@@ -98,10 +107,20 @@ const resources = useResourceStore()
 const listings = useListingsStore()
 const albums = useAlbumsStore()
 
+const freeMem = computed(() => resources.totalMem * resources.current.freemem)
+const golemMemUsage = computed(() => {
+  const golemMemPercent = resources.current.currentmemmaybe / 100
+  const golemMem = golemMemPercent * resources.totalMem
+
+  return golemMem
+})
+const totalMemUsage = computed(() => resources.totalMem - (freeMem.value - golemMemUsage.value))
+
 const memData = computed(() => {
   return [
-    { name: 'Free Memory', val: resources.totalMem * resources.current.freemem },
-    { name: 'Current Memory Usage', val: resources.totalMem - (resources.totalMem * resources.current.freemem) }
+    { name: 'Free Memory', val: (freeMem.value / 1000).toFixed(2) },
+    { name: 'Current Total Memory Usage', val: (totalMemUsage.value / 1000).toFixed(2) },
+    { name: 'Golem Memory Usage', val: (golemMemUsage.value / 1000).toFixed(2) }
     // total: resources.totalMem
   ]
 })
@@ -151,5 +170,4 @@ const uptime = computed(() => {
 .mem-chart svg .axis {
   display: none;
 }
-
 </style>

@@ -5,9 +5,13 @@
         <h2> Listings </h2>
 
           <v-pagination v-model="currentPage" :length="length"></v-pagination>
+
           <div class="paginated-list">
             <album-panel v-for="item of albumsToShow" :key="item._id" :album="item" />
           </div>
+          <!-- <paginated-results :items="albums.allAlbums" v-model="currentPage" v-slot="{ item }">
+            <album-panel :album="item" />
+          </paginated-results> -->
       </v-col>
     </v-row>
   </v-container>
@@ -18,6 +22,7 @@ import { computed, onMounted, ref, watch } from 'vue';
 import AlbumPanel from '@/components/AlbumPanel.vue';
 import { useAlbumsStore } from '@/stores/albums';
 import { useRoute, useRouter } from 'vue-router';
+import PaginatedResults from '@/components/PaginatedResults.vue';
 
 const page_length = 15
 

@@ -15,4 +15,5 @@ export interface ResourceData  {
   totalmem: number
   freemem: number
   uptime: number
+  currentmemmaybe: number
 }

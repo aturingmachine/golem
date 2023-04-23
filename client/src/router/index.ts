@@ -4,6 +4,7 @@ import ListingsView from '../views/ListingsView.vue'
 import PlayersView from '../views/PlayersView.vue'
 import AuditView from '../views/AuditView.vue'
 import ResourceView from '../views/ResourceView.vue'
+import SearchView from '../views/SearchView.vue'
 
 const routes = [
   {
@@ -15,6 +16,11 @@ const routes = [
     path: '/audits',
     name: 'audits',
     component: AuditView,
+  },
+  {
+    path: '/search',
+    name: 'search',
+    component: SearchView,
   },
   {
     path: '/resource-usage',

@@ -103,7 +103,7 @@ STACK: ${err.stack || 'No Stack Available.'}`
   process.once('exit', () => initService.shutdown())
 
   await app.startAllMicroservices()
-  await app.listen(8211)
+  await app.listen(config.get('web.apiPort') || 8211)
 }
 
 // TODO

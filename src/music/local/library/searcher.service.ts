@@ -13,7 +13,11 @@ export enum ResultType {
 }
 
 export class SearchResult {
-  constructor(public listing: LocalListing, public type: ResultType) {}
+  constructor(
+    public listing: LocalListing,
+    public type: ResultType,
+    public rawResult: fuzzy.FilterResult<LocalListing>
+  ) {}
 
   get isArtistQuery(): boolean {
     return this.type === ResultType.Artist
@@ -46,12 +50,14 @@ export class ListingSearcher {
         `Pre-weighting - Result=${result[0].string}; ArtistQuery=${isArtistQuery}; WideMatch=${isWideMatch}`
       )
 
-      const final = this.weightResult(result).original
+      const weighted = this.weightResult(result)
+      const final = weighted.original
       const hasBeenWeighted = final.path !== result[0].original.path
 
       return new SearchResult(
         final,
-        this.getResultType(isArtistQuery, isWideMatch && !hasBeenWeighted)
+        this.getResultType(isArtistQuery, isWideMatch && !hasBeenWeighted),
+        weighted
       )
     }
 
@@ -63,6 +69,10 @@ export class ListingSearcher {
     const result = this.searchSchemes.cascading(query, this.listings.records)
 
     return result.map((r) => r.original)
+  }
+
+  searchManyRaw(query: string): fuzzy.FilterResult<LocalListing>[] {
+    return this.searchSchemes.cascading(query, this.listings.records)
   }
 
   byId(id: string): LocalListing | undefined {
