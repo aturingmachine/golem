@@ -85,9 +85,6 @@ export class WebClientController {
 
   @Get('/users/:ids')
   async usersById(@Param('ids') ids: string): Promise<{ users: User[] }> {
-    console.log(this.client.client?.users.cache.values())
-    console.log(ids.split('|'))
-
     const splitIds = ids.split('|')
     const users: User[] = []
 
@@ -97,11 +94,6 @@ export class WebClientController {
         users.push(u)
       }
     }
-
-    // const users = ids
-    //   .split('|')
-    //   .map((id) => this.client.client?.users.cache.get(id))
-    //   .filter(ArrayUtils.isDefined)
 
     return { users: users }
   }
