@@ -19,7 +19,6 @@ import { SearchResult } from '../music/local/library/searcher.service'
 import { Album } from '../music/local/listings/album'
 import { LocalListing } from '../music/local/listings/listings'
 import { PlayerService } from '../music/player/player.service'
-import { ArrayUtils } from '../utils/list-utils'
 import { WebService } from './web.service'
 
 @Controller({ path: '/api' })

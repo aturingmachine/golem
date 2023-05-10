@@ -11,12 +11,16 @@ const config = YAML.parse(readFileSync(path.resolve(__dirname, '../config.yml'),
 
 const apiPort = config.web.apiPort || 8211
 
+const apiHost = process.env.NODE_ENV === 'production' ? '' : 'localhost'
+
+const apiString = process.env.NODE_ENV === 'production' ? '' : `${apiHost}:${apiPort}`
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],
   define: {
-    __API_HOST__: JSON.stringify(`localhost:${apiPort}`),
-    __API_URL__: JSON.stringify(`http://localhost:${apiPort}/api`)
+    __API_HOST__: JSON.stringify(`${apiString}`),
+    __API_URL__: JSON.stringify(`${apiString}/api`)
   },
   base: "/app/",
   // server: {

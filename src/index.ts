@@ -28,7 +28,10 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule)
   app.enableCors({
-    origin: [/localhost:?[0-9]*/, /192\.168\.[0-9]+\.[0-9]+:?[0-9]*/],
+    origin: [
+      /localhost:?[0-9]*/,
+      /(?:http[s]?:\/\/)?192\.168\.[0-9]+\.[0-9]+:?[0-9]*/,
+    ],
   })
   app.connectMicroservice({
     strategy: botServer,

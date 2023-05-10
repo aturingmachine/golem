@@ -2,7 +2,7 @@ import type { Album } from '@/models/album';
 import { TrackType, type MusicPlayerJSON, type ShortTrack } from '@/models/players';
 
 export function createArtUrl(album: Album | string, size: 'large' | 'med' | 'small' | 'xl' = 'med'): string {
-  return __API_URL__ + '/album-art/' + 
+  return window.location.protocol + '//' + __API_URL__ + '/album-art/' + 
     encodeURIComponent(
       typeof album === 'string' 
         ? album  + '_' + size
