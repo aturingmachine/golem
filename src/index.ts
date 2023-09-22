@@ -6,6 +6,7 @@ import { NestFactory } from '@nestjs/core'
 import { AppModule } from './application.module'
 import { ClientService } from './core/client.service'
 import configuration from './core/configuration'
+import { ConfigurationService } from './core/configuration.service'
 import { DiscordBotServer } from './core/discord-transport'
 import { InitService } from './core/init.service'
 import { LoggerService } from './core/logger/logger.service'
@@ -23,6 +24,8 @@ export function debugDump(...args: unknown[]): void {
 
 async function bootstrap() {
   const start = Date.now()
+  ConfigurationService.init()
+
   const botServer = new DiscordBotServer()
   botServer.init()
 
@@ -33,6 +36,9 @@ async function bootstrap() {
       /(?:http[s]?:\/\/)?192\.168\.[0-9]+\.[0-9]+:?[0-9]*/,
     ],
   })
+
+  console.log('Using Log levels', configuration().logLevels)
+
   app.connectMicroservice({
     strategy: botServer,
     logger: configuration().logLevels,

@@ -56,9 +56,14 @@ export class PermissionsService {
   }
 
   async isAdmin(params: GolemMessage | PermLookup): Promise<boolean> {
-    this.log.debug(`checking isAdmin on ${formatForLog(params)}`)
+    this.log.info(`checking isAdmin on ${formatForLog(params)}`)
+
     let rec
     if (params instanceof GolemMessage) {
+      if (params.isAdminDM()) {
+        return true
+      }
+
       rec = await this.for(params)
     } else {
       rec = await this.lookup(params.userId, params.guildId)

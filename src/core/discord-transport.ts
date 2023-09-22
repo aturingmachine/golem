@@ -1,5 +1,5 @@
 import { CustomTransportStrategy, Server } from '@nestjs/microservices'
-import { Client, GatewayIntentBits } from 'discord.js'
+import { Client, GatewayIntentBits, Partials } from 'discord.js'
 
 export class DiscordBotServer
   extends Server
@@ -27,6 +27,7 @@ export class DiscordBotServer
           GatewayIntentBits.MessageContent,
           GatewayIntentBits.GuildMembers,
         ],
+        partials: [Partials.Channel, Partials.Message],
       })
   }
 

@@ -1,0 +1,16 @@
+#!/bin/bash
+
+## Build only the Client
+
+echo "Removing Old Client Build"
+rm -rf dist/client
+
+echo "Building Client"
+npm run build --prefix client/ 
+
+echo "Moving Client Dist"
+mkdir dist/client
+
+cp -r client/dist/* dist/client
+
+echo "Done."

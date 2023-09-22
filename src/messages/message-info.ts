@@ -158,13 +158,18 @@ export class MessageInfo {
    */
   public parsed: ParsedMessage
 
+  public readonly userId: string
+
   constructor(
     public interaction: GolemMessageInteraction,
     private logger: LoggerService,
     parsedLogger: LoggerService,
+    readonly isDM?: boolean,
     private uid?: string
   ) {
-    this.member = this.interaction.member as GuildMember
+    this.member = interaction.channel?.isDMBased()
+      ? (interaction.channel.recipient as unknown as GuildMember)
+      : (this.interaction.member as GuildMember)
     this.guild = this.interaction.guild
 
     this.parsed = new ParsedMessage(
@@ -172,10 +177,10 @@ export class MessageInfo {
       parsedLogger,
       this.uid
     )
-  }
 
-  get userId(): string {
-    return this.member?.user.id || ''
+    this.userId = interaction.channel?.isDMBased()
+      ? interaction.channel.recipientId
+      : this.member?.user.id || ''
   }
 
   get guildId(): string {

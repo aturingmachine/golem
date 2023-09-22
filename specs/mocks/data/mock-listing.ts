@@ -36,7 +36,7 @@ export function createMockLocalListing(
   const album = createMockAlbum()
 
   listing.album = album
-  listing.albumId = album._id
+  listing.albumId = album._id.toString()
 
   return listing
 }

@@ -5,7 +5,7 @@ import { ArrayUtils } from '../utils/list-utils'
 import { ASTUnterminatedQuoteError } from './ast-parse-error'
 import { InputStream } from './input-stream'
 
-const shouldDebug = true
+const shouldDebug = false
 
 const dd = (...args: unknown[]) => {
   if (shouldDebug) {
@@ -81,7 +81,8 @@ export class Tokenizer {
   current: AstTokens | undefined | null = null
 
   command_names = [
-    'admin librefresh',
+    'admin',
+    // 'admin librefresh',
     'alias',
     'get',
     'mix',
@@ -181,6 +182,8 @@ export class Tokenizer {
         this.stream.next()
       }
 
+      this.hasCommand = false
+
       this.read_while(this.is_whitespace.bind(this))
     }
   }
@@ -245,6 +248,8 @@ export class Tokenizer {
     this.hasCommand = true
 
     this.stream.skip_to_whitespace()
+
+    dd(`pushing command "${base}"`)
 
     return {
       type: 'cmd',
@@ -586,9 +591,18 @@ export class Tokenizer {
       }
     }
 
+    dd('is_command(ch)', `"${ch}"`, this.is_command(ch))
+    dd(
+      'this.is_command(this.stream.peek_to_whitespace())',
+      `"${this.stream.peek_to_whitespace()}"`,
+      this.is_command(this.stream.peek_to_whitespace())
+    )
+    dd('!this.hasCommand', !this.hasCommand)
+    dd('!this.isInAlias', !this.isInAlias)
+
     if (
-      this.is_command(ch) &&
-      this.is_command(this.stream.peek_to_whitespace()) &&
+      (this.is_command(ch) ||
+        this.is_command(this.stream.peek_to_whitespace())) &&
       !this.hasCommand &&
       !this.isInAlias
     ) {

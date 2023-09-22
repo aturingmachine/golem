@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-row no-gutters v-if="!loading">
+    <v-row no-gutters v-if="!loading" class="w-80 ms-auto">
       <v-col cols="12">
         <v-text-field @keydown.enter="search()" density="compact" v-model="q" clearable label="Search" variant="solo">
           <template v-slot:append>
@@ -13,7 +13,7 @@
         <h2>Top Result</h2>
         <v-card class="bg-blue-grey-darken-2">
           <v-card-title>
-            {{ top?.rawResult.string }} - {{ processScore(top?.rawResult.score) }}
+            {{ top?.rawResult.string }} - Score: {{ processScore(top?.rawResult.score) }}
           </v-card-title>
 
           <v-card-text>
@@ -23,7 +23,7 @@
       </v-col>
 
       <v-col cols="12" >
-        <h2>All Results:</h2>
+        <h2>All {{ results.length }} Results:</h2>
       </v-col>
 
       <v-col cols="12" v-for="result in results" :key="result.original">

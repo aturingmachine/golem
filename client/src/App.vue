@@ -30,6 +30,10 @@ const routes = [
     path: '/players'
   },
   {
+    title: 'Config',
+    path: '/config'
+  },
+  {
     title: 'Audit Logs',
     path: '/audits'
   },
@@ -44,6 +48,10 @@ const routes = [
   {
     title: 'Listings',
     path: '/listings'
+  },
+  {
+    title: 'Editor',
+    path: '/editor'
   },
 ]
 

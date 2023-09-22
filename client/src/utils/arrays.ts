@@ -13,3 +13,17 @@ export function safeArray<T>(source?: T | T[]): T[] {
 
   return Array.isArray(source) ? source : [source]
 }
+
+export function chonk<T>(arr: T[], chonk_size: number): T[][] {
+  return arr.reduce((resultArray, item, index) => { 
+    const chunkIndex = Math.floor(index/chonk_size)
+
+    if(!resultArray[chunkIndex]) {
+      resultArray[chunkIndex] = []
+    }
+
+    resultArray[chunkIndex].push(item)
+
+    return resultArray
+  }, [] as T[][])
+}

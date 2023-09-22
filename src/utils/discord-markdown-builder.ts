@@ -20,7 +20,7 @@ export class DiscordMarkdown {
   bold(textToBold?: string): this {
     const t = textToBold || 'undefined'
 
-    this.content = this.content + `*${t.replaceAll('*', '\\*')}*`
+    this.content = this.content + `**${t.replaceAll('*', '\\*')}**`
 
     return this
   }

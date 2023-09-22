@@ -35,7 +35,9 @@ export class ListingSearcher {
     private listings: ListingLoaderService,
     private searchSchemes: SearchSchemes,
     private config: ConfigService
-  ) {}
+  ) {
+    this.log.setContext('ListingSearcher')
+  }
 
   search(query: string): SearchResult | undefined {
     const result = this.searchSchemes.cascading(query, this.listings.records)

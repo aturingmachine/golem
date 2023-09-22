@@ -9,6 +9,7 @@ import { AliasModule } from './alias/alias.module'
 import { AuditRecord } from './audits/audit.model'
 import { AuditService } from './audits/audit.service'
 import { ClientModule } from './client.module'
+import { CronService } from './cron.service'
 import { GuildConfigModule } from './guild-config/guild-config.module'
 import { InfoService } from './info/info.service'
 import { InitService } from './init.service'
@@ -16,6 +17,7 @@ import { LoggerModule } from './logger/logger.module'
 import { LoggerService } from './logger/logger.service'
 import { MessageController } from './message.controller'
 import { PermissionsModule } from './permissions/permissions.module'
+import { UpdatesModules } from './updates/updates.module'
 
 @Module({
   imports: [
@@ -26,6 +28,7 @@ import { PermissionsModule } from './permissions/permissions.module'
     AliasModule,
     ClientModule,
     GuildConfigModule,
+    UpdatesModules,
     TypeOrmModule.forFeature([AuditRecord]),
   ],
 
@@ -39,6 +42,7 @@ import { PermissionsModule } from './permissions/permissions.module'
     InfoService,
     MessageController,
     InitService,
+    CronService,
     AuditService,
   ],
 

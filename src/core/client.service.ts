@@ -31,6 +31,10 @@ export class ClientService {
     return this._clientInstance
   }
 
+  get botId(): string | undefined {
+    return this.client?.user?.id
+  }
+
   get channels(): ChannelManager {
     if (!this.client) {
       throw new Error('Attempting to access undefined client.')
@@ -60,7 +64,14 @@ export class ClientService {
   }
 
   userById(id: string): Promise<User> | undefined {
-    return this.client?.users.fetch(id)
+    try {
+      return this.client?.users.fetch(id)
+    } catch (error) {
+      this.log.error(`unable to get user ${id}`, error)
+      this.log.info(`unable to get user ${id} ${error}`)
+
+      throw error
+    }
   }
 
   async messageAdmin(

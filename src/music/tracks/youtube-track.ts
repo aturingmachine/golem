@@ -1,7 +1,38 @@
+import dargs from 'dargs'
+import execa from 'execa'
 import { getInfo } from 'ytdl-core'
+import { ConfigurationService } from '../../core/configuration.service'
+import { LoggerService } from '../../core/logger/logger.service'
 import { TrackListingInfo } from '../local/listings/listings'
 import { YoutubeListing } from '../youtube/youtube-listing'
 import { Track, TrackType } from '.'
+
+async function getYTInfo(url: string): Promise<any> {
+  if (!ConfigurationService.resolved.youtube?.ytdlpPath) {
+    throw new Error('No yt-dlp path')
+  }
+
+  try {
+    const args = dargs({
+      'dump-json': true,
+    })
+    console.log(`[getYTInfo] dumping info for "${url}"`)
+
+    const res = await execa(
+      ConfigurationService.resolved.youtube.ytdlpPath,
+      [url, ...args],
+      {
+        encoding: 'utf-8',
+      }
+    )
+
+    console.log(`[getYTInfo] info dumped "${url}"`)
+
+    return JSON.parse(res.stdout.trim())
+  } catch (error) {
+    throw error
+  }
+}
 
 export class YoutubeTrack extends Track {
   readonly type = TrackType.Youtube
@@ -45,7 +76,9 @@ export class YoutubeTrack extends Track {
    * @returns
    */
   static async fromUrl(userId: string, url: string): Promise<YoutubeTrack> {
-    const info = await getInfo(url)
+    console.log(`[YoutubeTrack] creating track from url "${url}"`)
+    const info = await getYTInfo(url)
+    console.log(`[YoutubeTrack] got info for "${url}"`)
 
     // const _imgUrl = info.videoDetails.thumbnails.find(
     //   (thumbnail) => thumbnail.width > 300
@@ -55,16 +88,18 @@ export class YoutubeTrack extends Track {
 
     const listing = new YoutubeListing({
       url,
-      author: info.videoDetails.ownerChannelName,
-      title: info.videoDetails.title,
-      duration: parseInt(info.videoDetails.lengthSeconds, 10),
+      author: info.channel,
+      title: info.title,
+      duration: parseInt(info.duration, 10),
     })
+    console.log(`[YoutubeTrack] generated listing for "${url}"`)
 
     // YoutubeTrack.log.silly(
     //   `created listing from ${url} - ${formatForLog(listing)}`
     // )
 
     const track = YoutubeTrack.fromYoutubeListing(userId, listing)
+    console.log(`[YoutubeTrack] generated track for "${url}"`)
 
     // YoutubeTrack.log.silly(`created track - ${formatForLog(listing)}`)
 

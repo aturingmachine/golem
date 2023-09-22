@@ -5,6 +5,10 @@ import os from 'os-utils'
 import { AuditRecord } from '../core/audits/audit.model'
 import { AuditService } from '../core/audits/audit.service'
 import { ClientService } from '../core/client.service'
+import { ConfigurationOptions } from '../core/configuration'
+import { ConfigurationService } from '../core/configuration.service'
+import { GuildConfig } from '../core/guild-config/guild-config.model'
+import { GuildConfigService } from '../core/guild-config/guild-config.service'
 import { LoggerService } from '../core/logger/logger.service'
 import { AlbumService } from '../music/local/library/album.service'
 import { Library } from '../music/local/library/library'
@@ -27,6 +31,7 @@ export class WebService {
     private albums: AlbumService,
     private audits: AuditService,
     private search: ListingSearcher,
+    private guildConfig: GuildConfigService,
     @Optional() private loader?: ListingLoaderService
   ) {
     this.log.setContext('WebService')
@@ -112,5 +117,29 @@ export class WebService {
       top,
       results,
     }
+  }
+
+  getConfig(): ConfigurationOptions {
+    return ConfigurationService.resolved
+  }
+
+  setConfig(path: string, value: unknown): ConfigurationOptions {
+    try {
+      ConfigurationService.set(path, value)
+    } catch (error) {
+      this.log.error(`unable to set config option`, error)
+
+      throw error
+    }
+
+    this.log.debug(`Should have updated config "${path}" to ${value}`)
+
+    return ConfigurationService.resolved
+  }
+
+  async getAllGuildConfigs(): Promise<GuildConfig[]> {
+    const configs = await this.guildConfig.all()
+
+    return configs
   }
 }

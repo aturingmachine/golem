@@ -6,6 +6,7 @@ import { AuditRecord } from './core/audits/audit.model'
 import configuration from './core/configuration'
 import { CoreModule } from './core/core.module'
 import { GuildConfig } from './core/guild-config/guild-config.model'
+import { LogLine } from './core/logger/log-line.model'
 import { Permissions } from './core/permissions/permissions'
 import { IntegrationsModule } from './integrations/integration.module'
 import { Library } from './music/local/library/library'
@@ -31,6 +32,7 @@ import { WebModule } from './web/web.module'
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => {
         return {
+          reconnectInterval: 60_000,
           connectTimeoutMS: 5000,
           ssl: false,
           useUnifiedTopology: true,
@@ -41,6 +43,7 @@ import { WebModule } from './web/web.module'
           logging: true,
           database: config.get('mongo.dbName'),
           entities: [
+            LogLine,
             Library,
             LocalListing,
             Album,

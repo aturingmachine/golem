@@ -1,8 +1,12 @@
 import { ConsoleLogger, Injectable, Scope } from '@nestjs/common'
 import { ConsoleLoggerOptions, LogLevel } from '@nestjs/common/services'
+// import { InjectRepository } from '@nestjs/typeorm'
+// import { MongoRepository } from 'typeorm'
 import { GolemMessage } from '../../messages/golem-message'
 import { ArrayUtils } from '../../utils/list-utils'
 import configuration from '../configuration'
+import { ConfigurationService } from '../configuration.service'
+// import { LogLine } from './log-line.model'
 
 @Injectable({ scope: Scope.TRANSIENT })
 export class LoggerService extends ConsoleLogger {
@@ -12,6 +16,13 @@ export class LoggerService extends ConsoleLogger {
 
   setContext(...contexts: string[]): void {
     super.setContext(contexts.join('::'))
+  }
+
+  isLevelEnabled(level: LogLevel): boolean {
+    return (
+      super.isLevelEnabled(level) ||
+      ConfigurationService.resolved.logLevels.includes(level)
+    )
   }
 
   extendContext(additionalContext: string, append = false): void {
@@ -27,8 +38,18 @@ export class LoggerService extends ConsoleLogger {
    * @param message
    * @param context
    */
-  info(message: any): void {
-    this.log(message)
+  info = this.log
+  // (message: any, context?: string | undefined): void {
+  //   this.log(message, context)
+  // }
+
+  error(message: any, ...optionalParams: any[]): void {
+    const { messages, context } = this._getContextAndMessagesToPrint([
+      message,
+      ...optionalParams,
+    ])
+
+    this.printMessages(messages, context, 'error', 'stdout')
   }
 
   silly(message: any, ...optionalParams: any[]): void {
@@ -41,11 +62,30 @@ export class LoggerService extends ConsoleLogger {
     ])
     this.printMessages(messages, context, 'silly' as LogLevel)
 
-    this.verbose(message)
+    // this.verbose(message)
   }
 
   setMessageContext(message: GolemMessage, context: string): void {
     this.setContext(context, message.traceId)
+  }
+
+  printMessages(
+    messages: unknown[],
+    context?: string | undefined,
+    logLevel?: LogLevel | undefined,
+    writeStreamType?: 'stdout' | 'stderr' | undefined
+  ) {
+    super.printMessages(messages, context, logLevel, writeStreamType)
+
+    // const lines = messages.map((message) => ({
+    //   message: message as string,
+    //   context,
+    //   level: logLevel || 'log',
+    // }))
+
+    // const createdLines = this.logs.create(lines)
+
+    // this.logs.save(createdLines)
   }
 
   private _getContextAndMessagesToPrint(args: unknown[]) {

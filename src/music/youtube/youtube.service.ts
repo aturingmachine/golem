@@ -16,6 +16,7 @@ import { ArrayUtils } from '../../utils/list-utils'
 import { similarity } from '../../utils/similarity'
 import { TrackAudioResourceMetadata } from '../tracks'
 import { YoutubeTrack } from '../tracks/youtube-track'
+import { YoutubeCache } from './youtube-cache.service'
 import { YoutubeListing } from './youtube-listing'
 import { YoutubePlaylistListing } from './youtube-playlist'
 
@@ -25,12 +26,14 @@ export class YoutubeService {
     output: '-',
     quiet: true,
     format: 'ba[ext=webm][acodec=opus] / ba',
-    limitRate: '1000K',
+    limitRate: '2000K',
+    'check-formats': true,
   })
 
   constructor(
     private log: LoggerService,
-    private config: ConfigService<ConfigurationOptions>
+    private config: ConfigService<ConfigurationOptions>,
+    private ytCache: YoutubeCache
   ) {
     this.log.setContext('YoutubeService')
   }
@@ -50,6 +53,21 @@ export class YoutubeService {
   createAudioResource(
     track: YoutubeTrack
   ): Promise<AudioResource<TrackAudioResourceMetadata>> {
+    this.log.info(`creating audio resource for ${track.name}`)
+
+    const cachedPath = this.ytCache.get(track.listing.listingId)
+
+    if (cachedPath) {
+      this.log.info(`cache hit for ${track.name}`)
+      return new Promise((resolve) => {
+        const resource = createAudioResource(cachedPath, {
+          metadata: { track: track, listing: track.listing },
+        })
+
+        resolve(resource)
+      })
+    }
+
     return new Promise((resolve, reject) => {
       const process = this.process(track.url)
 
@@ -74,6 +92,13 @@ export class YoutubeService {
       }
 
       process.once('spawn', async () => {
+        try {
+          this.log.info(`attempting to cache '${track.name}'`)
+          this.ytCache.save(track.listing.listingId, process)
+        } catch (error) {
+          this.log.error(`could not cache '${track.name}' ${error}`)
+        }
+
         try {
           this.log.silly(`attempting to demux - ${track.listing.title}`)
           const metadata: TrackAudioResourceMetadata = {
@@ -161,14 +186,14 @@ export class YoutubeService {
   }
 
   private playlistItemToListing(item: ytpl.Item): YoutubeListing {
-    this.log.debug(`creating YoutubeListing from ${formatForLog({
-      name: item.author.name,
-      title: item.title,
-      url: item.url,
-      duration: item.durationSec,
-      artworkUrl: item.bestThumbnail.url,
-    })}
-    `)
+    // this.log.debug(`creating YoutubeListing from ${formatForLog({
+    //   name: item.author.name,
+    //   title: item.title,
+    //   url: item.url,
+    //   duration: item.durationSec,
+    //   artworkUrl: item.bestThumbnail.url,
+    // })}
+    // `)
 
     const cleanUrl = `${item.url.split('?')[0]}?${item.url
       .split('?')[1]

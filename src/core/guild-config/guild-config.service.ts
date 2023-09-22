@@ -18,6 +18,10 @@ export class GuildConfigService {
     this.log.setContext('GuildConfigService')
   }
 
+  all(): Promise<GuildConfig[]> {
+    return this.guildConfigs.find({})
+  }
+
   async setDefaultChannelId(guildId: string, channelId: string): Promise<void> {
     this.log.debug(
       `setDefaultChannelId: for guild="${guildId}" channel="${channelId}"`

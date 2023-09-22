@@ -27,13 +27,13 @@ describe('Discord Markdown Builder', () => {
     it('should return the builder with the content wrapped in asteriks', () => {
       markdown.bold('This text should be bold!')
 
-      expect(markdown.toString()).toEqual('*This text should be bold!*')
+      expect(markdown.toString()).toEqual('**This text should be bold!**')
     })
 
     it('should escape any asteriks that are in the content to bold', () => {
       markdown.bold('This *text* should be bold!')
 
-      expect(markdown.toString()).toEqual('*This \\*text\\* should be bold!*')
+      expect(markdown.toString()).toEqual('**This \\*text\\* should be bold!**')
     })
   })
 

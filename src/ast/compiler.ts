@@ -2,6 +2,7 @@ import { GolemScriptFunctions } from '../golem-script/functions'
 import { ParsedCommand } from '../messages/parsed-command'
 import { formatForLog } from '../utils/debug-utils'
 import { ArrayUtils } from '../utils/list-utils'
+import { ASTDebugLogger } from './ast-debug-logger'
 import { AstParseResult, AstTokenLeaf, Parser } from './parser'
 import { AstTokens, FuncAstToken, OptAstToken, VarAstToken } from './tokenizer'
 
@@ -56,11 +57,12 @@ export class GSCompiler {
     ast: AstParseResult
     compiled: CompiledGolemScript
   } {
-    console.log(`Making Parser from source: "${source}"`)
+    ASTDebugLogger.log('[GSCompiler]', `Making Parser from source: "${source}"`)
     const ast = new Parser(source).result
     const compiled = new GSCompiler(ast).compile()
 
-    console.log(
+    ASTDebugLogger.log(
+      '[GSCompiler]',
       `Parser Produced: AST RAW "${ast.raw}" :::: GS RAW ${compiled.raw}`
     )
 
@@ -75,7 +77,8 @@ export class GSCompiler {
     const raw = this.ast.blocks
       .flatMap((block, blockIndex) => {
         return Object.values(block.commands).flatMap((leaf, _index) => {
-          console.log(
+          ASTDebugLogger.log(
+            '[GSCompiler]',
             'gs:compiled leaf tokens: ',
             leaf.tokens.map((t) => t.value).join(' ')
           )
@@ -101,7 +104,11 @@ export class GSCompiler {
 
   private compileTokens(leaf: AstTokenLeaf): string {
     const compiled = leaf.tokens.flatMap((token, index) => {
-      console.log('gs:compiledTokens compiling:', formatForLog(token))
+      ASTDebugLogger.log(
+        '[GSCompiler]',
+        'gs:compiledTokens compiling:',
+        formatForLog(token)
+      )
       return this.compileLeaf(token, index)
     })
 
@@ -141,7 +148,11 @@ export class GSCompiler {
     return compiled
       .filter(ArrayUtils.isDefined)
       .map((c) => {
-        console.log('gs:compileTokens compiled:', formatForLog(c))
+        ASTDebugLogger.log(
+          '[GSCompiler]',
+          'gs:compileTokens compiled:',
+          formatForLog(c)
+        )
         return c
       })
       .map((c) => c.resolved_value)
@@ -192,7 +203,8 @@ export class GSCompiler {
         }
         break
       default:
-        console.log(
+        ASTDebugLogger.log(
+          '[GSCompiler]',
           'gs:default',
           formatForLog({
             name: token.type,
@@ -248,7 +260,7 @@ export class GSCompiler {
   }
 
   private compileOptLeaf(token: OptAstToken): CompileTokenResult {
-    console.log('GS:compileOptLeaf', formatForLog(token))
+    ASTDebugLogger.log('[GSCompiler]', 'GS:compileOptLeaf', formatForLog(token))
     const val: string | boolean | number | FuncAstToken = token.opt_val
 
     // Handle nested Function Call
@@ -279,7 +291,8 @@ export class GSCompiler {
       this.tokens[token.name] = parseInt(val)
     }
 
-    console.log(
+    ASTDebugLogger.log(
+      '[GSCompiler]',
       `compileOptLeaf: ${formatForLog({
         raw: token.opt_val.toString(),
         name: token.name,

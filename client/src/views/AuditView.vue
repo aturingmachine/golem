@@ -12,8 +12,11 @@
         ></v-select>
       </v-col>
 
-      <audit-row v-for="log of logs" :key="log._id" :audit="log">
-      </audit-row>
+
+      <v-col cols="8" sm="12">
+        <audit-row v-for="log of logs" :key="log._id" :audit="log">
+        </audit-row>
+      </v-col>
     </v-row>
   </v-container>
 </template>

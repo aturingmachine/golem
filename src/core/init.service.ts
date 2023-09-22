@@ -4,6 +4,7 @@ import { CommandService } from '../commands/commands.service'
 import { PlayerService } from '../music/player/player.service'
 import { formatForLog } from '../utils/debug-utils'
 import { ClientService } from './client.service'
+import { CronService } from './cron.service'
 import { DiscordBotServer } from './discord-transport'
 import { GuildConfigService } from './guild-config/guild-config.service'
 import { LoggerService } from './logger/logger.service'
@@ -18,7 +19,8 @@ export class InitService {
     private config: ConfigService,
     private clientService: ClientService,
     private commands: CommandService,
-    private players: PlayerService
+    private players: PlayerService,
+    private cron: CronService
   ) {
     this.log.setContext('InitService')
   }
@@ -29,6 +31,8 @@ export class InitService {
     this.addClientListeners()
     await this.registerCommands()
     await this.setInitial()
+
+    this.cron.setCronJobs()
   }
 
   shutdown(): void {
@@ -40,50 +44,91 @@ export class InitService {
    * Add Listeners to the Client
    */
   private addClientListeners(): void {
-    this.clientService.client?.on('voiceStateUpdate', (oldState, newState) => {
-      const debugServer = this.config.get('discord.debug')
-      const hasDebugServer =
-        !!debugServer.channelId &&
-        !!debugServer.channelName &&
-        !!debugServer.guildId &&
-        !!debugServer.guildName
+    this.clientService.client?.on(
+      'voiceStateUpdate',
+      async (oldState, newState) => {
+        const debugServer = this.config.get('discord.debug')
+        const hasDebugServer =
+          !!debugServer.channelId &&
+          !!debugServer.channelName &&
+          !!debugServer.guildId &&
+          !!debugServer.guildName
 
-      if (hasDebugServer) {
-        this.log.debug('has debug server, doing nothing...')
-        return
-      }
+        if (hasDebugServer) {
+          this.log.debug('has debug server, doing nothing...')
+          return
+        }
 
-      this.log.debug(`Received voice state update ${newState.guild.id}`)
-      const player = this.players.for(newState.guild.id)
+        this.log.debug(`Received voice state update ${newState.guild.id}`)
+        const player = this.players.for(newState.guild.id)
 
-      this.log.debug(
-        `${formatForLog({
-          channel: oldState.channel?.name,
-          membersCount: oldState.channel?.members.size,
-        })}`
-      )
-
-      if (
-        player &&
-        newState.channelId === player.channelId &&
-        (newState.channel?.members?.size || 0) > 1 &&
-        player.isPlaying
-      ) {
-        this.log.debug(`member joined while playing - clearing timer`)
-        player.clearTimer()
-      }
-
-      if (
-        player &&
-        oldState.channelId === player.channelId &&
-        oldState.channel?.members.size === 1
-      ) {
         this.log.debug(
-          `no members left in channel with bot - starting auto-dc timer`
+          `${formatForLog({
+            channel: newState.channel?.name,
+            membersCount: newState.channel?.members.size,
+          })}`
+        )
+
+        if (
+          player &&
+          newState.channelId === player.channelId &&
+          (newState.channel?.members?.size || 0) > 1 &&
+          player.isPlaying
+        ) {
+          this.log.debug(`member joined while playing - clearing timer`)
+          await player.clearTimer()
+
+          return
+        }
+
+        const lastUsers = Array.from(oldState.channel?.members?.values() || [])
+        const hasPlayer = !!player
+
+        if (!hasPlayer) {
+          this.log.debug(
+            `has no player - bailing`,
+            'voiceStateUpdate:startTimer'
+          )
+          return
+        }
+
+        const eventIsInPlayerChannel = oldState.channelId === player.channelId
+
+        if (!eventIsInPlayerChannel) {
+          this.log.debug(
+            `not in Golem's channel - bailing`,
+            'voiceStateUpdate:startTimer'
+          )
+          return
+        }
+
+        const hasOnlyOneUserInChannel = lastUsers.length === 1
+
+        if (!hasOnlyOneUserInChannel) {
+          this.log.debug(
+            `more than one user in channel - bailing`,
+            'voiceStateUpdate:startTimer'
+          )
+          return
+        }
+
+        const isLastUserBot = lastUsers[0].id === this.clientService.botId
+
+        if (!isLastUserBot) {
+          this.log.debug(
+            `last user in channel is not Golem - bailing`,
+            'voiceStateUpdate:startTimer'
+          )
+          return
+        }
+
+        this.log.log(
+          `no members left in channel with bot - starting auto-dc timer`,
+          'voiceStateUpdate:startTimer'
         )
         player.startTimer()
       }
-    })
+    )
   }
 
   /**

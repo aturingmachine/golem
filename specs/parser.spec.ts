@@ -1,10 +1,16 @@
 import { AstParseResult, Parser } from '../src/ast/parser'
 import '../src/commands/register-commands'
+import { ConfigurationService } from '../src/core/configuration.service'
 import { debugDump } from '../test-utils/debug-dump'
 
 describe('Parser', () => {
   let parser: Parser
   let command: string
+
+  beforeEach(() => {
+    // ConfigurationService.init()
+    // ConfigurationService.set('logLevels', ['log', 'error', 'warn'])
+  })
 
   describe('Invalid Case Handling', () => {
     it('should handle strings that contain no commmands', () => {
@@ -159,15 +165,34 @@ describe('Parser', () => {
     })
   })
 
-  it.only('should', () => {
-    command = '$go play rocket punch flash'
-
-    const result = testParse()
-
-    console.log(result.raw)
-  })
-
   describe('Advanced Parsing', () => {
+    it('should handle commands that include a subcommand', () => {
+      command = '$go admin librefresh'
+
+      const result = testParse()
+
+      expect(result).toHaveLength(1)
+
+      const firstBlock = result.blocks[0]
+
+      expect(firstBlock.commands[0].tokens).toHaveLength(3)
+      expect(firstBlock.commands[0].tokens[0]).toEqual({
+        insideAlias: false,
+        type: 'invoker',
+        value: '$go',
+      })
+      expect(firstBlock.commands[0].tokens[1]).toEqual({
+        insideAlias: false,
+        type: 'cmd',
+        value: 'admin',
+      })
+      expect(firstBlock.commands[0].tokens[2]).toEqual({
+        insideAlias: false,
+        type: 'str',
+        value: 'librefresh',
+      })
+    })
+
     it('should handle options that use quotes', () => {
       command = '$go play twice tt --some_opt="this has quotes" --another_one'
 

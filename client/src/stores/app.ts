@@ -7,6 +7,7 @@ import { v4 } from 'uuid'
 import { useGuildsStore } from './guilds';
 import { useAuditsStore } from './audits';
 import { useResourceStore } from './resources';
+import { useConfigStore } from './configuration';
 
 export interface SnackbarData {
   id: string
@@ -36,6 +37,7 @@ export const useAppStore = defineStore('app', {
 
   actions: {
     async fetchAllData() {
+      const config = useConfigStore()
       const albums = useAlbumsStore()
       const libraries = useLibrariesStore()
       const listings = useListingsStore()
@@ -43,6 +45,7 @@ export const useAppStore = defineStore('app', {
       const guilds = useGuildsStore()
 
       await Promise.all([
+        config.fetch(),
         guilds.fetch(),
         albums.fetch(),
         libraries.fetch(),

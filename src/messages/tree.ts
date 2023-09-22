@@ -206,7 +206,7 @@ export class ProcessingTree {
 
     let lastSegment: [number, 'and_block' | 'solo'] = [
       0,
-      script.segments[0].block_type,
+      script.segments[0]?.block_type,
     ]
     let canRun = true
 
@@ -292,7 +292,7 @@ export class ProcessingTree {
 
     let adminMessage = ''
     if (GolemError.is(error)) {
-      if (error.params.requiresAdminAttention) {
+      if (error.params.requiresAdminAttention || true) {
         adminMessage = DiscordMarkdown.start()
           .raw('-----')
           .bold(`DATE: ${new Date().toUTCString()}`)

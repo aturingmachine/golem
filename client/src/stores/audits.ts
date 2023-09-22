@@ -22,7 +22,7 @@ export const useAuditsStore = defineStore('audit-logs', {
       return (guildId): AuditRecord[] => {
         console.log('Fetching audits for', guildId)
         return Object.values(this.records[guildId] || {}).sort((a, b) => {
-          return a.timestamp - b.timestamp
+          return b.timestamp - a.timestamp
         })
       }
     }
@@ -38,7 +38,6 @@ export const useAuditsStore = defineStore('audit-logs', {
         }
       )
     },
-
     
     add(records: AuditRecord[] | AuditRecord) {
       const updates: Record<string, Record<string, AuditRecord>> = {}

@@ -197,8 +197,9 @@ export class PlayerService {
     playType: 'next' | 'queue' = 'queue'
   ): Promise<void> {
     const userId = message.info.userId
+    const _tracks = Array.isArray(tracks) ? tracks : [tracks]
 
-    for (const track of (Array.isArray(tracks) ? tracks : [tracks]).reverse()) {
+    for (const track of _tracks.reverse()) {
       const audioResource = this.convertToAudioResource(track, userId)
 
       if (playType === 'next') {

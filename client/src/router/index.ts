@@ -5,6 +5,8 @@ import PlayersView from '../views/PlayersView.vue'
 import AuditView from '../views/AuditView.vue'
 import ResourceView from '../views/ResourceView.vue'
 import SearchView from '../views/SearchView.vue'
+import ConfigView from '../views/ConfigurationView.vue'
+import EditorView from '@/views/EditorView.vue'
 
 const routes = [
   {
@@ -16,6 +18,11 @@ const routes = [
     path: '/audits',
     name: 'audits',
     component: AuditView,
+  },
+  {
+    name: 'config',
+    path: '/config',
+    component: ConfigView,
   },
   {
     path: '/search',
@@ -36,7 +43,12 @@ const routes = [
     path: '/players',
     name: 'players',
     component: PlayersView,
-  }
+  },
+  {
+    name: 'editor',
+    path: '/editor',
+    component: EditorView,
+  },
 ]
 
 const router = createRouter({

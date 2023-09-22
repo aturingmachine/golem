@@ -1,5 +1,6 @@
 import {
   AwaitMessageComponentOptions,
+  ChannelType,
   CollectedMessageInteraction,
   Collection,
   CommandInteraction,
@@ -14,6 +15,7 @@ import { v4 } from 'uuid'
 import { CompiledGolemScript } from '../ast/compiler'
 import { AstParseResult } from '../ast/parser'
 import { BuiltInAlias, CommandNames } from '../constants'
+import { ConfigurationService } from '../core/configuration.service'
 import { LoggerService } from '../core/logger/logger.service'
 import { GolemError } from '../errors/golem-error'
 import { StringUtils } from '../utils/string-utils'
@@ -93,7 +95,27 @@ export class GolemMessage {
 
     this.log.debug(`rendered ${this.commands.length} commands.`)
 
-    this.info = new MessageInfo(this.source, logs[0], logs[1], this.traceId)
+    this.info = new MessageInfo(
+      this.source,
+      logs[0],
+      logs[1],
+      source.channel?.type === ChannelType.DM,
+      this.traceId
+    )
+  }
+
+  isAdminDM(): boolean {
+    this.log.log(
+      `isAdminDM> isDM=${this.info.isDM}; userID=${this.info.userId}; adminID=${
+        ConfigurationService.resolved.discord?.adminId
+      }; idMatch=${
+        this.info.userId === ConfigurationService.resolved.discord?.adminId
+      }`
+    )
+    return !!(
+      this.info.isDM &&
+      this.info.userId === ConfigurationService.resolved.discord?.adminId
+    )
   }
 
   getUserById(userId: string): GuildMember | undefined {
@@ -153,11 +175,19 @@ export class GolemMessage {
   async addError(
     error: Error | GolemError | string | unknown
   ): Promise<Replies[]> {
+    this.log.info(error)
+
+    if (!!error && typeof error === 'object' && 'stack' in error) {
+      this.log.info(error.stack)
+    }
+
     if (typeof error === 'string') {
       return this._replies.add(new RawReply(error))
     }
 
     if (GolemError.is(error)) {
+      this.log.info('is a golem error')
+
       if (error.hasRendered) {
         return this._replies.children
       }

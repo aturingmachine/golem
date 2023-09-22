@@ -19,9 +19,13 @@ export default new GolemCommand({
     const player = this.services.playerService.shuffle(message.info.guildId)
 
     if (player.nowPlaying) {
-      await message.addReply(
-        NowPlayingReply.fromListing(message, player.nowPlaying, player)
-      )
+      try {
+        await message.addReply(
+          NowPlayingReply.fromListing(message, player.nowPlaying, player)
+        )
+      } catch (error) {
+        console.log(error)
+      }
     }
   },
 

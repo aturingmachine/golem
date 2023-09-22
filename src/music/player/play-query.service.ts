@@ -47,7 +47,7 @@ export class PlayQueryService {
     const url = this.queryAsUrl(query)
 
     if (url) {
-      this.log.debug(`got url play query`)
+      this.log.debug(`got url play query "${query}"`)
       // Check different supported URL Types
       return this.processUrl(userId, url)
     }
@@ -162,6 +162,9 @@ export class PlayQueryService {
 
     // Check Playlist Param
     if (url.searchParams.has('list')) {
+      this.log.debug(
+        `youtube url has a playlist code "${url.searchParams.get('list')}"`
+      )
       const playlist = await this.youtube.getPlaylist(url.toString())
 
       tracks.push(...playlist.tracks)
@@ -170,6 +173,9 @@ export class PlayQueryService {
 
     // Check For a Video Param
     if (url.searchParams.has('v')) {
+      this.log.debug(
+        `youtube url has a video code "${url.searchParams.get('v')}"`
+      )
       const firstTrack = await YoutubeTrack.fromUrl(userId, url.toString())
 
       tracks.unshift(firstTrack)

@@ -94,6 +94,7 @@ export class ListingLoaderService {
         console.error(error)
       }
     } else {
+      this.log.info(`Library ${name} DB check missed! Loading from disk.`)
       this.loadFromDisk(rawLibName, name)
     }
   }
@@ -110,16 +111,31 @@ export class ListingLoaderService {
 
     // EzProgressBar.start(paths.length)
 
-    const newListings = await this.listingsFromPaths(paths, (_listing) => {
-      // this.log.verbose(`saved ${listing.shortName}`)
-      // EzProgressBar.add(1 / paths.length, `${listing.path.split('/').pop()}`)
-    })
+    const quarter = Math.floor(paths.length / 4)
+    const marks = [
+      { title: 25, val: quarter },
+      { title: 50, val: quarter * 2 },
+      { title: 75, val: quarter * 3 },
+    ]
+
+    const newListings = await this.listingsFromPaths(
+      paths,
+      (_listing, index) => {
+        const m = marks.find((m) => m.val === index)
+
+        if (m) {
+          this.log.info(`loading library "${path}" is ${m.title}% done.`)
+        }
+        // this.log.verbose(`saved ${listing.shortName}`)
+        // EzProgressBar.add(1 / paths.length, `${listing.path.split('/').pop()}`)
+      }
+    )
 
     listings.push(...newListings.listings)
     // EzProgressBar.stop()
 
     this.log.warn(
-      `Encountered ${newListings.errors} errors while loading library.`
+      `Encountered <${newListings.errors.length}> errors while loading library.`
     )
 
     const library = new Library(
@@ -198,7 +214,10 @@ export class ListingLoaderService {
       )
       this.log.warn(`encountered ${newListings.errors.length} errors`)
 
-      await this.libraries.updateOne({ name: record.name }, record)
+      await this.libraries.updateOne(
+        { name: record.name },
+        { $set: { listingIds: record.listingIds } }
+      )
     }
 
     return result
@@ -213,10 +232,11 @@ export class ListingLoaderService {
    */
   private async listingsFromPaths(
     paths: string[],
-    cb?: (l: LocalListing) => void
+    cb?: (l: LocalListing, index: number) => void
   ): Promise<{ listings: LocalListing[]; errors: Error[] }> {
     const listings: LocalListing[] = []
     const errors: Error[] = []
+    let index = 0
 
     for (const path of paths) {
       try {
@@ -225,11 +245,12 @@ export class ListingLoaderService {
         listings.push(newListing)
 
         if (cb) {
-          cb(newListing)
+          cb(newListing, index)
         }
       } catch (error) {
         errors.push(error as Error)
       }
+      index++
     }
 
     return {

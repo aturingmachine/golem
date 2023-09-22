@@ -30,13 +30,19 @@ export default new GolemCommand({
     librefresh: {
       name: 'librefresh',
       async handler({ message }) {
-        const result = await this.services.admin.refreshLibraries(message)
+        this.services.log.debug(`running librefresh command handler`)
 
-        const msg = Object.entries(result).reduce((prev, curr) => {
-          return prev.concat(`\n${curr[0]}: ${curr[1]} new listings.`)
-        }, 'Refresh Results:')
+        try {
+          const result = await this.services.admin.refreshLibraries(message)
 
-        await message.addReply(new PreformattedReply(msg))
+          const msg = Object.entries(result).reduce((prev, curr) => {
+            return prev.concat(`\n${curr[0]}: ${curr[1]} new listings.`)
+          }, 'Refresh Results:')
+
+          await message.addReply(new PreformattedReply(msg))
+        } catch (error) {
+          this.services.log.error(`could not refresh libraries`, error)
+        }
       },
     },
     config: {
@@ -124,12 +130,30 @@ export default new GolemCommand({
     },
     subcommands: [
       {
+        name: 'send-updates',
+        description: {
+          short: 'Send an update to all guilds that are subscribed to updates.',
+        },
+        args: [
+          {
+            name: 'update_message',
+            required: true,
+            type: 'string',
+            rest: true,
+            description: {
+              short: 'The message to send.',
+            },
+          },
+        ],
+      },
+      {
         name: 'librefresh',
         description: {
           short: 'Refresh all libraries, reading in new listings.',
         },
         args: [],
       },
+      // TODO
       {
         name: 'bugs',
         description: {

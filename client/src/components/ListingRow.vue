@@ -2,16 +2,57 @@
   <v-list-item
     class="overflow-auto listing-row"
     v-if="listing"
-    :title="listing.title"
-    :subtitle="listing.artist + ' - ' + albumName"
-    :prepend-avatar="art"
   >
-  <dl>
-    <template v-for="point of dataPoints" :key="point.key">
-      <dt>{{ point.key }}</dt>
-      <dd> {{ point.value }}</dd>
-    </template>
-  </dl>
+
+  <!-- <template v-slot:title>
+    {{ listing.title }}
+  </template>
+
+  <template v-slot:subtitle>
+    {{ listing.artist + ' - ' + albumName }}
+  </template> -->
+  <!-- :prepend-avatar="art" -->
+
+  <!-- <template v-slot:prepend>
+    <div>
+      <v-img class="art-image" :src="art">
+      </v-img>
+    </div>
+  </template> -->
+
+  <div class="d-flex flex-column w-100">
+    <div class="d-flex flex-row w-100">
+      <v-img class="art-image mr-5 rounded-lg" :src="art" max-width="25%">
+        <template v-slot:placeholder>
+          <div class="d-flex align-center justify-center fill-height">
+            <v-progress-circular
+              color="grey-lighten-4"
+              indeterminate
+            ></v-progress-circular>
+          </div>
+        </template>
+      </v-img>
+
+      <div>
+        <h2>{{ listing.title }}</h2>
+        <h3>{{ listing.artist + ' - ' + albumName }}</h3>
+        <div class="d-flex flex-row">
+          <dl v-for="(page, index) of dataPoints" :key="index">
+            <template v-for="point of page" :key="point.key">
+              <dt>{{ point.key }}</dt>
+              <dd> {{ point.value }}</dd>
+            </template>
+          </dl>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4" v-if="'key' in listing">
+      <span class="font-weight-black">Track Path:</span> {{ listing.path }} <br>
+      <span class="font-weight-black">Local Listing ID:</span> {{ listing.listingId }}
+    </div>
+  </div>
+
   </v-list-item>
 </template>
 
@@ -20,6 +61,7 @@ import type { LocalListing } from '@/models/listings';
 import { TrackType, type ShortTrack } from '@/models/players';
 import { useAlbumsStore } from '@/stores/albums';
 import { createArt } from '@/utils/album-art';
+import { chonk } from '@/utils/arrays';
 import { formatMS } from '@/utils/time';
 import { computed } from 'vue';
 
@@ -49,6 +91,10 @@ const art = computed(() => {
   return createArt('type' in props.listing ? props.listing.type as TrackType : TrackType.Local, albumRoot || props.listing as ShortTrack)
 })
 
+const isLocalListing = computed(() => {
+  return 'key' in props.listing
+})
+
 const dataPoints = computed(() => {
   const points = [
     {
@@ -58,11 +104,13 @@ const dataPoints = computed(() => {
   ]
 
   if ('key' in props.listing) {
-    //
     points.push({key: 'Key', value: props.listing.key})
+    points.push({key: 'Genres', value: props.listing.genres?.join(', ') || 'N/A'})
+    points.push({key: 'MusicBrainz Artist', value: props.listing.mb.artistId})
+    points.push({key: 'MusicBrainz Track', value: props.listing.mb.trackId})
   }
 
-  return points
+  return chonk(points, 3)
 })
 </script>
 
@@ -75,6 +123,22 @@ const dataPoints = computed(() => {
   }
 }
 
+.v-list-item__content {
+  display: flex;
+  flex-direction: row;
+}
+
+.listing-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.listing-row dl {
+  display: flex;
+  flex-direction: column;
+  width: 80%;
+}
+
 .listing-row dt {
   font-weight: bold;
 }
@@ -82,4 +146,12 @@ const dataPoints = computed(() => {
 .listing-row dd {
   margin-left: 8px;
 }
+
+.v-list-item__prepend div {
+  height: 100%;
+  width: 100%;
+}
+
+/* .art-image {
+} */
 </style>

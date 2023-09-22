@@ -1,6 +1,7 @@
 import {
   AudioPlayer,
   AudioPlayerError,
+  AudioPlayerPlayingState,
   AudioPlayerState,
   AudioPlayerStatus,
   AudioResource,
@@ -64,7 +65,7 @@ export type MusicPlayerOptions = JoinVoiceChannelOptions &
 export class MusicPlayer {
   static readonly autoDCTime = 300_000
 
-  private leaveTimeout!: NodeJS.Timeout
+  private leaveTimeout?: NodeJS.Timeout
   private queue!: TrackQueue
   private log!: LoggerService
 
@@ -339,7 +340,7 @@ export class MusicPlayer {
         VoiceConnectionStatus.Disconnected,
       ].includes(this.voiceConnection.state.status)
     ) {
-      this.log.debug(
+      this.log.info(
         `disconnecting voice connection for ${this.primaryKey} -  ${this.secondaryKey}`
       )
 
@@ -350,9 +351,18 @@ export class MusicPlayer {
   }
 
   startTimer(): void {
-    this.log.debug(
+    if (this.leaveTimeout) {
+      this.log.info(
+        `attempted to start a timer when was already set for ${this.primaryKey} -  ${this.secondaryKey}`
+      )
+
+      return
+    }
+
+    this.log.info(
       `starting auto-dc timer for ${this.primaryKey} -  ${this.secondaryKey}`
     )
+
     this.leaveTimeout = setTimeout(
       this.autoDisconnect.bind(this),
       MusicPlayer.autoDCTime
@@ -360,25 +370,40 @@ export class MusicPlayer {
   }
 
   async clearTimer(force = false): Promise<void> {
-    this.log.debug(
+    this.log.info(
       `clearing auto-dc timer for ${this.primaryKey} -  ${this.secondaryKey} - ${force}`
     )
 
-    if (force) {
+    if (force && this.leaveTimeout) {
       clearTimeout(this.leaveTimeout)
+      this.leaveTimeout = undefined
+
       return
     }
 
     const channel = await this.clientService.channels.fetch(this.channelId)
 
+    this.log.info(
+      `clear timeout isVoiceChannel="${
+        channel?.type === ChannelType.GuildVoice
+      }"`
+    )
+
     if (
       channel?.type === ChannelType.GuildVoice &&
       channel.members.size === 1
     ) {
+      this.log.info(
+        `non-forced timer clear bailing early for ${this.primaryKey} -  ${this.secondaryKey}. {${channel.type}:::${channel.members.size}}`
+      )
+
       return
     }
 
-    clearTimeout(this.leaveTimeout)
+    if (this.leaveTimeout) {
+      clearTimeout(this.leaveTimeout)
+      this.leaveTimeout = undefined
+    }
   }
 
   private joinVoice(): void {
@@ -420,7 +445,7 @@ export class MusicPlayer {
     )
     await this.destroy()
 
-    this.clearTimer(true)
+    await this.clearTimer(true)
   }
 
   private async processQueue(force = false): Promise<void> {
@@ -467,6 +492,8 @@ export class MusicPlayer {
 
     // Be careful in case the skip is forced and the last run
     if (nextTrack) {
+      await this.clearTimer(true)
+
       this.log.verbose(`process has next track, attempting play`)
       try {
         const next = await nextTrack.factory()
@@ -496,8 +523,8 @@ export class MusicPlayer {
   }
 
   private onAutoPause(
-    oldState: AudioPlayerState,
-    newState: AudioPlayerState
+    _oldState: AudioPlayerState,
+    _newState: AudioPlayerState
   ): void {
     // this.log.debug(
     //   `player state change ${oldState.status} => ${newState.status}`
@@ -506,18 +533,18 @@ export class MusicPlayer {
   }
 
   private onBuffering(
-    oldState: AudioPlayerState,
-    newState: AudioPlayerState
-  ): void {
+    _oldState: AudioPlayerState,
+    _newState: AudioPlayerState
+  ): Promise<void> {
     // this.log.debug(
     //   `player state change ${oldState.status} => ${newState.status}`
     // )
-    this.clearTimer()
+    return this.clearTimer()
   }
 
   private async onIdle(
     oldState: AudioPlayerState,
-    newState: AudioPlayerState
+    _newState: AudioPlayerState
   ): Promise<void> {
     // this.log.debug(
     //   `player state change ${oldState.status} => ${newState.status}`
@@ -535,8 +562,8 @@ export class MusicPlayer {
   }
 
   private onPaused(
-    oldState: AudioPlayerState,
-    newState: AudioPlayerState
+    _oldState: AudioPlayerState,
+    _newState: AudioPlayerState
   ): void {
     // this.log.debug(
     //   `player state change ${oldState.status} => ${newState.status}`
@@ -545,29 +572,30 @@ export class MusicPlayer {
   }
 
   private onPlaying(
-    oldState: AudioPlayerState,
-    newState: AudioPlayerState
-  ): void {
+    _oldState: AudioPlayerState,
+    _newState: AudioPlayerState
+  ): Promise<void> {
+    return this.clearTimer()
     // this.log.debug(
     //   `player state change ${oldState.status} => ${newState.status}`
     // )
-    if (isNotActive(oldState.status)) {
-      // clear timer
-      this.clearTimer()
+    // if (!isNotActive(oldState.status)) {
+    //   // clear timer
+    //   this.clearTimer()
 
-      // if idle trigger queue event
-      if (oldState.status === AudioPlayerStatus.Idle) {
-        // Golem.events.trigger(
-        //   GolemEvent.Queue,
-        //   this.voiceConnection.joinConfig.guildId
-        // )
-      }
-    }
+    // if idle trigger queue event
+    // if (oldState.status === AudioPlayerStatus.Idle) {
+    // Golem.events.trigger(
+    //   GolemEvent.Queue,
+    //   this.voiceConnection.joinConfig.guildId
+    // )
+    // }
+    // }
   }
 
   private addPlayerStateHandlers(): void {
-    this.audioPlayer.on('stateChange', (oldState, newState) => {
-      this.log.debug(
+    this.audioPlayer.on('stateChange', async (oldState, newState) => {
+      this.log.info(
         `player state change ${oldState.status} => ${newState.status}`
       )
 
@@ -579,7 +607,7 @@ export class MusicPlayer {
           this.onBuffering(oldState, newState)
           break
         case AudioPlayerStatus.Idle:
-          this.onIdle(oldState, newState)
+          await this.onIdle(oldState, newState)
           break
         case AudioPlayerStatus.Paused:
           this.onPaused(oldState, newState)

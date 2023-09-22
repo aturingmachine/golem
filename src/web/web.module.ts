@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { ClientModule } from '../core/client.module'
 import { CoreModule } from '../core/core.module'
+import { GuildConfigModule } from '../core/guild-config/guild-config.module'
 import { LoggerModule } from '../core/logger/logger.module'
 import { LocalMusicModule } from '../music/local/local-music.module'
 import { PlayerModule } from '../music/player/player.module'
@@ -20,6 +21,7 @@ import { WS } from './websocket.gateway'
     ClientModule,
     PlayerModule,
     CoreModule,
+    GuildConfigModule,
     LocalMusicModule.forRoot(),
   ],
 })

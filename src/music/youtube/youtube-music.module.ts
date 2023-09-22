@@ -1,6 +1,7 @@
 import { DynamicModule, Module } from '@nestjs/common'
 import { LoggerModule } from '../../core/logger/logger.module'
 import { GolemModule, RawConfig } from '../../utils/raw-config'
+import { YoutubeCache } from './youtube-cache.service'
 import { YoutubeService } from './youtube.service'
 
 @Module({})
@@ -15,7 +16,7 @@ export class YoutubeMusicModule {
 
       imports: [LoggerModule],
 
-      providers: [YoutubeService],
+      providers: [YoutubeService, YoutubeCache],
 
       exports: [YoutubeService],
     }

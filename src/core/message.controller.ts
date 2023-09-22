@@ -1,7 +1,7 @@
 import { Controller, Injectable } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
 import { MessagePattern } from '@nestjs/microservices'
-import { Message } from 'discord.js'
+import { ChannelType, Message } from 'discord.js'
 import { GSCompiler } from '../ast/compiler'
 import { GolemMessage } from '../messages/golem-message'
 import { MessageId } from '../messages/message-id.model'
@@ -75,15 +75,20 @@ export class MessageController {
 
     const audit = await this.auditService.create(message, data.message.content)
 
-    message.auditId = audit._id.toString()
+    if (audit) {
+      message.auditId = audit._id.toString()
+    }
 
     await this.treeService._execute(compiled, message)
 
-    // Set default channel for Guild Config if there is not one
-    await this.guildConfig.setDefaultChannelId(
-      message.info.guildId,
-      message.source.channelId
-    )
+    // Things to do if we are not in a DM
+    if (data.message.channel.type !== ChannelType.DM) {
+      // Set default channel for Guild Config if there is not one
+      await this.guildConfig.setDefaultChannelId(
+        message.info.guildId,
+        message.source.channelId
+      )
+    }
 
     const replies = message._replies.render()
 

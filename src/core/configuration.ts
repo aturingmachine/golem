@@ -52,6 +52,7 @@ export type WebConfig = {
 
 export type YoutubeConfig = {
   ytdlpPath: string
+  cachePath: string
 }
 
 export type GolemArgs = {
@@ -73,6 +74,7 @@ export type ConfigurationOptions = {
   web?: WebConfig
   youtube?: YoutubeConfig
   logLevels: LogLevel[]
+  cron: Record<string, string>
   crash?: {
     run: string
   }
@@ -152,13 +154,16 @@ export default (): ConfigurationOptions => {
 
   const youtube = {
     ytdlpPath: raw.youtube?.ytdlpPath || '',
+    cachePath: raw.youtube?.cachePath || '',
   }
 
   const web = {
     apiPort: raw.web?.apiPort || 3000,
   }
 
-  let logLevels: LogLevel[] = ['error', 'warn', 'log']
+  const cron = raw.cron || {}
+
+  let logLevels: LogLevel[] = raw.logLevels //['error', 'warn', 'log']
 
   if (args.verbose) {
     logLevels.push('verbose')
@@ -186,5 +191,6 @@ export default (): ConfigurationOptions => {
     youtube,
     web,
     logLevels,
+    cron,
   }
 }

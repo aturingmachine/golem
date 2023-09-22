@@ -7,7 +7,7 @@ import { CommandInvocation, MessageInfo } from '../src/messages/message-info'
 import { debugDump } from '../test-utils/debug-dump'
 
 describe('Message Info', () => {
-  describe.only('Text Parsing', () => {
+  describe('Text Parsing', () => {
     it('should', () => {
       const messageContent = '$go play rocket punch flash'
       const logger1 = new LoggerService({})

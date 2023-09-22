@@ -1,5 +1,5 @@
 import { LoggerService } from '@nestjs/common'
-import { Message } from 'discord.js'
+import { Message, ChannelType } from 'discord.js'
 import { CompiledGolemScript } from '../../src/ast/compiler'
 import { AstParseResult } from '../../src/ast/parser'
 import {
@@ -16,6 +16,7 @@ type MockMessageParams = {
   content?: string
   author?: Partial<Message['author']>
   guild?: Partial<Message['guild']>
+  channel?: Partial<Message['channel']>
   channelId?: string
 }
 
@@ -27,6 +28,7 @@ export class MockMessage {
   author: Partial<Message['author']>
   guild: Partial<Message['guild']>
   channelId: string
+  channel: Partial<Message['channel']>
 
   constructor(readonly __mock_params: MockMessageParams = {}) {
     this.content = __mock_params.content || ''
@@ -36,6 +38,11 @@ export class MockMessage {
     this.guild =
       __mock_params.guild || ({ id: '107' } as Partial<Message['guild']>)
     this.channelId = __mock_params.channelId || '211'
+    this.channel =
+      __mock_params.channel ||
+      ({ id: '107', type: ChannelType.GuildText } as Partial<
+        Message['channel']
+      >)
   }
 
   // Testing Util Functions

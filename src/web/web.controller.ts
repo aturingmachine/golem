@@ -1,16 +1,24 @@
 import { createReadStream } from 'fs'
 import {
+  BadRequestException,
+  Body,
   Controller,
   Get,
   Header,
   Optional,
   Param,
+  Put,
   Query,
   StreamableFile,
+  Post,
 } from '@nestjs/common'
 import { Guild, User } from 'discord.js'
 import fuzzy from 'fuzzy'
+import { CompiledGolemScript, GSCompiler } from '../ast/compiler'
+import { AstParseResult } from '../ast/parser'
 import { ClientService } from '../core/client.service'
+import { ConfigurationOptions } from '../core/configuration'
+import { GuildConfig } from '../core/guild-config/guild-config.model'
 import { LoggerService } from '../core/logger/logger.service'
 import { AlbumService } from '../music/local/library/album.service'
 import { Library } from '../music/local/library/library'
@@ -84,16 +92,63 @@ export class WebClientController {
 
   @Get('/users/:ids')
   async usersById(@Param('ids') ids: string): Promise<{ users: User[] }> {
-    const splitIds = ids.split('|')
+    const splitIds = ids.split('|').filter(Boolean)
+    this.log.debug(`getting users: [${splitIds.join(', ')}]`)
     const users: User[] = []
 
     for (const id of splitIds) {
-      const u = await this.client.userById(id)
-      if (u) {
-        users.push(u)
+      try {
+        const u = await this.client.userById(id)
+        if (u) {
+          users.push(u)
+        }
+      } catch (error) {
+        this.log.debug(`could not get user ${id}`)
       }
     }
 
     return { users: users }
+  }
+
+  @Get('/config')
+  config(): ConfigurationOptions {
+    return this.webService.getConfig()
+  }
+
+  @Put('/config')
+  updateConfig(
+    @Body() body: { path: string; value: unknown }
+  ): ConfigurationOptions {
+    return this.webService.setConfig(body.path, body.value)
+  }
+
+  @Get('/guild-configs')
+  async guildConfigs(): Promise<{ configs: GuildConfig[] }> {
+    const configs = await this.webService.getAllGuildConfigs()
+
+    return { configs }
+  }
+
+  @Post('/ast/parse')
+  parseAst(@Body() body: { script: string }): {
+    ast: AstParseResult
+    compiled: CompiledGolemScript
+  } {
+    if (!body.script) {
+      throw new BadRequestException({
+        message: '"script" property is required in request.',
+      })
+    }
+
+    try {
+      const result = GSCompiler.fromString(body.script)
+
+      return result
+    } catch (error) {
+      throw new BadRequestException({
+        message: 'unable to compile script.',
+        error,
+      })
+    }
   }
 }

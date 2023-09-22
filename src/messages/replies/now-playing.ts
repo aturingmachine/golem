@@ -31,7 +31,7 @@ export class NowPlayingReply extends BaseReply {
 
     const embed = new EmbedBuilder()
       .setTitle(title)
-      .setColor(listingEmbed.color.hex as HexColorString)
+      .setColor((listingEmbed.color?.hex || '#C1A7E2') as HexColorString)
       .setDescription(description)
       .setThumbnail(listing.albumArtUrl)
       .setFields(listingEmbed.fields)

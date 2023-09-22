@@ -21,10 +21,10 @@ Detailed documentation can be found on the [Golem Documentation Site](https://at
 - Support for custom aliased commands
 
 ## Installation
-
+> TODO?
 ```sh
 # Clone Repo
-git clone git@github.com:aturingmachine/golemt.git
+git clone git@github.com:aturingmachine/golem.git
 
 # Install Dependencies
 npm ci
@@ -35,3 +35,11 @@ cp config.example.yml config.yml
 # Dev only - dependecy install helper
 bash scripts/dev-install.sh
 ```
+
+
+## V2 TODO
+[] - Bot Status
+[] - Interactive Response Embeds
+  [] - Wide Search Results
+  [] - Artist Search Results
+  [] - Playlists?
