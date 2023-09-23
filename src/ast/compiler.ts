@@ -80,7 +80,7 @@ export class GSCompiler {
           ASTDebugLogger.log(
             '[GSCompiler]',
             'gs:compiled leaf tokens: ',
-            leaf.tokens.map((t) => t.value).join(' ')
+            `"${leaf.tokens.map((t) => t.value).join(' ')}"`
           )
           this.updateCurrentSegment('srcLeaf', leaf)
           this.updateCurrentSegment('index', blockIndex)

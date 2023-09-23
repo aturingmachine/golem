@@ -199,7 +199,8 @@ export class PlayerService {
     const userId = message.info.userId
     const _tracks = Array.isArray(tracks) ? tracks : [tracks]
 
-    for (const track of _tracks.reverse()) {
+    // TODO this was reversed for some reason?
+    for (const track of _tracks) {
       const audioResource = this.convertToAudioResource(track, userId)
 
       if (playType === 'next') {

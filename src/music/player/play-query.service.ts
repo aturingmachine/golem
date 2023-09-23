@@ -4,15 +4,19 @@ import { ConfigService } from '@nestjs/config'
 import { LoggerService } from '../../core/logger/logger.service'
 import { GolemMessage } from '../../messages/golem-message'
 import { BaseReply } from '../../messages/replies/base'
+import { ArtistQueryReply } from '../../messages/replies/interactive/artist-query'
 import { ListingReply } from '../../messages/replies/listing-reply'
 import { NowPlayingReply } from '../../messages/replies/now-playing'
 import { YoutubePlaylistReply } from '../../messages/replies/youtube-playlist-reply'
 import { GolemModule } from '../../utils/raw-config'
-import { ListingSearcher } from '../local/library/searcher.service'
+import {
+  ListingSearcher,
+  SearchResult,
+} from '../local/library/searcher.service'
 import { LocalTrack } from '../tracks/local-track'
 import { Tracks } from '../tracks/tracks'
 import { YoutubeTrack } from '../tracks/youtube-track'
-import { YoutubeService } from '../youtube/youtube.service'
+import { YoutubeSearchResult, YoutubeService } from '../youtube/youtube.service'
 import { PlayerService } from './player.service'
 
 export const SupportedHosts = {
@@ -20,7 +24,14 @@ export const SupportedHosts = {
 }
 
 export type QueryPlayResult =
-  | { tracks: Tracks[]; replies: BaseReply[] }
+  | {
+      tracks: Tracks[]
+      replies: BaseReply[]
+      raw: {
+        local?: SearchResult
+        youtube?: YoutubeSearchResult
+      }
+    }
   | { missingModule?: string; message?: string }
 
 @Injectable()
@@ -87,12 +98,34 @@ export class PlayQueryService {
       return undefined
     }
 
-    // TODO Check for Artist/Wide/Album queries
+    // Handle Artist Query
+    if (results.isArtistQuery) {
+      this.log.info(`query "${query}" produced Artist Query Result`)
+
+      return {
+        tracks: [],
+        raw: { local: results },
+        replies: [
+          await ArtistQueryReply.fromQuery(
+            results.listing.artist,
+            message,
+            this.localSearcher,
+            this.players
+          ),
+        ],
+      }
+    }
+
+    // Handle Wide Query
+    if (results.isWideQuery) {
+      this.log.info(`query "${query}" produced Wide Query Result`)
+    }
 
     // Return single Track if we got a match
     const track = new LocalTrack(results?.listing, userId)
     return {
       tracks: [track],
+      raw: { local: results },
       replies: [
         await NowPlayingReply.fromListing(
           message,
@@ -129,6 +162,9 @@ export class PlayQueryService {
     return {
       tracks: [track],
       replies: [await ListingReply.fromListing(track.listing)],
+      raw: {
+        youtube: result,
+      },
     }
   }
 
@@ -182,7 +218,7 @@ export class PlayQueryService {
       replies.unshift(await ListingReply.fromListing(firstTrack.listing))
     }
 
-    return { tracks, replies }
+    return { tracks, replies, raw: {} }
   }
 
   private queryAsUrl(str: string): URL | undefined {

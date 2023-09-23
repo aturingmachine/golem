@@ -20,6 +20,12 @@ import { YoutubeCache } from './youtube-cache.service'
 import { YoutubeListing } from './youtube-listing'
 import { YoutubePlaylistListing } from './youtube-playlist'
 
+export type YoutubeSearchResult = {
+  url: string
+  correctedQuery: string
+  similarity: number
+}
+
 @Injectable()
 export class YoutubeService {
   private static readonly ytdlOptions = dargs({
@@ -131,11 +137,7 @@ export class YoutubeService {
     })
   }
 
-  async search(
-    query: string
-  ): Promise<
-    { url: string; correctedQuery: string; similarity: number } | undefined
-  > {
+  async search(query: string): Promise<YoutubeSearchResult | undefined> {
     this.log.info(`searching for query ${query}`)
 
     const result = await ytsr(query, { limit: 10 })

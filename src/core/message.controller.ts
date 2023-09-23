@@ -120,8 +120,6 @@ export class MessageController {
       return true
     })
 
-    // console.log('RepliesToSend:', uniqueReplies)
-
     for (const reply of uniqueReplies) {
       this.logger.info(
         `attempting to render ${reply.isUnique ? 'unqiue' : 'non-unique'} ${
@@ -131,8 +129,12 @@ export class MessageController {
 
       try {
         await message.reply(reply.opts)
+
+        if ('collect' in reply) {
+          reply.collect()
+        }
       } catch (error) {
-        this.logger.error(`unable to render ${reply.type}`)
+        this.logger.error(`unable to render ${reply.type} => ${error}`)
       }
     }
   }

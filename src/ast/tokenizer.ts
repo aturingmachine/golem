@@ -2,6 +2,7 @@ import { Commands } from '../commands/register-commands'
 import { CommandBase } from '../constants'
 import { GolemScriptFunctions } from '../golem-script/functions'
 import { ArrayUtils } from '../utils/list-utils'
+import { ASTDebugLogger } from './ast-debug-logger'
 import { ASTUnterminatedQuoteError } from './ast-parse-error'
 import { InputStream } from './input-stream'
 
@@ -133,7 +134,7 @@ export class Tokenizer {
   is_golem_invoker(ch: string): boolean {
     return (
       this.is_invoker_start(ch) ||
-      ('$go $play $stop $pause $playnext'.includes(ch) &&
+      ('$go $play $stop $pause $playnext $np $nowplaying'.includes(ch) &&
         !this.is_whitespace(ch))
     )
   }
@@ -167,7 +168,7 @@ export class Tokenizer {
   }
 
   is_punc(ch: string): boolean {
-    return ',;(){}'.indexOf(ch) >= 0
+    return ',(){}'.indexOf(ch) >= 0
   }
 
   is_whitespace(ch: string): boolean {
@@ -436,8 +437,16 @@ export class Tokenizer {
   read_invoker(): AstToken | CmdAstToken | null {
     const invoker = this.read_while(this.is_golem_invoker.bind(this))
 
+    ASTDebugLogger.log('[TOKENIZER]', 'tokenizing  invoker', `"${invoker}"`)
+
     if (invoker !== '$go') {
       const base = Commands.get(invoker.slice(1))?.info.name
+
+      ASTDebugLogger.log(
+        '[TOKENIZER]',
+        'tokenizing go invoker',
+        `"${invoker}" got base "${base}"`
+      )
 
       if (!base) {
         return null
@@ -449,6 +458,8 @@ export class Tokenizer {
         insideAlias: this.isInAlias,
       }
     }
+
+    ASTDebugLogger.log('[TOKENIZER]', 'tokenizing go invoker', `"${invoker}"`)
 
     return {
       type: 'invoker',

@@ -37,6 +37,15 @@ export default new GolemCommand({
     description: {
       short: 'Retrieve information about the current Golem instance.',
     },
+    subcommands: [
+      {
+        name: 'nowplaying',
+        description: {
+          short: 'Display the current playing resource.',
+        },
+        args: [],
+      },
+    ],
     args: [
       {
         type: 'string',

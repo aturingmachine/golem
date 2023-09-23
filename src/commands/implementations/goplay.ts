@@ -35,6 +35,7 @@ export default new GolemCommand({
       })
     }
 
+    // Handle Unpause
     if (!query) {
       // If we are doing an "unpause" and nothing is playing
       // then we have errored...
@@ -54,7 +55,9 @@ export default new GolemCommand({
       return
     }
 
+    // Execute the Query
     const queryResult = await this.services.queryService.process(message, query)
+    this.services.log.debug(`query returned as: ${formatForLog(queryResult)}`)
 
     if (!('tracks' in queryResult)) {
       // Handle a processed result that does not have a supported module
@@ -68,6 +71,7 @@ export default new GolemCommand({
         })
       }
 
+      // Throw a slightly more generic error otherwise
       throw Errors.Basic({
         code: 101,
         message: queryResult.message || 'Unable to process play request.',
@@ -77,17 +81,19 @@ export default new GolemCommand({
       })
     }
 
-    this.services.playerService.play(
-      message,
-      player,
-      queryResult.tracks,
-      'queue'
-    )
-
-    this.services.log.debug(`query returned as: ${formatForLog(queryResult)}`)
+    // Handle Single Track Result.
+    if (queryResult.raw.local?.isTrackQuery || !queryResult.raw.local) {
+      this.services.playerService.play(
+        message,
+        player,
+        queryResult.tracks,
+        'queue'
+      )
+    }
 
     await message.addReply(queryResult.replies)
   },
+
   info: {
     name: CommandNames.Base.play,
     description: {

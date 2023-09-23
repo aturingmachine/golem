@@ -89,7 +89,8 @@ export class GolemMessage {
     this.traceId = v4().split('-')[0]
     this.log.setContext(`message`, this.traceId)
 
-    this.commands = this.messageContent.segments.map((segment) => {
+    this.commands = this.messageContent.segments.map((segment, index) => {
+      this.log.debug(`rendering segment[${index}]`)
       return ParsedCommand.fromSegment(segment)
     })
 

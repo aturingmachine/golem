@@ -17,8 +17,6 @@ export default new GolemCommand({
 
     const player = this.services.playerService.for(message.info.guildId)
 
-    // console.log('Got Player:', player, player?.trackCount)
-
     if (!player) {
       this.services.log.info(`no channel to join, exiting early`)
 
@@ -35,7 +33,8 @@ export default new GolemCommand({
     this.services.log.debug(`peek returned ${peekedResources.length} tracks`)
 
     const peek = new QueueReply(
-      peekedResources.map((resources) => resources.track)
+      peekedResources.map((resources) => resources.track),
+      player.trackCount
     )
 
     await message.addReply(peek)

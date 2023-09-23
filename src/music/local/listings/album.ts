@@ -72,7 +72,7 @@ export class Album extends AAlbum {
   }
 
   get attachmentUrl(): string {
-    return 'attachment://cover.png'
+    return 'attachment://cover.jpg'
   }
 
   // get fileRoot(): string {

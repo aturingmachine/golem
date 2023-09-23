@@ -215,7 +215,7 @@ export class LocalListing extends AListing {
 
   async toEmbed(): Promise<ListingEmbedData> {
     const artBuffer = this.album.covers.med.get() || PlexLogo
-    const image = new AttachmentBuilder(artBuffer, { name: 'cover.png' })
+    const image = new AttachmentBuilder(artBuffer, { name: 'cover.jpg' })
     const color = await ImageUtils.averageColor(artBuffer)
 
     const duration = this.hasDefaultDuration

@@ -8,8 +8,8 @@ describe('Parser', () => {
   let command: string
 
   beforeEach(() => {
-    // ConfigurationService.init()
-    // ConfigurationService.set('logLevels', ['log', 'error', 'warn'])
+    ConfigurationService.init()
+    ConfigurationService.set('logLevels', ['log', 'error', 'warn', 'debug'])
   })
 
   describe('Invalid Case Handling', () => {
@@ -141,6 +141,31 @@ describe('Parser', () => {
 
     it('should handle $play as an invoker alias', () => {
       command = `$play twice tt`
+
+      const result = testParse()
+
+      expect(result).toHaveLength(1)
+
+      const firstBlock = result.blocks[0]
+
+      expect(firstBlock.type).toEqual('solo')
+      expect(firstBlock).toHaveLength(1)
+
+      expect(firstBlock.commands[0].tokens).toHaveLength(2)
+      expect(firstBlock.commands[0].tokens[0]).toEqual({
+        insideAlias: false,
+        type: 'cmd',
+        value: 'play',
+      })
+      expect(firstBlock.commands[0].tokens[1]).toEqual({
+        insideAlias: false,
+        type: 'str',
+        value: 'twice tt',
+      })
+    })
+
+    it('should handle $np as an invoker alias', () => {
+      command = `$np`
 
       const result = testParse()
 
@@ -520,6 +545,34 @@ describe('Parser', () => {
     })
   })
 
+  it.only('should handle go get', () => {
+    command = `$go get np`
+
+    const result = testParse()
+
+    expect(result).toHaveLength(1)
+
+    const firstBlock = result.blocks[0]
+
+    expect(firstBlock.type).toEqual('solo')
+    expect(firstBlock.commands[0].tokens).toHaveLength(3)
+    expect(firstBlock.commands[0].tokens[0]).toEqual({
+      insideAlias: false,
+      type: 'invoker',
+      value: '$go',
+    })
+    expect(firstBlock.commands[0].tokens[1]).toEqual({
+      insideAlias: false,
+      type: 'cmd',
+      value: 'get',
+    })
+    expect(firstBlock.commands[0].tokens[2]).toEqual({
+      insideAlias: false,
+      type: 'str',
+      value: 'np',
+    })
+  })
+
   it('should parse a single $go command', () => {
     command = '$go play twice tt'
 
@@ -547,6 +600,54 @@ describe('Parser', () => {
       insideAlias: false,
       type: 'str',
       value: 'twice tt',
+    })
+  })
+
+  it('should parse a non-and chained command', () => {
+    command = '$play twice; $go play loona so what'
+
+    const result = testParse()
+
+    expect(result).toHaveLength(2)
+
+    const firstBlock = result.blocks[0]
+    const secondBlock = result.blocks[1]
+
+    expect(firstBlock.type).toEqual('solo')
+    expect(firstBlock).toHaveLength(1)
+
+    expect(firstBlock.commands[0].tokens).toHaveLength(2)
+    // expect(firstBlock.commands[0].tokens[0]).toEqual({
+    //   insideAlias: false,
+    //   type: 'invoker',
+    //   value: '$go',
+    // })
+    expect(firstBlock.commands[0].tokens[0]).toEqual({
+      insideAlias: false,
+      type: 'cmd',
+      value: 'play',
+    })
+    expect(firstBlock.commands[0].tokens[1]).toEqual({
+      insideAlias: false,
+      type: 'str',
+      value: 'twice',
+    })
+
+    expect(secondBlock.commands[0].tokens).toHaveLength(3)
+    expect(secondBlock.commands[0].tokens[0]).toEqual({
+      insideAlias: false,
+      type: 'invoker',
+      value: '$go',
+    })
+    expect(secondBlock.commands[0].tokens[1]).toEqual({
+      insideAlias: false,
+      type: 'cmd',
+      value: 'play',
+    })
+    expect(secondBlock.commands[0].tokens[2]).toEqual({
+      insideAlias: false,
+      type: 'str',
+      value: 'loona so what',
     })
   })
 

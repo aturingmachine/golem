@@ -39,6 +39,10 @@ export class ListingLoaderService {
     return this.listings.find({})
   }
 
+  forArtist(query: string): Promise<LocalListing[]> {
+    return this.listings.findBy({ where: { artist: query } })
+  }
+
   async load(): Promise<void> {
     this.log.info('starting load job')
     if (this.config.get('args.bust-cache')) {

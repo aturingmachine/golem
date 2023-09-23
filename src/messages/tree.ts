@@ -201,7 +201,7 @@ export class ProcessingTree {
     }
 
     this.logger.debug(
-      `executing segment[0] "${script.raw}" ${formatForLog(script)}`
+      `executing script "${script.raw}" ${formatForLog(script)}`
     )
 
     let lastSegment: [number, 'and_block' | 'solo'] = [
@@ -212,6 +212,8 @@ export class ProcessingTree {
 
     for (const segment of script.segments) {
       const index = segment.index
+
+      this.logger.debug(`executing segment[${index}] "${segment.compiled}"`)
 
       // A solo segment can always run so we will reset
       if (

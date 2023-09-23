@@ -13,6 +13,7 @@ import { LoggerService } from './core/logger/logger.service'
 import { PlexService } from './integrations/plex/plex.service'
 import { ListingLoaderService } from './music/local/library/loader.service'
 import { DiscordMarkdown } from './utils/discord-markdown-builder'
+import { LogUtils } from './utils/log-utils'
 import { GolemModule } from './utils/raw-config'
 import { RawConfig } from './utils/raw-config'
 import { humanReadableDuration } from './utils/time-utils'
@@ -43,6 +44,8 @@ async function bootstrap() {
     strategy: botServer,
     logger: configuration().logLevels,
   })
+
+  LogUtils.setContext(app)
 
   const log = await app.resolve(LoggerService)
   log.setContext('Bootstrap')

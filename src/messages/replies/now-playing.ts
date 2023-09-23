@@ -13,7 +13,8 @@ export class NowPlayingReply extends BaseReply {
   static async fromListing(
     message: GolemMessage,
     listing: AListing,
-    player?: MusicPlayer
+    player?: MusicPlayer,
+    force_not_playing = false
   ): Promise<NowPlayingReply | ListingReply> {
     if (!player) {
       return ListingReply.fromListing(listing)
@@ -21,7 +22,7 @@ export class NowPlayingReply extends BaseReply {
 
     const listingEmbed = await listing.toEmbed()
 
-    const isPlaying = !!player.currentResource
+    const isPlaying = !!player.currentResource && !force_not_playing
 
     const title = isPlaying ? 'Added to Queue' : 'Now Playing'
 

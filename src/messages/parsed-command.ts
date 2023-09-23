@@ -1,4 +1,5 @@
 import { CommandInteraction, CommandInteractionOption } from 'discord.js'
+import { ASTDebugLogger } from '../ast/ast-debug-logger'
 import { RawScriptSegment } from '../ast/compiler'
 import { CommandDescription, GolemCommand } from '../commands'
 import { Commands, RegisteredCommands } from '../commands/register-commands'
@@ -133,6 +134,12 @@ export class ParsedCommand {
   }
 
   static fromSegment(segment: RawScriptSegment): ParsedCommand {
+    ASTDebugLogger.log(
+      '[PARSED COMMAND]',
+      'pc:fromSegment',
+      `parsing from segment with command root "${segment.command}"`
+    )
+
     switch (segment.command) {
       case CommandBase.admin:
         return parseSegment(segment, RegisteredCommands.goadmin.info)
@@ -289,8 +296,24 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
           if (subc.args?.length > 1) {
             const args = StringUtils.smartSplit(argString)
             subc.args.forEach((arg, index) => {
+              if (arg.rest) {
+                ASTDebugLogger.log(
+                  '[PARSED COMMAND]',
+                  'pc:parseString subcommand args:',
+                  `"${args
+                    .slice(index, args.indexOf(' -- '))
+                    .join(' ')
+                    .replaceAll(';', '')
+                    .trim()}"`
+                )
+              }
+
               result.params[arg.name] = arg.rest
-                ? args.slice(index, args.indexOf(' -- ')).join(' ')
+                ? args
+                    .slice(index, args.indexOf(' -- '))
+                    .join(' ')
+                    .replaceAll(';', '')
+                    .trim()
                 : args[index]
             })
           } else {
@@ -303,8 +326,24 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
       if (def.args?.length > 1 || /( \-\-[A-z\- ]+ ?)+/g.test(meat)) {
         const args = StringUtils.smartSplit(meat)
         def.args.forEach((arg, index) => {
+          if (arg.rest) {
+            ASTDebugLogger.log(
+              '[PARSED COMMAND]',
+              'pc:parseString not-subcommand args:',
+              `"${args
+                .slice(index, args.indexOf(' -- '))
+                .join(' ')
+                .replaceAll(';', '')
+                .trim()}"`
+            )
+          }
+
           result.params[arg.name] = arg.rest
-            ? args.slice(index, args.indexOf(' -- ')).join(' ')
+            ? args
+                .slice(index, args.indexOf(' -- '))
+                .join(' ')
+                .replaceAll(';', '')
+                .trim()
             : args[index]
         })
       } else {
@@ -346,8 +385,16 @@ function parseSegment(
   const parsedContent = (
     /^\$/.test(content) ? content.replace(/^\$(go )?/, '') : content
   )
+    .replace(';', '')
+    .trim()
     // Remove all option flags from the raw compiled string
     .replaceAll(/(?:--[A-z_]+=((['"]).*?\2|[^s]*))/gi, '')
+
+  ASTDebugLogger.log(
+    '[PARSED COMMAND]',
+    'pc:parseSegment parsedContent set to:',
+    `"${parsedContent}"`
+  )
 
   const meat = StringUtils.dropWords(parsedContent, 1)
 
@@ -380,8 +427,24 @@ function parseSegment(
           if (subc.args?.length > 1) {
             const args = StringUtils.smartSplit(argString)
             subc.args.forEach((arg, index) => {
+              if (arg.rest) {
+                ASTDebugLogger.log(
+                  '[PARSED COMMAND]',
+                  'pc:parseSegment subcommand args:',
+                  `"${args
+                    .slice(index, args.indexOf(' -- '))
+                    .join(' ')
+                    .replaceAll(';', '')
+                    .trim()}"`
+                )
+              }
+
               result.params[arg.name] = arg.rest
-                ? args.slice(index, args.indexOf(' -- ')).join(' ')
+                ? args
+                    .slice(index, args.indexOf(' -- '))
+                    .join(' ')
+                    .replaceAll(';', '')
+                    .trim()
                 : args[index]
             })
           } else {
@@ -394,11 +457,32 @@ function parseSegment(
       if (def.args?.length > 1 || /( \-\-[A-z\- ]+ ?)+/g.test(meat)) {
         const args = StringUtils.smartSplit(meat)
         def.args.forEach((arg, index) => {
+          if (arg.rest) {
+            ASTDebugLogger.log(
+              '[PARSED COMMAND]',
+              'pc:parseString not-subcommand args:',
+              `"${args
+                .slice(index, args.indexOf(' -- '))
+                .join(' ')
+                .replaceAll(';', '')
+                .trim()}"`
+            )
+          }
+
           result.params[arg.name] = arg.rest
-            ? args.slice(index, args.indexOf(' -- ')).join(' ')
+            ? args
+                .slice(index, args.indexOf(' -- '))
+                .join(' ')
+                .replaceAll(';', '')
+                .trim()
             : args[index]
         })
       } else {
+        ASTDebugLogger.log(
+          '[PARSED COMMAND]',
+          'pc:parseString not-subcommand args:',
+          `setting "${result.params[def.args[0].name]}" => "${meat}"`
+        )
         result.params[def.args[0].name] = meat
       }
     }

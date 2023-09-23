@@ -1,3 +1,4 @@
+import { ArtistQueryReply } from './interactive/artist-query'
 import { ListingReply } from './listing-reply'
 import { NowPlayingReply } from './now-playing'
 import { PermissionChangeReply } from './permissions-change'
@@ -13,6 +14,8 @@ export enum ReplyType {
   YoutubePlaylist = 'YoutubePlaylist',
   Preformatted = 'Preformatted',
   PermissionChanged = 'PermissionChanged',
+
+  ArtistQuery = 'ArtistQuery',
 }
 
 export type Replies =
@@ -21,3 +24,4 @@ export type Replies =
   | RawReply
   | ListingReply
   | PermissionChangeReply
+  | ArtistQueryReply

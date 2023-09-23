@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import fuzzy from 'fuzzy'
 import { LoggerService } from '../../../core/logger/logger.service'
+import { ArrayUtils } from '../../../utils/list-utils'
 import { LocalListing } from '../listings/listings'
 import { ListingLoaderService } from './loader.service'
 import { SearchSchemes } from './search-schemes'
@@ -26,6 +27,10 @@ export class SearchResult {
   get isWideQuery(): boolean {
     return this.type === ResultType.Wide
   }
+
+  get isTrackQuery(): boolean {
+    return this.type === ResultType.Track
+  }
 }
 
 @Injectable()
@@ -45,7 +50,7 @@ export class ListingSearcher {
     const isArtistQuery = this.isArtistQuery(query, result)
     const isWideMatch = this.isWideMatch(result)
 
-    this.log.debug(`Query ${query} - ${result.length} results.`)
+    this.log.debug(`Query "${query}" - ${result.length} results.`)
 
     if (result.length) {
       this.log.debug(
@@ -63,7 +68,7 @@ export class ListingSearcher {
       )
     }
 
-    this.log.warn(`No Results found for ${query}`)
+    this.log.warn(`No Results found for "${query}"`)
     return undefined
   }
 
@@ -90,6 +95,18 @@ export class ListingSearcher {
           name: listing?.shortName || 'Not found',
         }
       : undefined
+  }
+
+  async forArtist(artist: string): Promise<LocalListing[]> {
+    const res = await this.listings.forArtist(artist)
+
+    return res
+  }
+
+  async artistSample(artist: string, count = 4): Promise<LocalListing[]> {
+    const res = await this.forArtist(artist)
+
+    return ArrayUtils.shuffleArray(res).slice(0, count)
   }
 
   private isWideMatch(result: fuzzy.FilterResult<LocalListing>[]): boolean {
