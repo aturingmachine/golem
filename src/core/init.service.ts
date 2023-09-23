@@ -150,6 +150,7 @@ export class InitService {
   private injectClient(botServer: DiscordBotServer): void {
     this.log.debug('Injecting client instance to container')
     this.clientService.client = botServer.client
+    this.clientService.startPresenceManager()
     this.log.debug('Client instance injected')
   }
 

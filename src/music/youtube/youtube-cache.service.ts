@@ -37,7 +37,8 @@ export class YoutubeCache {
 
     process.stdout.pipe(writeStream)
 
-    process.on('exit', () => {
+    process.on('close', () => {
+      this.log.info(`ytdlp process emitted close, closing write stream`)
       writeStream.close()
     })
   }

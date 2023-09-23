@@ -17,7 +17,7 @@ export class ListingReply extends BaseReply {
       .setTitle(title)
       .setColor(listingEmbed.color.hex as HexColorString)
       .setDescription(description)
-      .setThumbnail('attachment://cover.png')
+      .setThumbnail(listing.albumArtUrl)
       .setFields(listingEmbed.fields)
 
     return new ListingReply({ embeds: [embed] })

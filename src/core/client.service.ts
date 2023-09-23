@@ -11,12 +11,17 @@ import {
   User,
 } from 'discord.js'
 import { LoggerService } from './logger/logger.service'
+import { BotPresenceService, GolemPresence } from './presence.service'
 
 @Injectable()
 export class ClientService {
   private _clientInstance?: Client
 
-  constructor(private log: LoggerService, private config: ConfigService) {
+  constructor(
+    private log: LoggerService,
+    private config: ConfigService,
+    private presence: BotPresenceService
+  ) {
     this.log.setContext('ClientService')
   }
 
@@ -72,6 +77,20 @@ export class ClientService {
 
       throw error
     }
+  }
+
+  startPresenceManager() {
+    this.presence.startRotation((newStatus) => {
+      this.client?.user?.setActivity(newStatus)
+    })
+  }
+
+  addPresence(presence: GolemPresence) {
+    this.presence.add(presence)
+  }
+
+  removePresence(id: string) {
+    this.presence.remove(id)
   }
 
   async messageAdmin(

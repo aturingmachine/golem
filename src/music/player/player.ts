@@ -1,7 +1,6 @@
 import {
   AudioPlayer,
   AudioPlayerError,
-  AudioPlayerPlayingState,
   AudioPlayerState,
   AudioPlayerStatus,
   AudioResource,
@@ -160,6 +159,10 @@ export class MusicPlayer {
     return this.options.guildId
   }
 
+  public get presenceId(): string {
+    return `${this.options.guildId}-${this.options.channelId}-player-status`
+  }
+
   /**
    * The secondary key that the player should be referenced by.
    * Currently the ChannlerId of the Player.
@@ -289,6 +292,7 @@ export class MusicPlayer {
       this.currentResource?.metadata.track.onSkip()
       // await Golem.removePlayer(this.primaryKey, this.secondaryKey)
       this.voiceConnection.destroy()
+      this.updatePresence()
       // Golem.presence.update()
     }
   }
@@ -312,6 +316,7 @@ export class MusicPlayer {
     this.log.verbose(`force stopping player`)
     this.audioPlayer.stop(true)
     this.queueLock = false
+    this.updatePresence()
     // Golem.presence.update()
     // this.disconnect()
 
@@ -346,6 +351,7 @@ export class MusicPlayer {
 
       this.queueLock = false
       this.voiceConnection.disconnect()
+      this.updatePresence()
       // Golem.presence.update()
     }
   }
@@ -446,6 +452,18 @@ export class MusicPlayer {
     await this.destroy()
 
     await this.clearTimer(true)
+    this.updatePresence()
+  }
+
+  private updatePresence(): void {
+    this.clientService.removePresence(this.presenceId)
+
+    if (this.nowPlaying) {
+      this.clientService.addPresence({
+        id: this.presenceId,
+        status: `${this.nowPlaying.title}`,
+      })
+    }
   }
 
   private async processQueue(force = false): Promise<void> {
@@ -481,6 +499,8 @@ export class MusicPlayer {
       // if (this.queue.queuedTrackCount === 0) {
       //   this.currentResource = undefined
       // }
+
+      this.updatePresence()
       return
     }
 
@@ -520,6 +540,7 @@ export class MusicPlayer {
     }
 
     this.queueLock = false
+    this.updatePresence()
   }
 
   private onAutoPause(

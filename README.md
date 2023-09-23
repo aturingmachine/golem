@@ -38,8 +38,15 @@ bash scripts/dev-install.sh
 
 
 ## V2 TODO
-[] - Bot Status
+[X] - Bot Status
 [] - Interactive Response Embeds
   [] - Wide Search Results
-  [] - Artist Search Results
+  [X] - Artist Search Results
   [] - Playlists?
+[] - YT Caching
+  [X] - Write/Read cached results
+  [] - Clear old cached results
+  [] - Clear cached results when low on disk space
+  [] - Configurable cache size
+  [] - "reset" cache expire timer when cache hit
+  [] - be able to bust cache via command and/or web interface

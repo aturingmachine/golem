@@ -107,32 +107,6 @@ export class PlayerService {
       }
     }
 
-    // const opts = debugServer
-    //   ? {
-    //       adapterCreator: message.info.guild
-    //         .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
-    //       channelId: debugServer.channelId,
-    //       channelName: debugServer.channelName,
-    //       guildId: debugServer.guildId,
-    //       guildName: debugServer.guildName,
-    //     }
-    //   : {
-    //       adapterCreator: message.info.guild
-    //         .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
-    //       channelId: message.info.voiceChannel?.id,
-    //       channelName: message.info.voiceChannel?.name,
-    //       guildId: message.info.guildId,
-    //       guildName: message.info.guild.name,
-    //     }
-    // const opts = {
-    //   adapterCreator: message.info.guild
-    //     .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
-    //   channelId: message.info.voiceChannel.id,
-    //   channelName: message.info.voiceChannel.name,
-    //   guildId: message.info.guildId,
-    //   guildName: message.info.guild.name,
-    // }
-
     this.log.debug(
       `creating new player for name="${message.info.guild.name}" id="${message.info.guildId}" channelId="${message.info.voiceChannel?.id}",
       channelName="${message.info.voiceChannel?.name}"`
