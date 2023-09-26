@@ -9,6 +9,7 @@ import { GuildConfig } from './core/guild-config/guild-config.model'
 import { LogLine } from './core/logger/log-line.model'
 import { Permissions } from './core/permissions/permissions'
 import { IntegrationsModule } from './integrations/integration.module'
+import { CachedStream } from './music/cache/cached-stream.model'
 import { Library } from './music/local/library/library'
 import { Album } from './music/local/listings/album'
 import { LocalListing } from './music/local/listings/listings'
@@ -52,6 +53,7 @@ import { WebModule } from './web/web.module'
             Playlist,
             GuildConfig,
             AuditRecord,
+            CachedStream,
           ],
         }
       },

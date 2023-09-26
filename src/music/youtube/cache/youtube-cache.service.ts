@@ -2,16 +2,22 @@ import { createWriteStream } from 'fs'
 import { resolve } from 'path'
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { InjectRepository } from '@nestjs/typeorm'
 import execa from 'execa'
-import { ConfigurationOptions } from '../../core/configuration'
-import { LoggerService } from '../../core/logger/logger.service'
-import { pathExists } from '../../utils/filesystem'
+import { MongoRepository } from 'typeorm'
+import { ConfigurationOptions } from '../../../core/configuration'
+import { LoggerService } from '../../../core/logger/logger.service'
+import { pathExists } from '../../../utils/filesystem'
+import { CachedStream, CachedStreamType } from '../../cache/cached-stream.model'
 
 @Injectable()
 export class YoutubeCache {
   constructor(
     private log: LoggerService,
-    private config: ConfigService<ConfigurationOptions>
+    private config: ConfigService<ConfigurationOptions>,
+
+    @InjectRepository(CachedStream)
+    private cachedStreams: MongoRepository<CachedStream>
   ) {
     this.log.setContext('YoutubeCache')
   }
@@ -37,13 +43,15 @@ export class YoutubeCache {
 
     process.stdout.pipe(writeStream)
 
-    process.on('close', () => {
+    process.on('close', async () => {
       this.log.info(`ytdlp process emitted close, closing write stream`)
       writeStream.close()
+
+      await this.getDbRecord(videoId)
     })
   }
 
-  get(videoId: string): string | undefined {
+  async get(videoId: string): Promise<string | undefined> {
     this.log.info(`checking yt-cache for '${videoId}'`)
     const cacheRoot: string | undefined = this.config.get('youtube')?.cachePath
 
@@ -66,6 +74,32 @@ export class YoutubeCache {
     // cache hit
     this.log.info(`cache hit for '${videoId}'`)
 
+    // Get the Record if we have a cache on disk for it
+    await this.getDbRecord(videoId)
+
     return cachedPath
+  }
+
+  private async getDbRecord(id: string): Promise<CachedStream> {
+    const date = new Date()
+
+    let model = await this.cachedStreams.findOne({
+      where: { type: CachedStreamType.YouTube, external_id: id },
+    })
+
+    if (!model) {
+      model = this.cachedStreams.create({
+        type: CachedStreamType.YouTube,
+        external_id: id,
+        initial_cache_date: date,
+        last_access_date: date,
+      })
+    } else {
+      model.last_access_date = date
+    }
+
+    await this.cachedStreams.save(model)
+
+    return model
   }
 }

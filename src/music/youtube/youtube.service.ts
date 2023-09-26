@@ -16,7 +16,7 @@ import { ArrayUtils } from '../../utils/list-utils'
 import { similarity } from '../../utils/similarity'
 import { TrackAudioResourceMetadata } from '../tracks'
 import { YoutubeTrack } from '../tracks/youtube-track'
-import { YoutubeCache } from './youtube-cache.service'
+import { YoutubeCache } from './cache/youtube-cache.service'
 import { YoutubeListing } from './youtube-listing'
 import { YoutubePlaylistListing } from './youtube-playlist'
 
@@ -56,12 +56,12 @@ export class YoutubeService {
     )
   }
 
-  createAudioResource(
+  async createAudioResource(
     track: YoutubeTrack
   ): Promise<AudioResource<TrackAudioResourceMetadata>> {
     this.log.info(`creating audio resource for ${track.name}`)
 
-    const cachedPath = this.ytCache.get(track.listing.listingId)
+    const cachedPath = await this.ytCache.get(track.listing.listingId)
 
     if (cachedPath) {
       this.log.info(`cache hit for ${track.name}`)
