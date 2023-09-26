@@ -1,11 +1,11 @@
-import { Controller, Injectable } from '@nestjs/common'
+import { Controller } from '@nestjs/common'
 import { ModuleRef } from '@nestjs/core'
 import { MessagePattern } from '@nestjs/microservices'
 import { ChannelType, Message } from 'discord.js'
 import { GSCompiler } from '../ast/compiler'
 import { GolemMessage } from '../messages/golem-message'
 import { MessageId } from '../messages/message-id.model'
-import { ReplyType } from '../messages/replies/types'
+import { Replies, ReplyType } from '../messages/replies/types'
 import { ProcessingTree } from '../messages/tree'
 import { AliasService } from './alias/alias.service'
 import { AuditService } from './audits/audit.service'
@@ -34,9 +34,13 @@ export class MessageController {
       return
     }
 
-    let messageContent = data.message.content
+    const messageContent = await this.checkAliases(data.message)
 
-    const messageInfo = new MessageId(data.message)
+    this.logger.info(
+      `post alias injection - messageContent="${messageContent}"`
+    )
+
+    const { ast, compiled } = GSCompiler.fromString(messageContent)
 
     const messageLogger = await this.ref.resolve(LoggerService)
     // TODO this seems wrong on many levels.
@@ -44,26 +48,6 @@ export class MessageController {
       this.ref.resolve(LoggerService),
       this.ref.resolve(LoggerService),
     ])
-
-    // Check if we have any hits for custom aliases
-    const aliasHits = await this.aliasService.findAliases(
-      messageInfo.guildId,
-      data.message.content
-    )
-
-    this.logger.info(`pre alias injection - messageContent="${messageContent}"`)
-
-    // If we have an alias we want to expand it into a "raw" message string
-    if (aliasHits && aliasHits.length > 0) {
-      // Now we want to inject an expanded version of each hit into the stack
-      messageContent = this.aliasService.injectHits(messageContent, aliasHits)
-    }
-
-    this.logger.info(
-      `post alias injection - messageContent="${messageContent}"`
-    )
-
-    const { ast, compiled } = GSCompiler.fromString(messageContent)
 
     const message = new GolemMessage(
       data.message,
@@ -84,10 +68,7 @@ export class MessageController {
     // Things to do if we are not in a DM
     if (data.message.channel.type !== ChannelType.DM) {
       // Set default channel for Guild Config if there is not one
-      await this.guildConfig.setDefaultChannelId(
-        message.info.guildId,
-        message.source.channelId
-      )
+      await this.setGuildDefaultChannel(message)
     }
 
     const replies = message._replies.render()
@@ -97,9 +78,67 @@ export class MessageController {
       messageLogger.extendContext('MessageController')
     )
 
+    const uniqueReplies = this.filterReplies(replies)
+
+    await this.sendReplies(message, uniqueReplies)
+  }
+
+  private setGuildDefaultChannel(message: GolemMessage): Promise<void> {
+    return this.guildConfig.setDefaultChannelId(
+      message.info.guildId,
+      message.source.channelId
+    )
+  }
+
+  private async checkAliases(message: Message): Promise<string> {
+    let messageContent = message.content
+
+    const messageInfo = new MessageId(message)
+
+    // Check if we have any hits for custom aliases
+    const aliasHits = await this.aliasService.findAliases(
+      messageInfo.guildId,
+      message.content
+    )
+
+    this.logger.info(`pre alias injection - messageContent="${messageContent}"`)
+
+    // If we have an alias we want to expand it into a "raw" message string
+    if (aliasHits && aliasHits.length > 0) {
+      // Now we want to inject an expanded version of each hit into the stack
+      messageContent = this.aliasService.injectHits(messageContent, aliasHits)
+    }
+
+    return messageContent
+  }
+
+  private async sendReplies(
+    message: GolemMessage,
+    replies: Replies[]
+  ): Promise<void> {
+    for (const reply of replies) {
+      this.logger.info(
+        `attempting to render ${reply.isUnique ? 'unqiue' : 'non-unique'} ${
+          reply.type
+        }`
+      )
+
+      try {
+        await message.reply(reply.opts)
+
+        if ('collect' in reply) {
+          reply.collect()
+        }
+      } catch (error) {
+        this.logger.error(`unable to render ${reply.type} => ${error}`)
+      }
+    }
+  }
+
+  private filterReplies(replies: Replies[]): Replies[] {
     const state: Partial<Record<ReplyType, boolean>> = {}
 
-    const uniqueReplies = replies.filter((rep) => {
+    return replies.filter((rep) => {
       if (!rep.isUnique) {
         this.logger.debug(`Filtering Non Unique Reply: ${rep.type}`)
         return true
@@ -119,23 +158,5 @@ export class MessageController {
       state[rep.type] = true
       return true
     })
-
-    for (const reply of uniqueReplies) {
-      this.logger.info(
-        `attempting to render ${reply.isUnique ? 'unqiue' : 'non-unique'} ${
-          reply.type
-        }`
-      )
-
-      try {
-        await message.reply(reply.opts)
-
-        if ('collect' in reply) {
-          reply.collect()
-        }
-      } catch (error) {
-        this.logger.error(`unable to render ${reply.type} => ${error}`)
-      }
-    }
   }
 }
