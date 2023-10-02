@@ -118,10 +118,16 @@ export class YoutubeCache {
       pretty_formatted: '',
     }
 
+    if (!this.cacheRoot) {
+      result.pretty_formatted = 'No YoutTube Cache configured.'
+
+      return result
+    }
+
     result.deleted = await this.cleanCache()
     result.invalid_items_fixed = await this.validateCache()
     result.current = {
-      items: getAllFiles(this.cacheRoot!, []).length,
+      items: getAllFiles(this.cacheRoot, []).length,
       size: `${this.getCacheDirSize()}MB`,
     }
 
