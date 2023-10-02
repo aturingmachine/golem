@@ -1,5 +1,7 @@
 import { EmbedBuilder, HexColorString } from 'discord.js'
 import { AListing } from '../../music/local/listings/listings'
+import { formatForLog } from '../../utils/debug-utils'
+import { LogUtils } from '../../utils/log-utils'
 import { BaseReply } from './base'
 import { ReplyType } from './types'
 
@@ -8,6 +10,15 @@ export class ListingReply extends BaseReply {
   isUnique = false
 
   static async fromListing(listing: AListing): Promise<ListingReply> {
+    const log = await LogUtils.createLogger('ListingReply')
+    log.debug(
+      `generating ListingReply from ${formatForLog({
+        title: listing.title,
+        artist: listing.artist,
+        albumArt: listing.albumArtUrl,
+      })}`
+    )
+
     const listingEmbed = await listing.toEmbed()
 
     const title = listing.title

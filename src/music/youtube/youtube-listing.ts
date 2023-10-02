@@ -3,6 +3,7 @@ import { APIEmbedField } from 'discord.js'
 import ytpl from 'ytpl'
 import { embedFieldSpacer } from '../../constants'
 import { ImageUtils } from '../../utils/image-utils'
+import { LogUtils } from '../../utils/log-utils'
 import { humanReadableDuration } from '../../utils/time-utils'
 import { AAlbum } from '../local/listings/album'
 import { AListing, ListingEmbedData } from '../local/listings/listings'
@@ -46,6 +47,8 @@ export class YoutubeListing extends AListing {
     }
   ) {
     super()
+
+    console.log('>>>>', options.artworkUrl)
 
     const album = new YoutubeAlbum(options.url, options.artworkUrl || '')
     const parsedUrl = new URL(options.url)

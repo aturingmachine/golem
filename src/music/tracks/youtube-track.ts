@@ -1,13 +1,11 @@
 import dargs from 'dargs'
 import execa from 'execa'
-import { getInfo } from 'ytdl-core'
 import { ConfigurationService } from '../../core/configuration.service'
-import { LoggerService } from '../../core/logger/logger.service'
 import { TrackListingInfo } from '../local/listings/listings'
 import { YoutubeListing } from '../youtube/youtube-listing'
 import { Track, TrackType } from '.'
 
-async function getYTInfo(url: string): Promise<any> {
+export async function getYTInfo(url: string): Promise<any> {
   if (!ConfigurationService.resolved.youtube?.ytdlpPath) {
     throw new Error('No yt-dlp path')
   }
@@ -80,6 +78,13 @@ export class YoutubeTrack extends Track {
     const info = await getYTInfo(url)
     console.log(`[YoutubeTrack] got info for "${url}"`)
 
+    const targetThumbnail: string =
+      info.thumbnails
+        .filter((thumb: any) => thumb.url.endsWith('.jpg'))
+        .sort((a: any, b: any) => {
+          return b.preference - a.preference
+        })?.[0]?.url || info.thumbnail
+
     // const _imgUrl = info.videoDetails.thumbnails.find(
     //   (thumbnail) => thumbnail.width > 300
     // )?.url
@@ -91,6 +96,7 @@ export class YoutubeTrack extends Track {
       author: info.channel,
       title: info.title,
       duration: parseInt(info.duration, 10),
+      artworkUrl: targetThumbnail,
     })
     console.log(`[YoutubeTrack] generated listing for "${url}"`)
 

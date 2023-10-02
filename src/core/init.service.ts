@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { CommandService } from '../commands/commands.service'
 import { PlayerService } from '../music/player/player.service'
+import { YoutubeCache } from '../music/youtube/cache/youtube-cache.service'
 import { formatForLog } from '../utils/debug-utils'
 import { ClientService } from './client.service'
 import { CronService } from './cron.service'
@@ -20,7 +21,8 @@ export class InitService {
     private clientService: ClientService,
     private commands: CommandService,
     private players: PlayerService,
-    private cron: CronService
+    private cron: CronService,
+    private ytCache: YoutubeCache
   ) {
     this.log.setContext('InitService')
   }
@@ -33,6 +35,9 @@ export class InitService {
     await this.setInitial()
 
     this.cron.setCronJobs()
+
+    const ytCacheResult = await this.ytCache.cleanAndValidate()
+    this.clientService.messageAdmin(ytCacheResult.pretty_formatted)
   }
 
   shutdown(): void {

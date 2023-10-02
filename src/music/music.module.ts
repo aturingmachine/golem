@@ -28,6 +28,11 @@ import { YoutubeMusicModule } from './youtube/youtube-music.module'
 
   providers: [PlayQueryService],
 
-  exports: [PlayerModule, PlayQueryService, LocalMusicModule],
+  exports: [
+    PlayerModule,
+    PlayQueryService,
+    LocalMusicModule,
+    YoutubeMusicModule,
+  ],
 })
 export class MusicModule {}

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import cron from 'node-cron'
+import { YoutubeCache } from '../music/youtube/cache/youtube-cache.service'
 import { DiscordMarkdown } from '../utils/discord-markdown-builder'
 import { AdminService } from './admin/admin.service'
 import { ClientService } from './client.service'
@@ -11,7 +12,8 @@ export class CronService {
   constructor(
     private log: LoggerService,
     private admin: AdminService,
-    private client: ClientService
+    private client: ClientService,
+    private ytCache: YoutubeCache
   ) {
     this.log.setContext('CronService')
   }
@@ -19,7 +21,13 @@ export class CronService {
   setCronJobs(): void {
     this.log.info(`Setting Cron Jobs Up.`)
 
-    this.setJob('libraryUpdate', () => this.admin._forceRefresh())
+    this.setJob('library_update', () => this.admin._forceRefresh())
+    this.setJob('check_yt_cache', async () => {
+      this.log.info('cron running yt-cache check')
+      const result = await this.ytCache.cleanAndValidate()
+      this.client.messageAdmin(result.pretty_formatted)
+      this.log.info('cron running yt-cache check')
+    })
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

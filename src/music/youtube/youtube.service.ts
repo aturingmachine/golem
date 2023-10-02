@@ -8,17 +8,15 @@ import { ConfigService } from '@nestjs/config'
 import dargs from 'dargs'
 import execa from 'execa'
 import ytpl from 'ytpl'
-import ytsr from 'ytsr'
 import { ConfigurationOptions } from '../../core/configuration'
 import { LoggerService } from '../../core/logger/logger.service'
-import { formatForLog } from '../../utils/debug-utils'
 import { ArrayUtils } from '../../utils/list-utils'
-import { similarity } from '../../utils/similarity'
 import { TrackAudioResourceMetadata } from '../tracks'
 import { YoutubeTrack } from '../tracks/youtube-track'
 import { YoutubeCache } from './cache/youtube-cache.service'
 import { YoutubeListing } from './youtube-listing'
 import { YoutubePlaylistListing } from './youtube-playlist'
+import { YoutubeSearch } from './youtube-search.service'
 
 export type YoutubeSearchResult = {
   url: string
@@ -39,7 +37,8 @@ export class YoutubeService {
   constructor(
     private log: LoggerService,
     private config: ConfigService<ConfigurationOptions>,
-    private ytCache: YoutubeCache
+    private ytCache: YoutubeCache,
+    private ytSearch: YoutubeSearch
   ) {
     this.log.setContext('YoutubeService')
   }
@@ -61,7 +60,7 @@ export class YoutubeService {
   ): Promise<AudioResource<TrackAudioResourceMetadata>> {
     this.log.info(`creating audio resource for ${track.name}`)
 
-    const cachedPath = await this.ytCache.get(track.listing.listingId)
+    const cachedPath = await this.ytCache.get(track.listing)
 
     if (cachedPath) {
       this.log.info(`cache hit for ${track.name}`)
@@ -100,7 +99,7 @@ export class YoutubeService {
       process.once('spawn', async () => {
         try {
           this.log.info(`attempting to cache '${track.name}'`)
-          this.ytCache.save(track.listing.listingId, process)
+          this.ytCache.save(track.listing, track.listing.listingId, process)
         } catch (error) {
           this.log.error(`could not cache '${track.name}' ${error}`)
         }
@@ -139,25 +138,7 @@ export class YoutubeService {
 
   async search(query: string): Promise<YoutubeSearchResult | undefined> {
     this.log.info(`searching for query ${query}`)
-
-    const result = await ytsr(query, { limit: 10 })
-
-    // TODO this doesn't actually use the weight terms - it ignores weight terms
-    const topVideo = result.items
-      .filter((item) => item.type === 'video')
-      .filter((item) => {
-        return ![...this.config.get('search').forceWeightTerms, 'karaoke'].some(
-          (term) => (item as ytsr.Video).title.toLowerCase().includes(term)
-        )
-      })[0] as ytsr.Video
-
-    return topVideo
-      ? {
-          url: topVideo.url,
-          correctedQuery: result.correctedQuery,
-          similarity: similarity(query, result.correctedQuery),
-        }
-      : undefined
+    return this.ytSearch.search(query)
   }
 
   async getPlaylist(
@@ -188,15 +169,6 @@ export class YoutubeService {
   }
 
   private playlistItemToListing(item: ytpl.Item): YoutubeListing {
-    // this.log.debug(`creating YoutubeListing from ${formatForLog({
-    //   name: item.author.name,
-    //   title: item.title,
-    //   url: item.url,
-    //   duration: item.durationSec,
-    //   artworkUrl: item.bestThumbnail.url,
-    // })}
-    // `)
-
     const cleanUrl = `${item.url.split('?')[0]}?${item.url
       .split('?')[1]
       .split('&')
@@ -210,6 +182,7 @@ export class YoutubeService {
       author: item.author.name,
       title: item.title,
       duration: item.durationSec || 0,
+      artworkUrl: item.bestThumbnail?.url || undefined,
     })
   }
 }

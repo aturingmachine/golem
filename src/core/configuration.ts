@@ -52,7 +52,6 @@ export type WebConfig = {
 
 export type YoutubeConfig = {
   ytdlpPath: string
-  cachePath: string
 }
 
 export type GolemArgs = {
@@ -60,6 +59,17 @@ export type GolemArgs = {
   'bust-cache': boolean
   verbose: boolean
   debug: boolean
+}
+
+export type CacheConfig = {
+  yt: {
+    path: string
+    size: {
+      strict?: boolean
+      items?: number
+      space?: number
+    }
+  }
 }
 
 export type ConfigurationOptions = {
@@ -73,6 +83,7 @@ export type ConfigurationOptions = {
   search?: SearchConfig
   web?: WebConfig
   youtube?: YoutubeConfig
+  cache?: CacheConfig
   logLevels: LogLevel[]
   cron: Record<string, string>
   crash?: {
@@ -157,6 +168,10 @@ export default (): ConfigurationOptions => {
     cachePath: raw.youtube?.cachePath || '',
   }
 
+  const cache = {
+    yt: raw.cache?.yt,
+  }
+
   const web = {
     apiPort: raw.web?.apiPort || 3000,
   }
@@ -192,5 +207,6 @@ export default (): ConfigurationOptions => {
     web,
     logLevels,
     cron,
+    cache,
   }
 }

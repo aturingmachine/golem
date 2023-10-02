@@ -16,6 +16,15 @@ export class CachedStream {
   external_id!: string
 
   @Column()
+  title!: string
+
+  @Column()
+  artist!: string
+
+  @Column()
+  thumbnail!: string
+
+  @Column()
   initial_cache_date!: Date
 
   @Column()
