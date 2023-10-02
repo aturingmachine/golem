@@ -30,3 +30,10 @@ export function formatMS(milliseconds: number) {
 
   return base
 }
+
+const formatter = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'medium' })
+
+
+export function dateTime(date_string: string): string {
+  return formatter.format(new Date(date_string))
+}

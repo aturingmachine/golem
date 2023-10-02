@@ -87,7 +87,8 @@ export default new GolemCommand({
         message,
         player,
         queryResult.tracks,
-        'queue'
+        'queue',
+        source.extendedArgs['no-cache'] === 'true'
       )
     }
 
@@ -130,6 +131,12 @@ export default new GolemCommand({
     },
     alias: 'play',
     extendedArgs: [
+      {
+        key: 'no-cache',
+        type: 'boolean',
+        description:
+          'Opt to not use a cached version of a streamed track. Will also delete any existing cached version.',
+      },
       {
         key: 'limit',
         type: 'number',

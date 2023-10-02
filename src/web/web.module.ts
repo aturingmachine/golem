@@ -5,6 +5,7 @@ import { GuildConfigModule } from '../core/guild-config/guild-config.module'
 import { LoggerModule } from '../core/logger/logger.module'
 import { LocalMusicModule } from '../music/local/local-music.module'
 import { PlayerModule } from '../music/player/player.module'
+import { YoutubeMusicModule } from '../music/youtube/youtube-music.module'
 import { AppController } from './app.controller'
 import { PlayerController } from './player.controller'
 import { WebClientController } from './web.controller'
@@ -23,6 +24,7 @@ import { WS } from './websocket.gateway'
     CoreModule,
     GuildConfigModule,
     LocalMusicModule.forRoot(),
+    YoutubeMusicModule.forRoot(),
   ],
 })
 export class WebModule {}

@@ -46,13 +46,17 @@ export class WS {
   }
 
   updatePlayers(): void {
-    this.server.emit('players_update', this.webService.allPlayers())
+    if (this.server) {
+      this.server.emit('players_update', this.webService.allPlayers())
+    }
   }
 
   updateResourceUsage(): void {
-    this.server.emit('resource_update', {
-      data: this.webService.resourceData(),
-    })
+    if (this.server) {
+      this.server.emit('resource_update', {
+        data: this.webService.resourceData(),
+      })
+    }
   }
 
   async updateAudits(): Promise<void> {

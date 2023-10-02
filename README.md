@@ -45,8 +45,13 @@ bash scripts/dev-install.sh
   [] - Playlists?
 [] - YT Caching
   [X] - Write/Read cached results
-  [] - Clear old cached results
-  [] - Clear cached results when low on disk space
-  [] - Configurable cache size
-  [] - "reset" cache expire timer when cache hit
-  [] - be able to bust cache via command and/or web interface
+  [X] - Clear old cached results
+  [X] - Clear cached results when low on disk space
+  [X] - Configurable cache size
+  [X] - "reset" cache expire timer when cache hit
+  [X] - be able to bust cache via command and/or web interface
+    [X] - web
+    [] - command
+  [X] - web interface for cached results
+  [] - play with ignoring cached result
+  [] - dont cache if we skip the track

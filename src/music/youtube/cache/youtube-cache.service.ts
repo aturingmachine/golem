@@ -24,12 +24,6 @@ type YTCacheValidateAndCleanResult = {
   pretty_formatted: string
 }
 
-/**
- * @todo need to validate cache and files in teh cache dir, i think we should treat
- * the files as the source of truth. if there is a file but no db entry we should inject
- * a db entry.
- * @todo need to use new delete function for clearing the cache
- */
 @Injectable()
 export class YoutubeCache {
   constructor(
@@ -51,7 +45,11 @@ export class YoutubeCache {
     listing: YoutubeListing,
     videoId: string,
     process: execa.ExecaChildProcess<string>
-  ): void {
+  ):
+    | {
+        cancel: () => void
+      }
+    | undefined {
     this.log.info(`attempting to cache '${videoId}'`)
 
     if (!process.stdout) {
@@ -70,12 +68,42 @@ export class YoutubeCache {
 
     process.stdout.pipe(writeStream)
 
+    let hasCanceled = false
+
+    const cancel = () => {
+      this.log.info(`cancel handler triggered for ${videoId}`)
+      writeStream.close()
+      this.log.debug(`cancel handler closing writeStream for ${videoId}`)
+      rmSync(cachedPath)
+      this.log.debug(`cancel handler rmSync-ed "${cachedPath}" for ${videoId}`)
+
+      hasCanceled = true
+    }
+
+    process.on('error', (err) => {
+      this.log.info(`ytdlp process threw an error, removing cached file.`, err)
+      cancel()
+    })
+
+    process.on('exit', (code) => {
+      this.log.info(`ytdlp process emitted exit -`, code)
+    })
+
     process.on('close', async () => {
       this.log.info(`ytdlp process emitted close, closing write stream`)
+
       writeStream.close()
+
+      if (hasCanceled) {
+        this.log.info(`track was cancelled - not saving track to db.`)
+
+        return
+      }
 
       await this.getDbRecord(listing)
     })
+
+    return { cancel }
   }
 
   async get(listing: YoutubeListing): Promise<string | undefined> {
@@ -145,7 +173,7 @@ export class YoutubeCache {
     return result
   }
 
-  private allDbEntries(): Promise<CachedStream[]> {
+  allDbEntries(): Promise<CachedStream[]> {
     return this.cachedStreams.find({
       where: { type: CachedStreamType.YouTube },
     })
@@ -179,6 +207,30 @@ export class YoutubeCache {
     }
 
     return -1
+  }
+
+  async deleteById(id: string): Promise<void> {
+    if (!this.cacheRoot) {
+      return
+    }
+
+    const record = await this.cachedStreams.find({
+      where: {
+        external_id: id,
+        type: CachedStreamType.YouTube,
+      },
+    })
+
+    this.log.info(`attempting to delete record ${id} - ${record}`)
+
+    if (!record) {
+      return
+    }
+
+    const targetPath = resolve(this.cacheRoot, id)
+    rmSync(targetPath)
+
+    await this.deleteCachedItems(record)
   }
 
   async deleteCachedItems(items: CachedStream[]): Promise<void> {
@@ -215,7 +267,7 @@ export class YoutubeCache {
       const id = file.split('/').pop()
       const match = entries.find((item) => item.external_id === id)
 
-      return !!match
+      return !match
     })
 
     this.log.info(`found ${untrackedFiles.length} untracked cached streams`)
@@ -223,6 +275,7 @@ export class YoutubeCache {
     const newEntries = await Promise.all(
       untrackedFiles.map(async (file) => {
         const id = file.split('/').pop()!
+        this.log.debug(`generating cache entry for untracked "${id}"@"${file}"`)
 
         const ytResult = await this.ytSearch.getInfo(
           `https://www.youtube.com/watch?v=${id}`
@@ -246,6 +299,8 @@ export class YoutubeCache {
         })
       })
     )
+
+    this.log.info(`saving ${newEntries.length} backfilled entries`)
 
     await this.cachedStreams.save(newEntries)
 

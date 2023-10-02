@@ -11,6 +11,7 @@ import {
   Query,
   StreamableFile,
   Post,
+  Delete,
 } from '@nestjs/common'
 import { Guild, User } from 'discord.js'
 import fuzzy from 'fuzzy'
@@ -20,6 +21,10 @@ import { ClientService } from '../core/client.service'
 import { ConfigurationOptions } from '../core/configuration'
 import { GuildConfig } from '../core/guild-config/guild-config.model'
 import { LoggerService } from '../core/logger/logger.service'
+import {
+  CachedStream,
+  CachedStreamType,
+} from '../music/cache/cached-stream.model'
 import { AlbumService } from '../music/local/library/album.service'
 import { Library } from '../music/local/library/library'
 import { ListingLoaderService } from '../music/local/library/loader.service'
@@ -27,6 +32,7 @@ import { SearchResult } from '../music/local/library/searcher.service'
 import { Album } from '../music/local/listings/album'
 import { LocalListing } from '../music/local/listings/listings'
 import { PlayerService } from '../music/player/player.service'
+import { YoutubeCache } from '../music/youtube/cache/youtube-cache.service'
 import { WebService } from './web.service'
 
 @Controller({ path: '/api' })
@@ -37,7 +43,8 @@ export class WebClientController {
     private client: ClientService,
     private players: PlayerService,
     private albums: AlbumService,
-    @Optional() private loader?: ListingLoaderService
+    @Optional() private loader?: ListingLoaderService,
+    @Optional() private ytCache?: YoutubeCache
   ) {}
 
   @Get('/guilds')
@@ -149,6 +156,41 @@ export class WebClientController {
         message: 'unable to compile script.',
         error,
       })
+    }
+  }
+
+  @Get('/cache/:cache_type')
+  async getCachedStreams(@Param('cache_type') cache_type: string): Promise<{
+    entries: CachedStream[] | undefined
+  }> {
+    this.log.info(`Getting cached streams for type ${cache_type}`)
+
+    switch (cache_type) {
+      case CachedStreamType.YouTube:
+        return { entries: await this.ytCache?.allDbEntries() }
+      default:
+        return { entries: [] }
+        break
+    }
+  }
+
+  @Delete('/cache/:cache_type/:id')
+  async deleteCachedStream(
+    @Param('cache_type') cache_type: string,
+    @Param('id') id: string
+  ): Promise<{
+    entries: CachedStream[] | undefined
+  }> {
+    this.log.info(`delete cached stream ${id} for type ${cache_type}`)
+
+    switch (cache_type) {
+      case CachedStreamType.YouTube:
+        await this.ytCache?.deleteById(id)
+
+        return { entries: await this.ytCache?.allDbEntries() }
+      default:
+        return { entries: [] }
+        break
     }
   }
 }

@@ -36,8 +36,9 @@ export class InitService {
 
     this.cron.setCronJobs()
 
-    const ytCacheResult = await this.ytCache.cleanAndValidate()
-    this.clientService.messageAdmin(ytCacheResult.pretty_formatted)
+    // const ytCacheResult =
+    await this.ytCache.cleanAndValidate()
+    // this.clientService.messageAdmin(ytCacheResult.pretty_formatted)
   }
 
   shutdown(): void {

@@ -88,6 +88,7 @@ describe('Go Play', () => {
       const result = {
         tracks: [],
         replies: [],
+        raw: {},
       }
       queryService.process.mockResolvedValue(result)
 

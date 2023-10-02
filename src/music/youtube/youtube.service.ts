@@ -56,11 +56,21 @@ export class YoutubeService {
   }
 
   async createAudioResource(
-    track: YoutubeTrack
+    track: YoutubeTrack,
+    opts: Record<'noCache', boolean> = {
+      noCache: false,
+    }
   ): Promise<AudioResource<TrackAudioResourceMetadata>> {
     this.log.info(`creating audio resource for ${track.name}`)
 
-    const cachedPath = await this.ytCache.get(track.listing)
+    const cachedPath = opts.noCache
+      ? undefined
+      : await this.ytCache.get(track.listing)
+
+    if (opts.noCache) {
+      this.log.info(`no cache run for ${track.name} - deleting old cache`)
+      await this.ytCache.deleteById(track.listing.listingId)
+    }
 
     if (cachedPath) {
       this.log.info(`cache hit for ${track.name}`)
@@ -96,16 +106,27 @@ export class YoutubeService {
         reject(error)
       }
 
+      let cache_handler: { cancel: () => void } | undefined
+
       process.once('spawn', async () => {
         try {
           this.log.info(`attempting to cache '${track.name}'`)
-          this.ytCache.save(track.listing, track.listing.listingId, process)
+          cache_handler = this.ytCache.save(
+            track.listing,
+            track.listing.listingId,
+            process
+          )
+
+          track.cache_handler = cache_handler
+          this.log.debug(
+            `setting caching handler for '${track.name}' - ${track.cache_handler}`
+          )
         } catch (error) {
           this.log.error(`could not cache '${track.name}' ${error}`)
         }
 
         try {
-          this.log.silly(`attempting to demux - ${track.listing.title}`)
+          this.log.debug(`attempting to demux - ${track.listing.title}`)
           const metadata: TrackAudioResourceMetadata = {
             track: track,
             listing: track.listing,
@@ -128,7 +149,13 @@ export class YoutubeService {
         }
       })
 
-      process.on('error', onError)
+      process.on('error', (e) => {
+        onError(e)
+
+        if (cache_handler) {
+          cache_handler.cancel()
+        }
+      })
 
       process.on('message', (message) => {
         this.log.debug(`yt-dlp out => "${message.toString()}"`)

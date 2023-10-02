@@ -144,7 +144,10 @@ export class PlayerService {
 
   convertToAudioResource(
     track: Tracks,
-    userId: string
+    userId: string,
+    opts: Record<'noCache', boolean> = {
+      noCache: false,
+    }
   ): AudioResourceDefinition {
     let audioResourceFactory: AudioResourceFactory
 
@@ -153,7 +156,8 @@ export class PlayerService {
         audioResourceFactory = () => track.toAudioResource()
         break
       case TrackType.Youtube:
-        audioResourceFactory = () => this.youtube.createAudioResource(track)
+        audioResourceFactory = () =>
+          this.youtube.createAudioResource(track, opts)
         break
     }
 
@@ -168,14 +172,17 @@ export class PlayerService {
     message: GolemMessage,
     player: MusicPlayer,
     tracks: Tracks[] | Tracks,
-    playType: 'next' | 'queue' = 'queue'
+    playType: 'next' | 'queue' = 'queue',
+    noCache = false
   ): Promise<void> {
     const userId = message.info.userId
     const _tracks = Array.isArray(tracks) ? tracks : [tracks]
 
     // TODO this was reversed for some reason?
     for (const track of _tracks) {
-      const audioResource = this.convertToAudioResource(track, userId)
+      const audioResource = this.convertToAudioResource(track, userId, {
+        noCache,
+      })
 
       if (playType === 'next') {
         player.enqueue(audioResource, true)

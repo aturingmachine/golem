@@ -7,6 +7,7 @@ import ResourceView from '../views/ResourceView.vue'
 import SearchView from '../views/SearchView.vue'
 import ConfigView from '../views/ConfigurationView.vue'
 import EditorView from '@/views/EditorView.vue'
+import CachedStreamsView from '@/views/CachedStreamsView.vue'
 
 const routes = [
   {
@@ -48,6 +49,11 @@ const routes = [
     name: 'editor',
     path: '/editor',
     component: EditorView,
+  },
+  {
+    name: 'cached-streams',
+    path: '/cached-streams',
+    component: CachedStreamsView,
   },
 ]
 

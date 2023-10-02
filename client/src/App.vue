@@ -50,6 +50,10 @@ const routes = [
     path: '/listings'
   },
   {
+    title: 'Cache',
+    path: '/cached-streams'
+  },
+  {
     title: 'Editor',
     path: '/editor'
   },

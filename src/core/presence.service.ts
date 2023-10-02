@@ -28,29 +28,30 @@ export class BotPresenceService {
   }
 
   moveToNextStatus(): void {
-    this.log.debug('moving to next status')
+    // this.log.debug('moving to next status')
     const currentIndex = this.presences.indexOf(this.activePresence)
 
     let nextIndex = currentIndex + 1
 
     if (currentIndex < 0) {
-      this.log.debug('current not found, moving to 0')
+      // this.log.debug('current not found, moving to 0')
       nextIndex = 0
     }
 
     if (currentIndex >= this.presences.size - 1) {
-      this.log.debug('at end of list, moving to 0')
+      // this.log.debug('at end of list, moving to 0')
       nextIndex = 0
     }
 
     const targetPresence = this.presences.values()[nextIndex]
-    this.log.debug(`setting to ${targetPresence.id} | ${targetPresence.status}`)
+    // this.log.debug(`setting to ${targetPresence.id} | ${targetPresence.status}`)
 
     this.activePresence = targetPresence.id
   }
 
   remove(id: string): void {
     this.log.debug(`removing ${id}`)
+
     if (this.activePresence === id) {
       this.moveToNextStatus()
     }
@@ -78,7 +79,7 @@ export class BotPresenceService {
     }
 
     this.timeout = setInterval(async () => {
-      this.log.debug(`rotating`)
+      // this.log.debug(`rotating`)
       this.moveToNextStatus()
 
       await cb(this.activeStatus)

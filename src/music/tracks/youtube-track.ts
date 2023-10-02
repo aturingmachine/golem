@@ -35,6 +35,8 @@ export async function getYTInfo(url: string): Promise<any> {
 export class YoutubeTrack extends Track {
   readonly type = TrackType.Youtube
 
+  cache_handler?: { cancel: () => void }
+
   constructor(
     userId: string,
     public url: string,
@@ -64,6 +66,9 @@ export class YoutubeTrack extends Track {
 
   onSkip(): void {
     // Analytics.createPlayRecord(this.listing.trackId, this.userId, 'skip')
+    if (this.cache_handler) {
+      this.cache_handler.cancel()
+    }
   }
 
   /**
