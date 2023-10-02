@@ -253,7 +253,7 @@ export class YoutubeCache {
   }
 
   private get cacheRoot(): string | undefined {
-    return this.config.get('youtube')?.cachePath
+    return this.cacheConfig?.path
   }
 
   private async cleanCacheUsingCount(items: CachedStream[]): Promise<number> {
