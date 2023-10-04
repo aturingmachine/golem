@@ -53,5 +53,5 @@ bash scripts/dev-install.sh
     [X] - web
     [] - command
   [X] - web interface for cached results
-  [] - play with ignoring cached result
-  [] - dont cache if we skip the track
+  [X] - play with ignoring cached result
+  [X] - dont cache if we skip the track

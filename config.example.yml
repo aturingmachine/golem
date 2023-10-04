@@ -62,4 +62,29 @@ web:
 #
 # ytdlpPath - the path to your local ytdlp executable
 youtube:
-  ytdlpPath: 
+  ytdlpPath:
+
+# Log Levels to enable on start. Available levels: "error", "warn", "log", "debug" 
+logLevels:
+  - error
+  - warn
+  - log
+
+cache:
+  yt:
+    # Location where Golem should Cache YouTube streams. Leave blank to disable.
+    path:
+    size: 
+      # Optional, if true will clear cache space before saving a new item
+      # otherwise will clear cache on next cron run only.
+      strict: false
+      items: 
+      # Space in MB. Preferred over "items".
+      space: 100
+
+# Configuration for Cron Jobs
+cron:
+  # Cron to automatically scan local music files
+  library_update: "0 4 * * *"
+  # Cron to clean up YouTube stream cache.
+  check_yt_cache: "15 4 * * *"
