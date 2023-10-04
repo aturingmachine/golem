@@ -208,15 +208,22 @@ export class PlayQueryService {
     }
 
     // Check For a Video Param
-    if (url.searchParams.has('v')) {
+    if (url.searchParams.has('v') || url.host === 'youtu.be') {
       this.log.debug(
-        `youtube url has a video code "${url.searchParams.get('v')}"`
+        `youtube url has a video code "${
+          url.searchParams.get('v') || url.pathname.replace('/', '')
+        }"`
       )
       const firstTrack = await YoutubeTrack.fromUrl(userId, url.toString())
 
       tracks.unshift(firstTrack)
       replies.unshift(await ListingReply.fromListing(firstTrack.listing))
     }
+    // else if () {
+    //   const firstTrack = await YoutubeTrack.fromUrl(userId, url.toString())
+    //   tracks.unshift(firstTrack)
+    //   replies.unshift(await ListingReply.fromListing(firstTrack.listing))
+    // }
 
     return { tracks, replies, raw: {} }
   }

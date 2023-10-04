@@ -1,22 +1,31 @@
 import { getAverageColor } from 'fast-average-color-node'
 import sharp, { gravity } from 'sharp'
-import { PlexLogo } from '../constants'
+import { GolemLogo } from '../constants'
 
 export class ImageUtils {
   // Genuinely not sure about this any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  static averageColor(img?: Buffer | string): any {
-    return getAverageColor(img || PlexLogo, {
-      algorithm: 'sqrt',
-    })
+  static async averageColor(img?: Buffer | string): Promise<any> {
+    try {
+      const avg = await getAverageColor(img || GolemLogo, {
+        algorithm: 'sqrt',
+      })
+
+      return avg
+    } catch (error) {
+      // console.log('>> ImageUtils [averageColor] error getting color', error)
+      return getAverageColor(GolemLogo, {
+        algorithm: 'sqrt',
+      })
+    }
   }
 
-  static async resize(img: Buffer = PlexLogo, size = 200): Promise<Buffer> {
+  static async resize(img: Buffer = GolemLogo, size = 200): Promise<Buffer> {
     return await sharp(img).resize(size, size).toBuffer()
   }
 
   static async resizeWithMaxSize(
-    img: Buffer = PlexLogo,
+    img: Buffer = GolemLogo,
     size = 200,
     maxBufferSize = 16_000_000
   ): Promise<Buffer> {
@@ -38,7 +47,7 @@ export class ImageUtils {
     }
     size?: number
   }): Promise<Buffer> {
-    const logo = PlexLogo
+    const logo = GolemLogo
     const dimension = config.size || 200
     const halfDimension = dimension / 2
 

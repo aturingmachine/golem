@@ -228,7 +228,12 @@ export class YoutubeCache {
     }
 
     const targetPath = resolve(this.cacheRoot, id)
-    rmSync(targetPath)
+
+    try {
+      rmSync(targetPath)
+    } catch (error) {
+      this.log.warn(`could not delete "${targetPath}"`, error)
+    }
 
     await this.deleteCachedItems(record)
   }

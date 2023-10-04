@@ -5,7 +5,7 @@ import {
   EmbedBuilder,
   MessageReplyOptions,
 } from 'discord.js'
-import { PlexLogo } from '../../../constants'
+import { GolemLogo } from '../../../constants'
 import { LoggerService } from '../../../core/logger/logger.service'
 import { Errors } from '../../../errors'
 import { ListingSearcher } from '../../../music/local/library/searcher.service'
@@ -23,7 +23,7 @@ import { ButtonRow } from './core/button-row'
 import { CustomId } from './custom-id'
 
 export const GetMessageAttachement = (albumArt?: Buffer): AttachmentBuilder => {
-  return new AttachmentBuilder(albumArt || PlexLogo, {})
+  return new AttachmentBuilder(albumArt || GolemLogo, {})
 }
 
 export class ArtistQueryReply extends BaseReply {
@@ -175,7 +175,7 @@ export class ArtistQueryReply extends BaseReply {
       },
     })
 
-    const image = new AttachmentBuilder(albumArt || PlexLogo, {
+    const image = new AttachmentBuilder(albumArt || GolemLogo, {
       name: '4squarecover.jpg',
     })
     const color = await ImageUtils.averageColor(albumArt)

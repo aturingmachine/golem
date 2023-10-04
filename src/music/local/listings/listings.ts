@@ -4,7 +4,7 @@ import md5 from 'md5'
 import { IAudioMetadata } from 'music-metadata'
 // import { Album, LocalAlbum } from './album'
 import { Entity, ObjectID, ObjectIdColumn, Column } from 'typeorm'
-import { PlexLogo, embedFieldSpacer } from '../../../constants'
+import { GolemLogo, embedFieldSpacer } from '../../../constants'
 import { formatForLog } from '../../../utils/debug-utils'
 import { ImageUtils } from '../../../utils/image-utils'
 import { humanReadableDuration } from '../../../utils/time-utils'
@@ -214,7 +214,7 @@ export class LocalListing extends AListing {
   }
 
   async toEmbed(): Promise<ListingEmbedData> {
-    const artBuffer = this.album.covers.med.get() || PlexLogo
+    const artBuffer = this.album.covers.med.get() || GolemLogo
     const image = new AttachmentBuilder(artBuffer, { name: 'cover.jpg' })
     const color = await ImageUtils.averageColor(artBuffer)
 

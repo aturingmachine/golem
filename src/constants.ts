@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import type { ColorResolvable } from 'discord.js'
 
-export const PlexLogo = fs.readFileSync(
+export const GolemLogo = fs.readFileSync(
   path.resolve(__dirname, '../golem-logo.png')
 )
 

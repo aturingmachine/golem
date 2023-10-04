@@ -52,7 +52,9 @@ export class YoutubeListing extends AListing {
 
     const album = new YoutubeAlbum(options.url, options.artworkUrl || '')
     const parsedUrl = new URL(options.url)
-    const listingId = parsedUrl.searchParams.get('v')
+    const listingId =
+      parsedUrl.searchParams.get('v') || parsedUrl.pathname.replace('/', '')
+
     this.listingId = listingId || options.url
     this.title = options.title
     this.duration = options.duration
