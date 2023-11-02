@@ -19,6 +19,12 @@ export const StringUtils = {
       .filter(Boolean)
   },
 
+  safeIndex(str: string, searchPattern: string): number | undefined {
+    const index = str.indexOf(searchPattern)
+
+    return index > -1 ? index : undefined
+  },
+
   slugify(str: string): string {
     return str
       ? str

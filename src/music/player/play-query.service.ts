@@ -68,6 +68,7 @@ export class PlayQueryService {
 
     if (localTracks) {
       this.log.debug(`query returned search results`)
+
       return localTracks
     }
 

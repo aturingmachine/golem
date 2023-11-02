@@ -91,7 +91,7 @@ describe('Message Info', () => {
         source = '$go play :[random(twice tt, loona so what)] --skip'
 
         createInvocation()
-        debugDump(invocation)
+        // debugDump(invocation)
 
         console.log(invocation.asRaw)
 
@@ -103,12 +103,18 @@ describe('Message Info', () => {
       })
     })
 
+    it.only('should do a thing', () => {
+      source = '$go playlist add "test playlist" rocket punch chiquita'
+      createInvocation()
+      debugDump(invocation)
+    })
+
     it('should evaluate functions for values', () => {
       source =
         '$go play %song_name --song_name=:[random(twice tt, loona so what)] --skip'
 
       createInvocation()
-      debugDump(invocation)
+      // debugDump(invocation)
 
       expect(
         ['twice tt', 'loona so what'].includes(

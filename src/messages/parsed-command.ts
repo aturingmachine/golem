@@ -5,6 +5,7 @@ import { CommandDescription, GolemCommand } from '../commands'
 import { Commands, RegisteredCommands } from '../commands/register-commands'
 import { BuiltInAlias, CommandBase } from '../constants'
 import { formatForLog } from '../utils/debug-utils'
+import { ArrayUtils } from '../utils/list-utils'
 import { StringUtils } from '../utils/string-utils'
 import { CommandInvocation, ExtendedArgRegex } from './message-info'
 
@@ -192,6 +193,12 @@ export class ParsedCommand {
       .slice(0, parsed.includes(' ') ? parsed.indexOf(' ') : parsed.length)
       .trimStart()
 
+    ASTDebugLogger.log(
+      '[PARSED COMMAND]',
+      'pc:fromRaw',
+      `parsed as CMD="${cmd}"`
+    )
+
     switch (cmd) {
       case CommandBase.admin:
         return parseString(parsed, RegisteredCommands.goadmin.info)
@@ -295,13 +302,20 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
           const argString = StringUtils.dropWords(meat, 1)
           if (subc.args?.length > 1) {
             const args = StringUtils.smartSplit(argString)
+
             subc.args.forEach((arg, index) => {
+              ASTDebugLogger.log(
+                '[PARSED COMMAND]',
+                'pc:parseString subcommand args:',
+                `"${args.join(', ')}"`
+              )
+
               if (arg.rest) {
                 ASTDebugLogger.log(
                   '[PARSED COMMAND]',
-                  'pc:parseString subcommand args:',
+                  'pc:parseString subcommand rest args:',
                   `"${args
-                    .slice(index, args.indexOf(' -- '))
+                    .slice(index, ArrayUtils.safeIndex(args, ' -- '))
                     .join(' ')
                     .replaceAll(';', '')
                     .trim()}"`
@@ -310,7 +324,7 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
 
               result.params[arg.name] = arg.rest
                 ? args
-                    .slice(index, args.indexOf(' -- '))
+                    .slice(index, ArrayUtils.safeIndex(args, ' -- '))
                     .join(' ')
                     .replaceAll(';', '')
                     .trim()

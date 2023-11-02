@@ -71,8 +71,8 @@ export default new GolemCommand({
         )
       },
     },
-    test: {
-      name: 'test',
+    play: {
+      name: 'play',
       async handler({ message, source }) {
         const playlistName = source.getString('playlistname')
 
@@ -119,6 +119,10 @@ export default new GolemCommand({
         const playlistName = source.getString('playlistname')
         const query = source.getString('query')
 
+        this.services.log.info(
+          `goPlaylist:add running using playlistName="${playlistName}" query="${query}"`
+        )
+
         if (!playlistName) {
           throw Errors.BadArgs({
             message: 'Missing required argument for playlist name.',
@@ -137,7 +141,6 @@ export default new GolemCommand({
         let trackToAdd =
           this.services.playlists.createPlaylistListing(trackSource)
 
-        // If there is no query we are adding the current track
         if (!!query) {
           trackSource = await this.services.queries.process(message, query)
 
@@ -285,7 +288,7 @@ export default new GolemCommand({
       },
       {
         // TODO this named 'play' breaks things?
-        name: 'test',
+        name: 'play',
         description: {
           short: 'Play a playlist by name.',
         },

@@ -33,12 +33,19 @@ const safeArray = <T>(item: T | T[]): T[] => {
   return Array.isArray(item) ? item : [item]
 }
 
+const safeIndex = <T>(arr: T[], item: T): number | undefined => {
+  const index = arr.indexOf(item)
+
+  return index > -1 ? index : undefined
+}
+
 export const ArrayUtils = {
   shuffleArray,
   isDefined,
   setFrom,
   remove,
   safeArray,
+  safeIndex,
 }
 
 export class KeyedSet<T, K extends keyof T> {
