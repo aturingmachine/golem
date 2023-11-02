@@ -73,13 +73,16 @@ export class Parser {
 
     const get_command = () => {
       const cmd = []
+      let iterationCount = 0
 
       while (!tokenizer.eof()) {
-        if (tokenizer.eoc()) {
+        if (tokenizer.eoc() || iterationCount > 15) {
           ASTDebugLogger.log(`triggering EOC; finishing command`)
           tokenizer.finish_command()
           break
         }
+
+        iterationCount++
 
         try {
           const next = tokenizer.read_next()
@@ -98,8 +101,15 @@ export class Parser {
     }
 
     while (!tokenizer.eof()) {
-      const tokens = get_command().filter(ArrayUtils.isDefined)
+      const tokens = get_command().filter(Boolean).filter(ArrayUtils.isDefined)
       const commandToken = tokens.find((t) => t.type === 'cmd')
+
+      if (!tokens.length) {
+        ASTDebugLogger.log(
+          `produced no tokens; current stream peek "${tokenizer.stream.peek()}"`
+        )
+        break
+      }
 
       prog[index] = { length: tokens.length, command: commandToken, tokens }
       index++

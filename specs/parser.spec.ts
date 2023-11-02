@@ -545,7 +545,7 @@ describe('Parser', () => {
     })
   })
 
-  it.only('should handle go get', () => {
+  it('should handle go get', () => {
     command = `$go get np`
 
     const result = testParse()
@@ -570,6 +570,70 @@ describe('Parser', () => {
       insideAlias: false,
       type: 'str',
       value: 'np',
+    })
+  })
+
+  it('should handle multi-word rest params', () => {
+    command = '$go play rocket punch chiquita'
+
+    const result = testParse()
+
+    expect(result).toHaveLength(1)
+
+    const firstBlock = result.blocks[0]
+
+    expect(firstBlock.type).toEqual('solo')
+    expect(firstBlock).toHaveLength(1)
+
+    expect(firstBlock.commands[0].tokens).toHaveLength(3)
+    expect(firstBlock.commands[0].tokens[0]).toEqual({
+      insideAlias: false,
+      type: 'invoker',
+      value: '$go',
+    })
+    expect(firstBlock.commands[0].tokens[1]).toEqual({
+      insideAlias: false,
+      type: 'cmd',
+      value: 'play',
+    })
+    expect(firstBlock.commands[0].tokens[2]).toEqual({
+      insideAlias: false,
+      type: 'str',
+      value: 'rocket punch chiquita',
+    })
+  })
+
+  it('should handle multiple uses', () => {
+    command = '$go play nmixx dice'
+
+    testParse()
+
+    command = '$go play rocket punch chiquita'
+
+    const result = testParse()
+
+    expect(result).toHaveLength(1)
+
+    const firstBlock = result.blocks[0]
+
+    expect(firstBlock.type).toEqual('solo')
+    expect(firstBlock).toHaveLength(1)
+
+    expect(firstBlock.commands[0].tokens).toHaveLength(3)
+    expect(firstBlock.commands[0].tokens[0]).toEqual({
+      insideAlias: false,
+      type: 'invoker',
+      value: '$go',
+    })
+    expect(firstBlock.commands[0].tokens[1]).toEqual({
+      insideAlias: false,
+      type: 'cmd',
+      value: 'play',
+    })
+    expect(firstBlock.commands[0].tokens[2]).toEqual({
+      insideAlias: false,
+      type: 'str',
+      value: 'rocket punch chiquita',
     })
   })
 

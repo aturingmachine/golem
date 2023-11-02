@@ -6,7 +6,7 @@ import { ASTDebugLogger } from './ast-debug-logger'
 import { ASTUnterminatedQuoteError } from './ast-parse-error'
 import { InputStream } from './input-stream'
 
-const shouldDebug = false
+const shouldDebug = true
 
 const dd = (...args: unknown[]) => {
   if (shouldDebug) {
@@ -554,6 +554,11 @@ export class Tokenizer {
     dd('read_next::isInAlias? =>', this.isInAlias)
 
     if (this.stream.eof() || this.isInAlias) {
+      dd(
+        `read_next::bail_early eof="${this.stream.eof()}" isInAlias="${
+          this.isInAlias
+        }"`
+      )
       return null
     }
 
@@ -612,8 +617,9 @@ export class Tokenizer {
     dd('!this.isInAlias', !this.isInAlias)
 
     if (
-      (this.is_command(ch) ||
-        this.is_command(this.stream.peek_to_whitespace())) &&
+      // (this.is_command(ch) ||
+      //   this.is_command(this.stream.peek_to_whitespace())) &&
+      this.is_command(this.stream.peek_to_whitespace()) &&
       !this.hasCommand &&
       !this.isInAlias
     ) {

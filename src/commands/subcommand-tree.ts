@@ -42,7 +42,7 @@ export class SubcommandTree<T extends ServiceReqs> {
         }
 
         return def.name.includes(subcommand)
-      })
+      })?.handler
 
     if (!definition) {
       throw Errors.Basic({

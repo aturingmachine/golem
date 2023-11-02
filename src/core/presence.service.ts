@@ -17,6 +17,10 @@ export class BotPresenceService {
       id: 'play-message',
       status: 'Use `$play <search-term>` to play something!',
     },
+    {
+      id: 'now-playing-message',
+      status: 'Use `$go get np` to view the currently playing track!',
+    },
   ])
 
   activePresence = 'help-message'
