@@ -42,7 +42,7 @@ export class YoutubeSearch {
       : undefined
   }
 
-  async getInfo(url: string) {
+  getInfo(url: string): Promise<any> {
     return getYTInfo(url)
   }
 }

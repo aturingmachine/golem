@@ -60,6 +60,8 @@ export class WS {
   }
 
   async updateAudits(): Promise<void> {
-    this.server.emit('audit_update', await this.webService.allAudits())
+    if (this.server) {
+      this.server.emit('audit_update', await this.webService.allAudits())
+    }
   }
 }

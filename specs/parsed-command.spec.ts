@@ -13,4 +13,19 @@ describe('Parsed Command', () => {
     expect(parsedCommand.params.playlistname).toEqual('test playlist')
     expect(parsedCommand.params.query).toEqual('rocket punch chiquita')
   })
+
+  it('should parse things with urls', () => {
+    //
+    raw =
+      '$go play https://www.youtube.com/playlist?list=PLbxr0tBuEEpF1PFiDIwUkdDR5dsfx1ZUr --limit=100 --shuffle'
+
+    parsedCommand = ParsedCommand.fromRaw(raw)
+
+    console.log(parsedCommand.extendedArgs)
+
+    expect(parsedCommand.params).toEqual({
+      query:
+        'https://www.youtube.com/playlist?list=PLbxr0tBuEEpF1PFiDIwUkdDR5dsfx1ZUr',
+    })
+  })
 })

@@ -277,33 +277,33 @@ export class YoutubeCache {
 
     this.log.info(`found ${untrackedFiles.length} untracked cached streams`)
 
-    const newEntries = await Promise.all(
-      untrackedFiles.map(async (file) => {
-        const id = file.split('/').pop()!
-        this.log.debug(`generating cache entry for untracked "${id}"@"${file}"`)
+    const getInfo = untrackedFiles.map(async (file) => {
+      const id = file.split('/').pop()!
+      this.log.debug(`generating cache entry for untracked "${id}"@"${file}"`)
 
-        const ytResult = await this.ytSearch.getInfo(
-          `https://www.youtube.com/watch?v=${id}`
-        )
+      const ytResult = await this.ytSearch.getInfo(
+        `https://www.youtube.com/watch?v=${id}`
+      )
 
-        const targetThumbnail: string =
-          ytResult.thumbnails
-            .filter((thumb: any) => thumb.url.endsWith('.jpg'))
-            .sort((a: any, b: any) => {
-              return b.preference - a.preference
-            })?.[0]?.url || ytResult.thumbnail
+      const targetThumbnail: string =
+        ytResult.thumbnails
+          .filter((thumb: any) => thumb.url.endsWith('.jpg'))
+          .sort((a: any, b: any) => {
+            return b.preference - a.preference
+          })?.[0]?.url || ytResult.thumbnail
 
-        return this.cachedStreams.create({
-          type: CachedStreamType.YouTube,
-          external_id: id,
-          title: ytResult.title,
-          artist: ytResult.channel,
-          thumbnail: targetThumbnail,
-          initial_cache_date: new Date(),
-          last_access_date: new Date(),
-        })
+      return this.cachedStreams.create({
+        type: CachedStreamType.YouTube,
+        external_id: id,
+        title: ytResult.title,
+        artist: ytResult.channel,
+        thumbnail: targetThumbnail,
+        initial_cache_date: new Date(),
+        last_access_date: new Date(),
       })
-    )
+    })
+
+    const newEntries = await Promise.all(getInfo)
 
     this.log.info(`saving ${newEntries.length} backfilled entries`)
 

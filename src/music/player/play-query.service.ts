@@ -34,6 +34,11 @@ export type QueryPlayResult =
     }
   | { missingModule?: string; message?: string }
 
+type PlayOptions = {
+  limit?: number
+  shuffle?: boolean
+}
+
 @Injectable()
 export class PlayQueryService {
   constructor(
@@ -50,7 +55,8 @@ export class PlayQueryService {
 
   async process(
     message: GolemMessage,
-    query: string
+    query: string,
+    options?: PlayOptions
   ): Promise<QueryPlayResult> {
     const userId = message.info.userId
 
@@ -60,7 +66,7 @@ export class PlayQueryService {
     if (url) {
       this.log.debug(`got url play query "${query}"`)
       // Check different supported URL Types
-      return this.processUrl(userId, url)
+      return this.processUrl(userId, url, options)
     }
 
     // Check if we get a local hit
@@ -169,7 +175,11 @@ export class PlayQueryService {
     }
   }
 
-  private async processUrl(userId: string, url: URL): Promise<QueryPlayResult> {
+  private async processUrl(
+    userId: string,
+    url: URL,
+    options?: PlayOptions
+  ): Promise<QueryPlayResult> {
     const host = Object.entries(SupportedHosts).find(([_host, domains]) => {
       return domains.some((domain) => url.host.includes(domain))
     })?.[0]
@@ -178,7 +188,7 @@ export class PlayQueryService {
 
     switch (host) {
       case 'Youtube':
-        return this.processYoutubeUrl(userId, url)
+        return this.processYoutubeUrl(userId, url, options)
     }
 
     this.log.warn(`Unsupported URL Host: ${url.host}`)
@@ -188,7 +198,8 @@ export class PlayQueryService {
 
   private async processYoutubeUrl(
     userId: string,
-    url: URL
+    url: URL,
+    options?: PlayOptions
   ): Promise<QueryPlayResult> {
     const tracks: YoutubeTrack[] = []
     const replies: BaseReply[] = []
@@ -202,7 +213,11 @@ export class PlayQueryService {
       this.log.debug(
         `youtube url has a playlist code "${url.searchParams.get('list')}"`
       )
-      const playlist = await this.youtube.getPlaylist(url.toString())
+      const playlist = await this.youtube.getPlaylist(
+        url.toString(),
+        options?.limit,
+        options?.shuffle
+      )
 
       tracks.push(...playlist.tracks)
       replies.push(await YoutubePlaylistReply.fromPlaylist(playlist))

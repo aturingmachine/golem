@@ -56,7 +56,11 @@ export default new GolemCommand({
     }
 
     // Execute the Query
-    const queryResult = await this.services.queryService.process(message, query)
+    const queryResult = await this.services.queryService.process(
+      message,
+      query,
+      source.extendedArgs
+    )
     this.services.log.debug(`query returned as: ${formatForLog(queryResult)}`)
 
     if (!('tracks' in queryResult)) {
@@ -81,7 +85,7 @@ export default new GolemCommand({
       })
     }
 
-    // Handle Single Track Result.
+    // Handle Single Track Result or URL based play.
     if (queryResult.raw.local?.isTrackQuery || !queryResult.raw.local) {
       this.services.playerService.play(
         message,

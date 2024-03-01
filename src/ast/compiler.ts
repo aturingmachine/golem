@@ -4,7 +4,13 @@ import { formatForLog } from '../utils/debug-utils'
 import { ArrayUtils } from '../utils/list-utils'
 import { ASTDebugLogger } from './ast-debug-logger'
 import { AstParseResult, AstTokenLeaf, Parser } from './parser'
-import { AstTokens, FuncAstToken, OptAstToken, VarAstToken } from './tokenizer'
+import {
+  AstTokens,
+  FuncAstToken,
+  OptAstToken,
+  TokenTypes,
+  VarAstToken,
+} from './tokenizer'
 
 type ValDict = Record<string, string | number | boolean | undefined>
 
@@ -12,6 +18,7 @@ type CompileTokenResult = {
   raw: string
   name: string
   resolved_value: string | number | boolean
+  type: TokenTypes
 }
 
 export type RawScriptSegment = {
@@ -155,7 +162,17 @@ export class GSCompiler {
         )
         return c
       })
-      .map((c) => c.resolved_value)
+      .map((c) => {
+        ASTDebugLogger.log('[GSCompiler]', 'gs:compileTokens mapping %O', c)
+
+        // We do not want to compile options into the compiled string
+        if (['opt'].includes(c.type)) {
+          return undefined
+        }
+
+        return c.resolved_value
+      })
+      .filter(ArrayUtils.isDefined)
       .concat(this.dividers.shift()?.[0] || '')
       .join(' ')
   }
@@ -172,6 +189,7 @@ export class GSCompiler {
           name: token.type,
           raw: token.value,
           resolved_value: token.value,
+          type: token.type,
         }
         break
       case 'func':
@@ -200,6 +218,7 @@ export class GSCompiler {
           raw: token.value.toString(),
           name: 'alias_def',
           resolved_value: token.value.toString(),
+          type: token.type,
         }
         break
       default:
@@ -216,6 +235,7 @@ export class GSCompiler {
           name: token.type,
           raw: token.value.toString(),
           resolved_value: token.value.toString(),
+          type: token.type,
         }
         break
     }
@@ -234,6 +254,7 @@ export class GSCompiler {
         raw: token.value.toString(),
         name: token.name,
         resolved_value: existing.toString(),
+        type: 'var',
       }
     }
 
@@ -256,6 +277,7 @@ export class GSCompiler {
       raw: token.value,
       name: token.name,
       resolved_value: evaled,
+      type: 'func',
     }
   }
 
@@ -277,6 +299,7 @@ export class GSCompiler {
         raw: token.value.toString(),
         name: token.name,
         resolved_value: evaled,
+        type: 'opt',
       }
     }
 
@@ -304,6 +327,7 @@ export class GSCompiler {
       raw: token.opt_val.toString(),
       name: token.name,
       resolved_value: val,
+      type: 'opt',
     }
   }
 
@@ -312,6 +336,7 @@ export class GSCompiler {
       ...this.currentSegment,
       instance: ParsedCommand.fromSegment(this.currentSegment),
     })
+
     this.resetCurrentSegment()
   }
 

@@ -138,7 +138,9 @@ export class ParsedCommand {
     ASTDebugLogger.log(
       '[PARSED COMMAND]',
       'pc:fromSegment',
-      `parsing from segment with command root "${segment.command}"`
+      `parsing from segment with command root "%s" compiled="%s"`,
+      segment.command,
+      segment.compiled
     )
 
     switch (segment.command) {
@@ -396,6 +398,13 @@ function parseSegment(
   def: CommandDescription
 ): ParsedCommand {
   const content = segment.compiled
+
+  ASTDebugLogger.log(
+    '[PARSED COMMAND]',
+    'pc:parseSegment using compiled %s',
+    segment.compiled
+  )
+
   const parsedContent = (
     /^\$/.test(content) ? content.replace(/^\$(go )?/, '') : content
   )
