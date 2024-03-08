@@ -297,7 +297,14 @@ export default new GolemCommand({
       },
     ],
     examples: {
-      legacy: ['$go playlist play my-playlist', '$go playlist list'],
+      legacy: [
+        '$go playlist play my playlist',
+        '$go playlist list',
+        '$go playlist create my playlist',
+        '$go playlist create my playlist --fromQueue',
+        '$go playlist add',
+        '$go playlist add twice tt',
+      ],
       slashCommand: ['/goplaylist play my-playlist', '/goplaylist list'],
     },
     requiredModules: {

@@ -35,3 +35,26 @@ $go get count
 - **nowplaying**: Display the current playing resource.
 
 
+
+### Help Message
+```
+Command get:
+  Retrieve information about the current Golem instance.  
+--Arguments--
+    <value>
+      The property to get information about.
+  
+--Sub Commands--
+    - nowplaying
+        Display the current playing resource.
+  
+--Example Usage--
+    $go get
+    $go get nowplaying
+    $go get count
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
+

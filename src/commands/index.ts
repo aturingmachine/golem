@@ -17,6 +17,7 @@ import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
 import { LoggerService } from '../core/logger/logger.service'
 import { GolemMessage } from '../messages/golem-message'
 import { ParsedCommand } from '../messages/parsed-command'
+import { DiscordMarkdown } from '../utils/discord-markdown-builder'
 import { GolemModule } from '../utils/raw-config'
 import { StringUtils } from '../utils/string-utils'
 import { SubcommandTree, SubcommandTreeParams } from './subcommand-tree'
@@ -80,15 +81,6 @@ export type CommandHelp = {
   args: CommandArgDefinition[]
   alias?: string
 }
-
-// export type CommandParams = {
-//   source: string
-//   data: Omit<SlashCommandBuilder, 'addSubcommand' | 'addSubcommandGroup'>
-//   handler: CommandHandlerFn<T>
-//   helpInfo: CommandHelp
-//   errorHandler?: CommandErrorHandlerFn
-//   requiredModules?: any[]
-// }
 
 type CommandInfo = {
   short: string
@@ -281,6 +273,120 @@ export class GolemCommand<
 
   get info(): CommandDescription {
     return this.options.info
+  }
+
+  get helpMessage(): string {
+    const markdown = DiscordMarkdown.start()
+      .markCode()
+      .raw('Command ')
+      .raw(this.info.name)
+      .raw(':')
+      .newLine()
+      .tab()
+      .raw(this.info.description.long || this.info.description.short)
+
+    if (this.info.args.length) {
+      markdown.tab().newLine().raw('--Arguments--').newLine()
+    }
+
+    this.info.args.forEach((argDef) => {
+      markdown
+        .tab(2)
+        .raw(argDef.required ? `[${argDef.name}]` : `<${argDef.name}>`)
+        .newLine()
+        .tab(3)
+        .raw(argDef.description.long || argDef.description.short)
+
+      markdown.newLine()
+    })
+
+    if (this.info.subcommands?.length) {
+      markdown.tab().newLine().raw('--Sub Commands--').newLine()
+
+      this.info.subcommands.forEach((subc) => {
+        markdown.tab(2).raw('- ' + subc.name)
+
+        subc.args.forEach((subcArg) => {
+          markdown.raw(
+            subcArg.required ? ` [${subcArg.name}]` : ` <${subcArg.name}>`
+          )
+        })
+
+        markdown
+          .newLine()
+          .tab(4)
+          .raw(subc.description.long || subc.description.short)
+          .newLine()
+
+        subc.args.forEach((subcArg) => {
+          markdown
+            .tab(5)
+            .raw(subcArg.required ? `[${subcArg.name}]` : `<${subcArg.name}>`)
+            .newLine()
+            .tab(6)
+            .raw(subcArg.description.long || subcArg.description.short)
+
+          markdown.newLine()
+        })
+      })
+    }
+
+    if (this.info.extendedArgs?.length) {
+      markdown.tab().newLine().raw('--Extended Arguments--').newLine()
+
+      this.info.extendedArgs.forEach((eArg) => {
+        markdown
+          .tab(2)
+          .raw(eArg.key + ': ' + eArg.type)
+          .newLine()
+          .tab(3)
+          .raw(eArg.description)
+          .newLine()
+      })
+    }
+
+    if (this.info.requiredModules) {
+      markdown.tab().newLine().raw('--Required Modules--').newLine()
+
+      if (this.info.requiredModules.all?.length) {
+        markdown.tab(2).raw('Requires All Of:').newLine()
+
+        this.info.requiredModules.all.forEach((req) => {
+          markdown
+            .tab(3)
+            .raw('- ' + req)
+            .newLine()
+        })
+      }
+
+      if (this.info.requiredModules.oneOf?.length) {
+        markdown.tab(2).raw('Requires One Of:').newLine()
+
+        this.info.requiredModules.oneOf.forEach((req) => {
+          markdown
+            .tab(3)
+            .raw('- ' + req)
+            .newLine()
+        })
+      }
+    }
+
+    markdown.tab().newLine().raw('--Example Usage--').newLine()
+
+    this.info.examples.legacy.forEach((example) => {
+      markdown.tab(2).raw(example).newLine()
+    })
+
+    return markdown
+      .newLine()
+      .newLine()
+      .raw('*************')
+      .newLine()
+      .raw('arguments marked [] are required')
+      .newLine()
+      .raw('arguments marked <> are optional')
+      .markCode()
+      .toString()
   }
 
   toString(): string {

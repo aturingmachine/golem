@@ -10,6 +10,7 @@ const commandTemplate = readFileSync(
 
 class DocCommand {
   constructor(cmd) {
+    this.cmd = cmd
     this.info = cmd.options.info
     this.modules = this.info.requiredModules
   }
@@ -73,6 +74,10 @@ class DocCommand {
     return all.join(' ').concat(oneOfMods.join(' '))
   }
 
+  get help() {
+    return this.cmd.help.replaceAll('```', '```\n')
+  }
+
   get extendedArguments() {
     if (!this.info.extendedArgs || this.info.extendedArgs.length < 1) {
       return []
@@ -95,9 +100,6 @@ commands.forEach((cmd) => {
 
   const command = new DocCommand(cmd)
 
-  // console.log('modules', command.modules)
-  // console.log('badges', command.badges)
-
   const content = commandTemplate
     .replaceAll('<%name>', cmd.options.info.name)
     .replaceAll('<%description>', command.description)
@@ -107,6 +109,7 @@ commands.forEach((cmd) => {
     .replaceAll('<%subcommands>', command.subcommands)
     .replaceAll('<%badge>', command.badges)
     .replaceAll('<%extended_args>', command.extendedArguments)
+    .replaceAll('<%help_message>', command.help)
 
   writeFileSync(fp, content, { encoding: 'utf-8' })
   console.log(`[DOCGEN] Page rendered at ${fp}`)

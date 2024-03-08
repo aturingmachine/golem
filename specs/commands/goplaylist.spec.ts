@@ -71,6 +71,10 @@ describe('Go Playlist', () => {
     TestModule.source.getString.mockReturnValue(playlistName)
   })
 
+  it.only('should render a help message', () => {
+    console.log(goplaylist.helpMessage)
+  })
+
   describe('list', () => {
     it('should add a reply using the PlaylistService list method', async () => {
       const listResult = 'Test PlaylistService List'

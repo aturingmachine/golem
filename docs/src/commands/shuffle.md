@@ -29,3 +29,21 @@ $go shuffle
 
 
 
+
+### Help Message
+```
+Command shuffle:
+  Shuffle the current queue maintaining the playnext queue's position.  
+--Required Modules--
+    Requires One Of:
+      - LocalMusic
+      - Youtube
+  
+--Example Usage--
+    $go shuffle
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
+

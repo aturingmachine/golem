@@ -57,6 +57,18 @@ export class DiscordMarkdown {
     return this
   }
 
+  markCode(): this {
+    this.content = this.content + '```'
+
+    return this
+  }
+
+  tab(count = 1): this {
+    this.content = this.content + '  '.repeat(count)
+
+    return this
+  }
+
   toString(): string {
     return this.content
   }

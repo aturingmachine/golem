@@ -30,3 +30,22 @@ $stop
 
 
 
+
+### Help Message
+```
+Command stop:
+  Stops the current playback.  
+--Required Modules--
+    Requires One Of:
+      - LocalMusic
+      - Youtube
+  
+--Example Usage--
+    $go stop
+    $stop
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
+

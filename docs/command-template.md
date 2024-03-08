@@ -29,3 +29,6 @@ tags:
 <%subcommands>
 
 <%extended_args>
+
+### Help Message
+<%help_message>

@@ -29,3 +29,21 @@ $go peek
 
 
 
+
+### Help Message
+```
+Command peek:
+  See the next tracks in the queue.  
+--Required Modules--
+    Requires One Of:
+      - LocalMusic
+      - Youtube
+  
+--Example Usage--
+    $go peek
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
+

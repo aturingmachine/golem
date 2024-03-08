@@ -29,3 +29,21 @@ $go pause
 
 
 
+
+### Help Message
+```
+Command pause:
+  Pause the current playback.  
+--Required Modules--
+    Requires One Of:
+      - LocalMusic
+      - Youtube
+  
+--Example Usage--
+    $go pause
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
+

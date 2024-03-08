@@ -55,3 +55,45 @@ $go perms remove @Kim Dahyun moderator
 	- **permission*** - `string`: The dot notation based permission to remove from the user.
 
 
+
+### Help Message
+```
+Command perms:
+  View and modify user permissions.  
+--Sub Commands--
+    - describe
+        View all grantable permissions.
+    - get [user]
+        View permissions for a user
+          [user]
+            The mentioned user to fetch permissions for. Autocompleting the user using the `@` syntax will select the proper user.
+    - set [user] [permissions]
+        Set the permissions for a user.
+          [user]
+            The mentioned user whos permissions should be set. Autocompleting the user using the `@` syntax will select the proper user.
+          [permissions]
+            The dot notation based permission strings to set on the user. Delimit seperate permissions with a space to set multiple permissions. This will overwrite the users existing permissions
+    - add [user] [permission]
+        Grant a permission to a user
+          [user]
+            The mentioned user to grant permissions to. Autocompleting the user using the `@` syntax will select the proper user.
+          [permission]
+            The dot notation based permission string to grant to the user.
+    - remove [user] [permission]
+        Remove a permission from a user
+          [user]
+            The mentioned user to remove permissions from. Autocompleting the user using the `@` syntax will select the proper user.
+          [permission]
+            The dot notation based permission to remove from the user.
+  
+--Example Usage--
+    $go perms get @Kim Dahyun
+    $go perms set @Kim Dahyun alias.create alias.edit moderator
+    $go perms add @Kim Dahyun alias.delete
+    $go perms remove @Kim Dahyun moderator
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
+
