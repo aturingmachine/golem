@@ -150,7 +150,7 @@ export class PlaylistService {
     let listings: Playlist['listings'] = []
 
     if (payload.fromQueue) {
-      const player = this.players.for(payload.userInfo.guildId)
+      const player = this.players.forGuild(payload.userInfo.guildId)
 
       if (!player || !player.nowPlaying) {
         throw new NoPlayerError({

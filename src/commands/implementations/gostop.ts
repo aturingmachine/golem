@@ -16,7 +16,7 @@ export default new GolemCommand({
   async handler({ message }) {
     this.services.log.setMessageContext(message, this.options.logSource)
 
-    const player = this.services.playerService.for(message.info.guildId)
+    const player = this.services.playerService.for(message.info)
 
     if (!player) {
       this.services.log.warn(

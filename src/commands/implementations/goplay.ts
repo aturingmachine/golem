@@ -35,6 +35,18 @@ export default new GolemCommand({
       })
     }
 
+    if (player === 'ERR_ALREADY_ACTIVE') {
+      this.services.log.warn(
+        `attempted to play from another voice channel while bot was already active; guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
+      )
+
+      throw Errors.ActivePlayerChannelMismatch({
+        message: `Attempted action that requires matching Voice Channel with bot, but found mismsatched Voice Channels.`,
+        sourceCmd: 'play',
+        traceId: message.traceId,
+      })
+    }
+
     // Handle Unpause
     if (!query) {
       // If we are doing an "unpause" and nothing is playing

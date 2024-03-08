@@ -20,6 +20,7 @@ import {
 } from '@discordjs/voice'
 import { ModuleRef } from '@nestjs/core'
 import { ChannelType } from 'discord.js'
+import { v4 } from 'uuid'
 import { ClientService } from '../../core/client.service'
 import { LoggerService } from '../../core/logger/logger.service'
 import { humanReadableTime, wait } from '../../utils/time-utils'
@@ -62,7 +63,8 @@ export type MusicPlayerOptions = JoinVoiceChannelOptions &
   }
 
 export class MusicPlayer {
-  static readonly autoDCTime = 300_000
+  static readonly autoDCTime = 30_000
+  // static readonly autoDCTime = 300_000
 
   private leaveTimeout?: NodeJS.Timeout
   private queue!: TrackQueue
@@ -75,19 +77,24 @@ export class MusicPlayer {
   public voiceConnection!: VoiceConnection
   public currentResource?: GolemTrackAudioResource
 
+  public readonly id: string
   public readonly audioPlayer: AudioPlayer
   public readonly guildName: string
-  public readonly channelName: string
-  public readonly channelId: string
+
+  // TODO tracking these causes golem to hop into wrong channel lol
+  public readonly _channelName: string
+  private _channelId: string
 
   public constructor(
     private ref: ModuleRef,
     private options: MusicPlayerOptions
   ) {
+    this.id = v4()
+
     this.clientService = ref.get(ClientService, { strict: false })
     this.guildName = options.guildName
-    this.channelName = options.channelName
-    this.channelId = options.channelId
+    this._channelName = options.channelName
+    this._channelId = options.channelId
     this.audioPlayer = createAudioPlayer()
 
     this.audioPlayer.on('error', this.audioPlayErrorHandler.bind(this))
@@ -209,6 +216,10 @@ export class MusicPlayer {
     return this.queue.queuedTrackCount + (this.isPlaying ? 1 : 0)
   }
 
+  public get isConnected(): boolean {
+    return this.voiceConnection.state.status === VoiceConnectionStatus.Ready
+  }
+
   public get isDisconnected(): boolean {
     return (
       this.voiceConnection.state.status === VoiceConnectionStatus.Disconnected
@@ -290,10 +301,8 @@ export class MusicPlayer {
 
       this.queueLock = false
       this.currentResource?.metadata.track.onSkip()
-      // await Golem.removePlayer(this.primaryKey, this.secondaryKey)
       this.voiceConnection.destroy()
       this.updatePresence()
-      // Golem.presence.update()
     }
   }
 
@@ -352,7 +361,6 @@ export class MusicPlayer {
       this.queueLock = false
       this.voiceConnection.disconnect()
       this.updatePresence()
-      // Golem.presence.update()
     }
   }
 
@@ -375,6 +383,16 @@ export class MusicPlayer {
     )
   }
 
+  get channelId(): string {
+    return this._channelId
+  }
+
+  set channelId(id: string) {
+    this.log.info(`Updating players channel id to "${id}`)
+
+    this._channelId = id
+  }
+
   async clearTimer(force = false): Promise<void> {
     this.log.info(
       `clearing auto-dc timer for ${this.primaryKey} -  ${this.secondaryKey} - ${force}`
@@ -387,7 +405,7 @@ export class MusicPlayer {
       return
     }
 
-    const channel = await this.clientService.channels.fetch(this.channelId)
+    const channel = await this.clientService.channels.fetch(this._channelId)
 
     this.log.info(
       `clear timeout isVoiceChannel="${
@@ -413,7 +431,10 @@ export class MusicPlayer {
   }
 
   private joinVoice(): void {
-    this.voiceConnection = joinVoiceChannel(this.options)
+    this.voiceConnection = joinVoiceChannel({
+      ...this.options,
+      channelId: this.channelId,
+    })
 
     this.voiceConnection.on(
       VoiceConnectionStatus.Disconnected,

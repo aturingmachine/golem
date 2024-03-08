@@ -1,3 +1,4 @@
+import { ActivePlayerChannelMismatchError } from './active-player-channel-mismatch-errors'
 import { BadArgsError, NoSubCommandError } from './bad-args-error'
 import { BasicError } from './basic-error'
 import { ExistingResourceError } from './existing-resource-error'
@@ -8,6 +9,12 @@ import { NotFoundError } from './not-found-error'
 import { NotOwnedError } from './not-owner-error'
 
 export const Errors = {
+  ActivePlayerChannelMismatch(
+    params: ConstructorParameters<typeof ActivePlayerChannelMismatchError>[0]
+  ): ActivePlayerChannelMismatchError {
+    return new ActivePlayerChannelMismatchError(params)
+  },
+
   BadArgs(params: ConstructorParameters<typeof BadArgsError>[0]): BadArgsError {
     return new BadArgsError(params)
   },

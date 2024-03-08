@@ -135,7 +135,7 @@ export default new GolemCommand({
         }
 
         let trackSource: AListing | undefined | QueryPlayResult =
-          this.services.players.for(message.info.guildId)?.nowPlaying
+          this.services.players.forGuild(message.info.guildId)?.nowPlaying
         let trackName = trackSource?.title
 
         let trackToAdd =

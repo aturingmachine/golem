@@ -1,7 +1,7 @@
 {
-  "name": "discord-bot",
+  "name": "golem",
   "version": "1.0.0",
-  "description": "homebrew discord bot",
+  "description": "homebrewed discord bot",
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "build:clean": "rm -rf dist/ && npm run build",
@@ -17,7 +17,7 @@
     "docs:build": "npm run build --prefix ./docs",
     "docs:deploy": "sh ./scripts/docs-deploy.sh"
   },
-  "author": "",
+  "author": "aturingmachine",
   "license": "MIT",
   "devDependencies": {
     "@nestjs/testing": "^8.4.7",

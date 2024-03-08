@@ -19,7 +19,7 @@ export default new GolemCommand({
   async handler({ message, source }) {
     this.services.log.setMessageContext(message, 'GoSkip')
 
-    const player = this.services.playerService.for(message.info.guildId)
+    const player = this.services.playerService.for(message.info)
 
     if (!player) {
       this.services.log.warn(

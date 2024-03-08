@@ -9,14 +9,13 @@ import configuration from './core/configuration'
 import { ConfigurationService } from './core/configuration.service'
 import { DiscordBotServer } from './core/discord-transport'
 import { InitService } from './core/init.service'
-import { LoggerService } from './core/logger/logger.service'
 import { PlexService } from './integrations/plex/plex.service'
 import { ListingLoaderService } from './music/local/library/loader.service'
 import { DiscordMarkdown } from './utils/discord-markdown-builder'
 import { LogUtils } from './utils/log-utils'
 import { GolemModule } from './utils/raw-config'
 import { RawConfig } from './utils/raw-config'
-import { humanReadableDuration } from './utils/time-utils'
+import { JobTimer } from './utils/time-utils'
 
 export function debugDump(...args: unknown[]): void {
   const out = path.resolve(__dirname, '../out.json')
@@ -24,72 +23,88 @@ export function debugDump(...args: unknown[]): void {
 }
 
 async function bootstrap() {
-  const start = Date.now()
-  ConfigurationService.init()
+  const job = new JobTimer('bootstrap', async () => {
+    // Read in Raw Config that we may need
+    ConfigurationService.init()
 
-  const botServer = new DiscordBotServer()
-  botServer.init()
+    // Create the Nest Application
+    const app = await NestFactory.create(AppModule)
+    LogUtils.setContext(app)
 
-  const app = await NestFactory.create(AppModule)
-  app.enableCors({
-    origin: [
-      /localhost:?[0-9]*/,
-      /(?:http[s]?:\/\/)?192\.168\.[0-9]+\.[0-9]+:?[0-9]*/,
-    ],
-  })
+    const log = await LogUtils.createLogger('Bootstrap')
+    const transportLogger = await LogUtils.createLogger('DiscordTransport')
 
-  console.log('Using Log levels', configuration().logLevels)
+    log.info('Bootstrapping Golem...')
+    log.info('Configuration Read and Nest Application Created.')
 
-  app.connectMicroservice({
-    strategy: botServer,
-    logger: configuration().logLevels,
-  })
+    // Create a new Bot Server (a transport) and initialize it
+    const botServer = new DiscordBotServer()
+    botServer.init(transportLogger)
 
-  LogUtils.setContext(app)
+    app.enableCors({
+      origin: [
+        /localhost:?[0-9]*/,
+        /(?:http[s]?:\/\/)?192\.168\.[0-9]+\.[0-9]+:?[0-9]*/,
+      ],
+    })
 
-  const log = await app.resolve(LoggerService)
-  log.setContext('Bootstrap')
-  log.info('Bootstrapping Golem...')
+    console.log('Using Log levels', configuration().logLevels)
 
-  log.info('Getting ConfigService')
-  const config = app.get(ConfigService)
-  log.info('Getting ClientService')
-  const clientService = app.get(ClientService)
+    app.connectMicroservice({
+      strategy: botServer,
+      logger: configuration().logLevels,
+    })
 
-  if (RawConfig.hasLocalMusicModule) {
-    log.info('Getting ListingLoaderService')
-    const loader = app.get(ListingLoaderService)
-    log.info('Loading Listings')
-    await loader.load()
-  } else {
-    log.info('LocalMusicModule not enabled.')
-  }
+    log.debug('Getting ConfigService')
+    const config = app.get(ConfigService)
+    log.debug('Getting ClientService')
+    const clientService = app.get(ClientService)
 
-  if (RawConfig.modules.includes(GolemModule.Plex)) {
-    log.info('Getting PlexService')
-    const plexService = app.get(PlexService)
-    log.info('Got PlexService')
-
-    try {
-      await plexService.loadPlaylists()
-    } catch (error) {
-      log.warn(`unable to get plex playlists... ${error}`)
+    if (RawConfig.hasLocalMusicModule) {
+      log.debug('Getting ListingLoaderService')
+      const loader = app.get(ListingLoaderService)
+      log.info('Loading Listings')
+      await loader.load()
+    } else {
+      log.info('LocalMusicModule not enabled.')
     }
-  } else {
-    log.info('PlexModule not loaded.')
-  }
 
-  log.debug(`Getting Init Service.`)
-  const initService = app.get(InitService)
-  log.debug(`Running Init.`)
-  await initService.runInit(botServer)
-  log.debug(`Init Complete.`)
+    if (RawConfig.modules.includes(GolemModule.Plex)) {
+      log.debug('Getting PlexService')
+      const plexService = app.get(PlexService)
+      log.debug('Got PlexService')
 
-  const end = Date.now()
-  log.debug(`bootstrap lasted ${humanReadableDuration((end - start) / 1000)}`)
+      try {
+        await plexService.loadPlaylists()
+      } catch (error) {
+        log.warn(`unable to get plex playlists... ${error}`)
+      }
+    } else {
+      log.info('PlexModule not loaded.')
+    }
+
+    log.debug(`Getting Init Service.`)
+    const initService = app.get(InitService)
+    await initService.runInit(botServer)
+
+    return {
+      clientService,
+      config,
+      initService,
+      app,
+      log,
+    }
+  })
+
+  const { clientService, config, initService, app, log } = await job.run()
+
+  log.info(`Bootstrap lasted ${job.duration}`)
 
   // Set a handler to DM the admin on an uncaught exception.
   process.on('uncaughtException', async (err) => {
+    // MongoServerSelectionError
+    // console.log(err, err.name)
+
     // Build a message for a DM
     const message = DiscordMarkdown.start()
       .preformat(
