@@ -20,11 +20,11 @@ export class MessageBuilderService {
     return ListingReply.fromListing(listing)
   }
 
-  async nowPlaying(
+  nowPlaying(
     message: GolemMessage,
     listing: AListing
   ): Promise<NowPlayingReply | RawReply> {
-    const player = await this.players.getOrCreate(message)
+    const player = this.players.forGuild(message.info.guildId)
 
     if (!player) {
       throw new Error('No Player')

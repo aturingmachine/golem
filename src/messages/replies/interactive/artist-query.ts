@@ -26,19 +26,33 @@ export const GetMessageAttachement = (albumArt?: Buffer): AttachmentBuilder => {
   return new AttachmentBuilder(albumArt || GolemLogo, {})
 }
 
+type ArtistQueryReplyParams = {
+  opts: MessageReplyOptions
+  source: GolemMessage
+  artist: string
+  searcher: ListingSearcher
+  players: PlayerService
+  log: LoggerService
+}
+
 export class ArtistQueryReply extends BaseReply {
   readonly type = ReplyType.ArtistQuery
   readonly isUnique = false
 
-  constructor(
-    opts: MessageReplyOptions,
-    readonly source: GolemMessage,
-    readonly artist: string,
-    readonly searcher: ListingSearcher,
-    readonly players: PlayerService,
-    readonly log: LoggerService
-  ) {
-    super(opts)
+  readonly source: GolemMessage
+  readonly artist: string
+  readonly searcher: ListingSearcher
+  readonly players: PlayerService
+  readonly log: LoggerService
+
+  constructor(params: ArtistQueryReplyParams) {
+    super(params.opts)
+
+    this.source = params.source
+    this.artist = params.artist
+    this.searcher = params.searcher
+    this.players = params.players
+    this.log = params.log
   }
 
   async collect() {
@@ -73,20 +87,6 @@ export class ArtistQueryReply extends BaseReply {
           return
         }
 
-        const player = await this.players.getOrCreate(this.source)
-
-        if (!player) {
-          this.log.warn(
-            `unable to create player for guild: ${this.source.info.guild?.name} channel: ${this.source.info.voiceChannel?.name}`
-          )
-
-          throw Errors.NoPlayer({
-            message: `unable to create player for guild: ${this.source.info.guild?.name} channel: ${this.source.info.voiceChannel?.name}`,
-            sourceCmd: 'play',
-            traceId: this.source.traceId,
-          })
-        }
-
         const isShuffle = run === 'shuffle'
 
         let results = this.searcher
@@ -115,6 +115,32 @@ export class ArtistQueryReply extends BaseReply {
           LocalTrack.fromListing(listing, this.source.info.userId)
         )
 
+        const player = await this.players.getOrCreate(this.source)
+
+        if (!player) {
+          this.log.warn(
+            `unable to create player for guild: ${this.source.info.guild?.name} channel: ${this.source.info.voiceChannel?.name}`
+          )
+
+          throw Errors.NoPlayer({
+            message: `unable to create player for guild: ${this.source.info.guild?.name} channel: ${this.source.info.voiceChannel?.name}`,
+            sourceCmd: 'play',
+            traceId: this.source.traceId,
+          })
+        }
+
+        if (player === 'ERR_ALREADY_ACTIVE') {
+          this.log.warn(
+            `attempted to play from another voice channel while bot was already active; guild: ${this.source.info.guild?.name} channel: ${this.source.info.voiceChannel?.name}`
+          )
+
+          throw Errors.ActivePlayerChannelMismatch({
+            message: `Attempted action that requires matching Voice Channel with bot, but found mismsatched Voice Channels.`,
+            sourceCmd: 'artistQuery.collect',
+            traceId: this.source.traceId,
+          })
+        }
+
         await this.players.play(this.source, player, tracks, 'queue')
 
         const npReply = await NowPlayingReply.fromListing(
@@ -139,8 +165,6 @@ export class ArtistQueryReply extends BaseReply {
     const artistTracks = await searcher.forArtist(artist)
     let srcs: Buffer[] = []
     const albumNames: string[] = []
-
-    console.log(artistTracks)
 
     // TODO make not gross
     let i = 0
@@ -227,17 +251,17 @@ export class ArtistQueryReply extends BaseReply {
       ],
     })
 
-    return new ArtistQueryReply(
-      {
+    return new ArtistQueryReply({
+      opts: {
         components: [row.toRow()],
         embeds: [embed],
         files: [image],
       },
-      message,
+      source: message,
       artist,
       searcher,
       players,
-      log
-    )
+      log,
+    })
   }
 }

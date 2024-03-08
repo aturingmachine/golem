@@ -97,6 +97,18 @@ export default new GolemCommand({
           })
         }
 
+        if (player === 'ERR_ALREADY_ACTIVE') {
+          this.services.log.warn(
+            `attempted to play from another voice channel while bot was already active; guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
+          )
+
+          throw Errors.ActivePlayerChannelMismatch({
+            message: `Attempted action that requires matching Voice Channel with bot, but found mismsatched Voice Channels.`,
+            sourceCmd: 'playlist.play',
+            traceId: message.traceId,
+          })
+        }
+
         const result = await this.services.playlists.hydrate({
           guildId: message.info.guildId,
           name: playlistName,
