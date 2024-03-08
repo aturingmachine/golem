@@ -18,7 +18,7 @@
     "docs:deploy": "sh ./scripts/docs-deploy.sh"
   },
   "author": "aturingmachine",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "devDependencies": {
     "@nestjs/testing": "^8.4.7",
     "@types/common-tags": "^1.8.1",
