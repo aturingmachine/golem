@@ -18,7 +18,8 @@ export class TestCommandModule<T extends GolemCommand<any>> {
     public ref: TestingModule,
     public command: T,
     public message: typeof MockGolemMessage,
-    public source: MockedParsedCommand
+    public source: MockedParsedCommand,
+    readonly tokens: InjectionToken[]
   ) {}
 
   static async init<T extends GolemCommand<any>>(
@@ -39,7 +40,8 @@ export class TestCommandModule<T extends GolemCommand<any>> {
       moduleRef,
       command,
       MockGolemMessage,
-      source
+      source,
+      tokens
     )
 
     return module
@@ -67,6 +69,25 @@ export class TestCommandModule<T extends GolemCommand<any>> {
       message: MockGolemMessage._cast(),
       source: this.source._cast(),
     })
+  }
+
+  async reset(): Promise<void> {
+    this.source._reset()
+    this.message._reset()
+
+    for (const token of this.tokens) {
+      const target = await this.ref.get(token)
+
+      const keys = Object.keys(target)
+
+      keys.forEach((key) => {
+        const castKey = key as keyof typeof target
+
+        if (typeof target[castKey] === 'function') {
+          target[castKey].mockClear()
+        }
+      })
+    }
   }
 }
 

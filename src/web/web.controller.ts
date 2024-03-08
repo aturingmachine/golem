@@ -87,6 +87,9 @@ export class WebClientController {
   @Header('Cache-Control', 'max-age=31536000')
   albumArt(@Param('path') path: string): StreamableFile {
     const decoded = decodeURIComponent(path)
+
+    this.log.debug(`attempting to get album art at "${decoded}"`)
+
     return new StreamableFile(createReadStream(decoded))
   }
 

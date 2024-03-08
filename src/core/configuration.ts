@@ -178,7 +178,7 @@ export default (): ConfigurationOptions => {
 
   const cron = raw.cron || {}
 
-  let logLevels: LogLevel[] = raw.logLevels //['error', 'warn', 'log']
+  let logLevels: LogLevel[] = raw.logLevels || ['error', 'warn', 'log'] //['error', 'warn', 'log']
 
   if (args.verbose) {
     logLevels.push('verbose')

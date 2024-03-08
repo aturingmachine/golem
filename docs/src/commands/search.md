@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# search <badge text="Music" type="music-badge" />
+# search <badge text="LocalMusic*" type="localmusic-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 Search for a local track and view the result set.
 

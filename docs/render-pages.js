@@ -95,8 +95,8 @@ commands.forEach((cmd) => {
 
   const command = new DocCommand(cmd)
 
-  console.log('modules', command.modules)
-  console.log('badges', command.badges)
+  // console.log('modules', command.modules)
+  // console.log('badges', command.badges)
 
   const content = commandTemplate
     .replaceAll('<%name>', cmd.options.info.name)

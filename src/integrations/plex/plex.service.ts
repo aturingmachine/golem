@@ -4,12 +4,19 @@ import PlexAPI, { LibraryItem, PlaylistMetadata } from 'plex-api'
 import { LoggerService } from '../../core/logger/logger.service'
 import { ListingLoaderService } from '../../music/local/library/loader.service'
 import { ListingSearcher } from '../../music/local/library/searcher.service'
+import { PlaylistListing } from '../../music/playlists/playlist.model'
+import { TrackType } from '../../music/tracks'
 import { ArrayUtils } from '../../utils/list-utils'
 
-type PlexPlaylistRecord = {
+export type PlexPlaylistRecord = {
   name: string
   count: number
   tracks: Record<'name' | 'id', string>[]
+}
+
+export type CompatPlexPlaylist = {
+  name: string
+  listings: PlaylistListing[]
 }
 
 @Injectable()
@@ -70,6 +77,22 @@ export class PlexService {
     }
 
     this.log.info(`Loaded ${this.playlists.length} Playlists.`)
+  }
+
+  playlistByName(name: string): CompatPlexPlaylist | undefined {
+    const target = this.playlists.find((playlist) => playlist.name === name)
+
+    if (!target) {
+      return undefined
+    }
+
+    return {
+      name: target.name,
+      listings: target.tracks.map((track) => ({
+        source: TrackType.Local,
+        id: Object.keys(track)[0],
+      })),
+    }
   }
 
   private async getPlaylistById(

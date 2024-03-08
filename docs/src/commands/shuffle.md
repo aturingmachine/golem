@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# shuffle <badge text="Music*" type="music-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
+# shuffle <badge text="LocalMusic*" type="localmusic-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 Shuffle the current queue maintaining the playnext queue's position.
 

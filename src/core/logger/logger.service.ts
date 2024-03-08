@@ -38,7 +38,9 @@ export class LoggerService extends ConsoleLogger {
    * @param message
    * @param context
    */
-  info = this.log
+  info(message: any, ...optionalParams: any[]): void {
+    this.log(message, ...optionalParams)
+  }
   // (message: any, context?: string | undefined): void {
   //   this.log(message, context)
   // }

@@ -13,6 +13,8 @@ export class WebSocketClient {
 
     WebSocketClient.url = 'ws://' + __API_HOST__ + ''
 
+    console.log('[ws] using url:', WebSocketClient.url)
+
     WebSocketClient._socket = io(WebSocketClient.url)
 
     WebSocketClient._socket.on("connect", () => {

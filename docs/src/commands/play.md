@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# play <badge text="Music*" type="music-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
+# play <badge text="LocalMusic*" type="localmusic-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 Play a Local Track retrieved via searching for the provided query, a YouTube track retrievied via YouTube search if the Local Track search misses; A YouTube Track from a provided absolute url; A YouTube playlist from a provided absolute YouTube Playlist URL.
 
@@ -35,6 +35,9 @@ $go play <youtube playlist url>
 
 ## Extended Arguments
 
+- **no-cache**
+	- Type: `boolean`
+	- Opt to not use a cached version of a streamed track. Will also delete any existing cached version.
 - **limit**
 	- Type: `number`
 	- Requires a YouTube playlist - Override the default fetch limit of 20

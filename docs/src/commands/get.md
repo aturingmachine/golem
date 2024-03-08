@@ -31,6 +31,7 @@ $go get count
 ## Arguments
 - **value** - `string`: The property to get information about.
 
-
+## Subcommands
+- **nowplaying**: Display the current playing resource.
 
 

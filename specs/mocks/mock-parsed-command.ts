@@ -7,10 +7,14 @@ export type MockedParsedCommand = {
   getUser: jest.Mock
   isSubCommand: jest.Mock
   getDefault: jest.Mock
+  subCommand: string
+  extendedArgs: Record<string, string | number | boolean | undefined>
 
   _mockedParams(params: Record<string, string | number | boolean>): void
 
   _cast(): ParsedCommand
+
+  _reset(): void
 }
 
 export const MockParsedCommand = (): MockedParsedCommand => ({
@@ -20,6 +24,8 @@ export const MockParsedCommand = (): MockedParsedCommand => ({
   getUser: jest.fn(),
   isSubCommand: jest.fn(),
   getDefault: jest.fn(),
+  subCommand: '',
+  extendedArgs: {},
 
   _mockedParams(params: Record<string, string | number | boolean>): void {
     this.getDefault.mockImplementation((key: string) => {
@@ -29,5 +35,18 @@ export const MockParsedCommand = (): MockedParsedCommand => ({
 
   _cast(): ParsedCommand {
     return this as unknown as ParsedCommand
+  },
+
+  _reset(): void {
+    this.getString.mockClear()
+    this.getNumber.mockClear()
+    this.getBoolean.mockClear()
+    this.getUser.mockClear()
+    this.isSubCommand.mockClear()
+    this.getDefault.mockClear()
+
+    this.subCommand = ''
+
+    this.extendedArgs = {}
   },
 })
