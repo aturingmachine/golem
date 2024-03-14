@@ -17,6 +17,7 @@ import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
 import { LoggerService } from '../core/logger/logger.service'
 import { GolemMessage } from '../messages/golem-message'
 import { ParsedCommand } from '../messages/parsed-command'
+import { Replies } from '../messages/replies/replies'
 import { DiscordMarkdown } from '../utils/discord-markdown-builder'
 import { GolemModule } from '../utils/raw-config'
 import { StringUtils } from '../utils/string-utils'
@@ -46,7 +47,7 @@ export function expandBuiltInAlias(raw: string): string | undefined {
 }
 
 export type CommandHandlerFnProps = {
-  // module: ModuleRef
+  module: ModuleRef
   message: GolemMessage
   source: ParsedCommand
 }
@@ -85,6 +86,14 @@ export type CommandHelp = {
 type CommandInfo = {
   short: string
   long?: string
+}
+
+export type CustomCommandDef = {
+  handler: CommandHandlerFn<{ log: typeof LoggerService }>
+  info: {
+    name: string
+    description: CommandInfo
+  }
 }
 
 type OptionType = 'boolean' | 'user' | 'channel' | 'role' | 'mentionable'
@@ -222,7 +231,21 @@ export class GolemCommand<
     this.addOptions()
     this.addSubCommands()
 
-    this.execute = this.options.handler
+    this.execute = async function (this, props, args) {
+      const { source, message } = props
+
+      if (source.extendedArgs.help) {
+        this.services.log?.debug(
+          `rendering help message for command ${options.info.name}`
+        )
+
+        await message.addReply(Replies.Raw(this.helpMessage))
+
+        return
+      }
+
+      options.handler.call(this, props, args)
+    }
 
     if (options.subcommands) {
       this.subcommandTree = new SubcommandTree(options.subcommands)

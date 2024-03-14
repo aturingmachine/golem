@@ -57,7 +57,8 @@ export class ProcessingTree {
   constructor(
     private logger: LoggerService,
     private clientService: ClientService,
-    private config: ConfigService
+    private config: ConfigService,
+    private ref: ModuleRef
   ) {
     this.logger.setContext('TreeService')
   }
@@ -120,6 +121,7 @@ export class ProcessingTree {
       if (!!message) {
         try {
           innerTree.instance.handler?.execute({
+            module: this.ref,
             message: message,
             source: innerTree.instance,
           })
@@ -222,6 +224,7 @@ export class ProcessingTree {
       ) {
         try {
           await this.runOne(segment, {
+            module: this.ref,
             message,
             source: segment.instance,
           })
@@ -244,6 +247,7 @@ export class ProcessingTree {
         if (canRun) {
           try {
             await this.runOne(segment, {
+              module: this.ref,
               message,
               source: segment.instance,
             })

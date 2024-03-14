@@ -2,8 +2,8 @@ import { CommandInteraction, CommandInteractionOption } from 'discord.js'
 import { ASTDebugLogger } from '../ast/ast-debug-logger'
 import { RawScriptSegment } from '../ast/compiler'
 import { CommandDescription, GolemCommand } from '../commands'
-import { Commands, RegisteredCommands } from '../commands/register-commands'
-import { BuiltInAlias, CommandBase } from '../constants'
+import { Commands } from '../commands/register-commands'
+import { BuiltInAlias, CommandBase, CommandNames } from '../constants'
 import { formatForLog } from '../utils/debug-utils'
 import { ArrayUtils } from '../utils/list-utils'
 import { StringUtils } from '../utils/string-utils'
@@ -145,47 +145,74 @@ export class ParsedCommand {
 
     switch (segment.command) {
       case CommandBase.admin:
-        return parseSegment(segment, RegisteredCommands.goadmin.info)
+        return parseSegment(
+          segment,
+          Commands.get(CommandNames.Base.admin)?.info
+        )
       case CommandBase.alias:
-        return parseSegment(segment, RegisteredCommands.goalias.info)
+        return parseSegment(
+          segment,
+          Commands.get(CommandNames.Base.alias)?.info
+        )
       case BuiltInAlias.NP:
       case BuiltInAlias.NowPlaying:
       case CommandBase.get:
-        return parseSegment(segment, RegisteredCommands.goget.info)
+        return parseSegment(segment, Commands.get(CommandNames.Base.get)?.info)
       // case CommandBase.help:
       //   return parseSegment(segment, gohelp.info)
       // case CommandBase.mix:
-      //   return parseSegment(segment, RegisteredCommands.gomix.info)
+      //   return parseSegment(segment, Commands.get('gomix')?.info)
       case BuiltInAlias.Pause:
       case CommandBase.pause:
-        return parseSegment(segment, RegisteredCommands.gopause.info)
+        return parseSegment(
+          segment,
+          Commands.get(CommandNames.Base.pause)?.info
+        )
       case CommandBase.peek:
-        return parseSegment(segment, RegisteredCommands.gopeek.info)
+        return parseSegment(segment, Commands.get(CommandNames.Base.peek)?.info)
       case BuiltInAlias.Play:
       case CommandBase.play:
       default:
-        return parseSegment(segment, RegisteredCommands.goplay.info)
+        return parseSegment(segment, Commands.get(CommandNames.Base.play)?.info)
       case CommandBase.playlist:
-        return parseSegment(segment, RegisteredCommands.goplaylist.info)
+        return parseSegment(
+          segment,
+          Commands.get(CommandNames.Base.playlist)?.info
+        )
       case BuiltInAlias.PlayNext:
       case CommandBase.playNext:
-        return parseSegment(segment, RegisteredCommands.goplaynext.info)
+        return parseSegment(
+          segment,
+          Commands.get(CommandNames.Base.playNext)?.info
+        )
       case CommandBase.report:
-        return parseSegment(segment, RegisteredCommands.goreport.info)
+        return parseSegment(
+          segment,
+          Commands.get(CommandNames.Base.report)?.info
+        )
       case CommandBase.search:
-        return parseSegment(segment, RegisteredCommands.gosearch.info)
+        return parseSegment(
+          segment,
+          Commands.get(CommandNames.Base.search)?.info
+        )
       case CommandBase.shuffle:
-        return parseSegment(segment, RegisteredCommands.goshuffle.info)
+        return parseSegment(
+          segment,
+          Commands.get(CommandNames.Base.shuffle)?.info
+        )
       case BuiltInAlias.Skip:
       case CommandBase.skip:
-        return parseSegment(segment, RegisteredCommands.goskip.info)
+        return parseSegment(segment, Commands.get(CommandNames.Base.skip)?.info)
       case BuiltInAlias.Stop:
       case CommandBase.stop:
-        return parseSegment(segment, RegisteredCommands.gostop.info)
+        return parseSegment(segment, Commands.get(CommandNames.Base.stop)?.info)
       case CommandBase.perms:
-        return parseSegment(segment, RegisteredCommands.gopermission.info)
+        return parseSegment(
+          segment,
+          Commands.get(CommandNames.Base.perms)?.info
+        )
       // default:
-      //   return parseSegment(segment, RegisteredCommands.goget.info)
+      //   return parseSegment(segment, Commands.get('goget')?.info)
     }
   }
 
@@ -203,47 +230,56 @@ export class ParsedCommand {
 
     switch (cmd) {
       case CommandBase.admin:
-        return parseString(parsed, RegisteredCommands.goadmin.info)
-      // case CommandBase.alias:
-      //   return parseString(parsed, RegisteredCommands.goalias.info)
-      // case BuiltInAlias.NP:
-      // case BuiltInAlias.NowPlaying:
-      // case CommandBase.get:
-      //   return parseString(parsed, RegisteredCommands.goget.info)
-      // case CommandBase.help:
-      //   return parseString(parsed, gohelp.info)
-      // case CommandBase.mix:
-      //   return parseString(parsed, RegisteredCommands.gomix.info)
+        return parseString(parsed, Commands.get(CommandNames.Base.admin)?.info)
+      case CommandBase.alias:
+        return parseString(parsed, Commands.get(CommandNames.Base.alias)?.info)
+      case BuiltInAlias.NP:
+      case BuiltInAlias.NowPlaying:
+      case CommandBase.get:
+        return parseString(parsed, Commands.get(CommandNames.Base.get)?.info)
+      case CommandBase.help:
+        return parseString(parsed, Commands.get(CommandNames.Base.help)?.info)
+      case CommandBase.mix:
+        return parseString(parsed, Commands.get(CommandNames.Base.mix)?.info)
       case BuiltInAlias.Pause:
       case CommandBase.pause:
-        return parseString(parsed, RegisteredCommands.gopause.info)
+        return parseString(parsed, Commands.get(CommandNames.Base.pause)?.info)
       case CommandBase.peek:
-        return parseString(parsed, RegisteredCommands.gopeek.info)
+        return parseString(parsed, Commands.get(CommandNames.Base.peek)?.info)
       case BuiltInAlias.Play:
       case CommandBase.play:
       default:
-        return parseString(parsed, RegisteredCommands.goplay.info)
+        return parseString(parsed, Commands.get(CommandNames.Base.peek)?.info)
       case CommandBase.playlist:
-        return parseString(parsed, RegisteredCommands.goplaylist.info)
+        return parseString(
+          parsed,
+          Commands.get(CommandNames.Base.playlist)?.info
+        )
       case BuiltInAlias.PlayNext:
       case CommandBase.playNext:
-        return parseString(parsed, RegisteredCommands.goplaynext.info)
-      // case CommandBase.report:
-      //   return parseString(parsed, RegisteredCommands.goreport.info)
+        return parseString(
+          parsed,
+          Commands.get(CommandNames.Base.playNext)?.info
+        )
+      case CommandBase.report:
+        return parseString(parsed, Commands.get(CommandNames.Base.report)?.info)
       case CommandBase.search:
-        return parseString(parsed, RegisteredCommands.gosearch.info)
-      // case CommandBase.shuffle:
-      //   return parseString(parsed, RegisteredCommands.goshuffle.info)
+        return parseString(parsed, Commands.get(CommandNames.Base.search)?.info)
+      case CommandBase.shuffle:
+        return parseString(
+          parsed,
+          Commands.get(CommandNames.Base.shuffle)?.info
+        )
       case BuiltInAlias.Skip:
       case CommandBase.skip:
-        return parseString(parsed, RegisteredCommands.goskip.info)
+        return parseString(parsed, Commands.get(CommandNames.Base.skip)?.info)
       case BuiltInAlias.Stop:
       case CommandBase.stop:
-        return parseString(parsed, RegisteredCommands.gostop.info)
+        return parseString(parsed, Commands.get(CommandNames.Base.stop)?.info)
       case CommandBase.perms:
-        return parseString(parsed, RegisteredCommands.gopermission.info)
+        return parseString(parsed, Commands.get(CommandNames.Base.perms)?.info)
       // default:
-      //   return parseString(parsed, RegisteredCommands.goget.info)
+      //   return parseString(parsed, Commands.get('goget')?.info)
     }
   }
 }
@@ -269,7 +305,11 @@ export function parseCommandInterface(
   return res
 }
 
-function parseString(content: string, def: CommandDescription): ParsedCommand {
+function parseString(content: string, def?: CommandDescription): ParsedCommand {
+  if (!def) {
+    throw new Error('No command Def provided to parseString.')
+  }
+
   const parsedContent = /^\$/.test(content)
     ? content.replace(/^\$(go )?/, '')
     : content
@@ -395,8 +435,17 @@ function parseString(content: string, def: CommandDescription): ParsedCommand {
 
 function parseSegment(
   segment: RawScriptSegment,
-  def: CommandDescription
+  def?: CommandDescription
 ): ParsedCommand {
+  if (!def) {
+    ASTDebugLogger.warn(
+      '[PARSED COMMAND]',
+      'pc:parseSegment provided with no command definition'
+    )
+
+    throw new Error('No Command provided to parseSegment')
+  }
+
   const content = segment.compiled
 
   ASTDebugLogger.log(
