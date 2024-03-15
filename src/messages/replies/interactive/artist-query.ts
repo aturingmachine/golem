@@ -5,9 +5,9 @@ import {
   EmbedBuilder,
   MessageReplyOptions,
 } from 'discord.js'
+import { isValidPlayer } from '../../../commands/utils/player-error-handlers'
 import { GolemLogo } from '../../../constants'
 import { LoggerService } from '../../../core/logger/logger.service'
-import { Errors } from '../../../errors'
 import { ListingSearcher } from '../../../music/local/library/searcher.service'
 import { PlayerService } from '../../../music/player/player.service'
 import { LocalTrack } from '../../../music/tracks/local-track'
@@ -62,6 +62,19 @@ export class ArtistQueryReply extends BaseReply {
         time: 30_000,
       },
       async (interaction) => {
+        const player = await this.players.getOrCreate(this.source)
+
+        if (
+          !isValidPlayer(player, {
+            logger: this.log,
+            message: this.source,
+            sourceCmd: 'play',
+          })
+        ) {
+          this.log.info(`valid player check failed`)
+          return
+        }
+
         const custom_id = CustomId.fromString<ButtonIdPrefixes>(
           interaction.customId
         )
@@ -114,32 +127,6 @@ export class ArtistQueryReply extends BaseReply {
         const tracks = results.map((listing) =>
           LocalTrack.fromListing(listing, this.source.info.userId)
         )
-
-        const player = await this.players.getOrCreate(this.source)
-
-        if (!player) {
-          this.log.warn(
-            `unable to create player for guild: ${this.source.info.guild?.name} channel: ${this.source.info.voiceChannel?.name}`
-          )
-
-          throw Errors.NoPlayer({
-            message: `unable to create player for guild: ${this.source.info.guild?.name} channel: ${this.source.info.voiceChannel?.name}`,
-            sourceCmd: 'play',
-            traceId: this.source.traceId,
-          })
-        }
-
-        if (player === 'ERR_ALREADY_ACTIVE') {
-          this.log.warn(
-            `attempted to play from another voice channel while bot was already active; guild: ${this.source.info.guild?.name} channel: ${this.source.info.voiceChannel?.name}`
-          )
-
-          throw Errors.ActivePlayerChannelMismatch({
-            message: `Attempted action that requires matching Voice Channel with bot, but found mismsatched Voice Channels.`,
-            sourceCmd: 'artistQuery.collect',
-            traceId: this.source.traceId,
-          })
-        }
 
         await this.players.play(this.source, player, tracks, 'queue')
 

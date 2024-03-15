@@ -217,17 +217,19 @@ export class MusicPlayer {
   }
 
   public get isConnected(): boolean {
-    return this.voiceConnection.state.status === VoiceConnectionStatus.Ready
+    return this.voiceConnection?.state?.status === VoiceConnectionStatus.Ready
   }
 
   public get isDisconnected(): boolean {
     return (
-      this.voiceConnection.state.status === VoiceConnectionStatus.Disconnected
+      this.voiceConnection?.state?.status === VoiceConnectionStatus.Disconnected
     )
   }
 
   public get isDestroyed(): boolean {
-    return this.voiceConnection.state.status === VoiceConnectionStatus.Destroyed
+    return (
+      this.voiceConnection?.state?.status === VoiceConnectionStatus.Destroyed
+    )
   }
 
   public async enqueue(

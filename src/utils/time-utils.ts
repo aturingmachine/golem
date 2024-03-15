@@ -57,3 +57,41 @@ export class JobTimer<T> {
       : 'Has Not Exectuted.'
   }
 }
+
+type WaitUntilOptions = {
+  maxTries?: number
+  waitTime?: number
+  timeoutHandler?: () => Promise<void> | void
+}
+
+export async function waitUntil(
+  fn: () => Promise<boolean> | boolean,
+  options?: WaitUntilOptions
+): Promise<void> {
+  let tries = 0
+
+  const {
+    maxTries = 3,
+    waitTime = 1000,
+    timeoutHandler = () => {
+      throw new Error('Maxed out retrying opertaion.')
+    },
+  } = options || {}
+
+  const doTry = async () => {
+    if (tries > maxTries) {
+      await timeoutHandler()
+    }
+
+    tries++
+
+    const res = await fn()
+
+    if (!res) {
+      await wait(waitTime)
+      await doTry()
+    }
+  }
+
+  await doTry()
+}

@@ -232,6 +232,8 @@ export class GolemCommand<
     this.addSubCommands()
 
     this.execute = async function (this, props, args) {
+      this.services.log?.debug(`running wrapped handler`)
+
       const { source, message } = props
 
       if (source.extendedArgs.help) {
@@ -244,7 +246,7 @@ export class GolemCommand<
         return
       }
 
-      options.handler.call(this, props, args)
+      return options.handler.call(this, props, args)
     }
 
     if (options.subcommands) {

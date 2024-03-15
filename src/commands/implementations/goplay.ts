@@ -7,6 +7,7 @@ import { PlayQueryService } from '../../music/player/play-query.service'
 import { PlayerService } from '../../music/player/player.service'
 import { formatForLog } from '../../utils/debug-utils'
 import { GolemModule } from '../../utils/raw-config'
+import { isValidPlayer } from '../utils/player-error-handlers'
 
 export default new GolemCommand({
   services: {
@@ -23,28 +24,15 @@ export default new GolemCommand({
 
     const player = await this.services.playerService.getOrCreate(message)
 
-    if (!player) {
-      this.services.log.warn(
-        `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
-      )
-
-      throw Errors.NoPlayer({
-        message: `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
+    // Handle potential Error Codes from the PlayerService
+    if (
+      !isValidPlayer(player, {
+        logger: this.services.log,
+        message,
         sourceCmd: 'play',
-        traceId: message.traceId,
       })
-    }
-
-    if (player === 'ERR_ALREADY_ACTIVE') {
-      this.services.log.warn(
-        `attempted to play from another voice channel while bot was already active; guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
-      )
-
-      throw Errors.ActivePlayerChannelMismatch({
-        message: `Attempted action that requires matching Voice Channel with bot, but found mismsatched Voice Channels.`,
-        sourceCmd: 'play',
-        traceId: message.traceId,
-      })
+    ) {
+      return
     }
 
     // Handle Unpause

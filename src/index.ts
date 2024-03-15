@@ -127,7 +127,8 @@ STACK: ${err.stack || 'No Stack Available.'}`
   })
 
   // Run the shutdown handler on exit.
-  process.once('exit', () => initService.shutdown())
+  process.on('exit', () => initService.shutdown())
+  process.on('SIGINT', () => initService.shutdown())
 
   await app.startAllMicroservices()
   await app.listen(config.get('web.apiPort') || 8211)
@@ -158,6 +159,6 @@ STACK: ${err.stack || 'No Stack Available.'}`
 //   }
 // })
 
-process.once('SIGINT', () => process.exit(1))
+// process.once('SIGINT', () => process.exit(1))
 
 bootstrap()

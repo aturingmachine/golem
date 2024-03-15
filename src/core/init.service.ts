@@ -53,6 +53,7 @@ export class InitService {
   shutdown(): void {
     this.log.info('shutting down')
     this.clientService.client?.destroy()
+    process.exit(1)
   }
 
   /**

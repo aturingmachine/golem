@@ -63,27 +63,6 @@ export class ProcessingTree {
     this.logger.setContext('TreeService')
   }
 
-  // TODO make this work with Slash Commands probably?
-  treeify(parsed: string): CommandNodes {
-    if (parsed.includes(SEMI)) {
-      return {
-        type: SEMI,
-        commands: parsed.split(SEMI).map((m) => this.treeify(m.trim())),
-      }
-    } else if (parsed.includes(AND)) {
-      return {
-        type: AND,
-        commands: parsed.split(AND).map((m) => this.treeify(m.trim()) as any),
-      }
-    } else {
-      return {
-        type: RUN,
-        command: parsed,
-        instance: ParsedCommand.fromRaw(parsed),
-      }
-    }
-  }
-
   async runTree(
     innerTree: CommandNodes,
     results: ExecutionResults,
@@ -115,6 +94,14 @@ export class ProcessingTree {
       }
     } else if (innerTree.type === RUN) {
       // Run the command, return the status
+
+      /**
+       * Tracks the current state of the run.
+       *
+       * False = Failed
+       *
+       * True = Passing
+       */
       let status = true
 
       // client.users.send('id', 'content');
@@ -151,6 +138,8 @@ export class ProcessingTree {
             this.clientService.client &&
             this.config.get('discord.adminId')
           ) {
+            this.logger.info('Notifying Admin of Error.')
+
             await this.clientService.client.users.send(
               // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
               this.config.get('discord.adminId')!,
@@ -184,8 +173,16 @@ export class ProcessingTree {
     segment: CompiledScriptSegment,
     fnProps: CommandHandlerFnProps
   ): Promise<void> {
+    this.logger.debug(`[runOne] "${segment.compiled}"`)
+
     if (segment.instance.handler) {
-      await segment.instance.handler.execute(fnProps)
+      try {
+        return segment.instance.handler.execute(fnProps)
+      } catch (error) {
+        this.logger.debug(`[runOne] handler threw error ${error}`)
+
+        throw error
+      }
     } else {
       throw new Error('TODO')
     }
@@ -212,24 +209,31 @@ export class ProcessingTree {
     ]
     let canRun = true
 
+    // Loop through all Segments of the Script and execute them
     for (const segment of script.segments) {
       const index = segment.index
 
-      this.logger.debug(`executing segment[${index}] "${segment.compiled}"`)
+      this.logger.debug(
+        `[_execute] executing segment[${index}] "${segment.compiled}"`
+      )
 
       // A solo segment can always run so we will reset
       if (
         segment.block_type === 'solo' ||
         (segment.block_type === 'and_block' && lastSegment[1] === 'solo')
       ) {
+        this.logger.debug(`[_execute] running solo segment run`)
         try {
           await this.runOne(segment, {
             module: this.ref,
             message,
             source: segment.instance,
           })
+
           canRun = true
         } catch (error) {
+          this.logger.debug(`[_execute] solo segment run failed ${error}`)
+
           canRun = false
 
           message.addError(error)
@@ -287,52 +291,16 @@ export class ProcessingTree {
       lastSegment = [index, segment.block_type]
     }
 
+    this.logExecutionResults(results)
+
     return results
   }
 
-  private async handleError(
-    message: GolemMessage,
-    error: unknown
-  ): Promise<void> {
-    await message.addError(error)
-
-    let adminMessage = ''
-    if (GolemError.is(error)) {
-      if (error.params.requiresAdminAttention || true) {
-        adminMessage = DiscordMarkdown.start()
-          .raw('-----')
-          .bold(`DATE: ${new Date().toUTCString()}`)
-          .bold(`ADMIN ATTENTION REQUESTED VIA ERROR HANDLER`)
-          .newLine()
-          .code(`SERVER: ${message.info.guild?.name || message.info.guildId}`)
-          .newLine()
-          .preformat(error.toAdminString())
-          .toString()
-      }
-    } else if (error instanceof Error) {
-      adminMessage = DiscordMarkdown.start()
-        .preformat(
-          `
-GOLEM ERROR: UNCAUGHT EXCEPTION ${new Date().toUTCString()}
------
-Error: ${error.name} - ${error.message}
-STACK: ${error.stack || 'No Stack Available.'}`
-        )
-        .toString()
-    } else {
-      adminMessage = DiscordMarkdown.start()
-        .preformat(
-          `
-GOLEM ERROR: UNCAUGHT EXCEPTION ${new Date().toUTCString()}
------
-${error?.toString() || error}
-`
-        )
-        .toString()
-    }
-
-    if (adminMessage.length > 0) {
-      await this.clientService.messageAdmin(adminMessage)
-    }
+  private logExecutionResults(results: ExecutionResults): void {
+    results.timeline.forEach((timeline, index) => {
+      this.logger.debug(
+        `[INDEX:${index}] [${timeline.status}] "${timeline.instance.source}"`
+      )
+    })
   }
 }

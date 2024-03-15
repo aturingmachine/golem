@@ -3,7 +3,12 @@ import { GolemError, GolemErrorParams } from './golem-error'
 
 export class NoPlayerError extends GolemError {
   constructor(
-    params: GolemErrorParams & { message: string; sourceCmd: string }
+    params: GolemErrorParams & {
+      message: string
+      sourceCmd: string
+      guildName?: string
+      voiceChannel?: string
+    }
   ) {
     super(params)
   }

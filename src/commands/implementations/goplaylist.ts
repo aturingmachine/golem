@@ -14,6 +14,7 @@ import { PlayerService } from '../../music/player/player.service'
 import { PlaylistService } from '../../music/playlists/playlist.service'
 import { formatForLog } from '../../utils/debug-utils'
 import { GolemModule } from '../../utils/raw-config'
+import { isValidPlayer } from '../utils/player-error-handlers'
 
 export default new GolemCommand({
   logSource: 'GoPlaylist',
@@ -89,24 +90,14 @@ export default new GolemCommand({
 
         const player = await this.services.players.getOrCreate(message)
 
-        if (!player) {
-          throw Errors.NoPlayer({
-            message: `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
+        if (
+          !isValidPlayer(player, {
+            logger: this.services.log,
+            message,
             sourceCmd: 'playlist.play',
-            traceId: message.traceId,
           })
-        }
-
-        if (player === 'ERR_ALREADY_ACTIVE') {
-          this.services.log.warn(
-            `attempted to play from another voice channel while bot was already active; guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
-          )
-
-          throw Errors.ActivePlayerChannelMismatch({
-            message: `Attempted action that requires matching Voice Channel with bot, but found mismsatched Voice Channels.`,
-            sourceCmd: 'playlist.play',
-            traceId: message.traceId,
-          })
+        ) {
+          return
         }
 
         const result = await this.services.playlists.hydrate({

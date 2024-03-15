@@ -11,6 +11,6 @@ export class RawReply extends BaseReply {
   }
 
   addDebug(debugInfo: string): void {
-    this.addDebugContent(debugInfo)
+    this.addDebugContent('\n`' + debugInfo + '`')
   }
 }

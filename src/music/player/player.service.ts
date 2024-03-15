@@ -6,6 +6,7 @@ import { LoggerService } from '../../core/logger/logger.service'
 import { NoPlayerError } from '../../errors/no-player-error'
 import { GolemMessage } from '../../messages/golem-message'
 import { MessageInfo } from '../../messages/message-info'
+import { waitUntil } from '../../utils/time-utils'
 import { TrackAudioResourceMetadata, TrackType } from '../tracks'
 import { Tracks } from '../tracks/tracks'
 import { YoutubeService } from '../youtube/youtube.service'
@@ -94,10 +95,10 @@ export class PlayerService {
     return player
   }
 
-  async create(message: GolemMessage): Promise<MusicPlayer | undefined> {
+  async create(
+    message: GolemMessage
+  ): Promise<MusicPlayer | undefined | 'ERR_NO_VOICE_CHANNEL'> {
     const debugServer = this.config.get('discord.debug')
-
-    console.log(debugServer)
 
     const hasDebugServer =
       !!debugServer.channelId &&
@@ -110,7 +111,8 @@ export class PlayerService {
       !message.info.guild
     ) {
       this.log.warn(`create unable to create - no voice channel or guild`)
-      return
+
+      return 'ERR_NO_VOICE_CHANNEL'
     }
 
     let opts: MusicPlayerOptions
@@ -152,13 +154,23 @@ export class PlayerService {
 
   async getOrCreate(
     message: GolemMessage
-  ): Promise<MusicPlayer | undefined | 'ERR_ALREADY_ACTIVE'> {
-    this.log.info(`getOrCreate player for ${message.info.guildId}`)
+  ): Promise<
+    MusicPlayer | undefined | 'ERR_ALREADY_ACTIVE' | 'ERR_NO_VOICE_CHANNEL'
+  > {
+    this.log.info(`[getOrCreate] player for ${message.info.guildId}`)
     const voiceChannelId = message.info.voiceChannel?.id
     const guildPlayer = this.forGuild(message.info.guildId)
 
     if (guildPlayer) {
       this.log.info(`found guild instance for ${message.info.guildId}`)
+
+      await waitUntil(() => !!guildPlayer.voiceConnection, {
+        maxTries: 5,
+        waitTime: 250,
+        timeoutHandler() {
+          throw new Error(`A Voice Connection could not be established.`)
+        },
+      })
 
       // The bot is already in a channel
       if (guildPlayer.isConnected) {
