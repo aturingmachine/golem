@@ -20,4 +20,8 @@ export class PermissionChangeReply extends BaseReply {
 
     super({ content })
   }
+
+  addDebug(debugInfo: string): void {
+    this.addDebugContent(debugInfo)
+  }
 }

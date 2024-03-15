@@ -9,7 +9,7 @@ export class YoutubePlaylistReply extends BaseReply {
   type = ReplyType.YoutubePlaylist
   isUnique = false
 
-  constructor(embed: YoutubePlaylistEmbed) {
+  constructor(readonly embed: YoutubePlaylistEmbed) {
     super(embed.options)
   }
 
@@ -19,5 +19,9 @@ export class YoutubePlaylistReply extends BaseReply {
     const embed = await playlist.embed
 
     return new YoutubePlaylistReply(embed)
+  }
+
+  addDebug(debugInfo: string): void {
+    this.addDebugFooter(debugInfo)
   }
 }

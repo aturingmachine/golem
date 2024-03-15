@@ -23,4 +23,10 @@ export class QueueReply extends BaseReply {
 
     super({ embeds: [embed.data] })
   }
+
+  addDebug(debugInfo: string): void {
+    // console.log((this.opts.embeds?.[0] as any).footer)
+    // this.addDebugFooter(debugInfo)
+    // console.log(this.opts.embeds?.[0])
+  }
 }

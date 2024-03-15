@@ -172,7 +172,7 @@ export class ParsedCommand {
         return parseSegment(segment, Commands.get(CommandNames.Base.peek)?.info)
       case BuiltInAlias.Play:
       case CommandBase.play:
-      default:
+        // default:
         return parseSegment(segment, Commands.get(CommandNames.Base.play)?.info)
       case CommandBase.playlist:
         return parseSegment(
@@ -211,7 +211,8 @@ export class ParsedCommand {
           segment,
           Commands.get(CommandNames.Base.perms)?.info
         )
-      // default:
+      default:
+        throw new Error(`Command "${segment.command}" not known.`)
       //   return parseSegment(segment, Commands.get('goget')?.info)
     }
   }

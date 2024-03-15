@@ -264,4 +264,8 @@ export class ArtistQueryReply extends BaseReply {
       log,
     })
   }
+
+  addDebug(debugInfo: string): void {
+    this.addDebugFooter(debugInfo)
+  }
 }

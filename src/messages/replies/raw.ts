@@ -9,4 +9,8 @@ export class RawReply extends BaseReply {
   constructor(content: string | MessageReplyOptions) {
     super(typeof content === 'string' ? { content } : content)
   }
+
+  addDebug(debugInfo: string): void {
+    this.addDebugContent(debugInfo)
+  }
 }

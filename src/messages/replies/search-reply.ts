@@ -47,4 +47,8 @@ export class SearchReply extends BaseReply {
   ) {
     super(getSearchReply(query, trimmedResults, resultCount))
   }
+
+  addDebug(debugInfo: string): void {
+    this.addDebugFooter(debugInfo)
+  }
 }

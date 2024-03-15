@@ -261,6 +261,10 @@ export class GolemMessage {
     return message
   }
 
+  get messageDebugInfo(): string {
+    return `[trace_id: ${this.traceId} | audit_id: ${this.auditId}]`
+  }
+
   get lastReply(): Message | undefined {
     return this.replies.at(-1)
   }

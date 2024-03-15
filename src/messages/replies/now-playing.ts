@@ -42,4 +42,8 @@ export class NowPlayingReply extends BaseReply {
       files: listingEmbed.image ? [listingEmbed.image] : [],
     })
   }
+
+  addDebug(debugInfo: string): void {
+    this.addDebugFooter(debugInfo)
+  }
 }
