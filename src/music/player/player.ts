@@ -59,6 +59,7 @@ export type MusicPlayerOptions = JoinVoiceChannelOptions &
   CreateVoiceConnectionOptions & {
     guildName: string
     channelName: string
+    onDestroy: () => void
   }
 
 export class MusicPlayer {
@@ -274,10 +275,12 @@ export class MusicPlayer {
     await this.processQueue(true)
   }
 
+  // TODO add on destroy callback here
   public async destroy(): Promise<void> {
     this.log.verbose(
       `attempt destroy voice connection for ${this.primaryKey} - ${this.secondaryKey} - state=${this.voiceConnection.state.status}`
     )
+
     if (
       ![
         VoiceConnectionStatus.Destroyed,
@@ -352,6 +355,8 @@ export class MusicPlayer {
       this.queueLock = false
       this.voiceConnection.disconnect()
       this.updatePresence()
+
+      this.options.onDestroy()
       // Golem.presence.update()
     }
   }

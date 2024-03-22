@@ -45,6 +45,7 @@ export class PlayerService {
         this._cache
       )}`
     )
+
     return this._cache.get(guildId)
   }
 
@@ -68,8 +69,6 @@ export class PlayerService {
   async create(message: GolemMessage): Promise<MusicPlayer | undefined> {
     const debugServer = this.config.get('discord.debug')
 
-    console.log(debugServer)
-
     const hasDebugServer =
       !!debugServer.channelId &&
       !!debugServer.channelName &&
@@ -84,10 +83,21 @@ export class PlayerService {
       return
     }
 
-    let opts: MusicPlayerOptions
+    let opts: MusicPlayerOptions = {
+      adapterCreator: message.info.guild
+        .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
+      channelId: message.info.voiceChannel!.id,
+      channelName: message.info.voiceChannel!.name,
+      guildId: message.info.guildId,
+      guildName: message.info.guild.name,
+      onDestroy: () => {
+        this._cache.delete(message.info.guildId)
+      },
+    }
 
-    if (hasDebugServer) {
+    if (hasDebugServer && !message.info.voiceChannel?.id) {
       this.log.info(`creating player using debug server`)
+
       opts = {
         adapterCreator: message.info.guild
           .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
@@ -95,15 +105,9 @@ export class PlayerService {
         channelName: debugServer.channelName,
         guildId: debugServer.guildId,
         guildName: debugServer.guildName,
-      }
-    } else {
-      opts = {
-        adapterCreator: message.info.guild
-          .voiceAdapterCreator as unknown as DiscordGatewayAdapterCreator,
-        channelId: message.info.voiceChannel!.id,
-        channelName: message.info.voiceChannel!.name,
-        guildId: message.info.guildId,
-        guildName: message.info.guild.name,
+        onDestroy: () => {
+          this._cache.delete(debugServer.guildId)
+        },
       }
     }
 

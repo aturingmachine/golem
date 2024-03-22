@@ -132,6 +132,7 @@ export class InitService {
           `no members left in channel with bot - starting auto-dc timer`,
           'voiceStateUpdate:startTimer'
         )
+
         player.startTimer()
       }
     )
