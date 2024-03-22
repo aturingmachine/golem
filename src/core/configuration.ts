@@ -11,6 +11,7 @@ export type DiscordConfig = {
   serverIds: string[]
   adminId: string
   debugServerId?: string
+  messageDebug?: boolean
 }
 
 export type ImageConfig = {
@@ -72,6 +73,12 @@ export type CacheConfig = {
   }
 }
 
+export type CustomCommandConfig = {
+  key: string
+  command: string
+  exec_path: string
+}
+
 export type ConfigurationOptions = {
   args: GolemArgs & ParsedArgs
   discord?: DiscordConfig
@@ -86,6 +93,7 @@ export type ConfigurationOptions = {
   cache?: CacheConfig
   logLevels: LogLevel[]
   cron: Record<string, string>
+  custom_commands: CustomCommandConfig[]
   crash?: {
     run: string
   }
@@ -113,6 +121,7 @@ export default (): ConfigurationOptions => {
     clientId: raw.discord?.clientId || '',
     serverIds: raw.discord?.serverIds || [],
     adminId: raw.discord?.adminId || '',
+    messageDebug: raw.discord?.messageDebug || false,
     debug: {
       channelId: raw.discord?.debug?.channel_id,
       channelName: raw.discord?.debug?.channel_name,
@@ -178,7 +187,9 @@ export default (): ConfigurationOptions => {
 
   const cron = raw.cron || {}
 
-  let logLevels: LogLevel[] = raw.logLevels //['error', 'warn', 'log']
+  const custom_commands = raw.custom_commands || []
+
+  let logLevels: LogLevel[] = raw.logLevels || ['error', 'warn', 'log'] //['error', 'warn', 'log']
 
   if (args.verbose) {
     logLevels.push('verbose')
@@ -208,5 +219,6 @@ export default (): ConfigurationOptions => {
     logLevels,
     cron,
     cache,
+    custom_commands,
   }
 }

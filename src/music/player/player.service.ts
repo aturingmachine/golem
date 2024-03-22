@@ -5,6 +5,8 @@ import { ModuleRef } from '@nestjs/core'
 import { LoggerService } from '../../core/logger/logger.service'
 import { NoPlayerError } from '../../errors/no-player-error'
 import { GolemMessage } from '../../messages/golem-message'
+import { MessageInfo } from '../../messages/message-info'
+import { waitUntil } from '../../utils/time-utils'
 import { TrackAudioResourceMetadata, TrackType } from '../tracks'
 import { Tracks } from '../tracks/tracks'
 import { YoutubeService } from '../youtube/youtube.service'
@@ -19,6 +21,8 @@ export type AudioResourceDefinition = {
   track: Tracks
   userId: string
 }
+
+type PlayerLookup = [MessageInfo] | [string, string | undefined]
 
 @Injectable()
 export class PlayerService {
@@ -39,18 +43,43 @@ export class PlayerService {
     return this._cache
   }
 
-  for(guildId: string): MusicPlayer | undefined {
-    this.log.debug(
-      `fetching player for: ${guildId}; current cache: ${Object.entries(
-        this._cache
-      )}`
-    )
-
+  /**
+   * Should only be used to get the player for a guild if **no changes are going to be made to the player**.
+   * @param guildId
+   * @returns
+   */
+  forGuild(guildId: string): MusicPlayer | undefined {
     return this._cache.get(guildId)
   }
 
-  shuffle(guildId: string): MusicPlayer {
-    const player = this.for(guildId)
+  for(info: MessageInfo): MusicPlayer | undefined
+  for(guildId: string, channelId: string | undefined): MusicPlayer | undefined
+  for(...args: PlayerLookup): MusicPlayer | undefined {
+    const { guildId, channelId } = this.parseLookup(...args)
+
+    this.log.debug(
+      `fetching player for: guild="${guildId}" channel="${channelId}" `
+    )
+
+    const player = this._cache.get(guildId)
+
+    if (!player) {
+      return undefined
+    }
+
+    if (player.channelId !== channelId) {
+      return undefined
+    }
+
+    return player
+  }
+
+  shuffle(info: MessageInfo): MusicPlayer
+  shuffle(guildId: string, channelId: string): MusicPlayer
+  shuffle(...args: PlayerLookup): MusicPlayer {
+    const { guildId, channelId } = this.parseLookup(...args)
+
+    const player = this.for(guildId, channelId)
 
     if (!player) {
       this.log.warn(`cannot run shuffle on guild with no player`)
@@ -66,7 +95,9 @@ export class PlayerService {
     return player
   }
 
-  async create(message: GolemMessage): Promise<MusicPlayer | undefined> {
+  async create(
+    message: GolemMessage
+  ): Promise<MusicPlayer | undefined | 'ERR_NO_VOICE_CHANNEL'> {
     const debugServer = this.config.get('discord.debug')
 
     const hasDebugServer =
@@ -80,7 +111,8 @@ export class PlayerService {
       !message.info.guild
     ) {
       this.log.warn(`create unable to create - no voice channel or guild`)
-      return
+
+      return 'ERR_NO_VOICE_CHANNEL'
     }
 
     let opts: MusicPlayerOptions = {
@@ -125,12 +157,46 @@ export class PlayerService {
     return player
   }
 
-  async getOrCreate(message: GolemMessage): Promise<MusicPlayer | undefined> {
-    this.log.info(`getOrCreate player for ${message.info.guildId}`)
+  async getOrCreate(
+    message: GolemMessage
+  ): Promise<
+    MusicPlayer | undefined | 'ERR_ALREADY_ACTIVE' | 'ERR_NO_VOICE_CHANNEL'
+  > {
+    this.log.info(`[getOrCreate] player for ${message.info.guildId}`)
+    const voiceChannelId = message.info.voiceChannel?.id
+    const guildPlayer = this.forGuild(message.info.guildId)
 
-    if (this._cache.has(message.info.guildId)) {
-      this.log.info(`found instance for ${message.info.guildId}`)
-      return this.for(message.info.guildId)
+    if (guildPlayer) {
+      this.log.info(`found guild instance for ${message.info.guildId}`)
+
+      await waitUntil(() => !!guildPlayer.voiceConnection, {
+        maxTries: 5,
+        waitTime: 250,
+        timeoutHandler() {
+          throw new Error(`A Voice Connection could not be established.`)
+        },
+      })
+
+      // The bot is already in a channel
+      if (guildPlayer.isConnected) {
+        // The user is in the same channel as the bot
+        if (guildPlayer.channelId === message.info.voiceChannel?.id) {
+          return guildPlayer
+        }
+
+        return 'ERR_ALREADY_ACTIVE'
+      }
+
+      // Getting here means the guildPlayer is sitting idle and disconnected from voice
+
+      // If we do not have a voice channel to update to, bail
+      if (!voiceChannelId) {
+        return undefined
+      }
+
+      guildPlayer.channelId = voiceChannelId
+
+      return guildPlayer
     }
 
     this.log.info(`have to make new instance for ${message.info.guildId}`)
@@ -139,7 +205,7 @@ export class PlayerService {
   }
 
   async destroy(guildId: string): Promise<void> {
-    const player = this.for(guildId)
+    const player = this.forGuild(guildId)
 
     if (player) {
       player.destroy()
@@ -207,5 +273,20 @@ export class PlayerService {
     )
 
     player.enqueueMany(userId, audioResources)
+  }
+
+  private parseLookup(...args: PlayerLookup): {
+    guildId: string
+    channelId: string | undefined
+  } {
+    return args.length === 1
+      ? {
+          guildId: args[0].guildId,
+          channelId: args[0].voiceChannel?.id,
+        }
+      : {
+          guildId: args[0],
+          channelId: args[1],
+        }
   }
 }

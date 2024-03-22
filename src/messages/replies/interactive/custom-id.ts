@@ -23,6 +23,16 @@ export class CustomId<P extends InteractionIdPrefixes> {
     return formatForLog(this)
   }
 
+  /**
+   * Parse a CustomID String into a CustomId.
+   *
+   * The string should be formatted as:
+   *
+   * `key_1=val_1;key_2=val_2`
+   *
+   * @param idString
+   * @returns
+   */
   static fromString<T extends InteractionIdPrefixes>(
     idString: string
   ): CustomId<T> {

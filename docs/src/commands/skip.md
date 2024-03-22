@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# skip <badge text="Music*" type="music-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
+# skip <badge text="LocalMusic*" type="localmusic-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 Skip queued tracks.
 
@@ -30,4 +30,27 @@ $skip
 
 
 
+
+
+### Help Message
+```
+Command skip:
+  Skip queued tracks.  
+--Arguments--
+    <skip-count>
+      The number of tracks to skip.
+  
+--Required Modules--
+    Requires One Of:
+      - LocalMusic
+      - Youtube
+  
+--Example Usage--
+    $go skip
+    $skip
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
 

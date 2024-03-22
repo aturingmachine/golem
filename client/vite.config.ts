@@ -15,6 +15,9 @@ const apiHost = process.env.NODE_ENV === 'production' ? '' : 'localhost'
 
 const apiString = process.env.NODE_ENV === 'production' ? '' : `${apiHost}:${apiPort}`
 
+console.log('ApiHost = %s', apiHost)
+console.log('ApiString = %s', apiString)
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [vue()],

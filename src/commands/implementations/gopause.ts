@@ -17,11 +17,11 @@ export default new GolemCommand({
 
     this.services.log.info('executing')
 
-    const player = this.services.playerService.for(message.info.guildId)
+    const player = this.services.playerService.for(message.info)
 
     if (!player) {
       throw Errors.NoPlayer({
-        message: 'Cannot pause, no active player in server.',
+        message: 'Cannot pause, no valid player in server.',
         sourceCmd: 'pause',
         traceId: message.traceId,
       })

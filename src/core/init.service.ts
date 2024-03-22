@@ -4,6 +4,7 @@ import { CommandService } from '../commands/commands.service'
 import { PlayerService } from '../music/player/player.service'
 import { YoutubeCache } from '../music/youtube/cache/youtube-cache.service'
 import { formatForLog } from '../utils/debug-utils'
+import { JobTimer } from '../utils/time-utils'
 import { ClientService } from './client.service'
 import { CronService } from './cron.service'
 import { DiscordBotServer } from './discord-transport'
@@ -28,22 +29,31 @@ export class InitService {
   }
 
   async runInit(botServer: DiscordBotServer): Promise<void> {
-    await this.login(botServer)
-    this.injectClient(botServer)
-    this.addClientListeners()
-    await this.registerCommands()
-    await this.setInitial()
+    this.log.info('Running Init Jobs.')
 
-    this.cron.setCronJobs()
+    const job = new JobTimer('init_jobs', async () => {
+      await this.login(botServer)
+      this.injectClient(botServer)
+      this.addClientListeners()
+      await this.registerCommands()
+      await this.setInitial()
 
-    // const ytCacheResult =
-    await this.ytCache.cleanAndValidate()
-    // this.clientService.messageAdmin(ytCacheResult.pretty_formatted)
+      this.cron.setCronJobs()
+
+      // const ytCacheResult =
+      await this.ytCache.cleanAndValidate()
+      // this.clientService.messageAdmin(ytCacheResult.pretty_formatted)
+    })
+
+    await job.run()
+
+    this.log.info(`Init Jobs completed in ${job.duration}.`)
   }
 
   shutdown(): void {
     this.log.info('shutting down')
     this.clientService.client?.destroy()
+    process.exit(1)
   }
 
   /**
@@ -66,7 +76,7 @@ export class InitService {
         }
 
         this.log.debug(`Received voice state update ${newState.guild.id}`)
-        const player = this.players.for(newState.guild.id)
+        const player = this.players.forGuild(newState.guild.id)
 
         this.log.debug(
           `${formatForLog({

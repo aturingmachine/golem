@@ -26,7 +26,7 @@ export class CommandService {
       )
 
     for (const file of files) {
-      const command: GolemCommand<any> =
+      const command: GolemCommand =
         /* eslint-disable-next-line @typescript-eslint/no-var-requires */
         require(`${implementationPath}/${file}`).default
 

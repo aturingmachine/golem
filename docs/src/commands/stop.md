@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# stop <badge text="Music*" type="music-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
+# stop <badge text="LocalMusic*" type="localmusic-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 Stops the current playback.
 
@@ -29,4 +29,23 @@ $stop
 
 
 
+
+
+### Help Message
+```
+Command stop:
+  Stops the current playback.  
+--Required Modules--
+    Requires One Of:
+      - LocalMusic
+      - Youtube
+  
+--Example Usage--
+    $go stop
+    $stop
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
 

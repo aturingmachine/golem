@@ -1,24 +1,7 @@
 import { Collection } from 'discord.js'
-import goadmin from './implementations/goadmin'
-import goalias from './implementations/goalias'
-// import goget from './implementations/goget'
-// import gomix from './implementations/gomix'
-import goget from './implementations/goget'
-import gopause from './implementations/gopause'
-import gopeek from './implementations/gopeek'
-import gopermission from './implementations/gopermissions'
-import goplay from './implementations/goplay'
-import goplaylist from './implementations/goplaylist'
-import goplaynext from './implementations/goplaynext'
-// import goreport from './implementations/goreport'
-import goreport from './implementations/goreport'
-import gosearch from './implementations/gosearch'
-import goshuffle from './implementations/goshuffle'
-import goskip from './implementations/goskip'
-import gostop from './implementations/gostop'
 import { GolemCommand } from '.'
 
-export const Commands = new Collection<string, GolemCommand<any>>()
+export const Commands = new Collection<string, GolemCommand>()
 
 export function GetCommand(commandName: string): GolemCommand<any> {
   const target = Commands.get(commandName)
@@ -28,24 +11,6 @@ export function GetCommand(commandName: string): GolemCommand<any> {
   }
 
   return target
-}
-
-export const RegisteredCommands = {
-  goadmin,
-  goalias,
-  goget,
-  // gomix,
-  gopause,
-  gopeek,
-  gopermission,
-  goplay,
-  goplaylist,
-  goplaynext,
-  goreport,
-  gosearch,
-  goshuffle,
-  goskip,
-  gostop,
 }
 
 // @Injectable()

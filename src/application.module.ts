@@ -33,11 +33,12 @@ import { WebModule } from './web/web.module'
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => {
         return {
-          reconnectInterval: 60_000,
+          // reconnectInterval: 60_000,
           connectTimeoutMS: 5000,
           ssl: false,
           useUnifiedTopology: true,
           useNewUrlParser: true,
+          // reconnectTries: Number.MAX_VALUE,
           type: 'mongodb',
           url: 'mongodb://localhost:27017',
           synchronize: true,

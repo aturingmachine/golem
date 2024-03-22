@@ -1,0 +1,75 @@
+title Golem V2 Message Lifecycle
+
+participant Client
+participant DiscordJS_Client
+
+participantgroup Golem
+  participant DiscordBotServer
+  participant MessageController
+  participant AliasService
+  participant GSCompiler
+  participant GolemMessage
+  participant ParsedCommand
+  participant MessageInfo
+  participant AuditService
+  participant TreeService
+  participant Command Instance
+end
+
+parallel 
+note left of GolemMessage:Class that contains the\nraw message, as well the\nparsed commands, user\nand guild info for the\ngiven message, etc.
+note left of ParsedCommand:Class that contains the\ncommand  that is invoked\nas well the parsed parameters\nextended arguments, etc.\nA Single ""GolemMessage"" can\ncontain multiple instances of\n""ParsedCommand""
+note left of MessageInfo:Contains info related\nto the message. The\nuser who sent it, the\nguild it was sent in, the\nchannel, etc.
+note left of TreeService:Executes segments of\na ""GolemMessage"".
+note left of Command Instance:This represents any\narbitrary command.
+parallel off
+
+Client->DiscordJS_Client:Discord message is sent
+DiscordJS_Client->DiscordBotServer:""messageCreate"" event fires
+DiscordBotServer->MessageController:(Golem) ""messageCreate"" handler triggers
+
+alt message does not start with "$"
+  abox right of MessageController:Die, nothing to do with us.
+end
+
+rbox right of MessageController:Assuming the message starts\nwith a ""$"" we can try to parse it.
+MessageController->AliasService:Check for Aliases in the Message
+
+alt has an alias
+  AliasService->AliasService:Inject/Expand the aliases\nin the message content.
+end
+
+note left of AliasService:If there were no aliases\nfound, we don't even\ncall into the AliasService
+AliasService->MessageController:Return Message Content
+
+group GolemScript Compilation
+  MessageController->GSCompiler:Parse Expanded Message Content as String
+  GSCompiler->GSCompiler:Invoke a new ""Parser"" to\nrun over the command string.
+  GSCompiler->MessageController:Return AST and Compiled GolemScript
+end
+
+group GolemMessage Creation
+  MessageController->GolemMessage:Create new ""GolemMessage"" using the:\n- Raw ""DiscordJS Message""\n- Compiled GolemScript\n- AST Tree
+
+  GolemMessage<-->ParsedCommand:Create ""ParsedCommand"" for each\n"Segment" of the Golem Message.
+  GolemMessage<-->MessageInfo:Create ""MessageInfo"" from the "raw" ""DiscordJS Message""
+  GolemMessage->MessageController:Return built ""GolemMessage""
+  MessageController<-->AuditService:Create New Audit Record
+  MessageController<-->GolemMessage:Set ""auditId"" using new Audit Record
+end
+
+group Command Execution
+  MessageController->TreeService:Execute Compiled ""GolemScript""
+  TreeService-->Command Instance:Invoke handler on the ""ParsedCommand""\nfor each given segment.
+  Command Instance-->>GolemMessage:Add ""Replies"" as Command executes. This can include Embeds, Raw Messages, Error Message, etc.
+  TreeService->MessageController:Return once all commands have executed.
+end
+
+group Reply
+  MessageController<-->GolemMessage:Request a ""render"" of all ""Replies"" added to the messages. This is done\nsince a ""Reply"" may require a Promise to evaluate.
+  MessageController-->MessageController:Filter out unique replies.\ni.e. Do not render multiple\n""peek"" results or something.
+  MessageController->GolemMessage:Send Replies. This is done using the original ""Interaction"" that is\nstored on the ""GolemMessage"" instance.
+  alt Collection
+  GolemMessage-->>GolemMessage:Collect and Execute
+  end
+end

@@ -1,14 +1,16 @@
 export const Http = {
   async get<T>(url: string) {
-    console.log('[get]',  __API_URL__ + url)
+    console.log('[get]',  'http://' + __API_HOST__ + '/api' + url)
 
-    const result = await fetch( __API_URL__ + url)
+    const result = await fetch( 'http://' + __API_HOST__ + '/api' + url)
 
     return result.json() as T
   },
 
   async put<T>(url: string, body: unknown) {
-    const result = await fetch(__API_URL__ + url, {
+    console.log('[put]',  'http://' + __API_HOST__ + '/api' + url)
+
+    const result = await fetch('http://' + __API_HOST__ + '/api' + url, {
       method: 'put',
       body: JSON.stringify(body),
       headers: {
@@ -20,7 +22,9 @@ export const Http = {
   },
 
   async post<T>(url: string, body: unknown) {
-    const result = await fetch(__API_URL__ + url, {
+    console.log('[post]',  'http://' + __API_HOST__ + '/api' + url)
+
+    const result = await fetch('http://' + __API_HOST__ + '/api' + url, {
       method: 'post',
       body: JSON.stringify(body),
       headers: {
@@ -32,7 +36,9 @@ export const Http = {
   },
 
   async delete<T>(url: string) {
-    const result = await fetch(__API_URL__ + url, {
+    console.log('[delete]',  'http://' + __API_HOST__ + '/api' + url)
+
+    const result = await fetch('http://' + __API_HOST__ + '/api' + url, {
       method: 'delete'
     })
 

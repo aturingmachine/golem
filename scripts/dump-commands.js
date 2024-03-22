@@ -8,7 +8,12 @@ execSync('npm run build')
 
 const helpInfo = Object.values(
   require('../dist/commands/register-commands').RegisteredCommands
-)
+).map((cmd) => {
+  return {
+    ...cmd,
+    help: cmd.helpMessage,
+  }
+})
 
 writeFileSync(
   path.resolve(__dirname, '../docs/src/.vuepress/data/commands.json'),

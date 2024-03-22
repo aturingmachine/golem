@@ -1,18 +1,22 @@
 import { CustomTransportStrategy, Server } from '@nestjs/microservices'
 import { Client, GatewayIntentBits, Partials } from 'discord.js'
+import { LoggerService } from './logger/logger.service'
 
 export class DiscordBotServer
   extends Server
   implements CustomTransportStrategy
 {
   client!: Client
+  log!: LoggerService
 
   constructor() {
     super()
   }
 
-  init(): void {
-    console.log('Init Bot Server')
+  init(log: LoggerService): void {
+    this.log = this.log || log
+    this.log.info('Initializing Bot Server Transport.')
+
     this.client =
       this.client ||
       new Client({
@@ -29,6 +33,8 @@ export class DiscordBotServer
         ],
         partials: [Partials.Channel, Partials.Message],
       })
+
+    this.log.info('Bot Server Transport Initialized.')
   }
 
   login(token?: string): Promise<string> {
@@ -44,11 +50,10 @@ export class DiscordBotServer
    */
   async listen(callback: () => void): Promise<void> {
     this.client.on('ready', (_c) => {
-      // console.log('Logged in as', c.user.id)
+      this.log.info('Bot Server Transport Ready.')
     })
 
     this.client.on('messageCreate', (message) => {
-      // console.log('client on message create', message)
       const handler = this.messageHandlers.get('messageCreate')
 
       if (handler) {
@@ -63,6 +68,6 @@ export class DiscordBotServer
    * This method is triggered on application shutdown.
    */
   close() {
-    //
+    this.log.info('Bot Server Transport closing.')
   }
 }

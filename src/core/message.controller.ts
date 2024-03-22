@@ -5,10 +5,11 @@ import { ChannelType, Message } from 'discord.js'
 import { GSCompiler } from '../ast/compiler'
 import { GolemMessage } from '../messages/golem-message'
 import { MessageId } from '../messages/message-id.model'
-import { Replies, ReplyType } from '../messages/replies/types'
+import { Replies as AllReplies, ReplyType } from '../messages/replies/types'
 import { ProcessingTree } from '../messages/tree'
 import { AliasService } from './alias/alias.service'
 import { AuditService } from './audits/audit.service'
+import { ConfigurationService } from './configuration.service'
 import { GuildConfigService } from './guild-config/guild-config.service'
 import { LoggerService } from './logger/logger.service'
 
@@ -25,6 +26,7 @@ export class MessageController {
     this.logger.setContext('MessageController')
   }
 
+  // TODO make this something more custom and memorable
   @MessagePattern('messageCreate')
   async handleMessage(data: { message: Message }): Promise<void> {
     this.logger.debug(`raw message="${data.message.content}"`)
@@ -78,7 +80,7 @@ export class MessageController {
       messageLogger.extendContext('MessageController')
     )
 
-    const uniqueReplies = this.filterReplies(replies)
+    const uniqueReplies = this.filterReplies(message)
 
     await this.sendReplies(message, uniqueReplies)
   }
@@ -114,7 +116,7 @@ export class MessageController {
 
   private async sendReplies(
     message: GolemMessage,
-    replies: Replies[]
+    replies: AllReplies[]
   ): Promise<void> {
     for (const reply of replies) {
       this.logger.info(
@@ -135,10 +137,16 @@ export class MessageController {
     }
   }
 
-  private filterReplies(replies: Replies[]): Replies[] {
+  private filterReplies(message: GolemMessage): AllReplies[] {
+    const replies: AllReplies[] = message._replies.render()
+
     const state: Partial<Record<ReplyType, boolean>> = {}
 
     return replies.filter((rep) => {
+      if (ConfigurationService.resolved.discord?.messageDebug) {
+        rep.addDebug(message.messageDebugInfo)
+      }
+
       if (!rep.isUnique) {
         this.logger.debug(`Filtering Non Unique Reply: ${rep.type}`)
         return true

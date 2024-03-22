@@ -15,7 +15,7 @@ export default new GolemCommand({
   async handler({ message }) {
     this.services.log.setMessageContext(message, 'GoPeek')
 
-    const player = this.services.playerService.for(message.info.guildId)
+    const player = this.services.playerService.forGuild(message.info.guildId)
 
     if (!player) {
       this.services.log.info(`no channel to join, exiting early`)

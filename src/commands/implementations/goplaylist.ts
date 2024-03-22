@@ -14,6 +14,7 @@ import { PlayerService } from '../../music/player/player.service'
 import { PlaylistService } from '../../music/playlists/playlist.service'
 import { formatForLog } from '../../utils/debug-utils'
 import { GolemModule } from '../../utils/raw-config'
+import { isValidPlayer } from '../utils/player-error-handlers'
 
 export default new GolemCommand({
   logSource: 'GoPlaylist',
@@ -89,12 +90,14 @@ export default new GolemCommand({
 
         const player = await this.services.players.getOrCreate(message)
 
-        if (!player) {
-          throw Errors.NoPlayer({
-            message: 'Missing required argument for playlist name.',
+        if (
+          !isValidPlayer(player, {
+            logger: this.services.log,
+            message,
             sourceCmd: 'playlist.play',
-            traceId: message.traceId,
           })
+        ) {
+          return
         }
 
         const result = await this.services.playlists.hydrate({
@@ -135,7 +138,7 @@ export default new GolemCommand({
         }
 
         let trackSource: AListing | undefined | QueryPlayResult =
-          this.services.players.for(message.info.guildId)?.nowPlaying
+          this.services.players.forGuild(message.info.guildId)?.nowPlaying
         let trackName = trackSource?.title
 
         let trackToAdd =
@@ -190,69 +193,6 @@ export default new GolemCommand({
     )
 
     await this.subcommandTree.run(this, props)
-
-    // LEGEACY
-    // const playlistName = source.getString('playlist')
-    // const player = await this.services.players.getOrCreate(message)
-
-    // if (!player) {
-    //   this.services.log.error(
-    //     `unable to create player for guild: ${message.info.guild?.name}`
-    //   )
-
-    //   await message.addReply(
-    //     'Unable to create a music player. Contact my admin.'
-    //   )
-
-    //   return false
-    // }
-
-    // // TODO Handle the Playlist Dropdown Case
-
-    // if (playlistName) {
-    //   const targetPlaylist = this.services.plex.playlists.find(
-    //     (playlist) => playlist.name.toLowerCase() === playlistName.toLowerCase()
-    //   )
-
-    //   if (!targetPlaylist) {
-    //     await message.addReply(
-    //       `I couldn't find a playlist named "${playlistName}".`
-    //     )
-
-    //     return false
-    //   }
-
-    //   let listings = targetPlaylist.tracks
-    //     .map((t) =>
-    //       this.services.loader.records.find(
-    //         (rec) => rec._id.toString() === t.id
-    //       )
-    //     )
-    //     .filter(ArrayUtils.isDefined)
-
-    //   if (source.extendedArgs.shuffle) {
-    //     this.services.log.debug(`shuffling prior to play`)
-    //     listings = ArrayUtils.shuffleArray(listings)
-    //   }
-
-    //   await message.addReply(
-    //     `Queueing **${listings.length}** tracks from playlist **${targetPlaylist.name}**`
-    //   )
-
-    //   await message.addReply(
-    //     this.services.builder.nowPlaying(message, listings[0])
-    //   )
-
-    //   await this.services.players.playMany(
-    //     message,
-    //     player,
-    //     listings.map((listing) => new LocalTrack(listing, message.info.userId))
-    //   )
-
-    //   return true
-    // }
-
-    // return false
   },
 
   info: {
@@ -265,7 +205,7 @@ export default new GolemCommand({
       {
         name: 'list',
         description: {
-          long: 'List all playlists available on this server.',
+          long: 'List all playlists available on this server. Additionaly lists any Plex playlists if the Plex Module is enabled.',
           short: 'List all playlists available on this server.',
         },
         args: [],
@@ -339,9 +279,24 @@ export default new GolemCommand({
         required: false,
       },
     ],
+    extendedArgs: [
+      {
+        key: 'fromQueue',
+        type: 'boolean',
+        description:
+          'Create a playlist from the current play queue. Useful when wanting to create a Golem Playlist from a YouTube playlist that is currently playing.',
+      },
+    ],
     examples: {
-      legacy: ['$go playlist my-playlist', '$go playlist'],
-      slashCommand: ['/goplaylist my-playlist', '/goplaylist'],
+      legacy: [
+        '$go playlist play my playlist',
+        '$go playlist list',
+        '$go playlist create my playlist',
+        '$go playlist create my playlist --fromQueue',
+        '$go playlist add',
+        '$go playlist add twice tt',
+      ],
+      slashCommand: ['/goplaylist play my-playlist', '/goplaylist list'],
     },
     requiredModules: {
       all: [GolemModule.Plex, GolemModule.LocalMusic],

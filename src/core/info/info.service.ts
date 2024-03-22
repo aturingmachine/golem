@@ -31,7 +31,7 @@ export class InfoService {
    * @returns a NowPlaying Reply
    */
   nowPlaying(message: GolemMessage): Promise<NowPlayingReply | RawReply> {
-    const player = this.players.for(message.info.guildId)
+    const player = this.players.forGuild(message.info.guildId)
 
     if (!player || !player.nowPlaying) {
       this.log.warn(`cannot get player info for guild with no active player`)

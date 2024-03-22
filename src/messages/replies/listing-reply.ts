@@ -33,4 +33,8 @@ export class ListingReply extends BaseReply {
 
     return new ListingReply({ embeds: [embed] })
   }
+
+  addDebug(debugInfo: string): void {
+    this.addDebugFooter(debugInfo)
+  }
 }

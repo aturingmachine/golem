@@ -4,7 +4,7 @@ import { ModuleMocker, MockFunctionMetadata } from 'jest-mock'
 import { LoggerService } from '../../src/core/logger/logger.service'
 
 export interface Type<T = any> extends Function {
-  new (...args: any[]): T
+  new(...args: any[]): T
 }
 export interface Abstract<T> extends Function {
   prototype: T

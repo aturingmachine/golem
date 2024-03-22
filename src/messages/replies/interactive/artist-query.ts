@@ -5,9 +5,9 @@ import {
   EmbedBuilder,
   MessageReplyOptions,
 } from 'discord.js'
+import { isValidPlayer } from '../../../commands/utils/player-error-handlers'
 import { GolemLogo } from '../../../constants'
 import { LoggerService } from '../../../core/logger/logger.service'
-import { Errors } from '../../../errors'
 import { ListingSearcher } from '../../../music/local/library/searcher.service'
 import { PlayerService } from '../../../music/player/player.service'
 import { LocalTrack } from '../../../music/tracks/local-track'
@@ -26,19 +26,33 @@ export const GetMessageAttachement = (albumArt?: Buffer): AttachmentBuilder => {
   return new AttachmentBuilder(albumArt || GolemLogo, {})
 }
 
+type ArtistQueryReplyParams = {
+  opts: MessageReplyOptions
+  source: GolemMessage
+  artist: string
+  searcher: ListingSearcher
+  players: PlayerService
+  log: LoggerService
+}
+
 export class ArtistQueryReply extends BaseReply {
   readonly type = ReplyType.ArtistQuery
   readonly isUnique = false
 
-  constructor(
-    opts: MessageReplyOptions,
-    readonly source: GolemMessage,
-    readonly artist: string,
-    readonly searcher: ListingSearcher,
-    readonly players: PlayerService,
-    readonly log: LoggerService
-  ) {
-    super(opts)
+  readonly source: GolemMessage
+  readonly artist: string
+  readonly searcher: ListingSearcher
+  readonly players: PlayerService
+  readonly log: LoggerService
+
+  constructor(params: ArtistQueryReplyParams) {
+    super(params.opts)
+
+    this.source = params.source
+    this.artist = params.artist
+    this.searcher = params.searcher
+    this.players = params.players
+    this.log = params.log
   }
 
   async collect() {
@@ -48,6 +62,19 @@ export class ArtistQueryReply extends BaseReply {
         time: 30_000,
       },
       async (interaction) => {
+        const player = await this.players.getOrCreate(this.source)
+
+        if (
+          !isValidPlayer(player, {
+            logger: this.log,
+            message: this.source,
+            sourceCmd: 'play',
+          })
+        ) {
+          this.log.info(`valid player check failed`)
+          return
+        }
+
         const custom_id = CustomId.fromString<ButtonIdPrefixes>(
           interaction.customId
         )
@@ -71,20 +98,6 @@ export class ArtistQueryReply extends BaseReply {
           })
 
           return
-        }
-
-        const player = await this.players.getOrCreate(this.source)
-
-        if (!player) {
-          this.log.warn(
-            `unable to create player for guild: ${this.source.info.guild?.name} channel: ${this.source.info.voiceChannel?.name}`
-          )
-
-          throw Errors.NoPlayer({
-            message: `unable to create player for guild: ${this.source.info.guild?.name} channel: ${this.source.info.voiceChannel?.name}`,
-            sourceCmd: 'play',
-            traceId: this.source.traceId,
-          })
         }
 
         const isShuffle = run === 'shuffle'
@@ -139,8 +152,6 @@ export class ArtistQueryReply extends BaseReply {
     const artistTracks = await searcher.forArtist(artist)
     let srcs: Buffer[] = []
     const albumNames: string[] = []
-
-    console.log(artistTracks)
 
     // TODO make not gross
     let i = 0
@@ -227,17 +238,21 @@ export class ArtistQueryReply extends BaseReply {
       ],
     })
 
-    return new ArtistQueryReply(
-      {
+    return new ArtistQueryReply({
+      opts: {
         components: [row.toRow()],
         embeds: [embed],
         files: [image],
       },
-      message,
+      source: message,
       artist,
       searcher,
       players,
-      log
-    )
+      log,
+    })
+  }
+
+  addDebug(debugInfo: string): void {
+    this.addDebugFooter(debugInfo)
   }
 }

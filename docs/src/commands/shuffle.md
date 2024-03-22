@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# shuffle <badge text="Music*" type="music-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
+# shuffle <badge text="LocalMusic*" type="localmusic-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 Shuffle the current queue maintaining the playnext queue's position.
 
@@ -28,4 +28,22 @@ $go shuffle
 
 
 
+
+
+### Help Message
+```
+Command shuffle:
+  Shuffle the current queue maintaining the playnext queue's position.  
+--Required Modules--
+    Requires One Of:
+      - LocalMusic
+      - Youtube
+  
+--Example Usage--
+    $go shuffle
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
 

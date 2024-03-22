@@ -1,7 +1,7 @@
 import { Column, Entity, ObjectID, ObjectIdColumn } from 'typeorm'
 import { TrackType } from '../tracks'
 
-type PlaylistListing = {
+export type PlaylistListing = {
   source: TrackType
   id: string
 }

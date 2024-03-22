@@ -16,7 +16,7 @@ export default new GolemCommand({
   async handler({ message }) {
     this.services.log.setMessageContext(message, this.options.logSource)
 
-    const player = this.services.playerService.shuffle(message.info.guildId)
+    const player = this.services.playerService.shuffle(message.info)
 
     if (player.nowPlaying) {
       try {

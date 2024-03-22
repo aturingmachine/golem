@@ -9,6 +9,7 @@ import { PlayQueryService } from '../../music/player/play-query.service'
 import { PlayerService } from '../../music/player/player.service'
 import { formatForLog } from '../../utils/debug-utils'
 import { GolemModule } from '../../utils/raw-config'
+import { isValidPlayer } from '../utils/player-error-handlers'
 
 export default new GolemCommand({
   services: {
@@ -27,16 +28,14 @@ export default new GolemCommand({
 
     const player = await this.services.playerService.getOrCreate(message)
 
-    if (!player) {
-      this.services.log.warn(
-        `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`
-      )
-
-      throw Errors.NoPlayer({
-        message: `unable to create player for guild: ${message.info.guild?.name} channel: ${message.info.voiceChannel?.name}`,
+    if (
+      !isValidPlayer(player, {
+        logger: this.services.log,
+        message,
         sourceCmd: 'playnext',
-        traceId: message.traceId,
       })
+    ) {
+      return
     }
 
     if (!query) {

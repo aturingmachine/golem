@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# pause <badge text="Music*" type="music-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
+# pause <badge text="LocalMusic*" type="localmusic-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 Pause the current playback.
 
@@ -28,4 +28,22 @@ $go pause
 
 
 
+
+
+### Help Message
+```
+Command pause:
+  Pause the current playback.  
+--Required Modules--
+    Requires One Of:
+      - LocalMusic
+      - Youtube
+  
+--Example Usage--
+    $go pause
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
 

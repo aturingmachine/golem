@@ -8,25 +8,42 @@ tags:
 
 # report 
 
-Report bugs you experience while using Golem
+Report a bug/issue or provide a suggestion to the admin of this Golem Bot.
 
 ## Examples
 
 ### Legacy Command
 
 ```
-$go report Golem left the voice channel when I tried to queue a playlist while they were playing a local track
+$go report 
 ```
 
 ### Slash Command
 
 ```
-/goreport Golem left the voice channel when I tried to queue a playlist while they were playing a local track
+/goreport
 ```
 
 ## Arguments
-- **content*** - `string`: Describe the bug you experienced. Try to be specific with what occurred before the bug (for example - you may note that a YouTube Track was playing at the time), as well as what you expected to have happened. Any information can help resolve the underlying cause of the bug.
+- **reportmessage*** - `string`: A description of the bug/issue/suggestion.
 
 
 
+
+
+### Help Message
+```
+Command report:
+  Report a bug/issue or provide a suggestion to the admin of this Golem Bot.  
+--Arguments--
+    [reportmessage]
+      A description of the bug/issue/suggestion.
+  
+--Example Usage--
+    $go report 
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
 

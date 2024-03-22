@@ -6,7 +6,7 @@ tags:
   - command
 ---
 
-# search <badge text="Music" type="music-badge" />
+# search <badge text="LocalMusic*" type="localmusic-badge optional-mod-badge tooltip-root"/> <badge text="Youtube*" type="youtube-badge optional-mod-badge tooltip-root"/>
 
 Search for a local track and view the result set.
 
@@ -29,4 +29,26 @@ $go search twice tt
 
 
 
+
+
+### Help Message
+```
+Command search:
+  Search for a local track and view the result set.  
+--Arguments--
+    [query]
+      The query to run against the Local Search Index.
+  
+--Required Modules--
+    Requires One Of:
+      - LocalMusic
+      - Youtube
+  
+--Example Usage--
+    $go search twice tt
+
+
+*************
+arguments marked [] are required
+arguments marked <> are optional```
 

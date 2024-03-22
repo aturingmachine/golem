@@ -137,7 +137,7 @@ export class PlayQueryService {
         await NowPlayingReply.fromListing(
           message,
           track.listing,
-          this.players.for(message.info.guildId)
+          this.players.forGuild(message.info.guildId)
         ),
       ],
     }

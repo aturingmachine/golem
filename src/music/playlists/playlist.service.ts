@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { MongoRepository } from 'typeorm'
 import { LoggerService } from '../../core/logger/logger.service'
@@ -8,6 +8,10 @@ import { Errors } from '../../errors'
 import { ExistingResourceError } from '../../errors/existing-resource-error'
 import { NoPlayerError } from '../../errors/no-player-error'
 import { NoPrivilegesError } from '../../errors/no-privileges-error'
+import {
+  CompatPlexPlaylist,
+  PlexService,
+} from '../../integrations/plex/plex.service'
 import { formatForLog } from '../../utils/debug-utils'
 import { ArrayUtils } from '../../utils/list-utils'
 import { ListingSearcher } from '../local/library/searcher.service'
@@ -49,6 +53,9 @@ export class PlaylistService {
     private players: PlayerService,
     private localSearch: ListingSearcher,
     private youtubeService: YoutubeService,
+
+    @Optional()
+    private plex: PlexService,
 
     @InjectRepository(Playlist)
     private playlists: MongoRepository<Playlist>
@@ -143,7 +150,7 @@ export class PlaylistService {
     let listings: Playlist['listings'] = []
 
     if (payload.fromQueue) {
-      const player = this.players.for(payload.userInfo.guildId)
+      const player = this.players.forGuild(payload.userInfo.guildId)
 
       if (!player || !player.nowPlaying) {
         throw new NoPlayerError({
@@ -206,7 +213,7 @@ export class PlaylistService {
   async hydrate(
     payload: HydratePlaylistPayload
   ): Promise<HydratePlaylistResult> {
-    const playlist = await this.byName(payload.guildId, payload.name.trim())
+    const playlist = await this.getPlaylist(payload)
 
     if (!playlist) {
       throw Errors.NotFound({
@@ -239,5 +246,18 @@ export class PlaylistService {
     return {
       tracks: hydrated,
     }
+  }
+
+  private async getPlaylist(
+    payload: HydratePlaylistPayload
+  ): Promise<Playlist | CompatPlexPlaylist | undefined | null> {
+    let playlist: Playlist | CompatPlexPlaylist | null | undefined =
+      await this.byName(payload.guildId, payload.name.trim())
+
+    if (!playlist && !!this.plex) {
+      playlist = this.plex.playlistByName(payload.name)
+    }
+
+    return playlist
   }
 }
